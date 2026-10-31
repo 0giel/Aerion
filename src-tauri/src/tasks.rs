@@ -53,7 +53,14 @@ impl TaskRegistry {
     }
 
     pub fn list(&self) -> Vec<TaskInfo> {
-        let mut v: Vec<TaskInfo> = self.lock().values().map(|(i, c)| TaskInfo { progress: c.progress.snapshot(), ..i.clone() }).collect();
+        let mut v: Vec<TaskInfo> = self
+            .lock()
+            .values()
+            .map(|(i, c)| TaskInfo {
+                progress: c.progress.snapshot(),
+                ..i.clone()
+            })
+            .collect();
         v.sort_by(|a, b| a.started_at.total_cmp(&b.started_at));
         v
     }
@@ -70,15 +77,20 @@ impl TaskRegistry {
 
     pub fn dismiss(&self, id: &str) {
         let mut map = self.lock();
-        if map.get(id).is_some_and(|(i, _)| i.status != TaskStatus::Running) {
+        if map
+            .get(id)
+            .is_some_and(|(i, _)| i.status != TaskStatus::Running)
+        {
             map.remove(id);
         }
     }
 
     pub fn running_for(&self, instance_id: &str, kind: &str) -> bool {
-        self.lock()
-            .values()
-            .any(|(i, _)| i.status == TaskStatus::Running && i.kind == kind && i.instance_id.as_deref() == Some(instance_id))
+        self.lock().values().any(|(i, _)| {
+            i.status == TaskStatus::Running
+                && i.kind == kind
+                && i.instance_id.as_deref() == Some(instance_id)
+        })
     }
 
     /// Run `f` in the background; progress is sampled every 150 ms and emitted only on change.
@@ -125,7 +137,13 @@ impl TaskRegistry {
                 tokio::time::sleep(Duration::from_millis(150)).await;
                 let snap = ticker_ctx.progress.snapshot();
                 if last.as_ref() != Some(&snap) {
-                    let info = ticker_registry.lock().get(&ticker_id).map(|(i, _)| TaskInfo { progress: snap.clone(), ..i.clone() });
+                    let info = ticker_registry
+                        .lock()
+                        .get(&ticker_id)
+                        .map(|(i, _)| TaskInfo {
+                            progress: snap.clone(),
+                            ..i.clone()
+                        });
                     if let Some(i) = info {
                         let _ = TaskEvent(i).emit(&ticker_app);
                     }
@@ -138,7 +156,9 @@ impl TaskRegistry {
             ticker.abort();
             let info = {
                 let mut map = registry.lock();
-                let Some((info, c)) = map.get_mut(&tid) else { return };
+                let Some((info, c)) = map.get_mut(&tid) else {
+                    return;
+                };
                 info.progress = c.progress.snapshot();
                 match result {
                     Ok(r) => {
@@ -161,5 +181,8 @@ impl TaskRegistry {
 }
 
 pub fn chrono_now_ms() -> f64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as f64).unwrap_or(0.0)
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as f64)
+        .unwrap_or(0.0)
 }

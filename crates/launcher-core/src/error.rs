@@ -337,6 +337,10 @@ impl From<Error> for ErrorInfo {
 
 impl ErrorInfo {
     pub fn msg(code: &str, message: impl Into<String>) -> Self {
-        Self { code: code.to_owned(), message: message.into(), params: BTreeMap::new() }
+        Self {
+            code: code.to_owned(),
+            message: message.into(),
+            params: BTreeMap::new(),
+        }
     }
 }

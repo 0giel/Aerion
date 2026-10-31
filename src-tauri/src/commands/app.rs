@@ -34,7 +34,9 @@ pub struct AppInfo {
 #[specta::specta]
 pub async fn app_info(state: State<'_, AppState>) -> CmdResult<AppInfo> {
     let total = total_memory_mb();
-    let keyring = tokio::task::spawn_blocking(KeyringStore::available).await.map_err(|e| ErrorInfo::msg("generic", e.to_string()))?;
+    let keyring = tokio::task::spawn_blocking(KeyringStore::available)
+        .await
+        .map_err(|e| ErrorInfo::msg("generic", e.to_string()))?;
     Ok(AppInfo {
         version: env!("CARGO_PKG_VERSION").into(),
         os: current_os(),
@@ -61,19 +63,30 @@ pub async fn get_settings(state: State<'_, AppState>) -> CmdResult<Settings> {
 /// Save settings; rebuilds the HTTP stack when network options change.
 #[tauri::command]
 #[specta::specta]
-pub async fn save_settings(state: State<'_, AppState>, mut settings: Settings) -> CmdResult<Settings> {
+pub async fn save_settings(
+    state: State<'_, AppState>,
+    mut settings: Settings,
+) -> CmdResult<Settings> {
     settings.download_concurrency = settings.download_concurrency.clamp(1, 64);
     settings.proxy = settings.proxy.filter(|p| !p.trim().is_empty());
-    settings.msa_client_id = settings.msa_client_id.map(|s| s.trim().to_owned()).filter(|s| !s.is_empty());
+    settings.msa_client_id = settings
+        .msa_client_id
+        .map(|s| s.trim().to_owned())
+        .filter(|s| !s.is_empty());
     if let Some(m) = settings.max_memory_mb
         && !(512..=262_144).contains(&m)
     {
-        return Err(ErrorInfo::msg("settings.memory", "memory must be between 512 MB and 256 GB"));
+        return Err(ErrorInfo::msg(
+            "settings.memory",
+            "memory must be between 512 MB and 256 GB",
+        ));
     }
     let previous = state.settings.read().await.clone();
     // Keep the generated id stable no matter what the UI sends.
     settings.client_id = previous.client_id.clone();
-    if previous.proxy != settings.proxy || previous.download_concurrency != settings.download_concurrency {
+    if previous.proxy != settings.proxy
+        || previous.download_concurrency != settings.download_concurrency
+    {
         let engine = launcher_core::Engine::new(state.paths.clone(), &settings)?;
         *state.engine.write().await = engine;
     }
@@ -89,17 +102,32 @@ pub enum FolderTarget {
     Data,
     Logs,
     Themes,
-    Instance { id: String },
-    GameDir { id: String },
-    Content { id: String, content: ContentKind },
-    Screenshots { id: String },
+    Instance {
+        id: String,
+    },
+    GameDir {
+        id: String,
+    },
+    Content {
+        id: String,
+        content: ContentKind,
+    },
+    Screenshots {
+        id: String,
+    },
     /// A file or folder inside the launcher's directories (crash reports, exports).
-    Path { path: String },
+    Path {
+        path: String,
+    },
 }
 
 #[tauri::command]
 #[specta::specta]
-pub async fn open_folder(app: AppHandle, state: State<'_, AppState>, target: FolderTarget) -> CmdResult<()> {
+pub async fn open_folder(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    target: FolderTarget,
+) -> CmdResult<()> {
     let p = &state.paths;
     let path = match target {
         FolderTarget::Root => p.root.clone(),
@@ -108,13 +136,22 @@ pub async fn open_folder(app: AppHandle, state: State<'_, AppState>, target: Fol
         FolderTarget::Themes => p.themes_dir(),
         FolderTarget::Instance { id } => state.instances.dir(&id)?,
         FolderTarget::GameDir { id } => state.instances.game_dir(&id)?,
-        FolderTarget::Content { id, content } => state.instances.game_dir(&id)?.join(content.folder()),
+        FolderTarget::Content { id, content } => {
+            state.instances.game_dir(&id)?.join(content.folder())
+        }
         FolderTarget::Screenshots { id } => state.instances.game_dir(&id)?.join("screenshots"),
         FolderTarget::Path { path } => {
             let path = std::path::PathBuf::from(path);
             let allowed = [&p.root, &p.data].iter().any(|base| path.starts_with(base));
-            if !allowed || path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-                return Err(ErrorInfo::msg("security.unsafePath", "path outside the launcher directories"));
+            if !allowed
+                || path
+                    .components()
+                    .any(|c| matches!(c, std::path::Component::ParentDir))
+            {
+                return Err(ErrorInfo::msg(
+                    "security.unsafePath",
+                    "path outside the launcher directories",
+                ));
             }
             path
         }
@@ -122,7 +159,12 @@ pub async fn open_folder(app: AppHandle, state: State<'_, AppState>, target: Fol
     if !path.exists() {
         let _ = tokio::fs::create_dir_all(&path).await;
     }
-    let shown = if path.is_file() { app.opener().reveal_item_in_dir(&path) } else { app.opener().open_path(path.display().to_string(), None::<&str>) };
+    let shown = if path.is_file() {
+        app.opener().reveal_item_in_dir(&path)
+    } else {
+        app.opener()
+            .open_path(path.display().to_string(), None::<&str>)
+    };
     shown.map_err(|e| ErrorInfo::msg("generic", e.to_string()))
 }
 

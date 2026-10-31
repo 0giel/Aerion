@@ -35,7 +35,12 @@ pub async fn get_accounts(state: State<'_, AppState>) -> CmdResult<AccountsView>
 
 fn new_login(state: &AppState) -> CancellationToken {
     let token = CancellationToken::new();
-    if let Some(old) = state.login.lock().unwrap_or_else(|e| e.into_inner()).replace(token.clone()) {
+    if let Some(old) = state
+        .login
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .replace(token.clone())
+    {
         old.cancel();
     }
     token
@@ -45,12 +50,22 @@ fn new_login(state: &AppState) -> CancellationToken {
 #[tauri::command]
 #[specta::specta]
 pub async fn login_microsoft(app: AppHandle, state: State<'_, AppState>) -> CmdResult<Account> {
-    let client_id = state.settings.read().await.effective_client_id().ok_or(AuthError::ClientIdMissing).map_err(launcher_core::Error::from)?;
+    let client_id = state
+        .settings
+        .read()
+        .await
+        .effective_client_id()
+        .ok_or(AuthError::ClientIdMissing)
+        .map_err(launcher_core::Error::from)?;
     let cancel = new_login(&state);
     let engine = state.engine().await;
     let login = LoopbackLogin::start(&state.endpoints, &client_id).await?;
-    app.opener().open_url(login.auth_url.clone(), None::<&str>).map_err(|e| ErrorInfo::msg("generic", e.to_string()))?;
-    let tokens = login.finish(&engine.http, &state.endpoints, &client_id, &cancel).await?;
+    app.opener()
+        .open_url(login.auth_url.clone(), None::<&str>)
+        .map_err(|e| ErrorInfo::msg("generic", e.to_string()))?;
+    let tokens = login
+        .finish(&engine.http, &state.endpoints, &client_id, &cancel)
+        .await?;
     let session = minecraft_session(&engine.http, &state.endpoints, &tokens).await?;
     Ok(state.accounts.add_microsoft(&session).await?)
 }
@@ -76,10 +91,20 @@ pub struct DeviceCodeView {
 #[tauri::command]
 #[specta::specta]
 pub async fn device_code_begin(state: State<'_, AppState>) -> CmdResult<DeviceCodeView> {
-    let client_id = state.settings.read().await.effective_client_id().ok_or(AuthError::ClientIdMissing).map_err(launcher_core::Error::from)?;
+    let client_id = state
+        .settings
+        .read()
+        .await
+        .effective_client_id()
+        .ok_or(AuthError::ClientIdMissing)
+        .map_err(launcher_core::Error::from)?;
     let engine = state.engine().await;
     let dc = device_code_start(&engine.http, &state.endpoints, &client_id).await?;
-    let view = DeviceCodeView { user_code: dc.user_code.clone(), verification_uri: dc.verification_uri.clone(), expires_in: dc.expires_in as f64 };
+    let view = DeviceCodeView {
+        user_code: dc.user_code.clone(),
+        verification_uri: dc.verification_uri.clone(),
+        expires_in: dc.expires_in as f64,
+    };
     *state.device_code.lock().await = Some(dc);
     Ok(view)
 }
@@ -87,8 +112,19 @@ pub async fn device_code_begin(state: State<'_, AppState>) -> CmdResult<DeviceCo
 #[tauri::command]
 #[specta::specta]
 pub async fn device_code_complete(state: State<'_, AppState>) -> CmdResult<Account> {
-    let client_id = state.settings.read().await.effective_client_id().ok_or(AuthError::ClientIdMissing).map_err(launcher_core::Error::from)?;
-    let dc = state.device_code.lock().await.take().ok_or_else(|| ErrorInfo::msg("auth.expired", "no pending device code"))?;
+    let client_id = state
+        .settings
+        .read()
+        .await
+        .effective_client_id()
+        .ok_or(AuthError::ClientIdMissing)
+        .map_err(launcher_core::Error::from)?;
+    let dc = state
+        .device_code
+        .lock()
+        .await
+        .take()
+        .ok_or_else(|| ErrorInfo::msg("auth.expired", "no pending device code"))?;
     let cancel = new_login(&state);
     let engine = state.engine().await;
     let tokens = device_code_poll(&engine.http, &state.endpoints, &client_id, &dc, &cancel).await?;

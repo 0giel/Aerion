@@ -19,10 +19,17 @@ use crate::themes::{assets_dir, content_type, valid_asset};
 const MAX_IMAGE: usize = 15 * 1024 * 1024;
 
 fn empty(status: StatusCode) -> Response<Vec<u8>> {
-    Response::builder().status(status).body(Vec::new()).unwrap_or_default()
+    Response::builder()
+        .status(status)
+        .body(Vec::new())
+        .unwrap_or_default()
 }
 
-pub fn img<R: Runtime>(ctx: UriSchemeContext<'_, R>, request: Request<Vec<u8>>, responder: UriSchemeResponder) {
+pub fn img<R: Runtime>(
+    ctx: UriSchemeContext<'_, R>,
+    request: Request<Vec<u8>>,
+    responder: UriSchemeResponder,
+) {
     let app = ctx.app_handle().clone();
     tauri::async_runtime::spawn(async move {
         let resp = match proxy(&app, &request).await {
@@ -34,42 +41,74 @@ pub fn img<R: Runtime>(ctx: UriSchemeContext<'_, R>, request: Request<Vec<u8>>, 
 }
 
 fn is_private(host: &str) -> bool {
-    if host.eq_ignore_ascii_case("localhost") || host.ends_with(".localhost") || host.ends_with(".local") {
+    if host.eq_ignore_ascii_case("localhost")
+        || host.ends_with(".localhost")
+        || host.ends_with(".local")
+    {
         return true;
     }
     match host.trim_matches(['[', ']']).parse::<IpAddr>() {
-        Ok(IpAddr::V4(ip)) => ip.is_private() || ip.is_loopback() || ip.is_link_local() || ip.is_unspecified(),
-        Ok(IpAddr::V6(ip)) => ip.is_loopback() || ip.is_unspecified() || (ip.segments()[0] & 0xfe00) == 0xfc00,
+        Ok(IpAddr::V4(ip)) => {
+            ip.is_private() || ip.is_loopback() || ip.is_link_local() || ip.is_unspecified()
+        }
+        Ok(IpAddr::V6(ip)) => {
+            ip.is_loopback() || ip.is_unspecified() || (ip.segments()[0] & 0xfe00) == 0xfc00
+        }
         Err(_) => false,
     }
 }
 
-async fn proxy<R: Runtime>(app: &AppHandle<R>, request: &Request<Vec<u8>>) -> Result<Response<Vec<u8>>, StatusCode> {
+async fn proxy<R: Runtime>(
+    app: &AppHandle<R>,
+    request: &Request<Vec<u8>>,
+) -> Result<Response<Vec<u8>>, StatusCode> {
     let uri = request.uri();
     let encoded = uri.path().trim_start_matches('/');
-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(encoded).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(encoded)
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
     let url = String::from_utf8(bytes).map_err(|_| StatusCode::BAD_REQUEST)?;
     let parsed = reqwest::Url::parse(&url).map_err(|_| StatusCode::BAD_REQUEST)?;
     if !matches!(parsed.scheme(), "https" | "http") || parsed.host_str().is_none_or(is_private) {
         return Err(StatusCode::FORBIDDEN);
     }
-    let no_cache = uri.query().is_some_and(|q| q.split('&').any(|p| p == "nc=1"));
+    let no_cache = uri
+        .query()
+        .is_some_and(|q| q.split('&').any(|p| p == "nc=1"));
     let state = app.state::<AppState>();
     let cache_dir = state.paths.image_cache_dir();
     let key = sha1_hex(url.as_bytes());
     let (body_path, type_path) = (cache_dir.join(&key), cache_dir.join(format!("{key}.type")));
     if !no_cache
-        && let (Ok(body), Ok(ct)) = (tokio::fs::read(&body_path).await, tokio::fs::read_to_string(&type_path).await)
+        && let (Ok(body), Ok(ct)) = (
+            tokio::fs::read(&body_path).await,
+            tokio::fs::read_to_string(&type_path).await,
+        )
     {
         return Ok(image_response(body, &ct));
     }
     let engine = state.engine().await;
-    let resp = engine.http.client().get(parsed).send().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
+    let resp = engine
+        .http
+        .client()
+        .get(parsed)
+        .send()
+        .await
+        .map_err(|_| StatusCode::BAD_GATEWAY)?;
     if !resp.status().is_success() {
         return Err(StatusCode::NOT_FOUND);
     }
-    let ct = resp.headers().get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or("").to_ascii_lowercase();
-    if !ct.starts_with("image/") || resp.content_length().is_some_and(|l| l as usize > MAX_IMAGE) {
+    let ct = resp
+        .headers()
+        .get(header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if !ct.starts_with("image/")
+        || resp
+            .content_length()
+            .is_some_and(|l| l as usize > MAX_IMAGE)
+    {
         return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
     let body = resp.bytes().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
@@ -91,12 +130,19 @@ fn image_response(body: Vec<u8>, content_type: &str) -> Response<Vec<u8>> {
         .header(header::CACHE_CONTROL, "max-age=604800")
         .header("X-Content-Type-Options", "nosniff");
     if content_type.contains("svg") {
-        b = b.header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'");
+        b = b.header(
+            "Content-Security-Policy",
+            "default-src 'none'; style-src 'unsafe-inline'",
+        );
     }
     b.body(body).unwrap_or_default()
 }
 
-pub fn theme_asset<R: Runtime>(ctx: UriSchemeContext<'_, R>, request: Request<Vec<u8>>, responder: UriSchemeResponder) {
+pub fn theme_asset<R: Runtime>(
+    ctx: UriSchemeContext<'_, R>,
+    request: Request<Vec<u8>>,
+    responder: UriSchemeResponder,
+) {
     let app = ctx.app_handle().clone();
     tauri::async_runtime::spawn(async move {
         let name = request.uri().path().trim_start_matches('/').to_owned();
@@ -118,7 +164,11 @@ pub fn theme_asset<R: Runtime>(ctx: UriSchemeContext<'_, R>, request: Request<Ve
             .and_then(|r| r.split_once('-'))
             .and_then(|(s, e)| {
                 let start: usize = s.parse().ok()?;
-                let end: usize = if e.is_empty() { total.saturating_sub(1) } else { e.parse().ok()? };
+                let end: usize = if e.is_empty() {
+                    total.saturating_sub(1)
+                } else {
+                    e.parse().ok()?
+                };
                 (start <= end && end < total).then_some((start, end))
             });
         let resp = match range {
@@ -126,9 +176,16 @@ pub fn theme_asset<R: Runtime>(ctx: UriSchemeContext<'_, R>, request: Request<Ve
                 .status(StatusCode::PARTIAL_CONTENT)
                 .header(header::CONTENT_TYPE, ct)
                 .header(header::ACCEPT_RANGES, "bytes")
-                .header(header::CONTENT_RANGE, format!("bytes {start}-{end}/{total}"))
+                .header(
+                    header::CONTENT_RANGE,
+                    format!("bytes {start}-{end}/{total}"),
+                )
                 .body(data[start..=end].to_vec()),
-            None => Response::builder().status(StatusCode::OK).header(header::CONTENT_TYPE, ct).header(header::ACCEPT_RANGES, "bytes").body(data),
+            None => Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, ct)
+                .header(header::ACCEPT_RANGES, "bytes")
+                .body(data),
         };
         responder.respond(resp.unwrap_or_default());
     });
@@ -155,7 +212,9 @@ fn percent_decode(s: &str) -> String {
 
 /// Keep the thumbnail cache under ~300 MB (oldest files go first).
 pub async fn trim_image_cache(dir: std::path::PathBuf) {
-    let Ok(mut rd) = tokio::fs::read_dir(&dir).await else { return };
+    let Ok(mut rd) = tokio::fs::read_dir(&dir).await else {
+        return;
+    };
     let mut files = Vec::new();
     let mut total = 0u64;
     while let Ok(Some(e)) = rd.next_entry().await {
@@ -184,7 +243,15 @@ mod tests {
 
     #[test]
     fn blocks_private_hosts() {
-        for h in ["localhost", "127.0.0.1", "10.0.0.5", "192.168.1.1", "[::1]", "printer.local", "169.254.1.1"] {
+        for h in [
+            "localhost",
+            "127.0.0.1",
+            "10.0.0.5",
+            "192.168.1.1",
+            "[::1]",
+            "printer.local",
+            "169.254.1.1",
+        ] {
             assert!(is_private(h), "{h}");
         }
         for h in ["cdn.modrinth.com", "media.forgecdn.net", "8.8.8.8"] {

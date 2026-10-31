@@ -35,7 +35,10 @@ pub async fn create_instance(state: State<'_, AppState>, spec: NewInstance) -> C
 
 #[tauri::command]
 #[specta::specta]
-pub async fn update_instance(state: State<'_, AppState>, instance: Instance) -> CmdResult<Instance> {
+pub async fn update_instance(
+    state: State<'_, AppState>,
+    instance: Instance,
+) -> CmdResult<Instance> {
     Ok(state.instances.update(instance).await?)
 }
 
@@ -50,7 +53,11 @@ pub async fn delete_instance(state: State<'_, AppState>, id: String) -> CmdResul
 
 #[tauri::command]
 #[specta::specta]
-pub async fn clone_instance(state: State<'_, AppState>, id: String, name: String) -> CmdResult<Instance> {
+pub async fn clone_instance(
+    state: State<'_, AppState>,
+    id: String,
+    name: String,
+) -> CmdResult<Instance> {
     Ok(state.instances.clone_instance(&id, &name).await?)
 }
 
@@ -72,71 +79,141 @@ pub async fn create_shortcut(state: State<'_, AppState>, id: String) -> CmdResul
 /// Re-check every file with full hashing and repair what is broken ("Verify files").
 #[tauri::command]
 #[specta::specta]
-pub async fn verify_instance(app: AppHandle, state: State<'_, AppState>, id: String) -> CmdResult<String> {
+pub async fn verify_instance(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> CmdResult<String> {
     let inst = state.instances.get(&id).await?;
     let app2 = app.clone();
-    Ok(state.tasks.spawn(&app, "verify", "task.verify", Some(inst.name.clone()), Some(id.clone()), move |ctx| async move {
-        use tauri::Manager;
-        let state = app2.state::<AppState>();
-        let engine = state.engine().await;
-        let settings = state.settings.read().await.clone();
-        let inst = state.instances.get(&id).await?;
-        let version = ensure_version(&engine, &state.instances, &inst, &ctx).await?;
-        let prepared = prepare(&engine.meta, &engine.env, &version, VerifyMode::Full, &ctx).await?;
-        pick_java(&engine, &settings, &inst, &prepared.java, &ctx).await?;
-        Ok(None)
-    }))
+    Ok(state.tasks.spawn(
+        &app,
+        "verify",
+        "task.verify",
+        Some(inst.name.clone()),
+        Some(id.clone()),
+        move |ctx| async move {
+            use tauri::Manager;
+            let state = app2.state::<AppState>();
+            let engine = state.engine().await;
+            let settings = state.settings.read().await.clone();
+            let inst = state.instances.get(&id).await?;
+            let version = ensure_version(&engine, &state.instances, &inst, &ctx).await?;
+            let prepared =
+                prepare(&engine.meta, &engine.env, &version, VerifyMode::Full, &ctx).await?;
+            pick_java(&engine, &settings, &inst, &prepared.java, &ctx).await?;
+            Ok(None)
+        },
+    ))
 }
 
 /// Import a `.mrpack`, CurseForge zip or Luncher archive (also used for drag & drop).
 #[tauri::command]
 #[specta::specta]
-pub async fn import_pack(app: AppHandle, state: State<'_, AppState>, path: String) -> CmdResult<String> {
+pub async fn import_pack(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    path: String,
+) -> CmdResult<String> {
     let path = PathBuf::from(path);
     let name = path.file_name().map(|n| n.to_string_lossy().into_owned());
     let p = path.clone();
-    let format = tokio::task::spawn_blocking(move || modpacks::detect_format(&p)).await.map_err(|e| ErrorInfo::msg("generic", e.to_string()))??;
+    let format = tokio::task::spawn_blocking(move || modpacks::detect_format(&p))
+        .await
+        .map_err(|e| ErrorInfo::msg("generic", e.to_string()))??;
     let app2 = app.clone();
-    Ok(state.tasks.spawn(&app, "import", "task.import", name, None, move |ctx| async move {
-        use tauri::Manager;
-        let state = app2.state::<AppState>();
-        let engine = state.engine().await;
-        let modrinth = state.modrinth().await;
-        let result = match format {
-            PackFormat::Mrpack => ImportResult {
-                instance: modpacks::mrpack::import(&engine, &state.instances, &modrinth, &path, None, &ctx).await?,
-                manual_downloads: vec![],
-            },
-            PackFormat::Curseforge => {
-                let cf = state.curseforge().await;
-                modpacks::curseforge::import(&engine, &state.instances, &cf, &modrinth, &path, None, &ctx).await?
-            }
-            PackFormat::Luncher => ImportResult { instance: modpacks::native::import(&state.instances, &path).await?, manual_downloads: vec![] },
-        };
-        Ok(serde_json::to_string(&result).ok())
-    }))
+    Ok(state.tasks.spawn(
+        &app,
+        "import",
+        "task.import",
+        name,
+        None,
+        move |ctx| async move {
+            use tauri::Manager;
+            let state = app2.state::<AppState>();
+            let engine = state.engine().await;
+            let modrinth = state.modrinth().await;
+            let result = match format {
+                PackFormat::Mrpack => ImportResult {
+                    instance: modpacks::mrpack::import(
+                        &engine,
+                        &state.instances,
+                        &modrinth,
+                        &path,
+                        None,
+                        &ctx,
+                    )
+                    .await?,
+                    manual_downloads: vec![],
+                },
+                PackFormat::Curseforge => {
+                    let cf = state.curseforge().await;
+                    modpacks::curseforge::import(
+                        &engine,
+                        &state.instances,
+                        &cf,
+                        &modrinth,
+                        &path,
+                        None,
+                        &ctx,
+                    )
+                    .await?
+                }
+                PackFormat::Luncher => ImportResult {
+                    instance: modpacks::native::import(&state.instances, &path).await?,
+                    manual_downloads: vec![],
+                },
+            };
+            Ok(serde_json::to_string(&result).ok())
+        },
+    ))
 }
 
 #[tauri::command]
 #[specta::specta]
-pub async fn export_instance(app: AppHandle, state: State<'_, AppState>, id: String, path: String, options: ExportOptions) -> CmdResult<String> {
+pub async fn export_instance(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    path: String,
+    options: ExportOptions,
+) -> CmdResult<String> {
     let inst = state.instances.get(&id).await?;
     let app2 = app.clone();
-    Ok(state.tasks.spawn(&app, "export", "task.export", Some(inst.name.clone()), Some(id.clone()), move |_ctx| async move {
-        use tauri::Manager;
-        let state = app2.state::<AppState>();
-        let dest = PathBuf::from(&path);
-        match options.format {
-            PackFormat::Mrpack => {
-                let engine = state.engine().await;
-                let modrinth = state.modrinth().await;
-                modpacks::mrpack::export(&engine, &state.instances, &modrinth, &id, &dest, &options).await?
+    Ok(state.tasks.spawn(
+        &app,
+        "export",
+        "task.export",
+        Some(inst.name.clone()),
+        Some(id.clone()),
+        move |_ctx| async move {
+            use tauri::Manager;
+            let state = app2.state::<AppState>();
+            let dest = PathBuf::from(&path);
+            match options.format {
+                PackFormat::Mrpack => {
+                    let engine = state.engine().await;
+                    let modrinth = state.modrinth().await;
+                    modpacks::mrpack::export(
+                        &engine,
+                        &state.instances,
+                        &modrinth,
+                        &id,
+                        &dest,
+                        &options,
+                    )
+                    .await?
+                }
+                PackFormat::Curseforge => {
+                    modpacks::curseforge::export(&state.instances, &id, &dest, &options).await?
+                }
+                PackFormat::Luncher => {
+                    modpacks::native::export(&state.instances, &id, &dest).await?
+                }
             }
-            PackFormat::Curseforge => modpacks::curseforge::export(&state.instances, &id, &dest, &options).await?,
-            PackFormat::Luncher => modpacks::native::export(&state.instances, &id, &dest).await?,
-        }
-        Ok(Some(serde_json::to_string(&path).unwrap_or_default()))
-    }))
+            Ok(Some(serde_json::to_string(&path).unwrap_or_default()))
+        },
+    ))
 }
 
 /// Top-level entries of the game directory (export dialog checklist).

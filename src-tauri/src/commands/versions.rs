@@ -37,14 +37,22 @@ pub async fn list_game_versions(state: State<'_, AppState>) -> CmdResult<GameVer
         versions: m
             .versions
             .into_iter()
-            .map(|v| GameVersion { id: v.id, kind: v.kind, release_time: v.release_time })
+            .map(|v| GameVersion {
+                id: v.id,
+                kind: v.kind,
+                release_time: v.release_time,
+            })
             .collect(),
     })
 }
 
 #[tauri::command]
 #[specta::specta]
-pub async fn list_loader_versions(state: State<'_, AppState>, loader: LoaderKind, game_version: String) -> CmdResult<Vec<LoaderVersion>> {
+pub async fn list_loader_versions(
+    state: State<'_, AppState>,
+    loader: LoaderKind,
+    game_version: String,
+) -> CmdResult<Vec<LoaderVersion>> {
     Ok(loaders::versions(&state.engine().await, loader, &game_version).await?)
 }
 

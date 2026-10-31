@@ -12,11 +12,21 @@ use crate::state::AppState;
 /// the game itself is reported through `GameStateEvent` / `GameLogEvent`.
 #[tauri::command]
 #[specta::specta]
-pub async fn launch_instance(app: AppHandle, state: State<'_, AppState>, id: String, account_id: Option<String>) -> CmdResult<String> {
+pub async fn launch_instance(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    account_id: Option<String>,
+) -> CmdResult<String> {
     start_launch(&app, &state, id, account_id).await
 }
 
-pub async fn start_launch(app: &AppHandle, state: &AppState, id: String, account_id: Option<String>) -> CmdResult<String> {
+pub async fn start_launch(
+    app: &AppHandle,
+    state: &AppState,
+    id: String,
+    account_id: Option<String>,
+) -> CmdResult<String> {
     if state.games.is_running(&id) || state.tasks.running_for(&id, "launch") {
         return Err(launcher_core::Error::AlreadyRunning.into());
     }
@@ -27,24 +37,50 @@ pub async fn start_launch(app: &AppHandle, state: &AppState, id: String, account
         s.save(&state.paths).await?;
     }
     let app2 = app.clone();
-    Ok(state.tasks.spawn(app, "launch", "task.launch", Some(inst.name.clone()), Some(id.clone()), move |ctx| async move {
-        let state = app2.state::<AppState>();
-        let settings = state.settings.read().await.clone();
-        let engine = state.engine().await;
-        let account = match account_id {
-            Some(a) => a,
-            None => state.accounts.state().await.selected.ok_or(AuthError::NoAccount)?,
-        };
-        ctx.stage("stage.account", None);
-        let (_, auth) = state
-            .accounts
-            .launch_auth(&account, &engine.http, &state.endpoints, settings.effective_client_id().as_deref())
+    Ok(state.tasks.spawn(
+        app,
+        "launch",
+        "task.launch",
+        Some(inst.name.clone()),
+        Some(id.clone()),
+        move |ctx| async move {
+            let state = app2.state::<AppState>();
+            let settings = state.settings.read().await.clone();
+            let engine = state.engine().await;
+            let account = match account_id {
+                Some(a) => a,
+                None => state
+                    .accounts
+                    .state()
+                    .await
+                    .selected
+                    .ok_or(AuthError::NoAccount)?,
+            };
+            ctx.stage("stage.account", None);
+            let (_, auth) = state
+                .accounts
+                .launch_auth(
+                    &account,
+                    &engine.http,
+                    &state.endpoints,
+                    settings.effective_client_id().as_deref(),
+                )
+                .await?;
+            let plan = plan(
+                &engine,
+                &settings,
+                &state.instances,
+                &id,
+                auth,
+                VerifyMode::Fast,
+                &ctx,
+            )
             .await?;
-        let plan = plan(&engine, &settings, &state.instances, &id, auth, VerifyMode::Fast, &ctx).await?;
-        ctx.check()?;
-        games::start(app2.clone(), plan, settings.after_launch);
-        Ok(None)
-    }))
+            ctx.check()?;
+            games::start(app2.clone(), plan, settings.after_launch);
+            Ok(None)
+        },
+    ))
 }
 
 #[tauri::command]

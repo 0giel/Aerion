@@ -41,18 +41,29 @@ impl AppState {
         let base = Paths::detect()?;
         let settings = Settings::load(&base).await?;
         let paths = base.with_data_dir(settings.data_dir.clone());
-        for dir in [paths.root.clone(), paths.data.clone(), paths.instances_dir(), paths.themes_dir(), paths.logs_dir()] {
+        for dir in [
+            paths.root.clone(),
+            paths.data.clone(),
+            paths.instances_dir(),
+            paths.themes_dir(),
+            paths.logs_dir(),
+        ] {
             let _ = tokio::fs::create_dir_all(&dir).await;
         }
         let engine = Engine::new(paths.clone(), &settings)?;
         let keyring = Arc::new(KeyringStore::new(KEYRING_SERVICE));
-        let env_key = std::env::var("CURSEFORGE_API_KEY").ok().filter(|k| !k.trim().is_empty());
+        let env_key = std::env::var("CURSEFORGE_API_KEY")
+            .ok()
+            .filter(|k| !k.trim().is_empty());
         let cf_key_from_env = env_key.is_some();
         let cf_key = match env_key {
             Some(k) => Some(k),
             None => {
                 let k = keyring.clone();
-                tokio::task::spawn_blocking(move || k.get(CF_KEY_ENTRY).ok().flatten()).await.ok().flatten()
+                tokio::task::spawn_blocking(move || k.get(CF_KEY_ENTRY).ok().flatten())
+                    .await
+                    .ok()
+                    .flatten()
             }
         };
         Ok(Self {

@@ -32,15 +32,23 @@ fn io(path: &std::path::Path, e: std::io::Error) -> ErrorInfo {
 pub async fn list_user_themes(state: State<'_, AppState>) -> CmdResult<Vec<ThemeFile>> {
     let dir = state.paths.themes_dir();
     let mut out = Vec::new();
-    let Ok(mut rd) = tokio::fs::read_dir(&dir).await else { return Ok(out) };
+    let Ok(mut rd) = tokio::fs::read_dir(&dir).await else {
+        return Ok(out);
+    };
     while let Ok(Some(e)) = rd.next_entry().await {
         let p = e.path();
-        let Some(id) = p.file_stem().and_then(|s| s.to_str()).map(str::to_owned) else { continue };
+        let Some(id) = p.file_stem().and_then(|s| s.to_str()).map(str::to_owned) else {
+            continue;
+        };
         if p.extension().is_none_or(|x| x != "json") || !valid_id(&id) {
             continue;
         }
-        let Ok(json) = tokio::fs::read_to_string(&p).await else { continue };
-        let css = tokio::fs::read_to_string(dir.join(format!("{id}.css"))).await.ok();
+        let Ok(json) = tokio::fs::read_to_string(&p).await else {
+            continue;
+        };
+        let css = tokio::fs::read_to_string(dir.join(format!("{id}.css")))
+            .await
+            .ok();
         out.push(ThemeFile { id, json, css });
     }
     out.sort_by(|a, b| a.id.cmp(&b.id));
@@ -56,9 +64,14 @@ pub async fn save_user_theme(state: State<'_, AppState>, theme: ThemeFile) -> Cm
     if theme.json.len() > 512 * 1024 || theme.css.as_ref().is_some_and(|c| c.len() > 512 * 1024) {
         return Err(bad("theme is too large"));
     }
-    serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&theme.json).map_err(|e| bad(&e.to_string()))?;
+    serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&theme.json)
+        .map_err(|e| bad(&e.to_string()))?;
     let dir = state.paths.themes_dir();
-    launcher_core::util::fs::atomic_write(dir.join(format!("{}.json", theme.id)), theme.json.as_bytes()).await?;
+    launcher_core::util::fs::atomic_write(
+        dir.join(format!("{}.json", theme.id)),
+        theme.json.as_bytes(),
+    )
+    .await?;
     let css_path = dir.join(format!("{}.css", theme.id));
     match theme.css.filter(|c| !c.trim().is_empty()) {
         Some(css) => launcher_core::util::fs::atomic_write(&css_path, css.as_bytes()).await?,
@@ -91,14 +104,25 @@ pub async fn add_theme_asset(state: State<'_, AppState>, path: String) -> CmdRes
     if meta.len() > 200 * 1024 * 1024 {
         return Err(bad("file is larger than 200 MB"));
     }
-    let ext = src.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();
+    let ext = src
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
     if content_type(&format!("x.{ext}")) == "application/octet-stream" {
         return Err(bad("unsupported file type"));
     }
-    let name = format!("bg-{}.{ext}", &uuid::Uuid::new_v4().simple().to_string()[..12]);
+    let name = format!(
+        "bg-{}.{ext}",
+        &uuid::Uuid::new_v4().simple().to_string()[..12]
+    );
     let dir = assets_dir(&state.paths.themes_dir());
-    tokio::fs::create_dir_all(&dir).await.map_err(|e| io(&dir, e))?;
-    tokio::fs::copy(&src, dir.join(&name)).await.map_err(|e| io(&src, e))?;
+    tokio::fs::create_dir_all(&dir)
+        .await
+        .map_err(|e| io(&dir, e))?;
+    tokio::fs::copy(&src, dir.join(&name))
+        .await
+        .map_err(|e| io(&src, e))?;
     Ok(name)
 }
 
@@ -117,22 +141,39 @@ struct Bundle {
 /// Export one self-contained file: theme JSON + custom CSS + background asset (data URI).
 #[tauri::command]
 #[specta::specta]
-pub async fn export_theme(state: State<'_, AppState>, theme: ThemeFile, path: String) -> CmdResult<()> {
-    let map: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&theme.json).map_err(|e| bad(&e.to_string()))?;
+pub async fn export_theme(
+    state: State<'_, AppState>,
+    theme: ThemeFile,
+    path: String,
+) -> CmdResult<()> {
+    let map: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(&theme.json).map_err(|e| bad(&e.to_string()))?;
     let mut embedded = std::collections::BTreeMap::new();
-    if let Some(asset) = map.get("background").and_then(|b| b.get("asset")).and_then(|a| a.as_str())
+    if let Some(asset) = map
+        .get("background")
+        .and_then(|b| b.get("asset"))
+        .and_then(|a| a.as_str())
         && valid_asset(asset)
     {
         let p = assets_dir(&state.paths.themes_dir()).join(asset);
         if let Ok(bytes) = tokio::fs::read(&p).await {
             let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
-            embedded.insert(asset.to_owned(), format!("data:{};base64,{b64}", content_type(asset)));
+            embedded.insert(
+                asset.to_owned(),
+                format!("data:{};base64,{b64}", content_type(asset)),
+            );
         }
     }
-    let bundle = Bundle { theme: map, custom_css: theme.css.filter(|c| !c.trim().is_empty()), embedded_assets: embedded };
+    let bundle = Bundle {
+        theme: map,
+        custom_css: theme.css.filter(|c| !c.trim().is_empty()),
+        embedded_assets: embedded,
+    };
     let bytes = serde_json::to_vec_pretty(&bundle).map_err(|e| bad(&e.to_string()))?;
     let dest = PathBuf::from(&path);
-    tokio::fs::write(&dest, bytes).await.map_err(|e| io(&dest, e))
+    tokio::fs::write(&dest, bytes)
+        .await
+        .map_err(|e| io(&dest, e))
 }
 
 /// Import a theme file (plain theme JSON or an exported bundle). Returns the stored theme.
@@ -152,10 +193,18 @@ pub async fn import_theme(state: State<'_, AppState>, path: String) -> CmdResult
         if !valid_asset(name) {
             continue;
         }
-        let Some((_, data)) = uri.split_once(";base64,") else { continue };
-        let Ok(decoded) = base64::engine::general_purpose::STANDARD.decode(data) else { continue };
-        tokio::fs::create_dir_all(&assets).await.map_err(|e| io(&assets, e))?;
-        tokio::fs::write(assets.join(name), decoded).await.map_err(|e| io(&assets, e))?;
+        let Some((_, data)) = uri.split_once(";base64,") else {
+            continue;
+        };
+        let Ok(decoded) = base64::engine::general_purpose::STANDARD.decode(data) else {
+            continue;
+        };
+        tokio::fs::create_dir_all(&assets)
+            .await
+            .map_err(|e| io(&assets, e))?;
+        tokio::fs::write(assets.join(name), decoded)
+            .await
+            .map_err(|e| io(&assets, e))?;
     }
     let base: String = bundle
         .theme
@@ -170,16 +219,26 @@ pub async fn import_theme(state: State<'_, AppState>, path: String) -> CmdResult
         .chars()
         .take(40)
         .collect();
-    let base = if base.is_empty() || !valid_id(&base) { "theme".to_owned() } else { base };
+    let base = if base.is_empty() || !valid_id(&base) {
+        "theme".to_owned()
+    } else {
+        base
+    };
     let mut id = base.clone();
     let mut n = 2;
     while themes.join(format!("{id}.json")).exists() {
         id = format!("{base}-{n}");
         n += 1;
     }
-    bundle.theme.insert("id".into(), serde_json::Value::String(id.clone()));
+    bundle
+        .theme
+        .insert("id".into(), serde_json::Value::String(id.clone()));
     let json = serde_json::to_string_pretty(&bundle.theme).map_err(|e| bad(&e.to_string()))?;
-    let file = ThemeFile { id, json, css: bundle.custom_css.take() };
+    let file = ThemeFile {
+        id,
+        json,
+        css: bundle.custom_css.take(),
+    };
     save_user_theme(state, file.clone()).await?;
     Ok(file)
 }
