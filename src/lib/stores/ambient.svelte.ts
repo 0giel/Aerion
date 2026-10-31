@@ -36,6 +36,7 @@ export const ambient = new Ambient();
 // One shared frame clock for all ambient animations: without GPU compositing each repaint costs
 // a full-window redraw, so animations must land in the same frames instead of interleaving.
 const FRAME_MS = 50; // 20 fps
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- plain callback registry, not UI state
 const subscribers = new Set<(dt: number) => void>();
 let raf = 0;
 let last = 0;
