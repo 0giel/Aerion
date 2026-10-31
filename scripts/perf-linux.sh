@@ -27,10 +27,16 @@ for run in $(seq 1 ${1:-3}); do
     v=$(awk '/^Pss:/{print $2}' /proc/$p/smaps_rollup 2>/dev/null); pss=$((pss + ${v:-0}))
     v=$(awk '/^VmRSS:/{print $2}' /proc/$p/status 2>/dev/null); rss=$((rss + ${v:-0}))
   done
-  c0=$(ticks $pids); sleep 10; c1=$(ticks $pids)
   hz=$(getconf CLK_TCK)
-  cpu=$(echo "scale=1; ($c1 - $c0) * 100 / $hz / 10" | bc)
-  printf "run %d: ui_ready=%.2fs procs=%d pss=%dMB rss=%dMB idle_cpu=%s%%\n" $run $ready $(echo $pids | wc -w) $((pss/1024)) $((rss/1024)) $cpu
+  # 10–20 s after start the window still counts as "in use" (ambient animations run for 30 s
+  # after focus/input); 35–45 s it is idle.
+  c0=$(ticks $pids); sleep 10; c1=$(ticks $pids)
+  active=$(echo "scale=1; ($c1 - $c0) * 100 / $hz / 10" | bc)
+  sleep 15
+  c0=$(ticks $pids); sleep 10; c1=$(ticks $pids)
+  idle=$(echo "scale=1; ($c1 - $c0) * 100 / $hz / 10" | bc)
+  printf "run %d: ui_ready=%.2fs procs=%d pss=%dMB rss=%dMB cpu_active=%s%% cpu_idle=%s%%\n" \
+    $run $ready $(echo $pids | wc -w) $((pss/1024)) $((rss/1024)) $active $idle
   for p in $pids; do printf "   %-18s pss=%dMB\n" "$(cat /proc/$p/comm 2>/dev/null)" $(( $(awk '/^Pss:/{print $2}' /proc/$p/smaps_rollup 2>/dev/null || echo 0) / 1024 )); done
   kill $pid; wait $pid 2>/dev/null; sleep 1
 done

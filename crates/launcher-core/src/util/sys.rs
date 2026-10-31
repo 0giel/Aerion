@@ -40,6 +40,18 @@ pub fn current_arch() -> Arch {
     }
 }
 
+static PRIVATE_ENV: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+
+/// Records environment variables the launcher set for its own process only (webview
+/// workarounds); the game does not inherit them. Only the first call has an effect.
+pub fn set_private_env(vars: Vec<String>) {
+    let _ = PRIVATE_ENV.set(vars);
+}
+
+pub fn private_env() -> &'static [String] {
+    PRIVATE_ENV.get().map_or(&[], Vec::as_slice)
+}
+
 /// Total physical memory in MiB (falls back to 8 GiB if it cannot be determined).
 pub fn total_memory_mb() -> u64 {
     imp::total_memory_bytes()

@@ -228,6 +228,9 @@ pub async fn run(
 ) -> Result<GameExit> {
     tokio::fs::create_dir_all(&spec.cwd).await.at(&spec.cwd)?;
     let mut cmd = tokio::process::Command::new(&spec.program);
+    for var in crate::util::sys::private_env() {
+        cmd.env_remove(var);
+    }
     cmd.args(&spec.args)
         .current_dir(&spec.cwd)
         .envs(spec.env.iter().cloned())

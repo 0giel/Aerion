@@ -4,6 +4,16 @@
 pub fn prepare_env() -> Vec<String> {
     #[allow(unused_mut)]
     let mut notes = Vec::new();
+    // Variables set here for the webview only; the game does not inherit them.
+    #[allow(unused_mut)]
+    let mut private = Vec::new();
+    // glibc gives every thread its own malloc arena (up to 8 × cores); a mostly idle launcher
+    // does not need them, and each one keeps freed memory resident.
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    // SAFETY: plain libc call before any other thread exists.
+    unsafe {
+        libc::mallopt(libc::M_ARENA_MAX, 2);
+    }
     #[cfg(target_os = "linux")]
     {
         // WebKitGTK's DMA-BUF renderer shows a blank window with the proprietary NVIDIA driver.
@@ -12,11 +22,93 @@ pub fn prepare_env() -> Vec<String> {
         {
             // SAFETY: called first thing in `main`, before any other thread exists.
             unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
+            private.push("WEBKIT_DISABLE_DMABUF_RENDERER".into());
             notes.push("NVIDIA driver detected: WebKit DMA-BUF renderer disabled".into());
+        }
+        if let Some(note) = egl::apply() {
+            private.push(egl::VAR.into());
+            notes.push(note);
         }
         notes.extend(fontconfig::apply());
     }
+    launcher_core::util::sys::set_private_env(private);
     notes
+}
+
+/// GLVND loads every EGL vendor into both WebKit processes. With the proprietary NVIDIA driver
+/// as the only GPU driver, Mesa can offer nothing but a software rasteriser there, yet its
+/// LLVM costs ~30 MB; EGL is restricted to NVIDIA's vendor file. Machines with any other GPU
+/// driver (hybrid laptops, Mesa drivers, nouveau) are left alone.
+#[cfg(target_os = "linux")]
+mod egl {
+    use std::fs;
+    use std::path::{Path, PathBuf};
+
+    pub const VAR: &str = "__EGL_VENDOR_LIBRARY_FILENAMES";
+    /// GLVND's default search path.
+    const VENDOR_DIRS: [&str; 2] = ["/etc/glvnd/egl_vendor.d", "/usr/share/glvnd/egl_vendor.d"];
+
+    pub fn apply() -> Option<String> {
+        if std::env::var_os(VAR).is_some()
+            || std::env::var_os("__EGL_VENDOR_LIBRARY_DIRS").is_some()
+        {
+            return None;
+        }
+        if !only_nvidia(Path::new("/sys/class/drm")) {
+            return None;
+        }
+        let dirs = VENDOR_DIRS.map(Path::new);
+        let file = nvidia_vendor_file(&dirs)?;
+        // SAFETY: see `prepare_env`.
+        unsafe { std::env::set_var(VAR, &file) };
+        Some(format!(
+            "NVIDIA is the only GPU driver: EGL restricted to {}",
+            file.display()
+        ))
+    }
+
+    /// True when there is at least one DRM card and every card is driven by `nvidia`.
+    pub(super) fn only_nvidia(drm: &Path) -> bool {
+        let Ok(entries) = fs::read_dir(drm) else {
+            return false;
+        };
+        let mut found = false;
+        for e in entries.flatten() {
+            let name = e.file_name();
+            // `card0`, `card1`…; connectors are `card0-HDMI-A-1` and so on.
+            let is_card = name
+                .to_str()
+                .and_then(|n| n.strip_prefix("card"))
+                .is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
+            if !is_card {
+                continue;
+            }
+            let driver = fs::read_link(e.path().join("device/driver")).ok();
+            if driver.as_deref().and_then(Path::file_name) != Some("nvidia".as_ref()) {
+                return false;
+            }
+            found = true;
+        }
+        found
+    }
+
+    pub(super) fn nvidia_vendor_file(dirs: &[&Path]) -> Option<PathBuf> {
+        dirs.iter().find_map(|dir| {
+            let mut files: Vec<_> = fs::read_dir(dir)
+                .ok()?
+                .flatten()
+                .map(|e| e.path())
+                .filter(|p| {
+                    p.extension().is_some_and(|x| x == "json")
+                        && p.file_name()
+                            .and_then(|n| n.to_str())
+                            .is_some_and(|n| n.contains("nvidia"))
+                })
+                .collect();
+            files.sort();
+            files.into_iter().next()
+        })
+    }
 }
 
 /// Some tools (newer fontconfig builds, e.g. inside Flatpak runtimes) leave cache files named
@@ -128,8 +220,48 @@ mod fontconfig {
 
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
+    use super::egl::*;
     use super::fontconfig::*;
     use std::os::unix::fs::symlink;
+
+    #[test]
+    fn nvidia_only_detection() {
+        let dir = tempfile::tempdir().unwrap();
+        let drm = dir.path().join("drm");
+        let card = |name: &str, driver: &str| {
+            let dev = dir.path().join("devices").join(name);
+            std::fs::create_dir_all(&dev).unwrap();
+            symlink(
+                format!("../../../bus/pci/drivers/{driver}"),
+                dev.join("driver"),
+            )
+            .unwrap();
+            std::fs::create_dir_all(drm.join(name)).unwrap();
+            symlink(&dev, drm.join(name).join("device")).unwrap();
+        };
+        assert!(!only_nvidia(&drm));
+        std::fs::create_dir_all(&drm).unwrap();
+        assert!(!only_nvidia(&drm));
+        card("card1", "nvidia");
+        std::fs::create_dir_all(drm.join("card1-HDMI-A-1")).unwrap();
+        assert!(only_nvidia(&drm));
+        card("card0", "i915");
+        assert!(!only_nvidia(&drm));
+    }
+
+    #[test]
+    fn finds_the_nvidia_vendor_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let (etc, share) = (dir.path().join("etc"), dir.path().join("share"));
+        std::fs::create_dir_all(&share).unwrap();
+        std::fs::write(share.join("50_mesa.json"), "{}").unwrap();
+        assert_eq!(nvidia_vendor_file(&[&etc, &share]), None);
+        std::fs::write(share.join("10_nvidia.json"), "{}").unwrap();
+        assert_eq!(
+            nvidia_vendor_file(&[&etc, &share]),
+            Some(share.join("10_nvidia.json"))
+        );
+    }
 
     #[test]
     fn cache_versions() {

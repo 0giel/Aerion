@@ -231,6 +231,18 @@ fn dev_eval(app: AppHandle, file: std::path::PathBuf) {
 
 pub fn run(platform_notes: Vec<String>) {
     init_tracing();
+    // The launcher mostly waits on network and disk; a few workers are plenty (the default is
+    // one per core, each with its own stack and allocator state).
+    let workers = std::thread::available_parallelism().map_or(2, |n| n.get().clamp(2, 4));
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(workers)
+        .enable_all()
+        .thread_name("luncher-worker")
+        .build()
+        .expect("tokio runtime");
+    tauri::async_runtime::set(runtime.handle().clone());
+    // Lives for the whole process.
+    std::mem::forget(runtime);
     tracing::info!(version = env!("CARGO_PKG_VERSION"), "Luncher starting");
     for note in platform_notes {
         tracing::warn!("{note}");
