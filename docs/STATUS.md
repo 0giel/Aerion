@@ -16,8 +16,7 @@ Newest entries first.
   (fixed an import only unused on Windows).
 - **All 84 engine tests pass as Windows binaries under Wine 10** (private prefix). One failed
   first: Forge processor paths joined a `/`-separated Maven path onto a native path
-  (`C:\…\libraries
-et/neoforged/…`), which breaks under `\?\` prefixes →
+  (`C:\…\libraries\net/neoforged/…`), which breaks under `\\?\` prefixes →
   `MavenCoord::local_path()`. Coordinates now also reject `..`, `/` and `\` in classifier/extension.
 - **Smoke test as a Windows binary under Wine: Minecraft 26.3 reached the title screen in 9.7 s**
   with the Windows Mojang Java 25 runtime (`javaw.exe`), Windows natives and `;` classpath
