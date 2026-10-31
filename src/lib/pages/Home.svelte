@@ -129,7 +129,7 @@
             {:else if current}
               {t("home.lastPlayed", {
                 when: formatRelative(current.lastPlayed),
-              })}{#if current.playTimeSecs > 0}{" · "}{t("home.playTime", {
+              })}{#if current.playTimeSecs > 0}&nbsp;· {t("home.playTime", {
                   time: formatPlayTime(current.playTimeSecs),
                 })}{/if}
             {/if}
