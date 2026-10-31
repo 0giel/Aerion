@@ -26,7 +26,7 @@ Newest entries first.
   (Modrinth App profile → NeoForge 1.21.1 from its log, 5 SKlauncher instances, .minecraft).
 - **Theme gallery** (D25): 8 new themes prepared in `~/Desktop/aerion-strona/themes` for upload.
 - **Launcher updates** (D22): signed, from GitHub Releases; banner + Settings switch/"Check now".
-- Tests: engine 107, Tauri 12, vitest 18 (NBT, worlds, servers + fake-server ping, screenshots,
+- Tests: engine 106, Tauri 11, vitest 18 (NBT, worlds, servers + fake-server ping, screenshots,
   options, stats, upgrade plan, importers).
 - Not verified live: Join/ping against a real server, update install (needs a published
   release), gallery (needs the themes folder in the repository).
