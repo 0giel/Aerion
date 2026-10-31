@@ -524,6 +524,16 @@ const pl: Dict = {
     title: "Gra uległa awarii",
     exitCode: "Kod wyjścia {code}",
     report: "Raport awarii",
+    culprit: "Prawdopodobna przyczyna: {name}",
+    disableAndRelaunch: "Wyłącz ten mod i uruchom ponownie",
+    disabled: "Wyłączono {name}. Włączysz go z powrotem w zakładce Zawartość.",
+    share: "Udostępnij log",
+    shareTitle: "Udostępnić log?",
+    shareText:
+      "Raport awarii trafi na mclo.gs i zobaczy go każdy, kto ma link. Aerion usuwa z niego tokeny logowania i nazwę użytkownika komputera.",
+    shareConfirm: "Wyślij i skopiuj link",
+    linkCopied: "Link skopiowany — wklej go np. na Discordzie.",
+    openLink: "Otwórz",
     viewLogs: "Pokaż logi",
     kinds: {
       outOfMemory:
@@ -545,6 +555,7 @@ const pl: Dict = {
       nativeCrash:
         "Java uległa awarii w kodzie natywnym — zwykle przez sterowniki grafiki albo nakładki (np. programy do nagrywania). Zaktualizuj sterowniki i wyłącz nakładki.",
       startFailed: "Nie udało się uruchomić gry: {error}",
+      modCrash: "Gra uległa awarii w modzie {mod}. Zaktualizuj go albo wyłącz i spróbuj ponownie.",
       generic: "Gra niespodziewanie się zamknęła. Szczegóły znajdziesz w logu i raporcie awarii.",
     },
   },
@@ -939,6 +950,12 @@ const pl: Dict = {
     use: "Użyj",
     applied: "Zastosowano motyw {name}",
     submit: "Udostępnij swój motyw",
+  },
+  whatsNew: {
+    title: "Co nowego w Aerionie {version}",
+    version: "Wersja {version}",
+    all: "Wszystkie zmiany",
+    ok: "Super!",
   },
   appUpdate: {
     available: "Dostępny Aerion {version}",

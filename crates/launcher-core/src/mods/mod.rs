@@ -2,6 +2,7 @@
 
 pub mod content;
 pub mod curseforge;
+pub mod meta;
 pub mod model;
 pub mod modrinth;
 pub mod resolve;

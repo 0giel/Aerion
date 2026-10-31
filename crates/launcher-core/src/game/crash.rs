@@ -21,6 +21,10 @@ pub struct CrashInfo {
     /// The most relevant lines (stack trace head, loader error list).
     pub excerpt: String,
     pub exit_code: Option<i32>,
+    /// The jar in `mods/` that most likely caused the crash, and its mod's name; the UI offers
+    /// to disable it.
+    pub mod_file: Option<String>,
+    pub mod_name: Option<String>,
 }
 
 static CLASS_VERSION: LazyLock<Regex> =
@@ -31,6 +35,57 @@ static MIXIN_CONFIG: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"([A-Za-z0-9_\-]+)\.mixins?\.json").expect("static regex"));
 static FROM_MOD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"from mod ([A-Za-z0-9_\-]+)").expect("static regex"));
+/// Fabric's dependency errors: `Mod 'Sodium' (sodium) 0.6.0 requires …`.
+static FABRIC_MOD: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"Mod '[^']+' \(([A-Za-z0-9_\-]+)\)").expect("static regex"));
+/// `Name (modid)`, as crash reports list suspected mods.
+static NAME_ID: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\(([A-Za-z0-9_\-]+)\)\s*$").expect("static regex"));
+/// Forge/NeoForge crash reports name the jar directly.
+static MOD_FILE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"Mod File: (?:.*[/\\])?([^/\\\r\n]+\.jar)").expect("static regex")
+});
+
+/// Mod ids from a crash report's `Suspected Mods:` block (since 1.17): either on the same line
+/// or one per indented line below it, followed by details such as `Issue tracker URL: …`.
+fn suspected_mods(report: &str) -> Vec<String> {
+    let mut ids = Vec::new();
+    let mut lines = report.lines();
+    while let Some(line) = lines.next() {
+        let Some(rest) = line
+            .trim_start()
+            .strip_prefix("Suspected Mods:")
+            .or_else(|| line.trim_start().strip_prefix("Suspected Mod:"))
+        else {
+            continue;
+        };
+        let rest = rest.trim();
+        let block: Vec<&str> = if rest.is_empty() {
+            lines
+                .by_ref()
+                .take_while(|l| l.starts_with([' ', '\t']) && !l.trim().is_empty())
+                .collect()
+        } else {
+            rest.split(", ").collect()
+        };
+        ids.extend(
+            block
+                .iter()
+                .filter(|l| !l.contains(": "))
+                .filter_map(|l| NAME_ID.captures(l.trim()).map(|c| c[1].to_owned())),
+        );
+    }
+    ids
+}
+
+/// Loaders and libraries that show up as "mods" but are never the one to switch off.
+fn is_builtin(id: &str) -> bool {
+    matches!(
+        id,
+        "minecraft" | "java" | "fabricloader" | "fabric" | "neoforge" | "forge" | "quilt_loader"
+    ) || id.starts_with("fabric-")
+        || id.starts_with("quilted_fabric")
+}
 
 fn newest_after(dir: &Path, since: SystemTime, matches: impl Fn(&str) -> bool) -> Option<PathBuf> {
     std::fs::read_dir(dir)
@@ -162,6 +217,8 @@ pub fn analyze(
     ) || !hs.is_empty()
     {
         "nativeCrash"
+    } else if suspected_mods(&report).iter().any(|id| !is_builtin(id)) {
+        "modCrash"
     } else {
         "generic"
     };
@@ -174,6 +231,18 @@ pub fn analyze(
         .find_map(|l| l.strip_prefix("Description: "))
         .map(|s| s.trim().to_owned());
     let excerpt = excerpt(&report, log_tail, &hs);
+    // Only crashes a mod can cause point at one; memory, Java or driver problems never do.
+    let (mod_file, mod_name) = if matches!(
+        kind,
+        "mixin" | "modConflict" | "missingDependency" | "duplicateMod" | "modCrash"
+    ) {
+        culprit(&params, &all, &report, &game_dir.join("mods"))
+    } else {
+        (None, None)
+    };
+    if let Some(name) = &mod_name {
+        params.insert("mod".into(), name.clone());
+    }
     Some(CrashInfo {
         kind: kind.into(),
         params,
@@ -181,7 +250,38 @@ pub fn analyze(
         report_path: report_path.or(hs_err),
         excerpt,
         exit_code,
+        mod_file,
+        mod_name,
     })
+}
+
+fn culprit(
+    params: &BTreeMap<String, String>,
+    all: &str,
+    report: &str,
+    mods: &Path,
+) -> (Option<String>, Option<String>) {
+    if let Some(file) = MOD_FILE
+        .captures_iter(report)
+        .map(|c| c[1].to_owned())
+        .find(|f| mods.join(f).is_file())
+    {
+        let name = crate::mods::meta::read(&mods.join(&file))
+            .and_then(|m| m.name.or_else(|| m.ids.first().cloned()));
+        return (Some(file), name);
+    }
+    let ids = params
+        .get("mod")
+        .cloned()
+        .into_iter()
+        .chain(suspected_mods(report))
+        .chain(FABRIC_MOD.captures_iter(all).map(|c| c[1].to_owned()));
+    for id in ids.filter(|id| !is_builtin(id)) {
+        if let Some((file, name)) = crate::mods::meta::find(mods, &id) {
+            return (Some(file), Some(name));
+        }
+    }
+    (None, None)
 }
 
 fn excerpt(report: &str, log_tail: &[String], hs: &str) -> String {
@@ -282,6 +382,43 @@ mod tests {
             c.report_path
                 .unwrap()
                 .ends_with("crash-2026-10-30_12.00.00-client.txt")
+        );
+    }
+
+    #[test]
+    fn points_at_the_suspected_mod_jar() {
+        use std::io::Write;
+        let dir = tempfile::tempdir().unwrap();
+        let since = SystemTime::now() - std::time::Duration::from_secs(5);
+        let mods = dir.path().join("mods");
+        std::fs::create_dir_all(&mods).unwrap();
+        let mut z = zip::ZipWriter::new(std::fs::File::create(mods.join("iris-1.8.jar")).unwrap());
+        z.start_file("fabric.mod.json", zip::write::SimpleFileOptions::default())
+            .unwrap();
+        z.write_all(br#"{"id":"iris","name":"Iris"}"#).unwrap();
+        z.finish().unwrap();
+        let reports = dir.path().join("crash-reports");
+        std::fs::create_dir_all(&reports).unwrap();
+        std::fs::write(
+            reports.join("crash-2026-10-31_20.00.00-client.txt"),
+            "Description: Rendering overlay\n\njava.lang.NullPointerException\n\n-- Head --\nSuspected Mods: \n\tFabric API (fabric-rendering-v1)\n\tIris (iris)\n",
+        )
+        .unwrap();
+        let c = analyze(Some(1), &[], dir.path(), since, 4096).unwrap();
+        assert_eq!(c.kind, "modCrash");
+        assert_eq!(
+            (c.mod_file.as_deref(), c.mod_name.as_deref()),
+            (Some("iris-1.8.jar"), Some("Iris"))
+        );
+
+        // Fabric's dependency error names the mod that needs the missing one.
+        let tail = vec![
+            "- Mod 'Iris' (iris) 1.8 requires any version of sodium, which is missing!".to_owned(),
+        ];
+        let c = analyze(Some(1), &tail, dir.path(), SystemTime::now(), 4096).unwrap();
+        assert_eq!(
+            (c.kind.as_str(), c.mod_file.as_deref()),
+            ("missingDependency", Some("iris-1.8.jar"))
         );
     }
 }

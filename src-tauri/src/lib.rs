@@ -84,6 +84,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             mods::curseforge_status,
             mods::set_curseforge_key,
             commands::worlds::list_worlds,
+            commands::worlds::share_game_log,
             commands::worlds::list_world_backups,
             commands::worlds::backup_world,
             commands::worlds::restore_world_backup,

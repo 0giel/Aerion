@@ -116,6 +116,8 @@ pub struct Settings {
     /// The player model on the home screen turns its head towards the cursor.
     pub follow_cursor: bool,
     pub layout: LayoutPrefs,
+    /// Version whose "What's new" notes the user has seen; `None` before 0.1.9.
+    pub last_seen_version: Option<String>,
 }
 
 impl Default for Settings {
@@ -152,6 +154,7 @@ impl Default for Settings {
             check_updates: true,
             follow_cursor: true,
             layout: LayoutPrefs::default(),
+            last_seen_version: None,
         }
     }
 }

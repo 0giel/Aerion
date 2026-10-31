@@ -10,6 +10,7 @@
   import AccountHelp from "./lib/components/AccountHelp.svelte";
   import UpdateBanner from "./lib/components/UpdateBanner.svelte";
   import CustomizeModal from "./lib/components/CustomizeModal.svelte";
+  import WhatsNew from "./lib/components/WhatsNew.svelte";
   import { layout } from "./lib/stores/layout.svelte";
   import CommandPalette from "./lib/components/CommandPalette.svelte";
   import Modal from "./lib/components/Modal.svelte";
@@ -158,6 +159,7 @@
 <AccountHelp />
 <UpdateBanner />
 <CustomizeModal />
+<WhatsNew />
 
 {#if dragging}
   <div class="drop" aria-hidden="true">

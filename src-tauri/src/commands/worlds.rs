@@ -206,3 +206,28 @@ pub async fn clear_options_template(state: State<'_, AppState>) -> CmdResult<()>
     let dir = state.paths.options_template_dir();
     blocking(move || options::clear_template(&dir)).await
 }
+
+/// Upload the crash report (or the latest log) of an instance to mclo.gs and return the link.
+/// Only files inside the instance's game folder are accepted.
+#[tauri::command]
+#[specta::specta]
+pub async fn share_game_log(
+    state: State<'_, AppState>,
+    id: String,
+    report: Option<String>,
+) -> CmdResult<String> {
+    let game = state.instances.game_dir(&id)?;
+    let report = report.map(std::path::PathBuf::from).filter(|p| {
+        p.starts_with(&game)
+            && !p
+                .components()
+                .any(|c| matches!(c, std::path::Component::ParentDir))
+    });
+    let Some(path) = launcher_core::game::share::pick_log(&game, report.as_deref()) else {
+        return Err(launcher_core::Error::Invalid("no log to share".into()).into());
+    };
+    let http = state.engine.read().await.http.clone();
+    let url = launcher_core::game::share::upload(&http, &path).await?;
+    tracing::info!(%url, "shared game log");
+    Ok(url)
+}

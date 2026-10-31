@@ -261,6 +261,8 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
                     report_path: None,
                     excerpt: e.to_string(),
                     exit_code: None,
+                    mod_file: None,
+                    mod_name: None,
                 })
             }
             (_, c) => c,

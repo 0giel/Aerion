@@ -480,6 +480,16 @@ const en = {
     title: "The game crashed",
     exitCode: "Exit code {code}",
     report: "Crash report",
+    culprit: "Likely cause: {name}",
+    disableAndRelaunch: "Disable this mod and relaunch",
+    disabled: "{name} disabled. Turn it back on in the Content tab.",
+    share: "Share log",
+    shareTitle: "Share the log?",
+    shareText:
+      "The crash report goes to mclo.gs and anyone with the link can see it. Aerion removes sign-in tokens and your computer's user name from it.",
+    shareConfirm: "Upload and copy link",
+    linkCopied: "Link copied — paste it e.g. on Discord.",
+    openLink: "Open",
     viewLogs: "View logs",
     kinds: {
       outOfMemory:
@@ -501,6 +511,7 @@ const en = {
       nativeCrash:
         "Java crashed in native code, often caused by graphics drivers or overlays (e.g. recording software). Update drivers and disable overlays.",
       startFailed: "The game could not be started: {error}",
+      modCrash: "The game crashed in the mod {mod}. Update it, or disable it and try again.",
       generic: "The game stopped unexpectedly. Check the log and the crash report for details.",
     },
   },
@@ -884,6 +895,12 @@ const en = {
     use: "Use",
     applied: "Theme {name} applied",
     submit: "Share your theme",
+  },
+  whatsNew: {
+    title: "What's new in Aerion {version}",
+    version: "Version {version}",
+    all: "All changes",
+    ok: "Got it",
   },
   appUpdate: {
     available: "Aerion {version} is available",

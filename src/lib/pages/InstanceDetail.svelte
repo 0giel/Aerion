@@ -230,7 +230,7 @@
         <ProgressBar value={progress()} />
       </div>
     {/if}
-    {#if crash}<CrashCard {crash} ondetails={() => (tab = "logs")} />{/if}
+    {#if crash}<CrashCard {crash} instanceId={id} ondetails={() => (tab = "logs")} />{/if}
 
     <div class="tabs" role="tablist">
       {#each [["content", "instance.tabContent", "layers"], ["worlds", "instance.tabWorlds", "globe"], ["screenshots", "instance.tabScreenshots", "image"], ["servers", "instance.tabServers", "monitor"], ["settings", "instance.tabSettings", "sliders"], ["logs", "instance.tabLogs", "terminal"]] as [key, label, icon] (key)}

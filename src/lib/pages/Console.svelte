@@ -55,7 +55,7 @@
     {/if}
   </header>
 
-  {#if crash}<CrashCard {crash} />{/if}
+  {#if crash}<CrashCard {crash} instanceId={id} />{/if}
 
   <div class="bar row wrap">
     <input

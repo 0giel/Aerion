@@ -5,4 +5,5 @@ pub mod install;
 pub mod launch;
 pub mod logs;
 pub mod process;
+pub mod share;
 pub mod textures;

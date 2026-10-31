@@ -114,6 +114,11 @@ export const commands = {
 	/**  Validate and store (or remove) the user's CurseForge API key in the OS keyring. */
 	setCurseforgeKey: (key: string | null) => __TAURI_INVOKE<CurseForgeStatus>("set_curseforge_key", { key }),
 	listWorlds: (id: string) => __TAURI_INVOKE<WorldInfo[]>("list_worlds", { id }),
+	/**
+	 *  Upload the crash report (or the latest log) of an instance to mclo.gs and return the link.
+	 *  Only files inside the instance's game folder are accepted.
+	 */
+	shareGameLog: (id: string, report: string | null) => __TAURI_INVOKE<string>("share_game_log", { id, report }),
 	listWorldBackups: (id: string) => __TAURI_INVOKE<WorldBackup[]>("list_world_backups", { id }),
 	backupWorld: (id: string, folder: string) => __TAURI_INVOKE<WorldBackup>("backup_world", { id, folder }),
 	/**  Restore a backup (the world's current state is backed up first). Returns the world folder. */
@@ -393,6 +398,12 @@ export type CrashInfo_Deserialize = {
 	/**  The most relevant lines (stack trace head, loader error list). */
 	excerpt: string,
 	exitCode?: number | null,
+	/**
+	 *  The jar in `mods/` that most likely caused the crash, and its mod's name; the UI offers
+	 *  to disable it.
+	 */
+	modFile?: string | null,
+	modName?: string | null,
 };
 
 export type CrashInfo_Serialize = {
@@ -405,6 +416,12 @@ export type CrashInfo_Serialize = {
 	/**  The most relevant lines (stack trace head, loader error list). */
 	excerpt: string,
 	exitCode: number | null,
+	/**
+	 *  The jar in `mods/` that most likely caused the crash, and its mod's name; the UI offers
+	 *  to disable it.
+	 */
+	modFile: string | null,
+	modName: string | null,
 };
 
 export type CurseForgeStatus = {
@@ -1269,6 +1286,8 @@ export type Settings_Deserialize = {
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor?: boolean,
 	layout?: LayoutPrefs_Deserialize,
+	/**  Version whose "What's new" notes the user has seen; `None` before 0.1.9. */
+	lastSeenVersion?: string | null,
 };
 
 export type Settings_Serialize = {
@@ -1313,6 +1332,8 @@ export type Settings_Serialize = {
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor: boolean,
 	layout: LayoutPrefs_Serialize,
+	/**  Version whose "What's new" notes the user has seen; `None` before 0.1.9. */
+	lastSeenVersion: string | null,
 };
 
 export type Skin = Skin_Serialize | Skin_Deserialize;
