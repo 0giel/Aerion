@@ -2,7 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::error::{Error, IoContext, Result};
+#[cfg(unix)]
+use crate::error::IoContext;
+use crate::error::{Error, Result};
 use crate::instances::Instance;
 use crate::util::names::folder_name;
 

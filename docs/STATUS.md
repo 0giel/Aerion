@@ -5,6 +5,29 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Windows build (cross-compiled on Linux)
+- Rootless toolchain `scripts/windows-cross.sh`: clang-cl/lld-link/llvm-rc 20 and NSIS unpacked
+  from Ubuntu packages, `cargo-xwin` (MSVC CRT + Windows SDK), target `x86_64-pc-windows-msvc`
+  (Tauri's documented route). Ubuntu's `makensis` has its data dir compiled in, so it runs in a
+  bubblewrap namespace that mounts the private copy at `/usr/share/nsis`.
+- **`Luncher_0.1.0_x64-setup.exe` (5.9 MB, NSIS, per-user install, downloads WebView2 if
+  missing)**; `luncher.exe` 22.8 MB. MSI needs WiX (Windows only) — CI.
+- `cargo clippy --target x86_64-pc-windows-msvc -D warnings` clean for the whole workspace
+  (fixed an import only unused on Windows).
+- **All 84 engine tests pass as Windows binaries under Wine 10** (private prefix). One failed
+  first: Forge processor paths joined a `/`-separated Maven path onto a native path
+  (`C:\…\libraries
+et/neoforged/…`), which breaks under `\?\` prefixes →
+  `MavenCoord::local_path()`. Coordinates now also reject `..`, `/` and `\` in classifier/extension.
+- **Smoke test as a Windows binary under Wine: Minecraft 26.3 reached the title screen in 9.7 s**
+  with the Windows Mojang Java 25 runtime (`javaw.exe`), Windows natives and `;` classpath
+  (NVIDIA OpenGL 3.3 through Wine). Errors seen are Wine/offline artefacts (oshi, 401).
+- Not verified: the GUI on Windows (WebView2 under Wine was not tried), Credential Manager,
+  `.lnk` shortcuts, tray. Reviewed statically: `http://img.localhost` URLs and CSP, no HTML5
+  drag-and-drop, Segoe UI in the font stack, no console window in release, keyring v4 uses the
+  Windows store by default, tokens chunked for Credential Manager.
+
+
 ### Fixed: blank window on Linux (WebKitGTK hang)
 - Symptom: `pnpm tauri dev` showed only the native background colour; no JS ran.
 - Root cause (not our code — the system `MiniBrowser` hung the same way): 35 of the 52
@@ -141,5 +164,5 @@ Newest entries first.
 - Microsoft sign-in end to end (needs the owner's Azure app + Mojang approval) and therefore
   offline accounts in a release build (they unlock only after a licensed account).
 - CurseForge search/install/modpacks live (needs a CurseForge API key).
-- Windows and macOS builds (code paths exist; CI builds them, nobody has run them).
+- The GUI on a real Windows machine (installer built and engine verified under Wine); macOS.
 - Undo of a mod update through the UI.

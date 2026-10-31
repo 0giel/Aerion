@@ -32,7 +32,10 @@ impl MavenCoord {
         };
         if [group, artifact, version]
             .iter()
-            .any(|p| p.is_empty() || p.contains("..") || p.contains('/'))
+            .any(|p| p.is_empty() || unsafe_part(p))
+            || classifier.as_deref().is_some_and(unsafe_part)
+            || ext.is_empty()
+            || unsafe_part(&ext)
         {
             return None;
         }
@@ -62,6 +65,11 @@ impl MavenCoord {
             classifier,
             self.ext
         )
+    }
+
+    /// [`path`](Self::path) as a native relative path, for joining onto the libraries directory.
+    pub fn local_path(&self) -> PathBuf {
+        rel_path(&self.path())
     }
 
     /// Identity used to de-duplicate libraries across versions.
@@ -99,6 +107,11 @@ pub struct ResolvedLibrary {
     pub hash: Option<Hash>,
     pub size: Option<u64>,
     pub kind: LibKind,
+}
+
+/// Coordinates end up in file paths: no separators or parent references.
+fn unsafe_part(p: &str) -> bool {
+    p.contains("..") || p.contains('/') || p.contains('\\')
 }
 
 fn rel_path(p: &str) -> PathBuf {
@@ -248,6 +261,18 @@ mod tests {
         );
         assert!(MavenCoord::parse("a:../b:1").is_none());
         assert!(MavenCoord::parse("just-a-name").is_none());
+        // Coordinates become file paths: no escaping through classifier or extension.
+        assert!(MavenCoord::parse("a:b:1:../../x").is_none());
+        assert!(MavenCoord::parse("a:b:1:x@..\\y").is_none());
+        assert!(MavenCoord::parse("a:b:1@").is_none());
+        assert_eq!(
+            MavenCoord::parse("a.b:c:1:natives@zip")
+                .unwrap()
+                .local_path(),
+            ["a", "b", "c", "1", "c-1-natives.zip"]
+                .iter()
+                .collect::<PathBuf>()
+        );
     }
 
     #[test]

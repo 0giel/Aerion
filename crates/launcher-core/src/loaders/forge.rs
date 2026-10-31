@@ -390,7 +390,7 @@ fn substitute(arg: &str, data: &HashMap<String, String>, libs: &Path) -> String 
     if let Some(inner) = arg.strip_prefix('[').and_then(|a| a.strip_suffix(']'))
         && let Some(c) = MavenCoord::parse(inner)
     {
-        return display_path(&libs.join(c.path()));
+        return display_path(&libs.join(c.local_path()));
     }
     let mut out = String::with_capacity(arg.len());
     let mut rest = arg;
@@ -458,7 +458,7 @@ async fn run_processors(
         let value = if let Some(inner) = v.strip_prefix('[').and_then(|x| x.strip_suffix(']')) {
             let c = MavenCoord::parse(inner)
                 .ok_or_else(|| Error::LoaderInstall(format!("bad coordinates {inner}")))?;
-            display_path(&libs.join(c.path()))
+            display_path(&libs.join(c.local_path()))
         } else if let Some(inner) = v.strip_prefix('\'').and_then(|x| x.strip_suffix('\'')) {
             inner.to_owned()
         } else if v.starts_with('/') {
@@ -514,14 +514,14 @@ async fn run_processors(
         }
         let jar_coord = MavenCoord::parse(&p.jar)
             .ok_or_else(|| Error::LoaderInstall(format!("bad processor {}", p.jar)))?;
-        let jar = libs.join(jar_coord.path());
+        let jar = libs.join(jar_coord.local_path());
         let j = jar.clone();
         let main = blocking(move || main_class(&j)).await?;
         let mut cp = vec![display_path(&jar)];
         for c in &p.classpath {
             let coord = MavenCoord::parse(c)
                 .ok_or_else(|| Error::LoaderInstall(format!("bad classpath entry {c}")))?;
-            cp.push(display_path(&libs.join(coord.path())));
+            cp.push(display_path(&libs.join(coord.local_path())));
         }
         let args: Vec<String> = p.args.iter().map(|a| substitute(a, &data, &libs)).collect();
         let mut cmd = tokio::process::Command::new(java);
@@ -633,7 +633,11 @@ mod tests {
                 &data,
                 libs
             ),
-            "/data/libraries/net/neoforged/minecraft-client-patched/26.3.0.99/minecraft-client-patched-26.3.0.99.jar"
+            display_path(&libs.join(
+                "net/neoforged/minecraft-client-patched/26.3.0.99/minecraft-client-patched-26.3.0.99.jar"
+                    .split('/')
+                    .collect::<PathBuf>()
+            ))
         );
     }
 
