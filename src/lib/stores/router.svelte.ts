@@ -5,6 +5,7 @@ export type Page =
   | "mods"
   | "accounts"
   | "skins"
+  | "stats"
   | "console"
   | "settings"
   | "themeEditor"

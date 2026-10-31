@@ -24,6 +24,7 @@
     { page: "mods", icon: "package", key: "nav.mods" },
     { page: "accounts", icon: "user", key: "nav.accounts" },
     { page: "skins", icon: "shirt", key: "nav.skins" },
+    { page: "stats", icon: "chart", key: "nav.stats" },
     { page: "console", icon: "terminal", key: "nav.console" },
     { page: "settings", icon: "settings", key: "nav.settings" },
   ];

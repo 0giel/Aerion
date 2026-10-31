@@ -21,6 +21,7 @@ import { toasts } from "./toasts.svelte";
 const MAX_LOG_LINES = 20_000;
 
 /** Launch failures explained by the account help dialog instead of a toast. */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity -- constant lookup table, not UI state
 export const ACCOUNT_HELP = new Set([
   "auth.noAccount",
   "auth.offlineNotAllowed",

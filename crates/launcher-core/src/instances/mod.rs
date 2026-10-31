@@ -115,6 +115,8 @@ pub struct Instance {
     pub created_at: i64,
     pub last_played: Option<i64>,
     pub play_time_secs: u64,
+    /// Number of game sessions (for statistics).
+    pub launches: u32,
     pub modpack: Option<ModpackInfo>,
 }
 
@@ -148,6 +150,7 @@ impl Default for Instance {
             created_at: 0,
             last_played: None,
             play_time_secs: 0,
+            launches: 0,
             modpack: None,
         }
     }
@@ -393,6 +396,7 @@ impl InstanceManager {
         edited.game_dir = current.game_dir;
         edited.created_at = current.created_at;
         edited.play_time_secs = current.play_time_secs;
+        edited.launches = current.launches;
         edited.last_played = current.last_played;
         self.write(&edited).await?;
         Ok(edited)
@@ -473,6 +477,7 @@ impl InstanceManager {
         self.modify(id, |i| {
             i.last_played = Some(started);
             i.play_time_secs += secs;
+            i.launches += 1;
         })
         .await
         .map(|_| ())
@@ -568,6 +573,7 @@ impl InstanceManager {
             created_at: now_secs(),
             last_played: None,
             play_time_secs: 0,
+            launches: 0,
             game_dir: None,
             ..src
         };

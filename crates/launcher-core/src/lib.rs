@@ -20,6 +20,7 @@ pub mod paths;
 pub mod progress;
 pub mod settings;
 pub mod skins;
+pub mod stats;
 pub mod util;
 
 pub use engine::Engine;

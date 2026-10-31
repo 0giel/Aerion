@@ -17,6 +17,8 @@ export const commands = {
 	 *  visible to users or in release builds).
 	 */
 	frontendLog: (level: string, message: string) => __TAURI_INVOKE<null>("frontend_log", { level, message }),
+	/**  Play statistics for the Stats page. */
+	playStats: () => __TAURI_INVOKE<Stats_Serialize>("play_stats"),
 	listGameVersions: () => __TAURI_INVOKE<GameVersions>("list_game_versions"),
 	listLoaderVersions: (loader: LoaderKind, gameVersion: string) => __TAURI_INVOKE<LoaderVersion[]>("list_loader_versions", { loader, gameVersion }),
 	/**  System Java installations plus runtimes managed by Aerion. */
@@ -457,6 +459,12 @@ export type GameVersions = {
 	versions: GameVersion[],
 };
 
+export type GroupStat = {
+	key: string,
+	playSecs: number,
+	instances: number,
+};
+
 export type InstallPlan = InstallPlan_Serialize | InstallPlan_Deserialize;
 
 export type InstallPlan_Deserialize = {
@@ -482,6 +490,28 @@ export type InstallPlan_Serialize = {
 };
 
 export type Instance = Instance_Serialize | Instance_Deserialize;
+
+export type InstanceStat = InstanceStat_Serialize | InstanceStat_Deserialize;
+
+export type InstanceStat_Deserialize = {
+	id: string,
+	name: string,
+	icon?: string | null,
+	loader: LoaderKind,
+	gameVersion: string,
+	playSecs: number,
+	launches: number,
+};
+
+export type InstanceStat_Serialize = {
+	id: string,
+	name: string,
+	icon: string | null,
+	loader: LoaderKind,
+	gameVersion: string,
+	playSecs: number,
+	launches: number,
+};
 
 export type Instance_Deserialize = {
 	/**  Folder name; always taken from the directory, never trusted from the file. */
@@ -521,6 +551,8 @@ export type Instance_Deserialize = {
 	createdAt?: number,
 	lastPlayed?: number | null,
 	playTimeSecs?: number,
+	/**  Number of game sessions (for statistics). */
+	launches?: number,
 	modpack?: ModpackInfo_Deserialize | null,
 };
 
@@ -562,6 +594,8 @@ export type Instance_Serialize = {
 	createdAt: number,
 	lastPlayed: number | null,
 	playTimeSecs: number,
+	/**  Number of game sessions (for statistics). */
+	launches: number,
 	modpack: ModpackInfo_Serialize | null,
 };
 
@@ -649,6 +683,28 @@ export type LogLine_Serialize = {
 };
 
 export type ModSource = "modrinth" | "curseforge" | "both";
+
+export type ModStat = ModStat_Serialize | ModStat_Deserialize;
+
+export type ModStat_Deserialize = {
+	title: string,
+	iconUrl?: string | null,
+	pageUrl?: string | null,
+	/**  Instances that have it installed. */
+	instances: number,
+	/**  Play time of those instances. */
+	playSecs: number,
+};
+
+export type ModStat_Serialize = {
+	title: string,
+	iconUrl: string | null,
+	pageUrl: string | null,
+	/**  Instances that have it installed. */
+	instances: number,
+	/**  Play time of those instances. */
+	playSecs: number,
+};
 
 export type ModpackInfo = ModpackInfo_Serialize | ModpackInfo_Deserialize;
 
@@ -1056,6 +1112,38 @@ export type Skin_Serialize = {
 };
 
 export type SortOrder = "relevance" | "downloads" | "updated" | "newest";
+
+export type Stats = Stats_Serialize | Stats_Deserialize;
+
+export type Stats_Deserialize = {
+	totalPlaySecs: number,
+	totalLaunches: number,
+	instanceCount: number,
+	worldCount: number,
+	screenshotCount: number,
+	modCount: number,
+	/**  Most played first. */
+	instances: InstanceStat_Deserialize[],
+	versions: GroupStat[],
+	loaders: GroupStat[],
+	/**  Installed in the most instances first (top 12). */
+	mods: ModStat_Deserialize[],
+};
+
+export type Stats_Serialize = {
+	totalPlaySecs: number,
+	totalLaunches: number,
+	instanceCount: number,
+	worldCount: number,
+	screenshotCount: number,
+	modCount: number,
+	/**  Most played first. */
+	instances: InstanceStat_Serialize[],
+	versions: GroupStat[],
+	loaders: GroupStat[],
+	/**  Installed in the most instances first (top 12). */
+	mods: ModStat_Serialize[],
+};
 
 export type TaskEvent = TaskEvent_Serialize | TaskEvent_Deserialize;
 

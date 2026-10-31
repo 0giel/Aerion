@@ -25,6 +25,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             app::save_settings,
             app::open_folder,
             app::frontend_log,
+            app::play_stats,
             versions::list_game_versions,
             versions::list_loader_versions,
             versions::list_java,

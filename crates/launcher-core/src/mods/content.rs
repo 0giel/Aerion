@@ -124,6 +124,11 @@ impl ContentManager {
             .unwrap_or_default()
     }
 
+    /// Recorded entries without scanning the folders (fast; for statistics).
+    pub async fn entries(&self) -> Vec<ContentEntry> {
+        self.load().await.entries
+    }
+
     async fn save(&self, m: &Manifest) -> Result<()> {
         write_json(self.manifest_path(), m).await
     }

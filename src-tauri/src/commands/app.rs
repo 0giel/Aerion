@@ -186,3 +186,10 @@ pub async fn frontend_log(level: String, message: String) -> CmdResult<()> {
     }
     Ok(())
 }
+
+/// Play statistics for the Stats page.
+#[tauri::command]
+#[specta::specta]
+pub async fn play_stats(state: State<'_, AppState>) -> CmdResult<launcher_core::stats::Stats> {
+    Ok(launcher_core::stats::compute(&state.instances).await)
+}
