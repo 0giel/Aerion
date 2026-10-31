@@ -51,6 +51,13 @@ Newest entries first.
   when the NVIDIA driver is loaded (`game::launch::default_env`); variables set on the instance
   or in the launcher's own environment take precedence.
 
+### Documentation
+- `README.md` (features, unofficial disclaimer, build/run, configuration, troubleshooting),
+  `docs/AZURE_SETUP.md`, `docs/THEMING.md`, `docs/DECISIONS.md` (D1–D15),
+  `themes/theme.schema.json` (JSON Schema; also copied to `<data>/themes/` at start-up so editors
+  validate user themes; excluded from the built-in theme glob).
+- Background videos now pause while the window is hidden or motion is off.
+
 ### Verified: modpack from the browser (M7) and theme editor (M9)
 - Mods → Modpacks → "Fabulously Optimized" → *Install as new instance*: 52 files + Fabric 0.19.5 for
   MC 26.2 in ~8 s, modpack provenance stored on the instance. **Launch: 149 mods, title screen in
@@ -92,8 +99,7 @@ Newest entries first.
 - **Frontend** — all pages written; `pnpm check`, `pnpm lint`, `pnpm build` clean.
 
 ## Not started yet
-- `docs/DECISIONS.md`, `docs/THEMING.md` (+ `themes/theme.schema.json`), `docs/AZURE_SETUP.md`,
-  `docs/PERFORMANCE.md`, `README.md`; vitest tests for i18n/theme schema.
+- `docs/PERFORMANCE.md` (needs a release build); vitest tests for i18n/theme schema.
 - Live UI tests: Fabric + Sodium/Fabric API install, Forge/NeoForge launches, modpack import.
 - Release bundles (`pnpm tauri build`), performance measurements.
 - Owner actions: Azure app registration + Mojang review (client ID), CurseForge API key.

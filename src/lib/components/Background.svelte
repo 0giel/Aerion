@@ -6,6 +6,17 @@
   const bg = $derived(themes.active.background);
   const motion = $derived(themes.active.motion.enabled && !themes.reducedMotion);
   const assetUrl = $derived(bg.asset ? themeAssetUrl(bg.asset) : null);
+
+  let video: HTMLVideoElement | undefined = $state();
+  // Don't decode video while the window is hidden or minimised (or when motion is off).
+  $effect(() => {
+    const v = video;
+    if (!v) return;
+    const sync = () => (document.hidden || !motion ? v.pause() : void v.play().catch(() => {}));
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
+  });
 </script>
 
 <div class="background" aria-hidden="true">
@@ -18,9 +29,9 @@
     <img class="media" src={assetUrl} alt="" style:filter={bg.blur ? `blur(${bg.blur}px)` : undefined} />
   {:else if bg.type === "video" && assetUrl}
     <video
+      bind:this={video}
       class="media"
       src={assetUrl}
-      autoplay={motion}
       muted
       loop
       playsinline

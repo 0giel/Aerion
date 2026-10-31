@@ -3,7 +3,10 @@
 import { commands, events, type ThemeFile } from "../api";
 import { normalizeTheme, themeToCss, type Theme } from "./schema";
 
-const files = import.meta.glob("../../../themes/*.json", { eager: true, import: "default" });
+const files = import.meta.glob(["../../../themes/*.json", "!../../../themes/theme.schema.json"], {
+  eager: true,
+  import: "default",
+});
 
 const ORDER = ["nocturne", "dark", "light", "amoled", "emerald", "rose", "amber"];
 

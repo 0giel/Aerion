@@ -31,6 +31,19 @@ pub fn valid_asset(name: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.'))
 }
 
+/// Keeps `theme.schema.json` next to user themes so editors can validate
+/// `"$schema": "./theme.schema.json"` (the listing skips it: the id contains a dot).
+pub fn install_schema(dir: &Path) {
+    const SCHEMA: &str = include_str!("../../themes/theme.schema.json");
+    let path = dir.join("theme.schema.json");
+    if std::fs::read_to_string(&path).is_ok_and(|s| s == SCHEMA) {
+        return;
+    }
+    if let Err(e) = std::fs::create_dir_all(dir).and_then(|()| std::fs::write(&path, SCHEMA)) {
+        tracing::debug!(error = %e, "cannot write theme schema");
+    }
+}
+
 pub fn assets_dir(themes: &Path) -> PathBuf {
     themes.join("assets")
 }

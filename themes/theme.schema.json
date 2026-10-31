@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://luncher.invalid/theme.schema.json",
+  "title": "Luncher theme",
+  "description": "One theme = this JSON file (+ optional <id>.css). Out-of-range values are clamped and invalid ones replaced by the default theme's, so a broken theme never breaks the UI. See docs/THEMING.md.",
+  "type": "object",
+  "required": ["name", "base", "colors"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,47}$",
+      "description": "File name without .json; assigned by the launcher when saving or importing."
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "author": { "type": "string", "maxLength": 64 },
+    "base": {
+      "enum": ["dark", "light"],
+      "description": "Colour scheme for native controls and the 'follow system' pairing."
+    },
+    "colors": {
+      "type": "object",
+      "description": "Any CSS colour (hex with alpha, rgb(), hsl(), oklch(), …).",
+      "properties": {
+        "bg": { "$ref": "#/$defs/color", "description": "Window background." },
+        "surface": { "$ref": "#/$defs/color", "description": "Cards, sidebar." },
+        "surface2": { "$ref": "#/$defs/color", "description": "Inputs, raised elements." },
+        "surface3": { "$ref": "#/$defs/color", "description": "Hover, highest elevation." },
+        "border": { "$ref": "#/$defs/color" },
+        "text": { "$ref": "#/$defs/color" },
+        "textMuted": { "$ref": "#/$defs/color", "description": "Secondary text." },
+        "textFaint": { "$ref": "#/$defs/color", "description": "Hints, timestamps." },
+        "accent": { "$ref": "#/$defs/color", "description": "Primary buttons, selection, progress." },
+        "accentText": { "$ref": "#/$defs/color", "description": "Text on accent backgrounds." },
+        "success": { "$ref": "#/$defs/color" },
+        "warning": { "$ref": "#/$defs/color" },
+        "danger": { "$ref": "#/$defs/color" },
+        "info": { "$ref": "#/$defs/color" },
+        "focus": { "$ref": "#/$defs/color", "description": "Keyboard focus ring." }
+      },
+      "additionalProperties": false
+    },
+    "radius": {
+      "type": "object",
+      "description": "Corner radii in px.",
+      "properties": {
+        "sm": { "type": "number", "minimum": 0, "maximum": 24 },
+        "md": { "type": "number", "minimum": 0, "maximum": 32 },
+        "lg": { "type": "number", "minimum": 0, "maximum": 40 },
+        "xl": { "type": "number", "minimum": 0, "maximum": 48 }
+      },
+      "additionalProperties": false
+    },
+    "font": {
+      "type": "object",
+      "properties": {
+        "family": {
+          "type": "string",
+          "description": "A preset (system, serif, rounded) or a CSS font-family list; the system stack is appended as a fallback."
+        },
+        "mono": {
+          "type": "string",
+          "description": "A preset (system-mono) or a CSS font-family list for logs and code."
+        },
+        "size": { "type": "number", "minimum": 11, "maximum": 20, "description": "Base size in px." }
+      },
+      "additionalProperties": false
+    },
+    "density": { "enum": ["comfortable", "compact"] },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "sidebar": { "enum": ["left", "top"], "description": "Navigation as a sidebar or a top bar." },
+        "scale": { "type": "number", "minimum": 0.75, "maximum": 1.5, "description": "UI zoom." }
+      },
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "properties": {
+        "blur": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 40,
+          "description": "Backdrop blur of glass surfaces (px)."
+        },
+        "glass": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 1,
+          "description": "Opacity of glass surfaces."
+        },
+        "shadow": { "type": "number", "minimum": 0, "maximum": 1, "description": "Shadow strength." }
+      },
+      "additionalProperties": false
+    },
+    "motion": {
+      "type": "object",
+      "description": "Animations always stop when the OS asks for reduced motion.",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "speed": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 3,
+          "description": "1 = 180 ms transitions; 2 = twice as fast."
+        }
+      },
+      "additionalProperties": false
+    },
+    "background": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["color", "gradient", "image", "video"] },
+        "color": { "$ref": "#/$defs/color" },
+        "gradient": {
+          "type": ["string", "null"],
+          "description": "A CSS gradient (no url(), ';', '{' or '}')."
+        },
+        "asset": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+          "description": "File name inside <data>/themes/assets for image/video backgrounds."
+        },
+        "dim": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.95,
+          "description": "Dark overlay over images/videos."
+        },
+        "blur": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 40,
+          "description": "Blur of the image/video (px)."
+        },
+        "ribbons": { "type": "boolean", "description": "Soft light ribbons behind the content." },
+        "particles": { "enum": ["none", "sparkles", "dust", "snow"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "color": { "type": "string", "maxLength": 63 }
+  }
+}

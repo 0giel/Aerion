@@ -259,6 +259,7 @@ pub fn run(platform_notes: Vec<String>) {
             let themes_dir = state.paths.themes_dir();
             let cache = state.paths.image_cache_dir();
             app.manage(state);
+            themes::install_schema(&themes_dir);
             themes::watch(app.handle().clone(), themes_dir);
             tauri::async_runtime::spawn(protocols::trim_image_cache(cache));
             if let Err(e) = setup_tray(app) {

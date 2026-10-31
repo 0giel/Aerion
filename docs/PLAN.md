@@ -214,7 +214,7 @@ has been *verified* against its acceptance criterion. Details and the running lo
 1. ~~Fix the blank window~~ ✅ · ~~onboarding → offline account → 26.3 → Play through the UI~~ ✅
 2. ~~Wizard with a loader, Fabric + Sodium/Fabric API from Modrinth~~ ✅
 3. ~~Forge 1.20.1 and NeoForge 26.3 launches~~ ✅ · ~~a `.mrpack` install~~ ✅ · Quilt; Forge 1.8.9.
-4. Docs: README, DECISIONS, THEMING (+ `themes/theme.schema.json`), AZURE_SETUP, PERFORMANCE.
+4. ~~Docs: README, DECISIONS, THEMING (+ schema), AZURE_SETUP~~ ✅ · PERFORMANCE (after the release build).
 5. Vitest tests (i18n shape, theme schema), release build + bundles, performance measurements.
 
 ## 5. Risks and mitigations
