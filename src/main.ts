@@ -2,6 +2,7 @@ import "./app.css";
 import { mount } from "svelte";
 import App from "./App.svelte";
 import { themes } from "./lib/theme/engine.svelte";
+import { ambient } from "./lib/stores/ambient.svelte";
 import { commands } from "./lib/bindings";
 
 // Report uncaught frontend errors to the launcher log.
@@ -13,6 +14,7 @@ window.addEventListener("unhandledrejection", (e) =>
 
 // Paint with the default theme immediately; the saved theme follows once settings load.
 themes.apply();
+ambient.init();
 
 const app = mount(App, { target: document.getElementById("app")! });
 

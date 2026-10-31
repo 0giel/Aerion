@@ -2,6 +2,7 @@
 # Measures the release build: start-up to "UI ready", memory (PSS/RSS) and idle CPU.
 # Usage: scripts/perf-linux.sh [runs]   (after `pnpm tauri build`; close other Luncher windows first)
 cd "$(dirname "$0")/.."
+export LC_ALL=C
 source scripts/env.sh
 BIN=target/release/luncher
 LOG=$(ls -t ~/.local/share/luncher/logs/luncher*.log | head -1)

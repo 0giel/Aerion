@@ -101,12 +101,18 @@ export function instanceVersionLabel(i: Pick<Instance, "gameVersion" | "loader" 
   return i.loader === "vanilla" ? i.gameVersion : `${i.gameVersion} · ${loaderLabel(i.loader)}`;
 }
 
-/** "Name · 1.21.11 · Fabric", without repeating the version when the name already is one. */
+/** "Name · 1.21.11 · Fabric", leaving out the version or loader when the name already says it. */
 export function instanceTitle(
   i: Pick<Instance, "name" | "gameVersion" | "loader" | "loaderVersion">,
 ): string {
-  const version = instanceVersionLabel(i);
-  return i.name === version || i.name === i.gameVersion ? version : `${i.name} · ${version}`;
+  const name = i.name.toLowerCase();
+  const parts = [i.name];
+  if (!name.includes(i.gameVersion.toLowerCase())) parts.push(i.gameVersion);
+  if (i.loader !== "vanilla") {
+    const loader = loaderLabel(i.loader);
+    if (!name.includes(loader.toLowerCase())) parts.push(loader);
+  }
+  return parts.join(" · ");
 }
 
 /** Default Steve skin, fetched at runtime from Mojang's texture server (never bundled). */

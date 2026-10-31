@@ -2,20 +2,21 @@
   import { themes } from "../theme/engine.svelte";
   import { themeAssetUrl } from "../api";
   import Particles from "./Particles.svelte";
+  import { ambient } from "../stores/ambient.svelte";
 
   const bg = $derived(themes.active.background);
   const motion = $derived(themes.active.motion.enabled && !themes.reducedMotion);
+  // Animate only while someone is using the launcher (see stores/ambient).
+  const animate = $derived(motion && ambient.active);
   const assetUrl = $derived(bg.asset ? themeAssetUrl(bg.asset) : null);
 
   let video: HTMLVideoElement | undefined = $state();
-  // Don't decode video while the window is hidden or minimised (or when motion is off).
+  // Don't decode video while nobody is looking (or when motion is off).
   $effect(() => {
     const v = video;
     if (!v) return;
-    const sync = () => (document.hidden || !motion ? v.pause() : void v.play().catch(() => {}));
-    sync();
-    document.addEventListener("visibilitychange", sync);
-    return () => document.removeEventListener("visibilitychange", sync);
+    if (animate) void v.play().catch(() => {});
+    else v.pause();
   });
 </script>
 
@@ -39,7 +40,7 @@
     ></video>
   {/if}
   {#if bg.ribbons}
-    <svg class="ribbons" class:still={!motion} viewBox="0 0 400 1000" preserveAspectRatio="none">
+    <svg class="ribbons" viewBox="0 0 400 1000" preserveAspectRatio="none">
       <defs>
         <linearGradient id="rib" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="var(--c-text)" stop-opacity="0" />
@@ -68,7 +69,7 @@
     </svg>
   {/if}
   {#if bg.particles !== "none"}
-    <Particles kind={bg.particles} animate={motion} />
+    <Particles kind={bg.particles} {animate} />
   {/if}
   <div class="dim" style:opacity={bg.dim}></div>
   <div class="vignette"></div>
@@ -108,6 +109,8 @@
       rgb(0 0 0 / calc(var(--shadow-a) * 0.5)) 100%
     );
   }
+  /* Static on purpose: a blurred, blended SVG repaints a third of the window per frame when
+     WebKit has no GPU compositing (measured: ~45 % of a core). */
   .ribbons {
     position: absolute;
     right: -2%;
@@ -121,29 +124,5 @@
   :global([data-base="light"]) .ribbons {
     mix-blend-mode: multiply;
     opacity: 0.07;
-  }
-  .ribbons g {
-    transform-box: fill-box;
-    transform-origin: 50% 50%;
-    animation: sway 18s ease-in-out infinite alternate;
-  }
-  .ribbons .r2 {
-    animation-duration: 23s;
-    animation-delay: -6s;
-  }
-  .ribbons .r3 {
-    animation-duration: 29s;
-    animation-delay: -12s;
-  }
-  .ribbons.still g {
-    animation: none;
-  }
-  @keyframes sway {
-    from {
-      transform: translateX(-4%) skewX(-3deg);
-    }
-    to {
-      transform: translateX(5%) skewX(4deg);
-    }
   }
 </style>

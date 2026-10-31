@@ -11,4 +11,15 @@ describe("instanceTitle", () => {
   it("shows name and version otherwise", () => {
     expect(instanceTitle({ ...inst, name: "Survival" })).toBe("Survival · 26.3");
   });
+
+  it("adds the loader unless the name already mentions it", () => {
+    const forge = {
+      name: "Forge 1.20.1",
+      gameVersion: "1.20.1",
+      loader: "forge",
+      loaderVersion: "47.4.28",
+    } as const;
+    expect(instanceTitle(forge)).toBe("Forge 1.20.1");
+    expect(instanceTitle({ ...forge, name: "Modded" })).toBe("Modded · 1.20.1 · Forge");
+  });
 });

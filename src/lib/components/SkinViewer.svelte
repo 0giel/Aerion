@@ -5,6 +5,7 @@
   // the rest painted far-to-near.
   import { imgUrl } from "../api";
   import { themes } from "../theme/engine.svelte";
+  import { ambient, onAmbientFrame } from "../stores/ambient.svelte";
 
   let {
     skinUrl,
@@ -186,31 +187,33 @@
   let manual = $state(false);
   let dragging = false;
   let lastX = 0;
-  const animate = $derived(themes.active.motion.enabled && !themes.reducedMotion && !manual);
+  const motion = $derived(themes.active.motion.enabled && !themes.reducedMotion && !manual);
+  const animate = $derived(motion && ambient.active);
+  // Sway clock in ms; it only advances while animating, so pausing and resuming doesn't jump.
+  let clock = 0;
+  const sway = () => {
+    const k = (1 - Math.cos((Math.PI * clock) / 9000)) / 2;
+    return [-32 + 60 * k, -12 + 2 * k] as const;
+  };
 
   $effect(() => {
     // Track everything `draw` reads so a static model redraws on change.
     void [parts, image, scale, canvas];
     if (!animate) {
-      draw(yaw, -12);
+      if (manual) draw(yaw, -12);
+      else draw(...sway());
       return;
     }
-    // Idle sway between -32° and 28° (9 s each way), ~30 fps; rAF pauses while hidden.
-    let frame = 0;
-    let last = 0;
-    const tick = (t: number) => {
-      frame = requestAnimationFrame(tick);
-      if (t - last < 33) return;
-      last = t;
-      const k = (1 - Math.cos((Math.PI * t) / 9000)) / 2;
-      draw(-32 + 60 * k, -12 + 2 * k);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    // Sway between -32° and 28° (9 s each way) on the shared ambient clock.
+    return onAmbientFrame((dt) => {
+      clock += dt;
+      draw(...sway());
+    });
   });
 
   function down(e: PointerEvent) {
     dragging = true;
+    if (!manual) yaw = sway()[0];
     manual = true;
     lastX = e.clientX;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
