@@ -32,6 +32,10 @@ pub struct ContentEntry {
     pub version_id: Option<String>,
     pub title: String,
     pub version_number: Option<String>,
+    /// Release channel of the installed version; updates never move to a less stable one.
+    /// Unknown for entries written by older versions (treated as a release).
+    #[serde(default)]
+    pub release: Option<ReleaseKind>,
     pub icon_url: Option<String>,
     pub page_url: Option<String>,
     pub sha1: String,
@@ -188,6 +192,7 @@ impl ContentManager {
                                 project_id: None,
                                 version_id: None,
                                 version_number: None,
+                                release: None,
                                 icon_url: None,
                                 page_url: None,
                                 sha1,
@@ -308,6 +313,7 @@ impl ContentManager {
                 version_id: Some(planned.version.id.clone()),
                 title: planned.title.clone(),
                 version_number: Some(planned.version.version_number.clone()),
+                release: Some(planned.version.kind),
                 icon_url: planned.icon_url.clone(),
                 page_url: planned.page_url.clone(),
                 sha1: file.sha1.clone().unwrap_or_default(),
@@ -405,6 +411,7 @@ impl ContentManager {
                 e.project_id = Some(id.project.id.clone());
                 e.version_id = Some(id.version.id.clone());
                 e.version_number = Some(id.version.version_number.clone());
+                e.release = Some(id.version.kind);
                 e.title = id.project.title.clone();
                 e.icon_url = id.project.icon_url.clone();
                 e.page_url = Some(id.project.page_url.clone());
@@ -438,7 +445,26 @@ impl ContentManager {
                     .latest_for_hashes(&hashes, &loaders, game_version)
                     .await?;
                 for e in mr {
-                    if let Some(v) = latest.get(&e.sha1)
+                    let Some(latest) = latest.get(&e.sha1) else {
+                        continue;
+                    };
+                    // The update endpoint ignores release channels: a stable mod must not be
+                    // "updated" to a beta. Fall back to the newest version on an allowed channel.
+                    let channel = e.release.unwrap_or(ReleaseKind::Release);
+                    let candidate = if latest.kind <= channel {
+                        Some(latest.clone())
+                    } else if let Some(pid) = &e.project_id {
+                        let allowed: Vec<ProjectVersion> = modrinth
+                            .versions(pid, Some(game_version), &loaders)
+                            .await?
+                            .into_iter()
+                            .filter(|v| v.kind <= channel)
+                            .collect();
+                        best_version(&allowed, game_version, &loaders).cloned()
+                    } else {
+                        None
+                    };
+                    if let Some(v) = candidate
                         && Some(&v.id) != e.version_id.as_ref()
                         && v.primary_file()
                             .is_some_and(|f| f.sha1.as_deref() != Some(e.sha1.as_str()))
@@ -448,7 +474,7 @@ impl ContentManager {
                             kind,
                             title: e.title.clone(),
                             current: e.version_number.clone(),
-                            version: v.clone(),
+                            version: v,
                         });
                     }
                 }
@@ -564,6 +590,7 @@ impl ContentManager {
                 e.file_name = file.filename.clone();
                 e.version_id = Some(u.version.id.clone());
                 e.version_number = Some(u.version.version_number.clone());
+                e.release = Some(u.version.kind);
                 e.sha1 = file.sha1.clone().unwrap_or_default();
                 e.size = file.size;
                 e.modified = 0;
@@ -689,5 +716,99 @@ mod tests {
         assert!(!mods.join("sodium.jar.disabled").exists());
         assert_eq!(m.scan().await.unwrap().len(), 2);
         assert!(m.remove(ContentKind::Mod, "../x").await.is_err());
+    }
+
+    /// Modrinth's update endpoint returns the newest version on any channel; a stable mod
+    /// must only be offered stable updates.
+    #[tokio::test]
+    async fn updates_keep_the_release_channel() {
+        use crate::instances::LoaderKind;
+        use crate::net::{cache::HttpCache, client::Http, client::NetConfig};
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let versions: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/modrinth/versions-sodium-26.3-fabric.json"
+            ))
+            .unwrap(),
+        )
+        .unwrap();
+        let beta = &versions[0];
+        let release_sha1 = versions[2]["files"][0]["hashes"]["sha1"].as_str().unwrap();
+
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/version_files/update"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "old": beta, "current": beta, "beta": beta,
+            })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/project/AANobbMI/version"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(&versions))
+            .mount(&server)
+            .await;
+        let cache_dir = tempfile::tempdir().unwrap();
+        let http = Http::new(&NetConfig::default()).unwrap();
+        let mut modrinth = Modrinth::new(
+            http.clone(),
+            HttpCache::new(cache_dir.path().to_path_buf(), http),
+        );
+        modrinth.base = server.uri();
+
+        let entry = |file: &str, sha1: &str, version: &str, release| ContentEntry {
+            file_name: file.into(),
+            kind: ContentKind::Mod,
+            enabled: true,
+            provider: Some(Provider::Modrinth),
+            project_id: Some("AANobbMI".into()),
+            version_id: Some(version.into()),
+            title: "Sodium".into(),
+            version_number: None,
+            release,
+            icon_url: None,
+            page_url: None,
+            sha1: sha1.into(),
+            size: 1,
+            modified: 0,
+            installed_at: 0,
+            dependency: false,
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let m = ContentManager::new(dir.path().to_path_buf());
+        m.save(&Manifest {
+            entries: vec![
+                // An older release written before channels were recorded.
+                entry("old.jar", "old", "OLDREL", None),
+                // Already the newest release.
+                entry(
+                    "current.jar",
+                    release_sha1,
+                    "bAZQdGpg",
+                    Some(ReleaseKind::Release),
+                ),
+                // A beta user may move to a newer beta.
+                entry("beta.jar", "beta", "OLDBETA", Some(ReleaseKind::Beta)),
+            ],
+        })
+        .await
+        .unwrap();
+
+        let updates = m
+            .check_updates(&modrinth, None, "26.3", LoaderKind::Fabric)
+            .await
+            .unwrap();
+        let to = |file: &str| {
+            updates
+                .iter()
+                .find(|u| u.file_name == file)
+                .map(|u| u.version.version_number.as_str())
+        };
+        assert_eq!(to("old.jar"), Some("mc26.3-0.9.2-fabric"));
+        assert_eq!(to("current.jar"), None);
+        assert_eq!(to("beta.jar"), Some("mc26.3-0.9.3-beta.1-fabric"));
     }
 }

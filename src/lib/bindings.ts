@@ -241,6 +241,11 @@ export type ContentEntry_Deserialize = {
 	versionId?: string | null,
 	title: string,
 	versionNumber?: string | null,
+	/**
+	 *  Release channel of the installed version; updates never move to a less stable one.
+	 *  Unknown for entries written by older versions (treated as a release).
+	 */
+	release?: ReleaseKind | null,
 	iconUrl?: string | null,
 	pageUrl?: string | null,
 	sha1: string,
@@ -261,6 +266,11 @@ export type ContentEntry_Serialize = {
 	versionId: string | null,
 	title: string,
 	versionNumber: string | null,
+	/**
+	 *  Release channel of the installed version; updates never move to a less stable one.
+	 *  Unknown for entries written by older versions (treated as a release).
+	 */
+	release: ReleaseKind | null,
 	iconUrl: string | null,
 	pageUrl: string | null,
 	sha1: string,

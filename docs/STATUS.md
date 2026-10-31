@@ -28,6 +28,19 @@ Newest entries first.
   screen** (log: sound engine started, texture atlases created). Expected offline-only errors:
   Realms/user-properties 401. Stop button killed the game; play time was recorded.
 
+### Verified: Fabric + mods from Modrinth (M4/M5)
+- Wizard: new instance "Fabric 1.21.11", loader list from Fabric meta (latest stable 0.20.1 preselected).
+- Mod browser (Modrinth): search filtered to the instance (1.21.11 · Fabric), icons via the image
+  proxy, project page with sanitised description and metadata; install plan → **Sodium 0.8.14** and
+  **Fabric API 0.141.6** installed, provenance recorded in `content.json`.
+- **Launch: Fabric 1.21.11 with 49 mods reached the title screen** (~13 s incl. loader install,
+  Java 21); Sodium loaded and applied its NVIDIA workarounds. Loader version is pinned on first launch.
+- Enable/disable toggles rename to/from `.jar.disabled`.
+- **Fixed:** "Check updates" offered `Sodium 0.8.15-beta.1` for a stable install (Modrinth's
+  `version_files/update` ignores channels). Entries now record their release channel
+  (`release`), and updates never move to a less stable channel — falls back to the newest version
+  on an allowed channel. Wiremock test `updates_keep_the_release_channel`.
+
 ### UI fixes from the walkthrough
 - Onboarding card was stuck in the left grid track when the sidebar is hidden → `main` always uses
   the last track.
