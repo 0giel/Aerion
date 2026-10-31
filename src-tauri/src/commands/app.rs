@@ -68,6 +68,11 @@ pub async fn save_settings(
     mut settings: Settings,
 ) -> CmdResult<Settings> {
     settings.download_concurrency = settings.download_concurrency.clamp(1, 64);
+    settings.wrapper = settings
+        .wrapper
+        .map(|w| w.trim().to_owned())
+        .filter(|w| !w.is_empty());
+    settings.validate()?;
     settings.proxy = settings.proxy.filter(|p| !p.trim().is_empty());
     settings.msa_client_id = settings
         .msa_client_id

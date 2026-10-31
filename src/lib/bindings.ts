@@ -42,6 +42,11 @@ export const commands = {
 	setInstanceIcon: (id: string, icon: string | null) => __TAURI_INVOKE<Instance_Serialize>("set_instance_icon", { id, icon }),
 	/**  Use an image file picked by the user as the icon. */
 	importInstanceIcon: (id: string, path: string) => __TAURI_INVOKE<Instance_Serialize>("import_instance_icon", { id, path }),
+	/**
+	 *  Move the instance's game folder to `path` (empty or new folder), or back into the launcher's
+	 *  data folder with `None`.
+	 */
+	moveInstanceGameDir: (id: string, path: string | null) => __TAURI_INVOKE<Instance_Serialize>("move_instance_game_dir", { id, path }),
 	cloneInstance: (id: string, name: string) => __TAURI_INVOKE<Instance_Serialize>("clone_instance", { id, name }),
 	instanceGroups: () => __TAURI_INVOKE<string[]>("instance_groups"),
 	createShortcut: (id: string) => __TAURI_INVOKE<string>("create_shortcut", { id }),
@@ -496,7 +501,16 @@ export type Instance_Deserialize = {
 	envVars?: { [key in string]: string },
 	wrapper?: string | null,
 	resolution?: Resolution | null,
+	/**  `None` = the launcher-wide setting. */
+	fullscreen?: boolean | null,
+	/**  `None` = the launcher-wide setting. */
+	afterLaunch?: AfterLaunch | null,
 	joinServer?: string | null,
+	/**
+	 *  Game folder (worlds, mods, screenshots) outside the launcher's data, e.g. on another drive.
+	 *  `None` = `instances/<id>/minecraft`.
+	 */
+	gameDir?: string | null,
 	/**  Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder. */
 	icon?: string | null,
 	/**  Pinned by the user: listed first and shown under "Favourites". */
@@ -528,7 +542,16 @@ export type Instance_Serialize = {
 	envVars: { [key in string]: string },
 	wrapper: string | null,
 	resolution: Resolution | null,
+	/**  `None` = the launcher-wide setting. */
+	fullscreen: boolean | null,
+	/**  `None` = the launcher-wide setting. */
+	afterLaunch: AfterLaunch | null,
 	joinServer: string | null,
+	/**
+	 *  Game folder (worlds, mods, screenshots) outside the launcher's data, e.g. on another drive.
+	 *  `None` = `instances/<id>/minecraft`.
+	 */
+	gameDir: string | null,
 	/**  Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder. */
 	icon: string | null,
 	/**  Pinned by the user: listed first and shown under "Favourites". */
@@ -656,6 +679,8 @@ export type NewInstance_Deserialize = {
 	loaderVersion?: string | null,
 	icon?: string | null,
 	group?: string | null,
+	/**  Put the game folder here instead of the launcher's data folder (must be empty or new). */
+	gameDir?: string | null,
 };
 
 export type NewInstance_Serialize = {
@@ -665,6 +690,8 @@ export type NewInstance_Serialize = {
 	loaderVersion: string | null,
 	icon: string | null,
 	group: string | null,
+	/**  Put the game folder here instead of the launcher's data folder (must be empty or new). */
+	gameDir: string | null,
 };
 
 export type Os = "windows" | "macos" | "linux";
@@ -931,7 +958,16 @@ export type Settings_Deserialize = {
 	javaAutoInstall?: boolean,
 	/**  Default maximum heap; `None` = derived from installed RAM. */
 	maxMemoryMb?: number | null,
+	/**  Default initial heap (`-Xms`); `None` = the JVM's own default. */
+	minMemoryMb?: number | null,
 	jvmPreset?: JvmPreset,
+	jvmArgs?: string[],
+	gameArgs?: string[],
+	resolution?: Resolution | null,
+	fullscreen?: boolean,
+	envVars?: { [key in string]: string },
+	/**  Command the game runs under, e.g. `gamemoderun` or `mangohud`. */
+	wrapper?: string | null,
 	downloadConcurrency?: number,
 	proxy?: string | null,
 	afterLaunch?: AfterLaunch,
@@ -963,7 +999,16 @@ export type Settings_Serialize = {
 	javaAutoInstall: boolean,
 	/**  Default maximum heap; `None` = derived from installed RAM. */
 	maxMemoryMb: number | null,
+	/**  Default initial heap (`-Xms`); `None` = the JVM's own default. */
+	minMemoryMb: number | null,
 	jvmPreset: JvmPreset,
+	jvmArgs: string[],
+	gameArgs: string[],
+	resolution: Resolution | null,
+	fullscreen: boolean,
+	envVars: { [key in string]: string },
+	/**  Command the game runs under, e.g. `gamemoderun` or `mangohud`. */
+	wrapper: string | null,
 	downloadConcurrency: number,
 	proxy: string | null,
 	afterLaunch: AfterLaunch,

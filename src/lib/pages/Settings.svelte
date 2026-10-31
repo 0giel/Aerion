@@ -26,7 +26,36 @@
   let proxy = $state(app.settings?.proxy ?? "");
   let clientId = $state(app.settings?.msaClientId ?? "");
 
-  const sections = ["general", "appearance", "java", "network", "accounts", "mods", "data", "about"] as const;
+  const sections = [
+    "general",
+    "appearance",
+    "java",
+    "game",
+    "network",
+    "accounts",
+    "mods",
+    "data",
+    "about",
+  ] as const;
+
+  // Game defaults are edited as text and saved when a field loses focus.
+  const lines = (v: string) =>
+    v
+      .split("\n")
+      .map((x) => x.trim())
+      .filter(Boolean);
+  const envToText = (env: Record<string, string>) =>
+    Object.entries(env)
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n");
+  function textToEnv(v: string): Record<string, string> {
+    const env: Record<string, string> = {};
+    for (const line of lines(v)) {
+      const i = line.indexOf("=");
+      if (i > 0) env[line.slice(0, i).trim()] = line.slice(i + 1);
+    }
+    return env;
+  }
 
   $effect(() => {
     commands
@@ -295,6 +324,118 @@
         </div>
       </section>
 
+      <section id="set-game" class="card col gap-3">
+        <h2>{t("settings.sections.game")}</h2>
+        <span class="hint">{t("settings.gameHint")}</span>
+        <div class="field">
+          <span class="label">{t("instance.settings.minMemory")}</span>
+          <div class="row wrap gap-2">
+            <label class="row check"
+              ><input
+                type="checkbox"
+                checked={s.minMemoryMb === null}
+                onchange={(e) => save({ minMemoryMb: (e.target as HTMLInputElement).checked ? null : 1024 })}
+              />{t("common.auto")}</label
+            >
+            {#if s.minMemoryMb !== null}
+              <input
+                class="input num"
+                type="number"
+                min="256"
+                step="256"
+                value={s.minMemoryMb}
+                onchange={(e) => save({ minMemoryMb: Number((e.target as HTMLInputElement).value) || null })}
+                aria-label={t("instance.settings.minMemory")}
+              /><span class="faint">MB</span>
+            {/if}
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <span class="label">{t("instance.settings.resolution")}</span>
+            <div class="row">
+              <input
+                class="input"
+                type="number"
+                min="320"
+                placeholder={t("instance.settings.width")}
+                value={s.resolution?.width ?? ""}
+                onchange={(e) => {
+                  const w = Number((e.target as HTMLInputElement).value);
+                  save({ resolution: w ? { width: w, height: s.resolution?.height ?? 480 } : null });
+                }}
+              />
+              <span class="faint">×</span>
+              <input
+                class="input"
+                type="number"
+                min="240"
+                placeholder={t("instance.settings.height")}
+                value={s.resolution?.height ?? ""}
+                onchange={(e) => {
+                  const h = Number((e.target as HTMLInputElement).value);
+                  if (s.resolution && h) save({ resolution: { ...s.resolution, height: h } });
+                }}
+              />
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">{t("instance.settings.fullscreen")}</span>
+            <Switch
+              label={t("settings.fullscreenDefault")}
+              checked={s.fullscreen}
+              onchange={(v) => save({ fullscreen: v })}
+            />
+          </div>
+        </div>
+        <div class="field">
+          <label for="g-jvm">{t("instance.settings.jvmArgs")}</label>
+          <textarea
+            id="g-jvm"
+            class="textarea mono"
+            rows="2"
+            spellcheck="false"
+            value={s.jvmArgs.join("\n")}
+            onchange={(e) => save({ jvmArgs: lines((e.target as HTMLTextAreaElement).value) })}></textarea>
+          <span class="hint">{t("settings.globalArgsHint")}</span>
+        </div>
+        <div class="field">
+          <label for="g-game">{t("instance.settings.gameArgs")}</label>
+          <textarea
+            id="g-game"
+            class="textarea mono"
+            rows="2"
+            spellcheck="false"
+            value={s.gameArgs.join("\n")}
+            onchange={(e) => save({ gameArgs: lines((e.target as HTMLTextAreaElement).value) })}></textarea>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label for="g-wrap">{t("instance.settings.wrapper")}</label>
+            <input
+              id="g-wrap"
+              class="input mono"
+              placeholder="gamemoderun"
+              value={s.wrapper ?? ""}
+              onchange={(e) => save({ wrapper: (e.target as HTMLInputElement).value.trim() || null })}
+            />
+            <span class="hint">{t("instance.settings.wrapperHint")}</span>
+          </div>
+          <div class="field">
+            <label for="g-env">{t("instance.settings.env")}</label>
+            <textarea
+              id="g-env"
+              class="textarea mono"
+              rows="2"
+              spellcheck="false"
+              value={envToText(s.envVars)}
+              onchange={(e) => save({ envVars: textToEnv((e.target as HTMLTextAreaElement).value) })}
+            ></textarea>
+            <span class="hint">{t("instance.settings.envHint")}</span>
+          </div>
+        </div>
+      </section>
+
       <section id="set-network" class="card col gap-3">
         <h2>{t("settings.sections.network")}</h2>
         <div class="field">
@@ -446,6 +587,9 @@
 </div>
 
 <style>
+  .num {
+    width: 7rem;
+  }
   .toc {
     position: sticky;
     top: calc(-1 * var(--sp-5));

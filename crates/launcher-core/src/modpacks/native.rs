@@ -64,6 +64,7 @@ pub async fn import(instances: &InstanceManager, archive: &Path) -> Result<Insta
             loader_version: src.loader_version.clone(),
             icon: src.icon.clone(),
             group: src.group.clone(),
+            game_dir: None,
         })
         .await?;
     let id = created.id.clone();

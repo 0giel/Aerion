@@ -63,6 +63,24 @@ pub async fn set_instance_icon(
     Ok(state.instances.set_icon(&id, icon).await?)
 }
 
+/// Move the instance's game folder to `path` (empty or new folder), or back into the launcher's
+/// data folder with `None`.
+#[tauri::command]
+#[specta::specta]
+pub async fn move_instance_game_dir(
+    state: State<'_, AppState>,
+    id: String,
+    path: Option<String>,
+) -> CmdResult<Instance> {
+    if state.games.is_running(&id) {
+        return Err(launcher_core::Error::AlreadyRunning.into());
+    }
+    Ok(state
+        .instances
+        .move_game_dir(&id, path.map(PathBuf::from))
+        .await?)
+}
+
 /// Use an image file picked by the user as the icon.
 #[tauri::command]
 #[specta::specta]

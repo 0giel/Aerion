@@ -2,30 +2,39 @@
   // Player model drawn on a 2D canvas (no WebGL, no libraries, no CSS 3D — WebKitGTK without GPU
   // compositing flattens `preserve-3d`). Each body part is a cuboid; every face is an affine
   // image of its skin UV rectangle under an orthographic projection. Back faces are culled and
-  // the rest painted far-to-near.
+  // the rest painted far-to-near. Faces are shaded by pre-darkened copies of the texture, so a
+  // frame costs the same as unshaded drawing.
   import { imgUrl } from "../api";
   import { themes } from "../theme/engine.svelte";
   import { ambient, onAmbientFrame } from "../stores/ambient.svelte";
 
   let {
     skinUrl,
+    capeUrl = null,
     slim = false,
     scale = 9,
-  }: { skinUrl: string | null | undefined; slim?: boolean; scale?: number } = $props();
+  }: {
+    skinUrl: string | null | undefined;
+    capeUrl?: string | null;
+    slim?: boolean;
+    scale?: number;
+  } = $props();
 
   type Vec3 = [number, number, number];
+  type Kind = "head" | "body" | "armR" | "armL" | "legR" | "legL" | "cape";
   interface Part {
+    kind: Kind;
     size: Vec3;
     pos: Vec3;
     uv: [number, number];
     overlay: [number, number] | null;
     inflate: number;
     mirror?: boolean;
-    /** Turns on the neck towards the cursor. */
-    head?: boolean;
+    /** Turned 180° (the cape's outer side faces backwards). */
+    back?: boolean;
   }
   interface Face {
-    /** Skin texture rectangle. */
+    /** Texture rectangle (in 64-px units). */
     tex: [number, number, number, number];
     /** Corner at texture (0,0) and the edges along texture x and y, in model units. */
     origin: Vec3;
@@ -34,29 +43,72 @@
     normal: Vec3;
   }
 
-  const WIDTH = 20;
-  const HEIGHT = 34;
+  const WIDTH = 22;
+  const HEIGHT = 36;
+  /** Shading levels: multiplied brightness of each pre-darkened texture copy. */
+  const SHADES = [1, 0.9, 0.8, 0.7, 0.6];
+  /** Light from the upper left front (y points down). */
+  const LIGHT: Vec3 = (() => {
+    const l: Vec3 = [-0.42, -0.55, 0.72];
+    const n = Math.hypot(...l);
+    return [l[0] / n, l[1] / n, l[2] / n];
+  })();
 
   let canvas: HTMLCanvasElement | undefined = $state();
-  let image = $state.raw<HTMLImageElement | null>(null);
-  const url = $derived(imgUrl(skinUrl));
+  let skin = $state.raw<HTMLCanvasElement[] | null>(null);
+  let cape = $state.raw<HTMLCanvasElement[] | null>(null);
+  let legacy = $state(false);
 
-  $effect(() => {
-    image = null;
+  /** Copies of an image darkened to each shade (only opaque pixels: `source-atop`). */
+  function shaded(img: HTMLImageElement): HTMLCanvasElement[] {
+    return SHADES.map((b) => {
+      const c = document.createElement("canvas");
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const x = c.getContext("2d")!;
+      x.drawImage(img, 0, 0);
+      if (b < 1) {
+        x.globalCompositeOperation = "source-atop";
+        x.fillStyle = `rgba(0,0,0,${(1 - b).toFixed(2)})`;
+        x.fillRect(0, 0, c.width, c.height);
+      }
+      return c;
+    });
+  }
+
+  function load(
+    url: string | undefined,
+    set: (v: HTMLCanvasElement[] | null, img?: HTMLImageElement) => void,
+  ) {
+    set(null);
     if (!url) return;
     const img = new Image();
-    img.onload = () => (image = img);
+    img.onload = () => set(shaded(img), img);
     img.src = url;
     return () => (img.onload = null);
-  });
+  }
+  $effect(() =>
+    load(imgUrl(skinUrl), (v, img) => {
+      skin = v;
+      if (img) legacy = img.naturalHeight * 2 === img.naturalWidth;
+    }),
+  );
+  $effect(() => load(imgUrl(capeUrl), (v) => (cape = v)));
 
   const parts = $derived.by((): Part[] => {
     const aw = slim ? 3 : 4;
-    const legacy = image?.naturalHeight === 32;
-    return [
-      { size: [8, 8, 8], pos: [0, -10, 0], uv: [0, 0], overlay: [32, 0], inflate: 0.5, head: true },
-      { size: [8, 12, 4], pos: [0, 0, 0], uv: [16, 16], overlay: legacy ? null : [16, 32], inflate: 0.25 },
+    const list: Part[] = [
+      { kind: "head", size: [8, 8, 8], pos: [0, -10, 0], uv: [0, 0], overlay: [32, 0], inflate: 0.5 },
       {
+        kind: "body",
+        size: [8, 12, 4],
+        pos: [0, 0, 0],
+        uv: [16, 16],
+        overlay: legacy ? null : [16, 32],
+        inflate: 0.25,
+      },
+      {
+        kind: "armR",
         size: [aw, 12, 4],
         pos: [-(4 + aw / 2), 0, 0],
         uv: [40, 16],
@@ -65,6 +117,7 @@
       },
       legacy
         ? {
+            kind: "armL",
             size: [aw, 12, 4],
             pos: [4 + aw / 2, 0, 0],
             uv: [40, 16],
@@ -72,12 +125,45 @@
             inflate: 0.25,
             mirror: true,
           }
-        : { size: [aw, 12, 4], pos: [4 + aw / 2, 0, 0], uv: [32, 48], overlay: [48, 48], inflate: 0.25 },
-      { size: [4, 12, 4], pos: [-2, 12, 0], uv: [0, 16], overlay: legacy ? null : [0, 32], inflate: 0.25 },
+        : {
+            kind: "armL",
+            size: [aw, 12, 4],
+            pos: [4 + aw / 2, 0, 0],
+            uv: [32, 48],
+            overlay: [48, 48],
+            inflate: 0.25,
+          },
+      {
+        kind: "legR",
+        size: [4, 12, 4],
+        pos: [-2, 12, 0],
+        uv: [0, 16],
+        overlay: legacy ? null : [0, 32],
+        inflate: 0.25,
+      },
       legacy
-        ? { size: [4, 12, 4], pos: [2, 12, 0], uv: [0, 16], overlay: null, inflate: 0.25, mirror: true }
-        : { size: [4, 12, 4], pos: [2, 12, 0], uv: [16, 48], overlay: [0, 48], inflate: 0.25 },
+        ? {
+            kind: "legL",
+            size: [4, 12, 4],
+            pos: [2, 12, 0],
+            uv: [0, 16],
+            overlay: null,
+            inflate: 0.25,
+            mirror: true,
+          }
+        : { kind: "legL", size: [4, 12, 4], pos: [2, 12, 0], uv: [16, 48], overlay: [0, 48], inflate: 0.25 },
     ];
+    if (cape)
+      list.push({
+        kind: "cape",
+        size: [10, 16, 1],
+        pos: [0, 2, -2.6],
+        uv: [0, 0],
+        overlay: null,
+        inflate: 0,
+        back: true,
+      });
+    return list;
   });
 
   /** Faces of a cuboid centred at `pos` (y down, the player faces +z), Minecraft UV layout. */
@@ -102,7 +188,9 @@
       { tex: [u0 + d + w, v0, w, d], origin: [-x, y, z], u: [W, 0, 0], v: [0, 0, -D], normal: [0, 1, 0] },
     ];
     const [px, py, pz] = part.pos;
-    const flip = (p: Vec3): Vec3 => (part.mirror ? [-p[0], p[1], p[2]] : p);
+    // Mirror: legacy skins reuse the right limb's texture for the left. Back: 180° about y.
+    const flip = (p: Vec3): Vec3 =>
+      part.back ? [-p[0], p[1], -p[2]] : part.mirror ? [-p[0], p[1], p[2]] : p;
     return faces.map((f) => {
       const o = flip(f.origin);
       return {
@@ -115,11 +203,50 @@
     });
   }
 
-  const NECK: Vec3 = [0, -6, 0];
-  const rad = (deg: number) => (deg * Math.PI) / 180;
+  // Geometry only changes with the skin layout, not per frame.
+  const geometry = $derived(
+    parts.flatMap((part) =>
+      [false, true]
+        .filter((outer) => !outer || part.overlay)
+        .map((outer) => ({ part, outer, faces: cuboid(part, outer) })),
+    ),
+  );
 
-  /** Body yaw/pitch of the view, plus the head's own turn relative to the body. */
-  function draw(yawDeg: number, pitchDeg: number, headYaw = 0, headPitch = 0) {
+  const rad = (deg: number) => (deg * Math.PI) / 180;
+  /** Rotation: roll (about z), then pitch (about x, + tilts the front up), then yaw (about y). */
+  function rotator(yawDeg: number, pitchDeg: number, rollDeg = 0) {
+    const [sy, cy] = [Math.sin(rad(yawDeg)), Math.cos(rad(yawDeg))];
+    const [sp, cp] = [Math.sin(rad(pitchDeg)), Math.cos(rad(pitchDeg))];
+    const [sr, cr] = [Math.sin(rad(rollDeg)), Math.cos(rad(rollDeg))];
+    return ([x, y, z]: Vec3): Vec3 => {
+      const x0 = x * cr - y * sr;
+      const y0 = x * sr + y * cr;
+      const y1 = y0 * cp - z * sp;
+      const z1 = y0 * sp + z * cp;
+      return [x0 * cy + z1 * sy, y1, -x0 * sy + z1 * cy];
+    };
+  }
+
+  interface Pose {
+    pivot: Vec3;
+    turn: (v: Vec3) => Vec3;
+  }
+
+  /** Limb poses: the head looks around, arms sway like in game, the cape hangs back. */
+  function poses(headYaw: number, headPitch: number, t: number): Partial<Record<Kind, Pose>> {
+    const arm = 2.5 + 2 * Math.cos(t * 0.0018);
+    const swing = 3 * Math.sin(t * 0.0013);
+    const capeTilt = -(7 + 2.5 * Math.sin(t * 0.0011));
+    const aw = slim ? 3 : 4;
+    return {
+      head: { pivot: [0, -6, 0], turn: rotator(headYaw, headPitch) },
+      armR: { pivot: [-(4 + aw / 2), -4, 0], turn: rotator(0, swing, arm) },
+      armL: { pivot: [4 + aw / 2, -4, 0], turn: rotator(0, -swing, -arm) },
+      cape: { pivot: [0, -6, -2.1], turn: rotator(0, capeTilt) },
+    };
+  }
+
+  function draw(yawDeg: number, pitchDeg: number, headYaw = 0, headPitch = 0, t = 0) {
     const c = canvas;
     const ctx = c?.getContext("2d");
     if (!c || !ctx) return;
@@ -129,56 +256,51 @@
     if (c.width !== Math.round(cssW * dpr)) c.width = Math.round(cssW * dpr);
     if (c.height !== Math.round(cssH * dpr)) c.height = Math.round(cssH * dpr);
 
-    const [sy, cy] = [Math.sin((yawDeg * Math.PI) / 180), Math.cos((yawDeg * Math.PI) / 180)];
-    const [sp, cp] = [Math.sin((pitchDeg * Math.PI) / 180), Math.cos((pitchDeg * Math.PI) / 180)];
-    // Rotate around Y (yaw), then X (pitch). Directions use `rot`; points are taken relative to
-    // the model centre (y = 2) first.
-    const rot = ([x, y, z]: Vec3): Vec3 => {
-      const x1 = x * cy + z * sy;
-      const z1 = -x * sy + z * cy;
-      return [x1, y * cp - z1 * sp, y * sp + z1 * cp];
-    };
+    const rot = rotator(yawDeg, pitchDeg);
+    // Points are taken relative to the model centre (y = 2) first.
     const point = ([x, y, z]: Vec3): Vec3 => rot([x, y - 2, z]);
-    // The head turns in model space around the neck before the view rotation.
-    const [hsy, hcy, hsp, hcp] = [
-      Math.sin(rad(headYaw)),
-      Math.cos(rad(headYaw)),
-      Math.sin(rad(headPitch)),
-      Math.cos(rad(headPitch)),
-    ];
-    // Nod around the head's own x axis first, then turn: a neck, not a tilted turntable.
-    const turn = ([x, y, z]: Vec3): Vec3 => {
-      const y1 = y * hcp - z * hsp;
-      const z1 = y * hsp + z * hcp;
-      return [x * hcy + z1 * hsy, y1, -x * hsy + z1 * hcy];
-    };
-    const turnPoint = (p: Vec3): Vec3 => {
-      const [x, y, z] = turn([p[0] - NECK[0], p[1] - NECK[1], p[2] - NECK[2]]);
-      return [x + NECK[0], y + NECK[1], z + NECK[2]];
-    };
-    const posed = (part: Part, f: Face): Face =>
-      part.head && (headYaw || headPitch)
-        ? { ...f, origin: turnPoint(f.origin), u: turn(f.u), v: turn(f.v), normal: turn(f.normal) }
-        : f;
     const s = scale * dpr;
     const ox = (cssW / 2) * dpr;
     const oy = (cssH / 2) * dpr;
+    const pose = poses(headYaw, headPitch, t);
 
-    const visible: { face: Face; depth: number; outer: boolean }[] = [];
-    for (const part of parts) {
-      for (const outer of [false, true]) {
-        if (outer && (!part.overlay || !image)) continue;
-        for (const raw of cuboid(part, outer)) {
-          const face = posed(part, raw);
-          if (rot(face.normal)[2] <= 1e-6) continue;
-          const o = face.origin;
-          const centre: Vec3 = [
-            o[0] + (face.u[0] + face.v[0]) / 2,
-            o[1] + (face.u[1] + face.v[1]) / 2,
-            o[2] + (face.u[2] + face.v[2]) / 2,
-          ];
-          visible.push({ face, depth: point(centre)[2] + (outer ? 0.01 : 0), outer });
+    const visible: { face: Face; depth: number; shade: number; cape: boolean }[] = [];
+    for (const { part, outer, faces } of geometry) {
+      const p = pose[part.kind];
+      for (const raw of faces) {
+        let face = raw;
+        if (p) {
+          const at = (v: Vec3): Vec3 => {
+            const [x, y, z] = p.turn([v[0] - p.pivot[0], v[1] - p.pivot[1], v[2] - p.pivot[2]]);
+            return [x + p.pivot[0], y + p.pivot[1], z + p.pivot[2]];
+          };
+          face = {
+            ...raw,
+            origin: at(raw.origin),
+            u: p.turn(raw.u),
+            v: p.turn(raw.v),
+            normal: p.turn(raw.normal),
+          };
         }
+        const n = rot(face.normal);
+        if (n[2] <= 1e-6) continue;
+        const o = face.origin;
+        const centre: Vec3 = [
+          o[0] + (face.u[0] + face.v[0]) / 2,
+          o[1] + (face.u[1] + face.v[1]) / 2,
+          o[2] + (face.u[2] + face.v[2]) / 2,
+        ];
+        const light = 0.6 + 0.4 * Math.max(0, n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]);
+        const shade = SHADES.reduce(
+          (best, b, i) => (Math.abs(b - light) < Math.abs(SHADES[best] - light) ? i : best),
+          0,
+        );
+        visible.push({
+          face,
+          depth: point(centre)[2] + (outer ? 0.01 : 0),
+          shade,
+          cape: part.kind === "cape",
+        });
       }
     }
     visible.sort((a, b) => a.depth - b.depth);
@@ -186,8 +308,22 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, c.width, c.height);
     ctx.imageSmoothingEnabled = false;
-    const blank = image ? "" : getComputedStyle(c).getPropertyValue("--c-surface-3").trim() || "#444";
-    for (const { face } of visible) {
+
+    // Soft contact shadow under the feet.
+    const [fx, fy] = point([0, 18, 0]);
+    const rx = 7 * s;
+    ctx.setTransform(1, 0, 0, 0.24, ox + fx * s, oy + fy * s);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, "rgba(0,0,0,0.38)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(-rx, -rx, 2 * rx, 2 * rx);
+
+    const blank = skin ? "" : getComputedStyle(c).getPropertyValue("--c-surface-3").trim() || "#444";
+    for (const { face, shade, cape: isCape } of visible) {
+      const tex = isCape ? cape : skin;
+      // HD textures: scale texture coordinates from the 64-px layout.
+      const k = tex ? tex[0].width / 64 : 1;
       const [tu, tv, tw, th] = face.tex;
       const o = point(face.origin);
       const u = rot(face.u);
@@ -201,9 +337,9 @@
         ox + o[0] * s,
         oy + o[1] * s,
       );
-      if (image) {
+      if (tex) {
         // A hair of overlap hides seams between neighbouring faces.
-        ctx.drawImage(image, tu, tv, tw, th, -0.02, -0.02, tw + 0.04, th + 0.04);
+        ctx.drawImage(tex[shade], tu * k, tv * k, tw * k, th * k, -0.02, -0.02, tw + 0.04, th + 0.04);
       } else {
         ctx.fillStyle = blank;
         ctx.fillRect(0, 0, tw, th);
@@ -255,7 +391,7 @@
       yaw: head.yaw + (target.yaw - head.yaw) * k,
       pitch: head.pitch + (target.pitch - head.pitch) * k,
     };
-    draw(by, bp, head.yaw, head.pitch);
+    draw(by, bp, head.yaw, head.pitch, clock);
     return Math.abs(target.yaw - head.yaw) + Math.abs(target.pitch - head.pitch) > 0.3;
   }
 
@@ -313,10 +449,10 @@
 
   $effect(() => {
     // Track everything `draw` reads so a static model redraws on change.
-    void [parts, image, scale, canvas];
+    void [geometry, skin, cape, scale, canvas];
     if (!animate) {
       // Reads `manual` and `yaw`, so dragging redraws a static model too.
-      draw(...body(), head.yaw, head.pitch);
+      draw(...body(), head.yaw, head.pitch, clock);
       return;
     }
     // Sway between -32° and 28° (9 s each way) on the shared ambient clock, unless the fast

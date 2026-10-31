@@ -101,6 +101,11 @@ pub struct ContentManager {
 impl ContentManager {
     pub fn new(instance_dir: PathBuf) -> Self {
         let game_dir = instance_dir.join("minecraft");
+        Self::with_game_dir(instance_dir, game_dir)
+    }
+
+    /// For instances whose game folder lives elsewhere.
+    pub fn with_game_dir(instance_dir: PathBuf, game_dir: PathBuf) -> Self {
         Self {
             instance_dir,
             game_dir,

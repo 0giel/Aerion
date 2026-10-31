@@ -5,6 +5,24 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Game locations, global/per-instance settings, capes, nicer player model (0.1.3)
+- **Instance game folder anywhere** (`Instance.gameDir`): chosen in the new-instance dialog or
+  moved later (instance → Settings → Game folder; rename on the same drive, copy + delete across
+  drives). The folder must be empty/new; a `.aerion-instance` marker is written and only marked
+  folders are deleted with their instance. Clones copy it into their own default folder. Unit test
+  `game_folder_elsewhere`.
+- **Global defaults with per-instance override**: Settings → "Game defaults" (initial memory,
+  resolution, fullscreen, JVM and game arguments, wrapper, environment) next to the existing max
+  memory, JVM preset and Java per version. Instances show "Global (value)" / "Own" for memory,
+  preset, fullscreen and after-launch; arguments and environment are added on top of the global
+  ones (instance last), resolution and wrapper replace them. Global values are validated on save.
+- **Capes in the wardrobe**: the cape is drawn on the 3D model (home and Skins), pointing at a cape
+  previews it before wearing; offline accounts get an explanation instead of a hidden section.
+- **Player model**: geometry precomputed once instead of per frame; faces shaded by light
+  direction using pre-darkened texture copies (same per-frame cost); soft contact shadow; idle arm
+  sway like in game; cape hangs back and sways. Checked on screen with a test cape (front/side).
+
+
 ### Mojang review submitted
 - The owner submitted the Minecraft API review form (new AppID, client ID
   `b7169ac0-19f3-4bf2-a815-1e98829a891a`, website https://github.com/0giel/Aerion — a public page

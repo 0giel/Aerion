@@ -5,9 +5,7 @@ use launcher_core::ErrorInfo;
 use launcher_core::accounts::SecretStore;
 use launcher_core::instances::{LoaderKind, ModpackInfo};
 use launcher_core::modpacks::{self, ImportResult};
-use launcher_core::mods::content::{
-    BackupInfo, ContentEntry, ContentManager, UpdateInfo, safe_file_name,
-};
+use launcher_core::mods::content::{BackupInfo, ContentEntry, UpdateInfo, safe_file_name};
 use launcher_core::mods::curseforge::CurseForge;
 use launcher_core::mods::merge_pages;
 use launcher_core::mods::model::*;
@@ -122,7 +120,7 @@ async fn make_plan(
         game_version: &inst.game_version,
         loaders: &loaders,
     };
-    let content = ContentManager::new(state.instances.dir(instance_id)?);
+    let content = state.instances.content(instance_id)?;
     let mut installed = content.installed_projects().await;
     installed.extend(already.iter().cloned());
     match provider {
@@ -232,7 +230,7 @@ pub async fn install_content(
                     }
                 }
             }
-            let content = ContentManager::new(state.instances.dir(&iid)?);
+            let content = state.instances.content(&iid)?;
             let engine = state.engine().await;
             let installed = content
                 .install(&engine.downloader, &main, kind, &ctx)
@@ -248,9 +246,7 @@ pub async fn list_content(
     state: State<'_, AppState>,
     instance_id: String,
 ) -> CmdResult<Vec<ContentEntry>> {
-    Ok(ContentManager::new(state.instances.dir(&instance_id)?)
-        .scan()
-        .await?)
+    Ok(state.instances.content(&instance_id)?.scan().await?)
 }
 
 #[tauri::command]
@@ -262,7 +258,9 @@ pub async fn set_content_enabled(
     file_name: String,
     enabled: bool,
 ) -> CmdResult<()> {
-    Ok(ContentManager::new(state.instances.dir(&instance_id)?)
+    Ok(state
+        .instances
+        .content(&instance_id)?
         .set_enabled(kind, &file_name, enabled)
         .await?)
 }
@@ -275,7 +273,9 @@ pub async fn remove_content(
     kind: ContentKind,
     file_name: String,
 ) -> CmdResult<()> {
-    Ok(ContentManager::new(state.instances.dir(&instance_id)?)
+    Ok(state
+        .instances
+        .content(&instance_id)?
         .remove(kind, &file_name)
         .await?)
 }
@@ -284,7 +284,7 @@ pub async fn remove_content(
 #[tauri::command]
 #[specta::specta]
 pub async fn identify_content(state: State<'_, AppState>, instance_id: String) -> CmdResult<u32> {
-    let content = ContentManager::new(state.instances.dir(&instance_id)?);
+    let content = state.instances.content(&instance_id)?;
     content.scan().await?;
     let cf = state.curseforge().await;
     let n = content.identify(&state.modrinth().await, Some(&cf)).await?;
@@ -298,7 +298,7 @@ pub async fn check_content_updates(
     instance_id: String,
 ) -> CmdResult<Vec<UpdateInfo>> {
     let inst = state.instances.get(&instance_id).await?;
-    let content = ContentManager::new(state.instances.dir(&instance_id)?);
+    let content = state.instances.content(&instance_id)?;
     content.scan().await?;
     let cf = state.curseforge().await;
     Ok(content
@@ -329,7 +329,7 @@ pub async fn apply_content_updates(
         Some(instance_id.clone()),
         move |ctx| async move {
             let state = app2.state::<AppState>();
-            let content = ContentManager::new(state.instances.dir(&instance_id)?);
+            let content = state.instances.content(&instance_id)?;
             let engine = state.engine().await;
             let backup: BackupInfo = content
                 .apply_updates(&engine.downloader, &updates, &ctx)
@@ -345,7 +345,9 @@ pub async fn undo_content_update(
     state: State<'_, AppState>,
     instance_id: String,
 ) -> CmdResult<bool> {
-    Ok(ContentManager::new(state.instances.dir(&instance_id)?)
+    Ok(state
+        .instances
+        .content(&instance_id)?
         .undo_last_update()
         .await?)
 }
@@ -356,9 +358,7 @@ pub async fn list_content_backups(
     state: State<'_, AppState>,
     instance_id: String,
 ) -> CmdResult<Vec<BackupInfo>> {
-    Ok(ContentManager::new(state.instances.dir(&instance_id)?)
-        .backups()
-        .await)
+    Ok(state.instances.content(&instance_id)?.backups().await)
 }
 
 /// Copy local files (drag & drop) into the instance.
@@ -370,7 +370,7 @@ pub async fn add_content_files(
     kind: ContentKind,
     paths: Vec<String>,
 ) -> CmdResult<u32> {
-    let content = ContentManager::new(state.instances.dir(&instance_id)?);
+    let content = state.instances.content(&instance_id)?;
     let dir = content.folder(kind);
     tokio::fs::create_dir_all(&dir)
         .await

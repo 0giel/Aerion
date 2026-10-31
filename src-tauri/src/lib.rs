@@ -45,6 +45,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             instances::set_instance_favorite,
             instances::set_instance_icon,
             instances::import_instance_icon,
+            instances::move_instance_game_dir,
             instances::clone_instance,
             instances::instance_groups,
             instances::create_shortcut,

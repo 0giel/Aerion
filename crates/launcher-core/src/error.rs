@@ -115,6 +115,9 @@ pub enum Error {
     #[error("changing the skin needs a Microsoft account")]
     SkinNeedsMicrosoft,
 
+    #[error("the folder {0} is not empty")]
+    FolderNotEmpty(PathBuf),
+
     #[error("{0}")]
     Invalid(String),
 }
@@ -307,6 +310,10 @@ impl Error {
                 "skin.size"
             }
             Error::SkinNeedsMicrosoft => "skin.needsMicrosoft",
+            Error::FolderNotEmpty(path) => {
+                put("path", path.display().to_string());
+                "instance.folderNotEmpty"
+            }
             Error::Invalid(_) => "generic",
         };
         ErrorInfo {

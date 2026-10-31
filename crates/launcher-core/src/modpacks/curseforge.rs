@@ -12,7 +12,7 @@ use crate::instances::{InstanceManager, LoaderKind, ModpackInfo, NewInstance};
 use crate::modpacks::{
     ExportOptions, ImportResult, ManualDownload, excluded_from_export, loader_from_id,
 };
-use crate::mods::content::{ContentManager, entry_path, safe_file_name};
+use crate::mods::content::{entry_path, safe_file_name};
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
@@ -106,6 +106,7 @@ pub async fn import(
             loader_version,
             icon: None,
             group: None,
+            game_dir: None,
         })
         .await?;
     let id = inst.id.clone();
@@ -126,7 +127,7 @@ pub async fn import(
             .map(|p| (p.id.clone(), p))
             .collect();
 
-        let content = ContentManager::new(instances.dir(&id)?);
+        let content = instances.content(&id)?;
         let mut manual = Vec::new();
         let mut by_kind: HashMap<_, Vec<PlannedFile>> = HashMap::new();
         for v in versions {
@@ -214,7 +215,7 @@ pub async fn export(
 ) -> Result<()> {
     let inst = instances.get(id).await?;
     let game_dir = instances.game_dir(id)?;
-    let entries = ContentManager::new(instances.dir(id)?).scan().await?;
+    let entries = instances.content(id)?.scan().await?;
     let mut files = Vec::new();
     let mut overrides = Vec::new();
     for e in entries.iter().filter(|e| e.enabled) {

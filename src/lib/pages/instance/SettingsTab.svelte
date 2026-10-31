@@ -9,6 +9,7 @@
     errorMessage,
     LOADERS,
     loaderLabel,
+    type AfterLaunch,
     type GameVersions,
     type Instance,
     type JavaInstall,
@@ -30,6 +31,9 @@
       .join("\n"),
   );
   let memoryAuto = $state(initial.maxMemoryMb === null);
+  let minMemoryOwn = $state(initial.minMemoryMb !== null);
+  let moving = $state(false);
+  const g = $derived(app.settings);
   let customJava = $state(initial.javaPath !== null);
   let saving = $state(false);
   let versions = $state.raw<GameVersions | null>(null);
@@ -82,6 +86,7 @@
       gameArgs: lines(gameText),
       envVars: env,
       maxMemoryMb: memoryAuto ? null : draft.maxMemoryMb,
+      minMemoryMb: minMemoryOwn ? draft.minMemoryMb : null,
       javaPath: customJava ? draft.javaPath : null,
       group: draft.group?.trim() || null,
       wrapper: draft.wrapper?.trim() || null,
@@ -98,7 +103,28 @@
       .map(([k, v]) => `${k}=${v}`)
       .join("\n");
     memoryAuto = instance.maxMemoryMb === null;
+    minMemoryOwn = instance.minMemoryMb !== null;
     customJava = instance.javaPath !== null;
+  }
+
+  /** Move the game folder (worlds, mods…) somewhere else, or back with `null`. */
+  async function moveGameDir(to: "pick" | null) {
+    let path: string | null = null;
+    if (to === "pick") {
+      const picked = await openDialog({ directory: true, multiple: false });
+      if (typeof picked !== "string") return;
+      path = picked;
+    }
+    moving = true;
+    try {
+      await commands.moveInstanceGameDir(instance.id, path);
+      await app.refreshInstances();
+      toasts.success(t("instance.settings.gameDirMoved"));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    } finally {
+      moving = false;
+    }
   }
 
   async function save() {
@@ -135,6 +161,12 @@
   }
 
   const presets: (JvmPreset | null)[] = [null, "standard", "performance", "lowMemory"];
+  const afterOptions: AfterLaunch[] = ["keep", "minimize", "hide", "close"];
+  // Effective global values, shown next to "use global".
+  const globalMax = $derived(g?.maxMemoryMb ?? autoMb);
+  const globalRes = $derived(
+    g?.resolution ? `${g.resolution.width}×${g.resolution.height}` : t("common.auto"),
+  );
 </script>
 
 <div class="settings col gap-4">
@@ -220,11 +252,18 @@
 
   <section class="card col gap-3">
     <h3>{t("instance.settings.memory")} & {t("instance.settings.java")}</h3>
-    <label class="row check"
-      ><input type="checkbox" bind:checked={memoryAuto} />{t("instance.settings.memoryAuto", {
-        mb: autoMb,
-      })}</label
-    >
+    <span class="label">{t("instance.settings.maxMemory")}</span>
+    <div class="segmented" role="group" aria-label={t("instance.settings.maxMemory")}>
+      <button type="button" aria-pressed={memoryAuto} onclick={() => (memoryAuto = true)}
+        >{t("instance.settings.useGlobal", { value: `${globalMax} MB` })}</button
+      >
+      <button
+        type="button"
+        aria-pressed={!memoryAuto}
+        onclick={() => ((memoryAuto = false), (draft.maxMemoryMb ??= globalMax))}
+        >{t("instance.settings.own")}</button
+      >
+    </div>
     {#if !memoryAuto}
       <div class="row gap-3">
         <input
@@ -239,12 +278,43 @@
       </div>
       <span class="hint">{t("instance.settings.memoryHint", { total: Math.round(totalMb / 1024) })}</span>
     {/if}
+    <span class="label">{t("instance.settings.minMemory")}</span>
+    <div class="row wrap gap-2">
+      <div class="segmented" role="group" aria-label={t("instance.settings.minMemory")}>
+        <button type="button" aria-pressed={!minMemoryOwn} onclick={() => (minMemoryOwn = false)}
+          >{t("instance.settings.useGlobal", {
+            value: g?.minMemoryMb ? `${g.minMemoryMb} MB` : t("common.auto"),
+          })}</button
+        >
+        <button
+          type="button"
+          aria-pressed={minMemoryOwn}
+          onclick={() => ((minMemoryOwn = true), (draft.minMemoryMb ??= 1024))}
+          >{t("instance.settings.own")}</button
+        >
+      </div>
+      {#if minMemoryOwn}
+        <input
+          class="input num"
+          type="number"
+          min="256"
+          max={maxSlider}
+          step="256"
+          bind:value={draft.minMemoryMb}
+          aria-label={t("instance.settings.minMemory")}
+        /><span class="faint">MB</span>
+      {/if}
+    </div>
     <div class="field">
       <span class="label">{t("instance.settings.preset")}</span>
       <div class="segmented" role="group">
         {#each presets as p (p ?? "default")}
           <button type="button" aria-pressed={draft.jvmPreset === p} onclick={() => (draft.jvmPreset = p)}
-            >{p ? t(`instance.settings.presets.${p}`) : t("common.default")}</button
+            >{p
+              ? t(`instance.settings.presets.${p}`)
+              : t("instance.settings.useGlobal", {
+                  value: t(`instance.settings.presets.${g?.jvmPreset ?? "standard"}`),
+                })}</button
           >
         {/each}
       </div>
@@ -279,6 +349,73 @@
     </div>
   </section>
 
+  <section class="card col gap-3">
+    <h3>{t("instance.settings.launching")}</h3>
+    <div class="grid2">
+      <div class="field">
+        <label for="s-full">{t("instance.settings.fullscreen")}</label>
+        <select
+          id="s-full"
+          class="select"
+          value={draft.fullscreen === null ? "global" : String(draft.fullscreen)}
+          onchange={(e) => {
+            const v = (e.target as HTMLSelectElement).value;
+            draft.fullscreen = v === "global" ? null : v === "true";
+          }}
+        >
+          <option value="global"
+            >{t("instance.settings.useGlobal", {
+              value: g?.fullscreen ? t("common.on") : t("common.off"),
+            })}</option
+          >
+          <option value="true">{t("common.on")}</option>
+          <option value="false">{t("common.off")}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="s-after">{t("settings.afterLaunch")}</label>
+        <select
+          id="s-after"
+          class="select"
+          value={draft.afterLaunch ?? "global"}
+          onchange={(e) => {
+            const v = (e.target as HTMLSelectElement).value;
+            draft.afterLaunch = v === "global" ? null : (v as AfterLaunch);
+          }}
+        >
+          <option value="global"
+            >{t("instance.settings.useGlobal", {
+              value: t(`settings.afterLaunchOptions.${g?.afterLaunch ?? "minimize"}`),
+            })}</option
+          >
+          {#each afterOptions as a (a)}<option value={a}>{t(`settings.afterLaunchOptions.${a}`)}</option
+            >{/each}
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="card col gap-3">
+    <h3>{t("instance.settings.gameDir")}</h3>
+    <code class="path selectable">{instance.gameDir ?? t("instance.settings.gameDirDefault")}</code>
+    <div class="row wrap gap-2">
+      <button class="btn" disabled={moving} onclick={() => moveGameDir("pick")}
+        >{#if moving}<span class="spinner"></span>{:else}<Icon name="folder" size={15} />{/if}{t(
+          "instance.settings.gameDirMove",
+        )}</button
+      >
+      {#if instance.gameDir}
+        <button class="btn ghost" disabled={moving} onclick={() => moveGameDir(null)}
+          >{t("instance.settings.gameDirReset")}</button
+        >
+      {/if}
+      <button class="btn ghost" onclick={() => commands.openFolder({ kind: "gameDir", id: instance.id })}
+        >{t("common.openFolder")}</button
+      >
+    </div>
+    <span class="hint">{t("instance.settings.gameDirHint")}</span>
+  </section>
+
   <details class="card advanced">
     <summary><h3>{t("instance.settings.advanced")}</h3></summary>
     <div class="col gap-3" style="margin-top: var(--sp-3)">
@@ -287,10 +424,10 @@
         <textarea id="s-jvm" class="textarea mono" bind:value={jvmText} rows="3" spellcheck="false"
         ></textarea>
         <div class="row">
-          <span class="hint grow">{t("instance.settings.jvmArgsHint")}</span><button
-            class="btn sm"
-            onclick={testArgs}>{t("instance.settings.testArgs")}</button
-          >
+          <span class="hint grow"
+            >{t("instance.settings.jvmArgsHint")}{#if g?.jvmArgs.length}
+              {t("instance.settings.addedToGlobal", { value: g.jvmArgs.join(" ") })}{/if}</span
+          ><button class="btn sm" onclick={testArgs}>{t("instance.settings.testArgs")}</button>
         </div>
         {#if testResult}<span class="small">{testResult}</span>{/if}
       </div>
@@ -301,10 +438,14 @@
           bind:value={gameText}
           rows="2"
           spellcheck="false"></textarea>
+        {#if g?.gameArgs.length}<span class="hint"
+            >{t("instance.settings.addedToGlobal", { value: g.gameArgs.join(" ") })}</span
+          >{/if}
       </div>
       <div class="grid2">
         <div class="field">
           <span class="label">{t("instance.settings.resolution")}</span>
+          <span class="hint">{t("instance.settings.emptyMeansGlobal", { value: globalRes })}</span>
           <div class="row">
             <input
               class="input"
@@ -345,8 +486,11 @@
           id="s-wrap"
           class="input mono"
           bind:value={draft.wrapper}
-          placeholder="gamemoderun"
-        /><span class="hint">{t("instance.settings.wrapperHint")}</span>
+          placeholder={g?.wrapper ?? "gamemoderun"}
+        /><span class="hint"
+          >{t("instance.settings.wrapperHint")}{#if g?.wrapper}
+            {t("instance.settings.emptyMeansGlobal", { value: g.wrapper })}{/if}</span
+        >
       </div>
       <div class="field">
         <label for="s-env">{t("instance.settings.env")}</label><textarea
@@ -354,7 +498,9 @@
           class="textarea mono"
           bind:value={envText}
           rows="2"
-          spellcheck="false"></textarea><span class="hint">{t("instance.settings.envHint")}</span>
+          spellcheck="false"></textarea><span class="hint"
+          >{t("instance.settings.envHint")} {t("instance.settings.envOverGlobal")}</span
+        >
       </div>
     </div>
   </details>
@@ -380,9 +526,15 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--sp-3);
   }
-  .check {
-    gap: 0.5rem;
-    cursor: pointer;
+  .num {
+    width: 7rem;
+  }
+  .path {
+    display: block;
+    padding: var(--sp-2);
+    border-radius: var(--r-sm);
+    background: var(--c-surface-2);
+    word-break: break-all;
   }
   .mem {
     min-width: 6.5rem;

@@ -53,7 +53,18 @@ pub struct Settings {
     pub java_auto_install: bool,
     /// Default maximum heap; `None` = derived from installed RAM.
     pub max_memory_mb: Option<u32>,
+    /// Default initial heap (`-Xms`); `None` = the JVM's own default.
+    pub min_memory_mb: Option<u32>,
     pub jvm_preset: JvmPreset,
+    // Game defaults for every instance. An instance's own values are added after these (JVM and
+    // game arguments, environment) or replace them (resolution, fullscreen, wrapper).
+    pub jvm_args: Vec<String>,
+    pub game_args: Vec<String>,
+    pub resolution: Option<crate::instances::Resolution>,
+    pub fullscreen: bool,
+    pub env_vars: BTreeMap<String, String>,
+    /// Command the game runs under, e.g. `gamemoderun` or `mangohud`.
+    pub wrapper: Option<String>,
     pub download_concurrency: u32,
     pub proxy: Option<String>,
     pub after_launch: AfterLaunch,
@@ -82,7 +93,14 @@ impl Default for Settings {
             java_overrides: BTreeMap::new(),
             java_auto_install: true,
             max_memory_mb: None,
+            min_memory_mb: None,
             jvm_preset: JvmPreset::Standard,
+            jvm_args: vec![],
+            game_args: vec![],
+            resolution: None,
+            fullscreen: false,
+            env_vars: BTreeMap::new(),
+            wrapper: None,
             download_concurrency: 12,
             proxy: None,
             after_launch: AfterLaunch::Minimize,
@@ -120,6 +138,40 @@ impl Settings {
         }
         s.download_concurrency = s.download_concurrency.clamp(1, 64);
         Ok(s)
+    }
+
+    /// Reject values that would break every launch (same rules as an instance's own settings).
+    pub fn validate(&self) -> Result<()> {
+        crate::java::flags::validate_syntax(&self.jvm_args)?;
+        if self
+            .game_args
+            .iter()
+            .any(|a| a.contains(['\0', '\n', '\r']))
+        {
+            return Err(crate::Error::Invalid(
+                "game arguments may not contain line breaks".into(),
+            ));
+        }
+        for m in [self.max_memory_mb, self.min_memory_mb]
+            .into_iter()
+            .flatten()
+        {
+            if !(256..=262_144).contains(&m) {
+                return Err(crate::Error::Invalid(
+                    "memory must be between 256 MB and 256 GB".into(),
+                ));
+            }
+        }
+        if self
+            .env_vars
+            .keys()
+            .any(|k| k.is_empty() || k.contains(['=', '\0']))
+        {
+            return Err(crate::Error::Invalid(
+                "invalid environment variable name".into(),
+            ));
+        }
+        Ok(())
     }
 
     pub async fn save(&self, paths: &Paths) -> Result<()> {

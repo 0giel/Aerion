@@ -97,7 +97,14 @@ pub struct Instance {
     pub env_vars: BTreeMap<String, String>,
     pub wrapper: Option<String>,
     pub resolution: Option<Resolution>,
+    /// `None` = the launcher-wide setting.
+    pub fullscreen: Option<bool>,
+    /// `None` = the launcher-wide setting.
+    pub after_launch: Option<crate::settings::AfterLaunch>,
     pub join_server: Option<String>,
+    /// Game folder (worlds, mods, screenshots) outside the launcher's data, e.g. on another drive.
+    /// `None` = `instances/<id>/minecraft`.
+    pub game_dir: Option<PathBuf>,
     /// Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder.
     pub icon: Option<String>,
     /// Pinned by the user: listed first and shown under "Favourites".
@@ -129,7 +136,10 @@ impl Default for Instance {
             env_vars: BTreeMap::new(),
             wrapper: None,
             resolution: None,
+            fullscreen: None,
+            after_launch: None,
             join_server: None,
+            game_dir: None,
             icon: None,
             favorite: false,
             group: None,
@@ -153,6 +163,9 @@ pub struct NewInstance {
     pub loader_version: Option<String>,
     pub icon: Option<String>,
     pub group: Option<String>,
+    /// Put the game folder here instead of the launcher's data folder (must be empty or new).
+    #[serde(default)]
+    pub game_dir: Option<PathBuf>,
 }
 
 pub struct InstanceManager {
@@ -165,6 +178,28 @@ const FILE: &str = "instance.json";
 /// change keeps cached images from going stale.
 const ICON_PREFIX: &str = "icon-";
 const MAX_ICON_BYTES: u64 = 2 * 1024 * 1024;
+/// Written into game folders the launcher created outside its data folder. Only folders that
+/// carry it are ever deleted with their instance.
+const GAME_DIR_MARKER: &str = ".aerion-instance";
+
+/// A user-chosen game folder must be absolute and empty (or not exist yet), so the launcher never
+/// mixes an instance into, or later deletes, a folder holding other files.
+fn prepare_external_game_dir(dir: &Path, id: &str) -> Result<()> {
+    if !dir.is_absolute() {
+        return Err(Error::Invalid(
+            "the game folder must be an absolute path".into(),
+        ));
+    }
+    if dir.exists() {
+        let mut entries = std::fs::read_dir(dir).at(dir)?;
+        if entries.next().is_some() {
+            return Err(Error::FolderNotEmpty(dir.to_path_buf()));
+        }
+    }
+    std::fs::create_dir_all(dir).at(dir)?;
+    let marker = dir.join(GAME_DIR_MARKER);
+    std::fs::write(&marker, id).at(&marker)
+}
 
 /// `mc:<texture>` (a Minecraft item/block texture, e.g. `mc:item/diamond`),
 /// `file:icon-<millis>.<ext>`, or an older built-in key (`grass`, `diamond`, …).
@@ -217,8 +252,24 @@ impl InstanceManager {
         Ok(self.root.join(id))
     }
 
+    /// The game folder: the instance's own location if set, otherwise `<id>/minecraft`.
+    /// Reads `instance.json` (small) so every caller sees a relocated folder.
     pub fn game_dir(&self, id: &str) -> Result<PathBuf> {
-        Ok(self.dir(id)?.join("minecraft"))
+        let dir = self.dir(id)?;
+        let custom = std::fs::read(dir.join(FILE))
+            .ok()
+            .and_then(|b| serde_json::from_slice::<Instance>(&b).ok())
+            .and_then(|i| i.game_dir)
+            .filter(|p| p.is_absolute());
+        Ok(custom.unwrap_or_else(|| dir.join("minecraft")))
+    }
+
+    /// Mods, packs and their manifest for an instance.
+    pub fn content(&self, id: &str) -> Result<crate::mods::content::ContentManager> {
+        Ok(crate::mods::content::ContentManager::with_game_dir(
+            self.dir(id)?,
+            self.game_dir(id)?,
+        ))
     }
 
     pub async fn list(&self) -> Vec<Instance> {
@@ -277,9 +328,19 @@ impl InstanceManager {
         let _g = self.lock.lock().await;
         let id = self.unique_id(&name);
         let dir = self.root.join(&id);
-        tokio::fs::create_dir_all(dir.join("minecraft"))
-            .await
-            .at(&dir)?;
+        let game_dir = spec.game_dir.clone().filter(|p| !p.as_os_str().is_empty());
+        match &game_dir {
+            Some(g) => {
+                let (g, i) = (g.clone(), id.clone());
+                tokio::task::spawn_blocking(move || prepare_external_game_dir(&g, &i))
+                    .await
+                    .map_err(|e| Error::Invalid(e.to_string()))??;
+                tokio::fs::create_dir_all(&dir).await.at(&dir)?;
+            }
+            None => tokio::fs::create_dir_all(dir.join("minecraft"))
+                .await
+                .at(&dir)?,
+        }
         let inst = Instance {
             id,
             name,
@@ -287,6 +348,7 @@ impl InstanceManager {
             loader: spec.loader,
             loader_version: spec.loader_version.filter(|v| !v.is_empty()),
             icon: spec.icon.filter(|i| !i.starts_with("file:")),
+            game_dir,
             group: spec.group.filter(|g| !g.trim().is_empty()),
             created_at: now_secs(),
             ..Instance::default()
@@ -327,6 +389,8 @@ impl InstanceManager {
         {
             edited.version_id = None;
         }
+        // The game folder only moves through `move_game_dir`.
+        edited.game_dir = current.game_dir;
         edited.created_at = current.created_at;
         edited.play_time_secs = current.play_time_secs;
         edited.last_played = current.last_played;
@@ -420,7 +484,53 @@ impl InstanceManager {
         if !dir.join(FILE).is_file() {
             return Err(Error::InstanceNotFound(id.to_owned()));
         }
-        tokio::fs::remove_dir_all(&dir).await.at(&dir)
+        let external = self.get(id).await?.game_dir;
+        tokio::fs::remove_dir_all(&dir).await.at(&dir)?;
+        // A folder elsewhere goes only if the launcher created it (marker present).
+        if let Some(g) = external.filter(|g| g.join(GAME_DIR_MARKER).is_file()) {
+            tokio::fs::remove_dir_all(&g).await.at(&g)?;
+        }
+        Ok(())
+    }
+
+    /// Move the game folder to `target` (an empty or new folder), or back into the launcher's
+    /// data with `None`. Files are moved (renamed, or copied then removed across drives).
+    pub async fn move_game_dir(&self, id: &str, target: Option<PathBuf>) -> Result<Instance> {
+        let _g = self.lock.lock().await;
+        let inst = self.get(id).await?;
+        let from = self.game_dir(id)?;
+        let default = self.dir(id)?.join("minecraft");
+        let to = target.clone().unwrap_or_else(|| default.clone());
+        if to == from {
+            return Ok(inst);
+        }
+        let (f, t, i, external) = (from.clone(), to.clone(), id.to_owned(), target.is_some());
+        tokio::task::spawn_blocking(move || -> Result<()> {
+            if external {
+                prepare_external_game_dir(&t, &i)?;
+            } else if t.exists() {
+                std::fs::remove_dir(&t).map_err(|_| Error::FolderNotEmpty(t.clone()))?;
+            }
+            // Same drive: one rename. Otherwise copy, then delete the source.
+            let _ = std::fs::remove_dir(&t);
+            if std::fs::rename(&f, &t).is_err() {
+                copy_dir_sync(&f, &t, &|_| false)?;
+                std::fs::remove_dir_all(&f).at(&f)?;
+            }
+            let marker = t.join(GAME_DIR_MARKER);
+            if external {
+                std::fs::write(&marker, &i).at(&marker)?;
+            } else {
+                let _ = std::fs::remove_file(&marker);
+            }
+            Ok(())
+        })
+        .await
+        .map_err(|e| Error::Invalid(e.to_string()))??;
+        let mut inst = inst;
+        inst.game_dir = target;
+        self.write(&inst).await?;
+        Ok(inst)
     }
 
     /// Copy an instance (worlds, mods, configs) under a new name.
@@ -431,15 +541,24 @@ impl InstanceManager {
         let new_id = self.unique_id(&name);
         let from = self.dir(id)?;
         let to = self.root.join(&new_id);
+        // A relocated game folder is copied into the clone's own default folder.
+        let external = src.game_dir.clone().map(|g| (g, to.join("minecraft")));
         tokio::task::spawn_blocking(move || {
-            copy_dir_sync(&from, &to, &|p: &Path| {
+            let skip = |p: &Path| {
                 let n = p
                     .file_name()
                     .map(|n| n.to_string_lossy().into_owned())
                     .unwrap_or_default();
-                matches!(n.as_str(), "logs" | "crash-reports" | ".backups")
-                    || n.starts_with("hs_err_pid")
-            })
+                matches!(
+                    n.as_str(),
+                    "logs" | "crash-reports" | ".backups" | GAME_DIR_MARKER
+                ) || n.starts_with("hs_err_pid")
+            };
+            copy_dir_sync(&from, &to, &skip)?;
+            if let Some((g, dst)) = external {
+                copy_dir_sync(&g, &dst, &skip)?;
+            }
+            Ok::<(), Error>(())
         })
         .await
         .map_err(|e| Error::Invalid(e.to_string()))??;
@@ -449,6 +568,7 @@ impl InstanceManager {
             created_at: now_secs(),
             last_played: None,
             play_time_secs: 0,
+            game_dir: None,
             ..src
         };
         self.write(&inst).await?;
@@ -481,6 +601,7 @@ mod tests {
             loader_version: None,
             icon: None,
             group: Some("Survival".into()),
+            game_dir: None,
         }
     }
 
@@ -531,6 +652,51 @@ mod tests {
         m.delete(&b.id).await.unwrap();
         assert_eq!(m.list().await.len(), 2);
         assert!(m.dir("../escape").unwrap_err().info().code == "instance.notFound");
+    }
+
+    #[tokio::test]
+    async fn game_folder_elsewhere() {
+        let dir = tempfile::tempdir().unwrap();
+        let m = InstanceManager::new(dir.path().join("instances"));
+        let external = dir.path().join("D/Gry/Survival");
+
+        let mut s = spec("Daleko");
+        s.game_dir = Some(external.clone());
+        let a = m.create(s).await.unwrap();
+        assert_eq!(m.game_dir(&a.id).unwrap(), external);
+        assert!(external.join(GAME_DIR_MARKER).is_file());
+        std::fs::create_dir_all(external.join("saves/W")).unwrap();
+
+        // A folder with other files is refused.
+        let busy = dir.path().join("busy");
+        std::fs::create_dir_all(&busy).unwrap();
+        std::fs::write(busy.join("photo.jpg"), b"x").unwrap();
+        let mut s = spec("Zajęty");
+        s.game_dir = Some(busy.clone());
+        assert_eq!(
+            m.create(s).await.unwrap_err().info().code,
+            "instance.folderNotEmpty"
+        );
+        assert!(m.move_game_dir(&a.id, Some(busy.clone())).await.is_err());
+
+        // Back into the launcher's folder and out again.
+        let a = m.move_game_dir(&a.id, None).await.unwrap();
+        assert!(a.game_dir.is_none());
+        assert!(m.game_dir(&a.id).unwrap().join("saves/W").is_dir());
+        assert!(!external.exists());
+        let elsewhere = dir.path().join("E/Inne");
+        m.move_game_dir(&a.id, Some(elsewhere.clone()))
+            .await
+            .unwrap();
+        assert!(elsewhere.join("saves/W").is_dir());
+
+        // Clones get their own copy; deleting removes only marked folders.
+        let c = m.clone_instance(&a.id, "Kopia daleko").await.unwrap();
+        assert!(c.game_dir.is_none());
+        assert!(m.game_dir(&c.id).unwrap().join("saves/W").is_dir());
+        m.delete(&a.id).await.unwrap();
+        assert!(!elsewhere.exists());
+        assert!(busy.join("photo.jpg").is_file());
     }
 
     #[tokio::test]

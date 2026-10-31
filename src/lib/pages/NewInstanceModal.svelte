@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
+  import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import Modal from "../components/Modal.svelte";
   import Icon from "../components/Icon.svelte";
   import IconPicker from "../components/IconPicker.svelte";
@@ -30,6 +31,13 @@
   let group = $state("");
   let icon = $state<string | null>(null);
   let iconFile = $state<string | null>(null);
+  /** Game folder elsewhere (e.g. another drive); `null` = inside the launcher's data folder. */
+  let gameDir = $state<string | null>(null);
+
+  async function pickLocation() {
+    const picked = await openDialog({ directory: true, multiple: false });
+    if (typeof picked === "string") gameDir = picked;
+  }
   let busy = $state(false);
   let loadError = $state<string | null>(null);
 
@@ -82,6 +90,7 @@
         loaderVersion: loader === "vanilla" ? null : loaderVersion || null,
         icon,
         group: group.trim() || null,
+        gameDir,
       });
       if (iconFile) {
         // The instance exists either way; a bad image only costs the custom icon.
@@ -181,6 +190,21 @@
       </div>
     {/if}
     <div class="field">
+      <span class="label">{t("newInstance.location")}</span>
+      <div class="row gap-2">
+        <code class="loc grow truncate" title={gameDir ?? ""}
+          >{gameDir ?? t("newInstance.locationDefault")}</code
+        >
+        <button type="button" class="btn sm" onclick={pickLocation}
+          ><Icon name="folder" size={14} />{t("newInstance.locationPick")}</button
+        >
+        {#if gameDir}<button type="button" class="btn sm ghost" onclick={() => (gameDir = null)}
+            >{t("common.default")}</button
+          >{/if}
+      </div>
+      <span class="hint">{t("newInstance.locationHint")}</span>
+    </div>
+    <div class="field">
       <span class="label">{t("newInstance.icon")}</span>
       <IconPicker bind:icon bind:file={iconFile} name={name || gameVersion} {loader} />
     </div>
@@ -205,6 +229,12 @@
   }
   .two > .field {
     flex: 1 1 0;
+  }
+  .loc {
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--r-sm);
+    background: var(--c-surface-2);
+    min-width: 0;
   }
   .check {
     gap: 0.4rem;

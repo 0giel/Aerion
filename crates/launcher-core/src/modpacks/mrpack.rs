@@ -10,7 +10,7 @@ use crate::error::{Error, Result};
 use crate::instances::launch::ensure_version;
 use crate::instances::{Instance, InstanceManager, LoaderKind, ModpackInfo, NewInstance};
 use crate::modpacks::{ExportOptions, excluded_from_export};
-use crate::mods::content::{ContentManager, entry_path};
+use crate::mods::content::entry_path;
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
 use crate::net::download::{DownloadItem, VerifyMode};
@@ -120,6 +120,7 @@ pub async fn import(
             loader_version,
             icon: None,
             group: None,
+            game_dir: None,
         })
         .await?;
     let result = install_into(
@@ -189,7 +190,7 @@ async fn install_into(
         .await?;
 
     // Record provenance of the downloaded files (one bulk hash lookup).
-    let content = ContentManager::new(instances.dir(&inst.id)?);
+    let content = instances.content(&inst.id)?;
     content.scan().await?;
     let _ = content.identify(modrinth, None).await;
     ensure_version(engine, instances, &inst, ctx).await?;
@@ -209,7 +210,7 @@ pub async fn export(
     let _ = engine;
     let inst = instances.get(id).await?;
     let game_dir = instances.game_dir(id)?;
-    let content = ContentManager::new(instances.dir(id)?);
+    let content = instances.content(id)?;
     let entries = content.scan().await?;
     let mut deps = BTreeMap::new();
     deps.insert("minecraft".to_owned(), inst.game_version.clone());

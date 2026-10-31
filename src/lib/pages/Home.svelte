@@ -125,7 +125,12 @@
   <aside class="player fade-up" aria-label={account?.username ?? ""}>
     <div class="player-name">{account?.username ?? "Steve"}</div>
     <div class="underline"></div>
-    <SkinViewer skinUrl={account?.skinUrl ?? DEFAULT_SKIN} slim={account?.skinVariant === "slim"} scale={9} />
+    <SkinViewer
+      skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
+      capeUrl={account?.capeUrl}
+      slim={account?.skinVariant === "slim"}
+      scale={9}
+    />
   </aside>
 
   {#if recent.length > 1}

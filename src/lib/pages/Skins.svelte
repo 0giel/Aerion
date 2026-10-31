@@ -30,6 +30,8 @@
   let selected = $state<string | null>(null);
   let busy = $state<string | null>(null);
   let capes = $state.raw<Cape[] | null>(null);
+  /** Cape under the pointer, previewed on the model before it is worn. */
+  let hoverCape = $state<string | null>(null);
 
   let editing = $state<SavedSkin | null>(null);
   let editName = $state("");
@@ -47,6 +49,7 @@
     editing ? editVariant === "slim" : current ? current.variant === "slim" : account?.skinVariant === "slim",
   );
   const activeCape = $derived(account?.capeUrl ?? null);
+  const previewCape = $derived(hoverCape === "none" ? null : (hoverCape ?? activeCape));
 
   async function load() {
     library = await commands.listSkins().catch(() => []);
@@ -216,7 +219,7 @@
   <div class="layout">
     <aside class="preview card">
       <div class="viewer">
-        <SkinViewer skinUrl={previewUrl} slim={previewSlim} scale={8} />
+        <SkinViewer skinUrl={previewUrl} capeUrl={previewCape} slim={previewSlim} scale={8} />
       </div>
       <div class="col gap-1 center">
         <strong class="truncate">{editing?.name ?? current?.name ?? t("skins.currentSkin")}</strong>
@@ -265,7 +268,12 @@
           {/if}
         </section>
 
-        {#if microsoft}
+        {#if !microsoft}
+          <section class="card col gap-2">
+            <h3>{t("skins.capes")}</h3>
+            <p class="small muted">{t("skins.capesNeedMicrosoft")}</p>
+          </section>
+        {:else}
           <section class="card col gap-3">
             <div class="row">
               <h3 class="grow">{t("skins.capes")}</h3>
@@ -289,6 +297,8 @@
                     aria-checked={!activeCape}
                     disabled={!!busy}
                     onclick={() => chooseCape(null)}
+                    onpointerenter={() => (hoverCape = "none")}
+                    onpointerleave={() => (hoverCape = null)}
                   >
                     <span class="none"><Icon name="x" size={18} /></span>
                     <span class="tiny">{t("skins.noCape")}</span>
@@ -300,12 +310,15 @@
                       aria-checked={c.state === "ACTIVE"}
                       disabled={!!busy}
                       onclick={() => chooseCape(c.id)}
+                      onpointerenter={() => (hoverCape = c.url)}
+                      onpointerleave={() => (hoverCape = null)}
                     >
                       <canvas width="10" height="16" use:capeFront={c.url}></canvas>
                       <span class="tiny truncate">{c.alias ?? "—"}</span>
                     </button>
                   {/each}
                 </div>
+                <span class="tiny faint">{t("skins.capeHoverHint")}</span>
               {/if}
             {/if}
           </section>

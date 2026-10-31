@@ -74,6 +74,11 @@ fn merge_env(
     env
 }
 
+/// Global arguments first, then the instance's own (later JVM flags win).
+fn merge_args(global: &[String], instance: &[String]) -> Vec<String> {
+    global.iter().chain(instance).cloned().collect()
+}
+
 pub async fn pick_java(
     engine: &Engine,
     settings: &Settings,
@@ -134,8 +139,15 @@ pub async fn plan(
     let prepared = prepare(&engine.meta, &engine.env, &version_id, mode, ctx).await?;
     ctx.stage("stage.java", None);
     let java = pick_java(engine, settings, &inst, &prepared.java, ctx).await?;
-    if !inst.jvm_args.is_empty() {
-        probe_args(&java.path, &inst.jvm_args).await?;
+    let jvm_args = merge_args(&settings.jvm_args, &inst.jvm_args);
+    if !jvm_args.is_empty() {
+        probe_args(&java.path, &jvm_args).await?;
+    }
+    let mut game_args = merge_args(&settings.game_args, &inst.game_args);
+    if inst.fullscreen.unwrap_or(settings.fullscreen)
+        && !game_args.iter().any(|a| a == "--fullscreen")
+    {
+        game_args.push("--fullscreen".into());
     }
     let modded = inst.loader != LoaderKind::Vanilla;
     let max_memory_mb = inst
@@ -149,16 +161,23 @@ pub async fn plan(
         java: java.path.clone(),
         java_major: java.major,
         max_memory_mb,
-        min_memory_mb: inst.min_memory_mb,
+        min_memory_mb: inst.min_memory_mb.or(settings.min_memory_mb),
         preset: inst.jvm_preset.unwrap_or(settings.jvm_preset),
-        extra_jvm_args: inst.jvm_args.clone(),
-        extra_game_args: inst.game_args.clone(),
-        resolution: inst.resolution.map(|r| (r.width, r.height)),
+        extra_jvm_args: jvm_args,
+        extra_game_args: game_args,
+        resolution: inst
+            .resolution
+            .or(settings.resolution)
+            .map(|r| (r.width, r.height)),
         quick_play_server: inst.join_server.clone().filter(|s| !s.trim().is_empty()),
-        env: merge_env(default_env(engine.env.os), &inst.env_vars),
+        env: merge_env(
+            merge_env(default_env(engine.env.os), &settings.env_vars),
+            &inst.env_vars,
+        ),
         wrapper: inst
             .wrapper
             .as_deref()
+            .or(settings.wrapper.as_deref())
             .map(|w| w.split_whitespace().map(str::to_owned).collect())
             .unwrap_or_default(),
         auth,
@@ -177,7 +196,17 @@ pub async fn plan(
 
 #[cfg(test)]
 mod tests {
-    use super::merge_env;
+    use super::{merge_args, merge_env};
+
+    #[test]
+    fn global_then_instance_arguments() {
+        let global = ["-XX:+UseZGC".to_owned(), "-Dglobal=1".to_owned()];
+        let inst = ["-Dglobal=2".to_owned()];
+        assert_eq!(
+            merge_args(&global, &inst),
+            ["-XX:+UseZGC", "-Dglobal=1", "-Dglobal=2"]
+        );
+    }
 
     #[test]
     fn instance_env_overrides_defaults() {

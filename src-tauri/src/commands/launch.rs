@@ -77,7 +77,8 @@ pub async fn start_launch(
             )
             .await?;
             ctx.check()?;
-            games::start(app2.clone(), plan, settings.after_launch);
+            let after = plan.instance.after_launch.unwrap_or(settings.after_launch);
+            games::start(app2.clone(), plan, after);
             Ok(None)
         },
     ))
