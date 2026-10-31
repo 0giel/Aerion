@@ -65,6 +65,8 @@
     width: 68%;
     height: 68%;
     object-fit: contain;
+    /* Older WebKit ignores `pixelated` and keeps the first, crisp fallback. */
+    image-rendering: -webkit-optimize-contrast;
     image-rendering: pixelated;
     filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.35));
   }
