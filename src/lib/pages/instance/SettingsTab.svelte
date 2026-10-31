@@ -3,6 +3,7 @@
   import { untrack } from "svelte";
   import Icon from "../../components/Icon.svelte";
   import { app } from "../../stores/app.svelte";
+  import { dialogs } from "../../stores/dialogs.svelte";
   import { toasts } from "../../stores/toasts.svelte";
   import {
     commands,
@@ -105,6 +106,52 @@
     memoryAuto = instance.maxMemoryMb === null;
     minMemoryOwn = instance.minMemoryMb !== null;
     customJava = instance.javaPath !== null;
+  }
+
+  // Game settings (options.txt …): copy between instances, or keep as template for new ones.
+  let copyFrom = $state("");
+  let template = $state.raw<{ source: string; savedAt: number } | null>(null);
+  const others = $derived(app.instances.filter((i) => i.id !== instance.id));
+  $effect(() => {
+    commands
+      .optionsTemplate()
+      .then((tpl) => (template = tpl))
+      .catch(() => {});
+  });
+
+  async function optionsAction(fn: () => Promise<unknown>, ok: string) {
+    try {
+      await fn();
+      toasts.success(ok);
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+  const copyFromOther = () =>
+    optionsAction(
+      () => commands.copyGameOptions(copyFrom, [instance.id]),
+      t("instance.settings.optionsCopied"),
+    );
+  async function copyToAll() {
+    const ok = await dialogs.confirm({
+      title: t("instance.settings.optionsToAllTitle"),
+      text: t("instance.settings.optionsToAllText", { n: others.length }),
+    });
+    if (ok)
+      await optionsAction(
+        () =>
+          commands.copyGameOptions(
+            instance.id,
+            others.map((i) => i.id),
+          ),
+        t("instance.settings.optionsCopied"),
+      );
+  }
+  async function saveTemplate() {
+    await optionsAction(
+      async () => (template = await commands.saveOptionsTemplate(instance.id)),
+      t("instance.settings.templateSaved"),
+    );
   }
 
   /** Move the game folder (worlds, mods…) somewhere else, or back with `null`. */
@@ -392,6 +439,33 @@
             >{/each}
         </select>
       </div>
+    </div>
+  </section>
+
+  <section class="card col gap-3">
+    <h3>{t("instance.settings.gameOptions")}</h3>
+    <span class="hint">{t("instance.settings.gameOptionsHint")}</span>
+    <div class="row wrap gap-2">
+      <select class="select grow" bind:value={copyFrom} aria-label={t("instance.settings.copyFrom")}>
+        <option value="">{t("instance.settings.copyFrom")}</option>
+        {#each others as o (o.id)}<option value={o.id}>{o.name}</option>{/each}
+      </select>
+      <button class="btn" disabled={!copyFrom} onclick={copyFromOther}
+        ><Icon name="download" size={15} />{t("instance.settings.copy")}</button
+      >
+      <button class="btn ghost" disabled={!others.length} onclick={copyToAll}
+        ><Icon name="upload" size={15} />{t("instance.settings.copyToAll")}</button
+      >
+    </div>
+    <div class="row wrap gap-2">
+      <button class="btn" onclick={saveTemplate}
+        ><Icon name="star" size={15} />{t("instance.settings.saveTemplate")}</button
+      >
+      <span class="small muted"
+        >{template
+          ? t("instance.settings.templateInfo", { name: template.source })
+          : t("instance.settings.noTemplate")}</span
+      >
     </div>
   </section>
 

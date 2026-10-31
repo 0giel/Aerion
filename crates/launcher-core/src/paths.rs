@@ -79,6 +79,10 @@ impl Paths {
     pub fn accounts_file(&self) -> PathBuf {
         self.root.join("accounts.json")
     }
+    /// Game settings that new instances start with.
+    pub fn options_template_dir(&self) -> PathBuf {
+        self.root.join("templates").join("game-options")
+    }
     pub fn skins_dir(&self) -> PathBuf {
         self.root.join("skins")
     }

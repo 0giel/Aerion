@@ -25,6 +25,21 @@
   let javas = $state.raw<JavaInstall[]>([]);
   let proxy = $state(app.settings?.proxy ?? "");
   let clientId = $state(app.settings?.msaClientId ?? "");
+  let optionsTemplate = $state.raw<{ source: string; savedAt: number } | null>(null);
+  $effect(() => {
+    commands
+      .optionsTemplate()
+      .then((tpl) => (optionsTemplate = tpl))
+      .catch(() => {});
+  });
+  async function clearTemplate() {
+    try {
+      await commands.clearOptionsTemplate();
+      optionsTemplate = null;
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
 
   const sections = [
     "general",
@@ -327,6 +342,19 @@
       <section id="set-game" class="card col gap-3">
         <h2>{t("settings.sections.game")}</h2>
         <span class="hint">{t("settings.gameHint")}</span>
+        <div class="field">
+          <span class="label">{t("instance.settings.gameOptions")}</span>
+          <div class="row wrap gap-2">
+            <span class="small grow"
+              >{optionsTemplate
+                ? t("instance.settings.templateInfo", { name: optionsTemplate.source })
+                : t("settings.noTemplateHint")}</span
+            >
+            {#if optionsTemplate}<button class="btn sm ghost" onclick={clearTemplate}
+                ><Icon name="trash" size={14} />{t("settings.clearTemplate")}</button
+              >{/if}
+          </div>
+        </div>
         <div class="field">
           <span class="label">{t("instance.settings.minMemory")}</span>
           <div class="row wrap gap-2">

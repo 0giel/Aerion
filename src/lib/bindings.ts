@@ -111,6 +111,11 @@ export const commands = {
 	removeServer: (id: string, address: string) => __TAURI_INVOKE<null>("remove_server", { id, address }),
 	/**  Live status of a server (players, MOTD, icon, ping). */
 	serverStatus: (address: string) => __TAURI_INVOKE<ServerStatus_Serialize>("server_status", { address }),
+	/**  Copy game settings (options.txt …) from one instance to others. Returns how many received them. */
+	copyGameOptions: (from: string, to: string[]) => __TAURI_INVOKE<number>("copy_game_options", { from, to }),
+	saveOptionsTemplate: (from: string) => __TAURI_INVOKE<OptionsTemplate>("save_options_template", { from }),
+	optionsTemplate: () => __TAURI_INVOKE<OptionsTemplate | null>("options_template"),
+	clearOptionsTemplate: () => __TAURI_INVOKE<null>("clear_options_template"),
 	listSkins: () => __TAURI_INVOKE<SavedSkin[]>("list_skins"),
 	/**  Add a PNG picked by the user to the library. */
 	addSkin: (path: string, name: string, variant: SkinVariant) => __TAURI_INVOKE<SavedSkin>("add_skin", { path, name, variant }),
@@ -765,6 +770,13 @@ export type NewInstance_Serialize = {
 	group: string | null,
 	/**  Put the game folder here instead of the launcher's data folder (must be empty or new). */
 	gameDir: string | null,
+};
+
+export type OptionsTemplate = {
+	/**  Name of the instance it was saved from. */
+	source: string,
+	/**  Unix seconds. */
+	savedAt: number,
 };
 
 export type Os = "windows" | "macos" | "linux";

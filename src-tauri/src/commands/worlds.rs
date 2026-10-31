@@ -1,5 +1,6 @@
 //! Worlds (with backups), screenshots and the server list of an instance.
 
+use launcher_core::instances::options::{self, OptionsTemplate};
 use launcher_core::instances::screenshots::{self, Screenshot};
 use launcher_core::instances::servers::{self, SavedServer};
 use launcher_core::instances::worlds::{self, WorldBackup, WorldInfo};
@@ -151,4 +152,57 @@ pub async fn remove_server(
 #[specta::specta]
 pub async fn server_status(address: String) -> CmdResult<ServerStatus> {
     Ok(mcping::status(&address).await?)
+}
+
+/// Copy game settings (options.txt …) from one instance to others. Returns how many received them.
+#[tauri::command]
+#[specta::specta]
+pub async fn copy_game_options(
+    state: State<'_, AppState>,
+    from: String,
+    to: Vec<String>,
+) -> CmdResult<u32> {
+    let src = state.instances.game_dir(&from)?;
+    let mut targets = Vec::new();
+    for id in to.iter().filter(|id| **id != from) {
+        not_running(&state, id)?;
+        targets.push(state.instances.game_dir(id)?);
+    }
+    blocking(move || {
+        let mut n = 0;
+        for t in &targets {
+            if options::copy(&src, t)? > 0 {
+                n += 1;
+            }
+        }
+        Ok(n)
+    })
+    .await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn save_options_template(
+    state: State<'_, AppState>,
+    from: String,
+) -> CmdResult<OptionsTemplate> {
+    let inst = state.instances.get(&from).await?;
+    let (src, dir) = (
+        state.instances.game_dir(&from)?,
+        state.paths.options_template_dir(),
+    );
+    blocking(move || options::save_template(&src, &dir, &inst.name)).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn options_template(state: State<'_, AppState>) -> CmdResult<Option<OptionsTemplate>> {
+    Ok(options::template(&state.paths.options_template_dir()))
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn clear_options_template(state: State<'_, AppState>) -> CmdResult<()> {
+    let dir = state.paths.options_template_dir();
+    blocking(move || options::clear_template(&dir)).await
 }

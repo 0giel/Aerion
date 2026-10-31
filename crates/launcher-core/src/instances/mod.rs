@@ -8,6 +8,7 @@
 //! ```
 
 pub mod launch;
+pub mod options;
 pub mod screenshots;
 pub mod servers;
 pub mod shortcut;

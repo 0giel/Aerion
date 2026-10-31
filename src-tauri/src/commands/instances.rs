@@ -27,6 +27,15 @@ pub async fn get_instance(state: State<'_, AppState>, id: String) -> CmdResult<I
 #[specta::specta]
 pub async fn create_instance(state: State<'_, AppState>, spec: NewInstance) -> CmdResult<Instance> {
     let inst = state.instances.create(spec).await?;
+    // New instances start with the saved game settings, if any (a failure only costs that).
+    let (tpl, game) = (
+        state.paths.options_template_dir(),
+        state.instances.game_dir(&inst.id)?,
+    );
+    let _ = tokio::task::spawn_blocking(move || {
+        launcher_core::instances::options::apply_template(&tpl, &game)
+    })
+    .await;
     let mut settings = state.settings.write().await;
     settings.last_instance = Some(inst.id.clone());
     settings.save(&state.paths).await?;
