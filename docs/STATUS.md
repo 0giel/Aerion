@@ -48,6 +48,8 @@ Newest entries first.
 - **NeoForge 26.3 (26.3.0.100)**: one processor (installertools fatjar). First launch crashed with
   SIGSEGV in `libnvidia-glcore` (FML early-window thread) after GL_INVALID_OPERATION errors.
   `__GL_THREADED_OPTIMIZATIONS=0` fixes it → **title screen in 10 s**.
+- **Forge 1.8.9 (11.15.1.2318)**: legacy installer (embedded `versionInfo` + universal jar),
+  Java 8 (`jre-legacy`) → FML loading in 15 s.
 - **Fixed:** the launcher now sets `__GL_THREADED_OPTIMIZATIONS=0` for game processes on Linux
   when the NVIDIA driver is loaded (`game::launch::default_env`); variables set on the instance
   or in the launcher's own environment take precedence.

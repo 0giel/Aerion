@@ -205,15 +205,15 @@ has been *verified* against its acceptance criterion. Details and the running lo
 | M4 | Fabric, Quilt | Fabric 26.3 / 1.21.11 and Quilt 1.21.11 launch | ✅ Fabric 1.21.11 (UI) and Quilt 1.21.11 |
 | M5 | Modrinth browser, install with dependencies, enable/disable, updates + undo, hash recognition | Sodium + Fabric API install and run | ✅ install, toggle, update check (channel fix); undo pending |
 | M6 | CurseForge in the same browser (user key, missing `downloadUrl` handling) | mocked integration tests; live once a key is entered | code + mocks; live needs a key |
-| M7 | Modpacks (.mrpack / CurseForge zip import+export, own format), resource packs, shaders | a Modrinth pack installs and starts | ✅ Fabulously Optimized (149 mods) installs from the browser and starts; export pending |
-| M8 | NeoForge, Forge | NeoForge 26.3, Forge 1.20.1, Forge 1.8.9 launch | ✅ NeoForge 26.3 + Forge 1.20.1 via the app (NVIDIA env fix); Forge 1.8.9 pending |
-| M9 | Theme editor, built-in themes, THEMING.md | live edits without restart; export/import | live preview verified (loop fixed); THEMING.md pending |
-| M10 | Performance audit, accessibility, crash analysis polish, tray, updater hook, bundles, README | targets measured in PERFORMANCE.md | not started |
+| M7 | Modpacks (.mrpack / CurseForge zip import+export, own format), resource packs, shaders | a Modrinth pack installs and starts | ✅ Fabulously Optimized (149 mods) installs from the browser and starts; `.mrpack` export → import round trip ✅ |
+| M8 | NeoForge, Forge | NeoForge 26.3, Forge 1.20.1, Forge 1.8.9 launch | ✅ NeoForge 26.3, Forge 1.20.1, Forge 1.8.9 via the app (NVIDIA env fix) |
+| M9 | Theme editor, built-in themes, THEMING.md | live edits without restart; export/import | ✅ live preview, schema, THEMING.md |
+| M10 | Performance audit, accessibility, crash analysis polish, tray, updater hook, bundles, README | targets measured in PERFORMANCE.md | in progress: release build, bundles, PERFORMANCE.md |
 
 ### Next steps (in order)
 1. ~~Fix the blank window~~ ✅ · ~~onboarding → offline account → 26.3 → Play through the UI~~ ✅
 2. ~~Wizard with a loader, Fabric + Sodium/Fabric API from Modrinth~~ ✅
-3. ~~Forge 1.20.1 and NeoForge 26.3 launches~~ ✅ · ~~a `.mrpack` install~~ ✅ · ~~Quilt~~ ✅ · Forge 1.8.9.
+3. ~~Forge 1.20.1 and NeoForge 26.3 launches~~ ✅ · ~~a `.mrpack` install~~ ✅ · ~~Quilt~~ ✅ · ~~Forge 1.8.9~~ ✅
 4. ~~Docs: README, DECISIONS, THEMING (+ schema), AZURE_SETUP~~ ✅ · PERFORMANCE (after the release build).
 5. ~~Vitest tests (i18n shape, theme schema)~~ ✅ · release build + bundles, performance measurements.
 
