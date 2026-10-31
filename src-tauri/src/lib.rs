@@ -55,6 +55,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             instances::export_instance,
             instances::list_game_dir,
             launch::launch_instance,
+            launch::join_server,
             launch::stop_instance,
             launch::running_games,
             launch::game_logs,
@@ -77,6 +78,18 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             mods::install_modpack,
             mods::curseforge_status,
             mods::set_curseforge_key,
+            commands::worlds::list_worlds,
+            commands::worlds::list_world_backups,
+            commands::worlds::backup_world,
+            commands::worlds::restore_world_backup,
+            commands::worlds::delete_world_backup,
+            commands::worlds::list_screenshots,
+            commands::worlds::delete_screenshot,
+            commands::worlds::open_screenshot,
+            commands::worlds::list_servers,
+            commands::worlds::add_server,
+            commands::worlds::remove_server,
+            commands::worlds::server_status,
             commands::skins::list_skins,
             commands::skins::add_skin,
             commands::skins::save_account_skin,
@@ -179,7 +192,7 @@ fn handle_launch_arg(app: &AppHandle, args: &[String]) {
         let app = app.clone();
         tauri::async_runtime::spawn(async move {
             let state = app.state::<AppState>();
-            if let Err(e) = commands::launch::start_launch(&app, &state, id, None).await {
+            if let Err(e) = commands::launch::start_launch(&app, &state, id, None, None).await {
                 tracing::warn!(error = %e.message, "launch from shortcut failed");
                 show_main(&app);
             }

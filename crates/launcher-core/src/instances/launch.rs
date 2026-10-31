@@ -125,6 +125,8 @@ pub async fn pick_java(
         .ok_or(Error::JavaNotFound(req.major_version))
 }
 
+// Every input is a distinct piece of launch context; a struct would only rename them.
+#[allow(clippy::too_many_arguments)]
 pub async fn plan(
     engine: &Engine,
     settings: &Settings,
@@ -132,6 +134,7 @@ pub async fn plan(
     instance_id: &str,
     auth: AuthInfo,
     mode: VerifyMode,
+    join_server: Option<String>,
     ctx: &TaskCtx,
 ) -> Result<LaunchPlan> {
     let inst = instances.get(instance_id).await?;
@@ -169,7 +172,9 @@ pub async fn plan(
             .resolution
             .or(settings.resolution)
             .map(|r| (r.width, r.height)),
-        quick_play_server: inst.join_server.clone().filter(|s| !s.trim().is_empty()),
+        quick_play_server: join_server
+            .or_else(|| inst.join_server.clone())
+            .filter(|s| !s.trim().is_empty()),
         env: merge_env(
             merge_env(default_env(engine.env.os), &settings.env_vars),
             &inst.env_vars,

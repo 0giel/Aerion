@@ -105,6 +105,14 @@ export function textureUrl(texture: string): string {
   return `${LOCAL_IMG}mc/${texture.split("/").map(encodeURIComponent).join("/")}`;
 }
 
+export function screenshotUrl(id: string, name: string): string {
+  return `${LOCAL_IMG}instance/${encodeURIComponent(id)}/screenshots/${encodeURIComponent(name)}`;
+}
+
+export function worldIconUrl(id: string, folder: string): string {
+  return `${LOCAL_IMG}instance/${encodeURIComponent(id)}/world/${encodeURIComponent(folder)}`;
+}
+
 /** A skin from the launcher's skin library. */
 export function savedSkinUrl(id: string): string {
   return `${LOCAL_IMG}skin/${encodeURIComponent(id)}`;

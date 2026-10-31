@@ -8,7 +8,10 @@
 //! ```
 
 pub mod launch;
+pub mod screenshots;
+pub mod servers;
 pub mod shortcut;
+pub mod worlds;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

@@ -7,6 +7,9 @@
   import ContentTab from "./instance/ContentTab.svelte";
   import SettingsTab from "./instance/SettingsTab.svelte";
   import ExportModal from "./instance/ExportModal.svelte";
+  import WorldsTab from "./instance/WorldsTab.svelte";
+  import ScreenshotsTab from "./instance/ScreenshotsTab.svelte";
+  import ServersTab from "./instance/ServersTab.svelte";
   import Modal from "../components/Modal.svelte";
   import IconPicker from "../components/IconPicker.svelte";
   import { app } from "../stores/app.svelte";
@@ -17,7 +20,7 @@
   import { formatPlayTime, formatRelative, t } from "../i18n/index.svelte";
 
   const id = router.params.id ?? "";
-  type Tab = "content" | "settings" | "logs";
+  type Tab = "content" | "worlds" | "screenshots" | "servers" | "settings" | "logs";
   let tab = $state<Tab>((router.params.tab as Tab) ?? "content");
   let menuOpen = $state(false);
   let exportOpen = $state(false);
@@ -205,7 +208,7 @@
     {#if crash}<CrashCard {crash} ondetails={() => (tab = "logs")} />{/if}
 
     <div class="tabs" role="tablist">
-      {#each [["content", "instance.tabContent", "layers"], ["settings", "instance.tabSettings", "sliders"], ["logs", "instance.tabLogs", "terminal"]] as [key, label, icon] (key)}
+      {#each [["content", "instance.tabContent", "layers"], ["worlds", "instance.tabWorlds", "globe"], ["screenshots", "instance.tabScreenshots", "image"], ["servers", "instance.tabServers", "monitor"], ["settings", "instance.tabSettings", "sliders"], ["logs", "instance.tabLogs", "terminal"]] as [key, label, icon] (key)}
         <button role="tab" aria-selected={tab === key} onclick={() => (tab = key as Tab)}
           ><Icon name={icon} size={16} />{t(label)}</button
         >
@@ -215,6 +218,12 @@
     <section class="tab-body">
       {#if tab === "content"}
         <ContentTab instance={inst} />
+      {:else if tab === "worlds"}
+        <WorldsTab instance={inst} />
+      {:else if tab === "screenshots"}
+        <ScreenshotsTab instance={inst} />
+      {:else if tab === "servers"}
+        <ServersTab instance={inst} />
       {:else if tab === "settings"}
         <SettingsTab instance={inst} onremove={remove} />
       {:else}

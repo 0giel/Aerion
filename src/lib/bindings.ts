@@ -64,6 +64,8 @@ export const commands = {
 	 *  the game itself is reported through `GameStateEvent` / `GameLogEvent`.
 	 */
 	launchInstance: (id: string, accountId: string | null) => __TAURI_INVOKE<string>("launch_instance", { id, accountId }),
+	/**  Launch an instance straight into a multiplayer server (Quick Play). */
+	joinServer: (id: string, address: string) => __TAURI_INVOKE<string>("join_server", { id, address }),
 	stopInstance: (id: string) => __TAURI_INVOKE<boolean>("stop_instance", { id }),
 	runningGames: () => __TAURI_INVOKE<RunningGame[]>("running_games"),
 	gameLogs: (id: string) => __TAURI_INVOKE<LogLine_Serialize[]>("game_logs", { id }),
@@ -94,6 +96,21 @@ export const commands = {
 	curseforgeStatus: () => __TAURI_INVOKE<CurseForgeStatus>("curseforge_status"),
 	/**  Validate and store (or remove) the user's CurseForge API key in the OS keyring. */
 	setCurseforgeKey: (key: string | null) => __TAURI_INVOKE<CurseForgeStatus>("set_curseforge_key", { key }),
+	listWorlds: (id: string) => __TAURI_INVOKE<WorldInfo[]>("list_worlds", { id }),
+	listWorldBackups: (id: string) => __TAURI_INVOKE<WorldBackup[]>("list_world_backups", { id }),
+	backupWorld: (id: string, folder: string) => __TAURI_INVOKE<WorldBackup>("backup_world", { id, folder }),
+	/**  Restore a backup (the world's current state is backed up first). Returns the world folder. */
+	restoreWorldBackup: (id: string, file: string) => __TAURI_INVOKE<string>("restore_world_backup", { id, file }),
+	deleteWorldBackup: (id: string, file: string) => __TAURI_INVOKE<null>("delete_world_backup", { id, file }),
+	listScreenshots: (id: string) => __TAURI_INVOKE<Screenshot[]>("list_screenshots", { id }),
+	deleteScreenshot: (id: string, name: string) => __TAURI_INVOKE<null>("delete_screenshot", { id, name }),
+	/**  Open a screenshot in the system image viewer. */
+	openScreenshot: (id: string, name: string) => __TAURI_INVOKE<null>("open_screenshot", { id, name }),
+	listServers: (id: string) => __TAURI_INVOKE<SavedServer_Serialize[]>("list_servers", { id }),
+	addServer: (id: string, name: string, address: string) => __TAURI_INVOKE<null>("add_server", { id, name, address }),
+	removeServer: (id: string, address: string) => __TAURI_INVOKE<null>("remove_server", { id, address }),
+	/**  Live status of a server (players, MOTD, icon, ping). */
+	serverStatus: (address: string) => __TAURI_INVOKE<ServerStatus_Serialize>("server_status", { address }),
 	listSkins: () => __TAURI_INVOKE<SavedSkin[]>("list_skins"),
 	/**  Add a PNG picked by the user to the library. */
 	addSkin: (path: string, name: string, variant: SkinVariant) => __TAURI_INVOKE<SavedSkin>("add_skin", { path, name, variant }),
@@ -952,11 +969,34 @@ export type RunningGame = {
 	command: string,
 };
 
+export type SavedServer = SavedServer_Serialize | SavedServer_Deserialize;
+
+export type SavedServer_Deserialize = {
+	name: string,
+	address: string,
+	/**  Last icon the game stored (base64 PNG), shown until a live status arrives. */
+	icon?: string | null,
+};
+
+export type SavedServer_Serialize = {
+	name: string,
+	address: string,
+	/**  Last icon the game stored (base64 PNG), shown until a live status arrives. */
+	icon: string | null,
+};
+
 export type SavedSkin = {
 	id: string,
 	name: string,
 	variant: SkinVariant,
 	addedAt: number,
+};
+
+export type Screenshot = {
+	name: string,
+	sizeBytes: number,
+	/**  Unix seconds. */
+	taken: number,
 };
 
 export type SearchPage = SearchPage_Serialize | SearchPage_Deserialize;
@@ -995,6 +1035,30 @@ export type SearchQuery_Serialize = {
 	sort: SortOrder,
 	offset: number,
 	limit: number,
+};
+
+export type ServerStatus = ServerStatus_Serialize | ServerStatus_Deserialize;
+
+export type ServerStatus_Deserialize = {
+	online: number,
+	max: number,
+	version: string,
+	/**  Message of the day as plain text (formatting codes removed). */
+	motd: string,
+	/**  `data:image/png;base64,…` */
+	favicon?: string | null,
+	pingMs: number,
+};
+
+export type ServerStatus_Serialize = {
+	online: number,
+	max: number,
+	version: string,
+	/**  Message of the day as plain text (formatting codes removed). */
+	motd: string,
+	/**  `data:image/png;base64,…` */
+	favicon: string | null,
+	pingMs: number,
 };
 
 export type Settings = Settings_Serialize | Settings_Deserialize;
@@ -1245,6 +1309,27 @@ export type VersionFile_Serialize = {
 	sha1: string | null,
 	sha512: string | null,
 	primary: boolean,
+};
+
+export type WorldBackup = {
+	file: string,
+	world: string,
+	/**  Unix seconds. */
+	created: number,
+	sizeBytes: number,
+	/**  Made before mod updates or a version change. */
+	auto: boolean,
+};
+
+export type WorldInfo = {
+	/**  Folder name inside `saves/` (the identity). */
+	folder: string,
+	/**  `LevelName` from `level.dat`, or the folder name. */
+	name: string,
+	/**  Unix seconds. */
+	lastPlayed: number,
+	sizeBytes: number,
+	hasIcon: boolean,
 };
 
 /* Tauri Specta runtime */

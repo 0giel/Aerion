@@ -10,5 +10,6 @@ pub mod skins;
 pub mod tasks;
 pub mod themes;
 pub mod versions;
+pub mod worlds;
 
 pub type CmdResult<T> = Result<T, launcher_core::ErrorInfo>;

@@ -200,6 +200,8 @@ pub fn theme_asset<R: Runtime>(
 #[derive(Debug, PartialEq)]
 enum LocalImg {
     InstanceIcon { id: String, file: String },
+    Screenshot { id: String, name: String },
+    WorldIcon { id: String, folder: String },
     Skin(String),
     Texture(String),
 }
@@ -207,6 +209,14 @@ enum LocalImg {
 fn parse_local_img(path: &str) -> Option<LocalImg> {
     let mut parts = path.trim_start_matches('/').split('/');
     let img = match (parts.next()?, parts.next()?, parts.next()) {
+        ("instance", id, Some(kind @ ("screenshots" | "world"))) => {
+            let (id, item) = (percent_decode(id), percent_decode(parts.next()?));
+            if kind == "world" {
+                LocalImg::WorldIcon { id, folder: item }
+            } else {
+                LocalImg::Screenshot { id, name: item }
+            }
+        }
         ("instance", id, Some(file)) => LocalImg::InstanceIcon {
             id: percent_decode(id),
             file: percent_decode(file),
@@ -229,6 +239,19 @@ pub fn local_img<R: Runtime>(
         let file = match parse_local_img(request.uri().path()) {
             Some(LocalImg::InstanceIcon { id, file }) => state.instances.icon_file(&id, &file),
             Some(LocalImg::Skin(id)) => state.skins.file(&id),
+            Some(LocalImg::Screenshot { id, name }) => state
+                .instances
+                .game_dir(&id)
+                .and_then(|g| launcher_core::instances::screenshots::path(&g, &name)),
+            Some(LocalImg::WorldIcon { id, folder }) => {
+                if folder.contains(['/', '\\']) || folder.starts_with('.') {
+                    return responder.respond(empty(StatusCode::BAD_REQUEST));
+                }
+                state
+                    .instances
+                    .game_dir(&id)
+                    .map(|g| g.join("saves").join(&folder).join("icon.png"))
+            }
             Some(LocalImg::Texture(name)) => {
                 let engine = state.engine.read().await;
                 return match state.textures.get(&engine, &name).await {
@@ -360,6 +383,13 @@ mod tests {
         assert_eq!(
             parse_local_img("/mc/item/diamond"),
             Some(LocalImg::Texture("item/diamond".into()))
+        );
+        assert_eq!(
+            parse_local_img("/instance/A/screenshots/shot%201.png"),
+            Some(LocalImg::Screenshot {
+                id: "A".into(),
+                name: "shot 1.png".into()
+            })
         );
         assert_eq!(parse_local_img("/instance/a/b/c"), None);
         assert_eq!(parse_local_img("/other/x"), None);

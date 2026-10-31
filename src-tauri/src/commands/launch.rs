@@ -18,7 +18,20 @@ pub async fn launch_instance(
     id: String,
     account_id: Option<String>,
 ) -> CmdResult<String> {
-    start_launch(&app, &state, id, account_id).await
+    start_launch(&app, &state, id, account_id, None).await
+}
+
+/// Launch an instance straight into a multiplayer server (Quick Play).
+#[tauri::command]
+#[specta::specta]
+pub async fn join_server(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    address: String,
+) -> CmdResult<String> {
+    launcher_core::net::mcping::parse_address(&address)?;
+    start_launch(&app, &state, id, None, Some(address)).await
 }
 
 pub async fn start_launch(
@@ -26,6 +39,7 @@ pub async fn start_launch(
     state: &AppState,
     id: String,
     account_id: Option<String>,
+    join_server: Option<String>,
 ) -> CmdResult<String> {
     if state.games.is_running(&id) || state.tasks.running_for(&id, "launch") {
         return Err(launcher_core::Error::AlreadyRunning.into());
@@ -73,6 +87,7 @@ pub async fn start_launch(
                 &id,
                 auth,
                 VerifyMode::Fast,
+                join_server,
                 &ctx,
             )
             .await?;
