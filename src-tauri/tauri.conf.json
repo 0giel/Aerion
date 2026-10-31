@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Luncher",
+  "version": "0.1.0",
+  "identifier": "pl.luncher.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Luncher",
+        "width": 1200,
+        "height": 760,
+        "minWidth": 920,
+        "minHeight": 600,
+        "center": true,
+        "visible": false,
+        "dragDropEnabled": true,
+        "backgroundColor": "#141519"
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob: img: http://img.localhost https://img.localhost themeasset: http://themeasset.localhost https://themeasset.localhost",
+        "media-src": "'self' blob: themeasset: http://themeasset.localhost https://themeasset.localhost",
+        "font-src": "'self' data:",
+        "connect-src": "ipc: http://ipc.localhost",
+        "object-src": "'none'",
+        "frame-src": "'none'",
+        "base-uri": "'none'",
+        "form-action": "'none'"
+      },
+      "devCsp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob: img: http://img.localhost https://img.localhost themeasset: http://themeasset.localhost https://themeasset.localhost",
+        "media-src": "'self' blob: themeasset: http://themeasset.localhost https://themeasset.localhost",
+        "font-src": "'self' data:",
+        "connect-src": "ipc: http://ipc.localhost ws://localhost:1420 http://localhost:1420",
+        "object-src": "'none'",
+        "frame-src": "'none'",
+        "base-uri": "'none'",
+        "form-action": "'none'"
+      },
+      "freezePrototype": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "deb", "appimage", "dmg"],
+    "category": "Game",
+    "shortDescription": "Minecraft: Java Edition launcher",
+    "longDescription": "Luncher is an unofficial, fast and themeable launcher for Minecraft: Java Edition with Modrinth and CurseForge integration. Not approved by or associated with Mojang or Microsoft.",
+    "copyright": "Unofficial product. Not approved by or associated with Mojang or Microsoft.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "windows": {
+      "nsis": { "installMode": "currentUser", "languages": ["English", "Polish"], "displayLanguageSelector": false },
+      "webviewInstallMode": { "type": "downloadBootstrapper" }
+    },
+    "linux": {
+      "deb": { "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"] }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+# Rust
+/target/
+**/target/
+
+# Node / frontend
+node_modules/
+dist/
+*.local
+.vite/
+
+# Tauri
+src-tauri/gen/schemas/
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Local launcher data when running portable builds from the repo
+/data/
+portable

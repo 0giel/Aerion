@@ -1,0 +1,59 @@
+{
+  "$schema": "./theme.schema.json",
+  "id": "light",
+  "name": "Light",
+  "author": "Luncher",
+  "base": "light",
+  "colors": {
+    "bg": "#f3f3f7",
+    "surface": "#ffffff",
+    "surface2": "#f0f0f5",
+    "surface3": "#e6e6ee",
+    "border": "#1b1b2a1c",
+    "text": "#1c1c28",
+    "textMuted": "#55556a",
+    "textFaint": "#8a8a9c",
+    "accent": "#5b4dff",
+    "accentText": "#ffffff",
+    "success": "#16a34a",
+    "warning": "#b45309",
+    "danger": "#dc2626",
+    "info": "#2563eb",
+    "focus": "#5b4dff"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 14,
+    "glass": 0.82,
+    "shadow": 0.18
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#f3f3f7",
+    "gradient": "radial-gradient(1000px 600px at 90% 0%, #e7e3ff 0%, transparent 60%), linear-gradient(180deg, #f6f6fa 0%, #eeeef4 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": false,
+    "particles": "none"
+  }
+}

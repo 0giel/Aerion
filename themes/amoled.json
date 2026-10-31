@@ -1,0 +1,59 @@
+{
+  "$schema": "./theme.schema.json",
+  "id": "amoled",
+  "name": "AMOLED",
+  "author": "Luncher",
+  "base": "dark",
+  "colors": {
+    "bg": "#000000",
+    "surface": "#0b0b0d",
+    "surface2": "#141417",
+    "surface3": "#1d1d21",
+    "border": "#ffffff14",
+    "text": "#f2f2f5",
+    "textMuted": "#a3a3ad",
+    "textFaint": "#6b6b75",
+    "accent": "#e2e2ea",
+    "accentText": "#000000",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#ffffff"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 0,
+    "glass": 1,
+    "shadow": 0
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "color",
+    "color": "#000000",
+    "gradient": null,
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": false,
+    "particles": "none"
+  }
+}

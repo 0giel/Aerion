@@ -1,0 +1,201 @@
+<script lang="ts">
+  import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import Icon from "../components/Icon.svelte";
+  import InstanceIcon from "../components/InstanceIcon.svelte";
+  import { app } from "../stores/app.svelte";
+  import { router } from "../stores/router.svelte";
+  import { ui } from "../stores/ui.svelte";
+  import { toasts } from "../stores/toasts.svelte";
+  import { commands, errorMessage, instanceVersionLabel, type Instance } from "../api";
+  import { formatPlayTime, formatRelative, t } from "../i18n/index.svelte";
+
+  type Sort = "recent" | "name" | "version" | "created";
+  let query = $state("");
+  let sort = $state<Sort>("recent");
+  let group = $state<string | null>(null);
+
+  const groups = $derived(
+    [...new Set(app.instances.map((i) => i.group).filter((g): g is string => !!g))].sort(),
+  );
+  const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+  const list = $derived.by(() => {
+    const q = fold(query.trim());
+    const filtered = app.instances.filter(
+      (i) =>
+        (!group || i.group === group) &&
+        (!q ||
+          fold(`${i.name} ${i.gameVersion} ${i.loader} ${i.group ?? ""} ${i.tags.join(" ")}`).includes(q)),
+    );
+    const by: Record<Sort, (a: Instance, b: Instance) => number> = {
+      recent: (a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0) || a.name.localeCompare(b.name),
+      name: (a, b) => a.name.localeCompare(b.name),
+      version: (a, b) => b.gameVersion.localeCompare(a.gameVersion, undefined, { numeric: true }),
+      created: (a, b) => b.createdAt - a.createdAt,
+    };
+    return [...filtered].sort(by[sort]);
+  });
+
+  async function importPack() {
+    const file = await openDialog({
+      multiple: false,
+      filters: [{ name: "Modpack", extensions: ["mrpack", "zip"] }],
+    });
+    if (typeof file === "string") await commands.importPack(file).catch((e) => toasts.error(errorMessage(e)));
+  }
+</script>
+
+<div class="page">
+  <header class="page-header">
+    <h1 class="grow">{t("instances.title")}</h1>
+    <button class="btn" onclick={importPack}><Icon name="upload" size={16} />{t("instances.import")}</button>
+    <button class="btn primary" onclick={() => (ui.newInstanceOpen = true)}
+      ><Icon name="plus" size={16} />{t("instances.new")}</button
+    >
+  </header>
+
+  <div class="toolbar row wrap">
+    <label class="search">
+      <Icon name="search" size={16} />
+      <input
+        class="input"
+        bind:value={query}
+        placeholder={t("instances.search")}
+        aria-label={t("instances.search")}
+      />
+    </label>
+    <select class="select sort" bind:value={sort} aria-label={t("mods.sort")}>
+      <option value="recent">{t("instances.sortRecent")}</option>
+      <option value="name">{t("instances.sortName")}</option>
+      <option value="version">{t("instances.sortVersion")}</option>
+      <option value="created">{t("instances.sortCreated")}</option>
+    </select>
+    <span class="grow"></span>
+    <span class="small faint">{t("instances.count", { n: list.length })}</span>
+  </div>
+  {#if groups.length}
+    <div class="row wrap groups">
+      <button class="chip" aria-pressed={group === null} onclick={() => (group = null)}
+        >{t("instances.allGroups")}</button
+      >
+      {#each groups as g (g)}
+        <button class="chip" aria-pressed={group === g} onclick={() => (group = g)}>{g}</button>
+      {/each}
+    </div>
+  {/if}
+
+  {#if !app.instances.length}
+    <div class="empty card">
+      <Icon name="grid" size={40} />
+      <h3>{t("instances.empty")}</h3>
+      <p class="muted">{t("instances.emptyHint")}</p>
+      <button class="btn primary" onclick={() => (ui.newInstanceOpen = true)}
+        ><Icon name="plus" size={16} />{t("instances.new")}</button
+      >
+    </div>
+  {:else if !list.length}
+    <div class="empty"><p>{t("instances.noResults")}</p></div>
+  {:else}
+    <div class="grid">
+      {#each list as inst (inst.id)}
+        {@const running = !!app.running[inst.id]}
+        {@const busy = app.isBusy(inst.id)}
+        <article class="tile card" class:running>
+          <button class="open" onclick={() => router.go("instance", { id: inst.id })} aria-label={inst.name}
+          ></button>
+          <div class="row">
+            <InstanceIcon name={inst.name} loader={inst.loader} size={46} />
+            <div class="col gap-1 grow" style="min-width:0">
+              <strong class="truncate">{inst.name}</strong>
+              <span class="small muted truncate">{instanceVersionLabel(inst)}</span>
+            </div>
+          </div>
+          <div class="meta tiny faint">
+            <span><Icon name="clock" size={13} />{formatRelative(inst.lastPlayed)}</span>
+            {#if inst.playTimeSecs}<span>{formatPlayTime(inst.playTimeSecs)}</span>{/if}
+            {#if inst.group}<span class="badge">{inst.group}</span>{/if}
+          </div>
+          <button
+            class="btn play"
+            class:primary={!running}
+            class:danger={running}
+            disabled={busy && !running}
+            onclick={() => (running ? app.stop(inst.id) : app.launch(inst.id))}
+          >
+            <Icon name={running ? "stop" : "play"} size={15} />{running ? t("common.stop") : t("common.play")}
+          </button>
+        </article>
+      {/each}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .toolbar {
+    margin-bottom: var(--sp-3);
+  }
+  .search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: min(22rem, 100%);
+    color: var(--c-text-faint);
+  }
+  .search :global(.icon) {
+    position: absolute;
+    left: 0.7rem;
+  }
+  .search .input {
+    padding-left: 2.2rem;
+  }
+  .sort {
+    width: auto;
+  }
+  .groups {
+    margin-bottom: var(--sp-3);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: var(--sp-3);
+  }
+  .tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    transition:
+      transform var(--dur) var(--ease),
+      border-color var(--dur) var(--ease);
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--c-accent) 40%, var(--c-border));
+  }
+  .tile.running {
+    border-color: color-mix(in srgb, var(--c-success) 50%, transparent);
+  }
+  .open {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: transparent;
+    border-radius: inherit;
+    cursor: pointer;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .play {
+    position: relative;
+    align-self: flex-start;
+  }
+</style>

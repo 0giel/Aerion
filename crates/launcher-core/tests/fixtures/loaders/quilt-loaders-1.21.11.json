@@ -1,0 +1,432 @@
+[
+  {
+    "loader": {
+      "maven": "org.quiltmc:quilt-loader:0.20.0-beta.9",
+      "version": "0.20.0-beta.9",
+      "build": 9,
+      "separator": ".",
+      "file_size": 1550096,
+      "hashes": {
+        "sha1": "5f092442b79a6511f6b25c8d175ae76393444db7",
+        "sha256": "a475689ac9a5b9718c045972bb0f41381ce22315a87273a99f30ec1fa3aacb8a",
+        "sha512": "6f2e2c0f47afeee5812bf979b19372a9384661e896a0278f2183a5494ea0db962dff7afc401738c469d37f2e506261fb971e0831ddf12efa219e4f875d0b9e45"
+      }
+    },
+    "hashed": {
+      "maven": "org.quiltmc:hashed:1.21.11",
+      "version": "1.21.11",
+      "file_size": 1103658,
+      "hashes": {
+        "sha1": "56aa2b39b149ce19c6ea86324198e4829e09a4c6",
+        "sha256": "d76039d601a0c54cbe401a0e27c65caff83af31740d0ee021a094f10bb09eaef",
+        "sha512": "7d544744d8e619d8d698fe477926fc02f765259fd163f5577cd74f695eb56bab4f76bd0b7a067daa462d054893fa915a4f6b12ef8a29b44af921753b6fd5c4b3"
+      }
+    },
+    "intermediary": {
+      "maven": "net.fabricmc:intermediary:1.21.11",
+      "version": "1.21.11"
+    },
+    "launcherMeta": {
+      "version": 1,
+      "libraries": {
+        "client": [],
+        "common": [
+          {
+            "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:tiny-remapper:0.8.6",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:access-widener:2.1.0",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-json5:1.0.4+final",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          },
+          {
+            "name": "org.ow2.asm:asm:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-analysis:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-commons:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-tree:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-util:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-config:1.1.0-beta.3",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          }
+        ],
+        "server": []
+      },
+      "mainClass": {
+        "client": "org.quiltmc.loader.impl.launch.knot.KnotClient",
+        "server": "org.quiltmc.loader.impl.launch.knot.KnotServer",
+        "serverLauncher": "org.quiltmc.loader.impl.launch.server.QuiltServerLauncher"
+      }
+    }
+  },
+  {
+    "loader": {
+      "maven": "org.quiltmc:quilt-loader:0.20.0-beta.7",
+      "version": "0.20.0-beta.7",
+      "build": 7,
+      "separator": ".",
+      "file_size": 1550094,
+      "hashes": {
+        "sha1": "a430a615c5e9c8560491df4e570acd0fa54d1a1c",
+        "sha256": "c9a83fa20e8f21682a7ec3ee2ac34368b76b6795c5953e342fc64ebcbfc24dff",
+        "sha512": "0bd3ce1c97820da234626fcb5a469fcc7ff85644499fbe76070e25dbd922e84bedb9d7b1ed993b3bbdb854ef195239ffb20d5a654f1af332c369ca5e208c3cf1"
+      }
+    },
+    "hashed": {
+      "maven": "org.quiltmc:hashed:1.21.11",
+      "version": "1.21.11",
+      "file_size": 1103658,
+      "hashes": {
+        "sha1": "56aa2b39b149ce19c6ea86324198e4829e09a4c6",
+        "sha256": "d76039d601a0c54cbe401a0e27c65caff83af31740d0ee021a094f10bb09eaef",
+        "sha512": "7d544744d8e619d8d698fe477926fc02f765259fd163f5577cd74f695eb56bab4f76bd0b7a067daa462d054893fa915a4f6b12ef8a29b44af921753b6fd5c4b3"
+      }
+    },
+    "intermediary": {
+      "maven": "net.fabricmc:intermediary:1.21.11",
+      "version": "1.21.11"
+    },
+    "launcherMeta": {
+      "version": 1,
+      "libraries": {
+        "client": [],
+        "common": [
+          {
+            "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:tiny-remapper:0.8.6",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:access-widener:2.1.0",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-json5:1.0.4+final",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          },
+          {
+            "name": "org.ow2.asm:asm:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-analysis:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-commons:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-tree:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-util:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-config:1.1.0-beta.3",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          }
+        ],
+        "server": []
+      },
+      "mainClass": {
+        "client": "org.quiltmc.loader.impl.launch.knot.KnotClient",
+        "server": "org.quiltmc.loader.impl.launch.knot.KnotServer",
+        "serverLauncher": "org.quiltmc.loader.impl.launch.server.QuiltServerLauncher"
+      }
+    }
+  },
+  {
+    "loader": {
+      "maven": "org.quiltmc:quilt-loader:0.20.0-beta.8",
+      "version": "0.20.0-beta.8",
+      "build": 8,
+      "separator": ".",
+      "file_size": 1550095,
+      "hashes": {
+        "sha1": "228f45e47804ec6e840e4f5f5d3f4a89a780ed04",
+        "sha256": "f56aa2d5fff90eda859c477cf9ca3f6abeb70b85bcaf0025f463551790ca8ca3",
+        "sha512": "dae2c53f6ea124007bcd3531c4b26e1b30750fef3b853cfc1c05f7ee9b1fb0c1f8598a04ef647f8985b4d1e1cada1d175431971337deacacd5224faf416b248e"
+      }
+    },
+    "hashed": {
+      "maven": "org.quiltmc:hashed:1.21.11",
+      "version": "1.21.11",
+      "file_size": 1103658,
+      "hashes": {
+        "sha1": "56aa2b39b149ce19c6ea86324198e4829e09a4c6",
+        "sha256": "d76039d601a0c54cbe401a0e27c65caff83af31740d0ee021a094f10bb09eaef",
+        "sha512": "7d544744d8e619d8d698fe477926fc02f765259fd163f5577cd74f695eb56bab4f76bd0b7a067daa462d054893fa915a4f6b12ef8a29b44af921753b6fd5c4b3"
+      }
+    },
+    "intermediary": {
+      "maven": "net.fabricmc:intermediary:1.21.11",
+      "version": "1.21.11"
+    },
+    "launcherMeta": {
+      "version": 1,
+      "libraries": {
+        "client": [],
+        "common": [
+          {
+            "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:tiny-remapper:0.8.6",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:access-widener:2.1.0",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-json5:1.0.4+final",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          },
+          {
+            "name": "org.ow2.asm:asm:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-analysis:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-commons:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-tree:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-util:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-config:1.1.0-beta.3",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          }
+        ],
+        "server": []
+      },
+      "mainClass": {
+        "client": "org.quiltmc.loader.impl.launch.knot.KnotClient",
+        "server": "org.quiltmc.loader.impl.launch.knot.KnotServer",
+        "serverLauncher": "org.quiltmc.loader.impl.launch.server.QuiltServerLauncher"
+      }
+    }
+  },
+  {
+    "loader": {
+      "maven": "org.quiltmc:quilt-loader:0.20.0-beta.1",
+      "version": "0.20.0-beta.1",
+      "build": 1,
+      "separator": ".",
+      "file_size": 1961901,
+      "hashes": {
+        "sha1": "dad3b63c69f9452882c80d28ecaa89e7ffaf5d54",
+        "sha256": "c0140e8dec9aa680cf3b8373c5ededca0116eeb926709dc2dd5648af5e2611d6",
+        "sha512": "77d4e2fb9d5f4340a161eea5650a07519e0fbb0e040fe5c1c8c3dfa782ce56c296df897da195e552d87460c397235065b36bd56b88987f3df31ff1006585e8f7"
+      }
+    },
+    "hashed": {
+      "maven": "org.quiltmc:hashed:1.21.11",
+      "version": "1.21.11",
+      "file_size": 1103658,
+      "hashes": {
+        "sha1": "56aa2b39b149ce19c6ea86324198e4829e09a4c6",
+        "sha256": "d76039d601a0c54cbe401a0e27c65caff83af31740d0ee021a094f10bb09eaef",
+        "sha512": "7d544744d8e619d8d698fe477926fc02f765259fd163f5577cd74f695eb56bab4f76bd0b7a067daa462d054893fa915a4f6b12ef8a29b44af921753b6fd5c4b3"
+      }
+    },
+    "intermediary": {
+      "maven": "net.fabricmc:intermediary:1.21.11",
+      "version": "1.21.11"
+    },
+    "launcherMeta": {
+      "version": 1,
+      "libraries": {
+        "client": [],
+        "common": [
+          {
+            "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:tiny-remapper:0.8.6",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:access-widener:2.1.0",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-json5:1.0.4+final",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          },
+          {
+            "name": "org.ow2.asm:asm:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-analysis:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-commons:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-tree:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-util:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-config:1.1.0-beta.1",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          }
+        ],
+        "server": []
+      },
+      "mainClass": {
+        "client": "org.quiltmc.loader.impl.launch.knot.KnotClient",
+        "server": "org.quiltmc.loader.impl.launch.knot.KnotServer",
+        "serverLauncher": "org.quiltmc.loader.impl.launch.server.QuiltServerLauncher"
+      }
+    }
+  },
+  {
+    "loader": {
+      "maven": "org.quiltmc:quilt-loader:0.20.0-beta.2",
+      "version": "0.20.0-beta.2",
+      "build": 2,
+      "separator": ".",
+      "file_size": 1961902,
+      "hashes": {
+        "sha1": "7fff2e468d6bb489b881c566a903ad66d3b4254a",
+        "sha256": "c1cd9a8da24c748c3e0da2a65e50ffdfab3362971a58445793f7e16907779c8a",
+        "sha512": "2f8ce0417c8a93af79a119cc64920c77066d58188909ea9fa3b89c8eb1982cb320c4da6acf30f7e94476cd1a313c63477d69a20f2b7fc3573470c120ccb8d42d"
+      }
+    },
+    "hashed": {
+      "maven": "org.quiltmc:hashed:1.21.11",
+      "version": "1.21.11",
+      "file_size": 1103658,
+      "hashes": {
+        "sha1": "56aa2b39b149ce19c6ea86324198e4829e09a4c6",
+        "sha256": "d76039d601a0c54cbe401a0e27c65caff83af31740d0ee021a094f10bb09eaef",
+        "sha512": "7d544744d8e619d8d698fe477926fc02f765259fd163f5577cd74f695eb56bab4f76bd0b7a067daa462d054893fa915a4f6b12ef8a29b44af921753b6fd5c4b3"
+      }
+    },
+    "intermediary": {
+      "maven": "net.fabricmc:intermediary:1.21.11",
+      "version": "1.21.11"
+    },
+    "launcherMeta": {
+      "version": 1,
+      "libraries": {
+        "client": [],
+        "common": [
+          {
+            "name": "net.fabricmc:tiny-mappings-parser:0.3.0+build.17",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:sponge-mixin:0.12.5+mixin.0.8.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:tiny-remapper:0.8.6",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "net.fabricmc:access-widener:2.1.0",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-json5:1.0.4+final",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          },
+          {
+            "name": "org.ow2.asm:asm:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-analysis:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-commons:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-tree:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.ow2.asm:asm-util:9.5",
+            "url": "https://maven.fabricmc.net/"
+          },
+          {
+            "name": "org.quiltmc:quilt-config:1.1.0-beta.2",
+            "url": "https://maven.quiltmc.org/repository/release/"
+          }
+        ],
+        "server": []
+      },
+      "mainClass": {
+        "client": "org.quiltmc.loader.impl.launch.knot.KnotClient",
+        "server": "org.quiltmc.loader.impl.launch.knot.KnotServer",
+        "serverLauncher": "org.quiltmc.loader.impl.launch.server.QuiltServerLauncher"
+      }
+    }
+  }
+]

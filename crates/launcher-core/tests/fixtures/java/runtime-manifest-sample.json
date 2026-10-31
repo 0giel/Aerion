@@ -1,0 +1,605 @@
+{
+  "files": {
+    "bin": {
+      "type": "directory"
+    },
+    "bin/jar": {
+      "downloads": {
+        "lzma": {
+          "sha1": "74883b68bcda9aae4884f8993de0f826517e2670",
+          "size": 2739,
+          "url": "https://piston-data.mojang.com/v1/objects/74883b68bcda9aae4884f8993de0f826517e2670/jar"
+        },
+        "raw": {
+          "sha1": "758f475a65ad8f50e3b4fffc420b5436b68fae75",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/758f475a65ad8f50e3b4fffc420b5436b68fae75/jar"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jarsigner": {
+      "downloads": {
+        "lzma": {
+          "sha1": "e44e29b94aedfd295440f21b175f13e00510cf77",
+          "size": 2750,
+          "url": "https://piston-data.mojang.com/v1/objects/e44e29b94aedfd295440f21b175f13e00510cf77/jarsigner"
+        },
+        "raw": {
+          "sha1": "80ebcebfbfd8fc93554f769e8190eb7f0228a370",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/80ebcebfbfd8fc93554f769e8190eb7f0228a370/jarsigner"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/java": {
+      "downloads": {
+        "lzma": {
+          "sha1": "642142ac44a60289af35a6016d81e008b76cd33b",
+          "size": 2679,
+          "url": "https://piston-data.mojang.com/v1/objects/642142ac44a60289af35a6016d81e008b76cd33b/java"
+        },
+        "raw": {
+          "sha1": "a34ef485e0f2a5250d1213f8e596b4a343efbec8",
+          "size": 12328,
+          "url": "https://piston-data.mojang.com/v1/objects/a34ef485e0f2a5250d1213f8e596b4a343efbec8/java"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/javac": {
+      "downloads": {
+        "lzma": {
+          "sha1": "be23e3b1deb2ad6ef64e354daa06aa6d1c06a76d",
+          "size": 2775,
+          "url": "https://piston-data.mojang.com/v1/objects/be23e3b1deb2ad6ef64e354daa06aa6d1c06a76d/javac"
+        },
+        "raw": {
+          "sha1": "dd40d441fcf5147cd23c27c8083dc0de3f760c14",
+          "size": 12416,
+          "url": "https://piston-data.mojang.com/v1/objects/dd40d441fcf5147cd23c27c8083dc0de3f760c14/javac"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/javadoc": {
+      "downloads": {
+        "lzma": {
+          "sha1": "9789a4517b23ea1d464ea49fc1724919e7df8a09",
+          "size": 2770,
+          "url": "https://piston-data.mojang.com/v1/objects/9789a4517b23ea1d464ea49fc1724919e7df8a09/javadoc"
+        },
+        "raw": {
+          "sha1": "1e6514cddc92c20587ba0562649ab70c84973f9c",
+          "size": 12424,
+          "url": "https://piston-data.mojang.com/v1/objects/1e6514cddc92c20587ba0562649ab70c84973f9c/javadoc"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/javap": {
+      "downloads": {
+        "lzma": {
+          "sha1": "b6bf7d8109b99227dbf9238aed5f17e0071c0bbf",
+          "size": 2746,
+          "url": "https://piston-data.mojang.com/v1/objects/b6bf7d8109b99227dbf9238aed5f17e0071c0bbf/javap"
+        },
+        "raw": {
+          "sha1": "bbb15c22b2688e5c3da4e0cd01f4e875b08e7b0f",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/bbb15c22b2688e5c3da4e0cd01f4e875b08e7b0f/javap"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jcmd": {
+      "downloads": {
+        "lzma": {
+          "sha1": "1b2e6514e82f8b9d44f9888f1537543a7f68a16f",
+          "size": 2737,
+          "url": "https://piston-data.mojang.com/v1/objects/1b2e6514e82f8b9d44f9888f1537543a7f68a16f/jcmd"
+        },
+        "raw": {
+          "sha1": "eb34528b63c24f5d4f8686d462664f6849d41343",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/eb34528b63c24f5d4f8686d462664f6849d41343/jcmd"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jconsole": {
+      "downloads": {
+        "lzma": {
+          "sha1": "dd0409b243a99c9c487ba991785f95e32d707f01",
+          "size": 2864,
+          "url": "https://piston-data.mojang.com/v1/objects/dd0409b243a99c9c487ba991785f95e32d707f01/jconsole"
+        },
+        "raw": {
+          "sha1": "be3d370138c461b3338d8cd29b32db945bbde147",
+          "size": 12456,
+          "url": "https://piston-data.mojang.com/v1/objects/be3d370138c461b3338d8cd29b32db945bbde147/jconsole"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jdb": {
+      "downloads": {
+        "lzma": {
+          "sha1": "616902cc34d757e4505453a55fca70b390e39bb9",
+          "size": 2754,
+          "url": "https://piston-data.mojang.com/v1/objects/616902cc34d757e4505453a55fca70b390e39bb9/jdb"
+        },
+        "raw": {
+          "sha1": "94a4ed49afe697c34e749731a1c725269bbb0a8a",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/94a4ed49afe697c34e749731a1c725269bbb0a8a/jdb"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jdeprscan": {
+      "downloads": {
+        "lzma": {
+          "sha1": "2d532c779d1ba557f79d3a3f9e1936a3bed58cf3",
+          "size": 2746,
+          "url": "https://piston-data.mojang.com/v1/objects/2d532c779d1ba557f79d3a3f9e1936a3bed58cf3/jdeprscan"
+        },
+        "raw": {
+          "sha1": "423d111ac2c5ed271cb68185d0e905435e0900f1",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/423d111ac2c5ed271cb68185d0e905435e0900f1/jdeprscan"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jdeps": {
+      "downloads": {
+        "lzma": {
+          "sha1": "218b9f0bb686b4c4ed4f5ea23d75d022b4f2b663",
+          "size": 2741,
+          "url": "https://piston-data.mojang.com/v1/objects/218b9f0bb686b4c4ed4f5ea23d75d022b4f2b663/jdeps"
+        },
+        "raw": {
+          "sha1": "6ca4ca9d4c213c6de06b09eeb3ddb5664b324d91",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/6ca4ca9d4c213c6de06b09eeb3ddb5664b324d91/jdeps"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jfr": {
+      "downloads": {
+        "lzma": {
+          "sha1": "9578033a333ca5e3a18eba348a7338056fc973c6",
+          "size": 2739,
+          "url": "https://piston-data.mojang.com/v1/objects/9578033a333ca5e3a18eba348a7338056fc973c6/jfr"
+        },
+        "raw": {
+          "sha1": "e004114988c512d03231dff27a0fbf57c1e5775a",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/e004114988c512d03231dff27a0fbf57c1e5775a/jfr"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jhsdb": {
+      "downloads": {
+        "lzma": {
+          "sha1": "01a02a3ffb433c638c57f581894e5c5b3de9fe69",
+          "size": 2747,
+          "url": "https://piston-data.mojang.com/v1/objects/01a02a3ffb433c638c57f581894e5c5b3de9fe69/jhsdb"
+        },
+        "raw": {
+          "sha1": "b2e4cfa04011fe8061a8b22b3eaea34be26e325f",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/b2e4cfa04011fe8061a8b22b3eaea34be26e325f/jhsdb"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jimage": {
+      "downloads": {
+        "lzma": {
+          "sha1": "e969b802d2dfce8679af7840a732f83068c17744",
+          "size": 2744,
+          "url": "https://piston-data.mojang.com/v1/objects/e969b802d2dfce8679af7840a732f83068c17744/jimage"
+        },
+        "raw": {
+          "sha1": "65fe1234516c57b9f1b14e1719888121c46d3d70",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/65fe1234516c57b9f1b14e1719888121c46d3d70/jimage"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jinfo": {
+      "downloads": {
+        "lzma": {
+          "sha1": "d0ce7273a4ea8c5a31c5d76daaaf97143c17e34e",
+          "size": 2790,
+          "url": "https://piston-data.mojang.com/v1/objects/d0ce7273a4ea8c5a31c5d76daaaf97143c17e34e/jinfo"
+        },
+        "raw": {
+          "sha1": "e491caa2b3ffe15acad714c30b028d5ed482dfa5",
+          "size": 12416,
+          "url": "https://piston-data.mojang.com/v1/objects/e491caa2b3ffe15acad714c30b028d5ed482dfa5/jinfo"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jlink": {
+      "downloads": {
+        "lzma": {
+          "sha1": "219fbc9b27ff5ebefdbe30699619c093752ec644",
+          "size": 2776,
+          "url": "https://piston-data.mojang.com/v1/objects/219fbc9b27ff5ebefdbe30699619c093752ec644/jlink"
+        },
+        "raw": {
+          "sha1": "67b64dad5169eddce0fbb997f4fe87ca8f1cc145",
+          "size": 12416,
+          "url": "https://piston-data.mojang.com/v1/objects/67b64dad5169eddce0fbb997f4fe87ca8f1cc145/jlink"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jmap": {
+      "downloads": {
+        "lzma": {
+          "sha1": "96d3499d2fad1902fdb4375c9ccf41b453463a86",
+          "size": 2788,
+          "url": "https://piston-data.mojang.com/v1/objects/96d3499d2fad1902fdb4375c9ccf41b453463a86/jmap"
+        },
+        "raw": {
+          "sha1": "259a29bf55abef9531e4c48d8cb6da8913474afc",
+          "size": 12416,
+          "url": "https://piston-data.mojang.com/v1/objects/259a29bf55abef9531e4c48d8cb6da8913474afc/jmap"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jmod": {
+      "downloads": {
+        "lzma": {
+          "sha1": "9f4d7bc48f95127d50e069b671cd856c9c5eef2b",
+          "size": 2746,
+          "url": "https://piston-data.mojang.com/v1/objects/9f4d7bc48f95127d50e069b671cd856c9c5eef2b/jmod"
+        },
+        "raw": {
+          "sha1": "194a8a634a2da1d094a4c10c2c94eadc29cfa1e5",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/194a8a634a2da1d094a4c10c2c94eadc29cfa1e5/jmod"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jnativescan": {
+      "downloads": {
+        "lzma": {
+          "sha1": "da012ce2241c7f668ea5572b95cee3865c849074",
+          "size": 2748,
+          "url": "https://piston-data.mojang.com/v1/objects/da012ce2241c7f668ea5572b95cee3865c849074/jnativescan"
+        },
+        "raw": {
+          "sha1": "7860c9df4fd7aec0da65e221585a552e21e7754b",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/7860c9df4fd7aec0da65e221585a552e21e7754b/jnativescan"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jpackage": {
+      "downloads": {
+        "lzma": {
+          "sha1": "e3df70a4b5ccee72f85c4d7a7ba8b6df83ed30a9",
+          "size": 2741,
+          "url": "https://piston-data.mojang.com/v1/objects/e3df70a4b5ccee72f85c4d7a7ba8b6df83ed30a9/jpackage"
+        },
+        "raw": {
+          "sha1": "d389aa42089cc12e0e9608a56793d0201d3adcbe",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/d389aa42089cc12e0e9608a56793d0201d3adcbe/jpackage"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jps": {
+      "downloads": {
+        "lzma": {
+          "sha1": "accf621db14bd0de2cc0ef82606f09eba7b8a8eb",
+          "size": 2744,
+          "url": "https://piston-data.mojang.com/v1/objects/accf621db14bd0de2cc0ef82606f09eba7b8a8eb/jps"
+        },
+        "raw": {
+          "sha1": "4c6e762568cd2fae9865115b00b33603064b477a",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/4c6e762568cd2fae9865115b00b33603064b477a/jps"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jrunscript": {
+      "downloads": {
+        "lzma": {
+          "sha1": "64c64929e23a38073e83556ef8e8a2adaa717de8",
+          "size": 2789,
+          "url": "https://piston-data.mojang.com/v1/objects/64c64929e23a38073e83556ef8e8a2adaa717de8/jrunscript"
+        },
+        "raw": {
+          "sha1": "54b95be34e6836bc86c6e859d8bd65eae74a5a0d",
+          "size": 12424,
+          "url": "https://piston-data.mojang.com/v1/objects/54b95be34e6836bc86c6e859d8bd65eae74a5a0d/jrunscript"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jshell": {
+      "downloads": {
+        "lzma": {
+          "sha1": "1faabb376a6a117f1581ad87a48824229d7a3e1c",
+          "size": 2749,
+          "url": "https://piston-data.mojang.com/v1/objects/1faabb376a6a117f1581ad87a48824229d7a3e1c/jshell"
+        },
+        "raw": {
+          "sha1": "f2dd4ce78c15b859244d56ba1fd106cfb4f3acd0",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/f2dd4ce78c15b859244d56ba1fd106cfb4f3acd0/jshell"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jstack": {
+      "downloads": {
+        "lzma": {
+          "sha1": "97431df121ce2ba3b42ebe4f0b987a25f8e91b2d",
+          "size": 2794,
+          "url": "https://piston-data.mojang.com/v1/objects/97431df121ce2ba3b42ebe4f0b987a25f8e91b2d/jstack"
+        },
+        "raw": {
+          "sha1": "047efd7966bda0e3a2017b63672683f188fa1e21",
+          "size": 12424,
+          "url": "https://piston-data.mojang.com/v1/objects/047efd7966bda0e3a2017b63672683f188fa1e21/jstack"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jstat": {
+      "downloads": {
+        "lzma": {
+          "sha1": "8dcb83ba1d77ff5fc6585875ce8c73e00f8e3cf2",
+          "size": 2737,
+          "url": "https://piston-data.mojang.com/v1/objects/8dcb83ba1d77ff5fc6585875ce8c73e00f8e3cf2/jstat"
+        },
+        "raw": {
+          "sha1": "683e7f05f8f9b3bb964a5121e82fa590329ac37f",
+          "size": 12384,
+          "url": "https://piston-data.mojang.com/v1/objects/683e7f05f8f9b3bb964a5121e82fa590329ac37f/jstat"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jstatd": {
+      "downloads": {
+        "lzma": {
+          "sha1": "0d66f82ea1df6beec083f5c2ed55f662f380ac2e",
+          "size": 2744,
+          "url": "https://piston-data.mojang.com/v1/objects/0d66f82ea1df6beec083f5c2ed55f662f380ac2e/jstatd"
+        },
+        "raw": {
+          "sha1": "1bd7cc0e0e071a63279ebe2bda8d5677957264dc",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/1bd7cc0e0e071a63279ebe2bda8d5677957264dc/jstatd"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/jwebserver": {
+      "downloads": {
+        "lzma": {
+          "sha1": "6dbef968b8d453ded7856e2f52bd338f3b021a70",
+          "size": 2755,
+          "url": "https://piston-data.mojang.com/v1/objects/6dbef968b8d453ded7856e2f52bd338f3b021a70/jwebserver"
+        },
+        "raw": {
+          "sha1": "26c49ecb199b1c93eacc17acbf515dd280ff96cb",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/26c49ecb199b1c93eacc17acbf515dd280ff96cb/jwebserver"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/keytool": {
+      "downloads": {
+        "lzma": {
+          "sha1": "18e77ece6180540de5fe85fb2faf6077807c1edb",
+          "size": 2743,
+          "url": "https://piston-data.mojang.com/v1/objects/18e77ece6180540de5fe85fb2faf6077807c1edb/keytool"
+        },
+        "raw": {
+          "sha1": "04c12377ed95406b2702640c14b1b26ef25f2c78",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/04c12377ed95406b2702640c14b1b26ef25f2c78/keytool"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/rmiregistry": {
+      "downloads": {
+        "lzma": {
+          "sha1": "a6d2595ba8e2476b9dd5a6b39654ab5cbf7c9089",
+          "size": 2743,
+          "url": "https://piston-data.mojang.com/v1/objects/a6d2595ba8e2476b9dd5a6b39654ab5cbf7c9089/rmiregistry"
+        },
+        "raw": {
+          "sha1": "a1edfd997e35aebe4a1b709382c72af45096581c",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/a1edfd997e35aebe4a1b709382c72af45096581c/rmiregistry"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "bin/serialver": {
+      "downloads": {
+        "lzma": {
+          "sha1": "9c413b0f177f098c8c36b2161035a5f7907325ab",
+          "size": 2746,
+          "url": "https://piston-data.mojang.com/v1/objects/9c413b0f177f098c8c36b2161035a5f7907325ab/serialver"
+        },
+        "raw": {
+          "sha1": "54ad01c1ce9f97ba00cc6cd4981f308a6a56749c",
+          "size": 12392,
+          "url": "https://piston-data.mojang.com/v1/objects/54ad01c1ce9f97ba00cc6cd4981f308a6a56749c/serialver"
+        }
+      },
+      "executable": true,
+      "type": "file"
+    },
+    "conf": {
+      "type": "directory"
+    },
+    "conf/jaxp-strict.properties.template": {
+      "downloads": {
+        "lzma": {
+          "sha1": "0265cf4f943dab66222db95db01c2bf4e9960f51",
+          "size": 1664,
+          "url": "https://piston-data.mojang.com/v1/objects/0265cf4f943dab66222db95db01c2bf4e9960f51/jaxp-strict.properties.template"
+        },
+        "raw": {
+          "sha1": "c965c754dd6e44602d9763c2061a6c5abc95ccbe",
+          "size": 4937,
+          "url": "https://piston-data.mojang.com/v1/objects/c965c754dd6e44602d9763c2061a6c5abc95ccbe/jaxp-strict.properties.template"
+        }
+      },
+      "executable": false,
+      "type": "file"
+    },
+    "conf/jaxp.properties": {
+      "downloads": {
+        "lzma": {
+          "sha1": "ac5390321fa9ae35f94e8a61395b508e88653d0b",
+          "size": 2627,
+          "url": "https://piston-data.mojang.com/v1/objects/ac5390321fa9ae35f94e8a61395b508e88653d0b/jaxp.properties"
+        },
+        "raw": {
+          "sha1": "ed8df3f663c669bbe7d9dffd03d4800fae364ba9",
+          "size": 8222,
+          "url": "https://piston-data.mojang.com/v1/objects/ed8df3f663c669bbe7d9dffd03d4800fae364ba9/jaxp.properties"
+        }
+      },
+      "executable": false,
+      "type": "file"
+    },
+    "conf/logging.properties": {
+      "downloads": {
+        "lzma": {
+          "sha1": "84936e0ea5c1ba4e13c818cead7610c6911c5c5c",
+          "size": 1008,
+          "url": "https://piston-data.mojang.com/v1/objects/84936e0ea5c1ba4e13c818cead7610c6911c5c5c/logging.properties"
+        },
+        "raw": {
+          "sha1": "5795edcb624326bbefdedcdb6a11d9c18071d8ce",
+          "size": 2740,
+          "url": "https://piston-data.mojang.com/v1/objects/5795edcb624326bbefdedcdb6a11d9c18071d8ce/logging.properties"
+        }
+      },
+      "executable": false,
+      "type": "file"
+    },
+    "conf/management": {
+      "type": "directory"
+    },
+    "conf/management/jmxremote.access": {
+      "downloads": {
+        "lzma": {
+          "sha1": "ca1986d5aec894b6d6281ee33c91cf86a14d7276",
+          "size": 1418,
+          "url": "https://piston-data.mojang.com/v1/objects/ca1986d5aec894b6d6281ee33c91cf86a14d7276/jmxremote.access"
+        },
+        "raw": {
+          "sha1": "db484eb763831db19c089c9820a54cc875e4f624",
+          "size": 3997,
+          "url": "https://piston-data.mojang.com/v1/objects/db484eb763831db19c089c9820a54cc875e4f624/jmxremote.access"
+        }
+      },
+      "executable": false,
+      "type": "file"
+    },
+    "conf/management/jmxremote.password.template": {
+      "downloads": {
+        "lzma": {
+          "sha1": "2c4c07471fad1c77ef5856d18c64b33e4bb76498",
+          "size": 2228,
+          "url": "https://piston-data.mojang.com/v1/objects/2c4c07471fad1c77ef5856d18c64b33e4bb76498/jmxremote.password.template"
+        },
+        "raw": {
+          "sha1": "3bad5b040b6d7117df4c40609ea0f8074339ee47",
+          "size": 5690,
+          "url": "https://piston-data.mojang.com/v1/objects/3bad5b040b6d7117df4c40609ea0f8074339ee47/jmxremote.password.template"
+        }
+      },
+      "executable": false,
+      "type": "file"
+    },
+    "conf/management/management.properties": {
+      "downloads": {
+        "lzma": {
+          "sha1": "042c3cb95cbf412e7014a782f8f6b90524f62934",
+          "size": 3791,
+          "url": "https://piston-data.mojang.com/v1/objects/042c3cb95cbf412e7014a782f8f6b90524f62934/management.properties"
+        },
+        "raw": {
+          "sha1": "dff7cd177dbba6166dd782af2f49628e3045f1a4",
+          "size": 15015,
+          "url": "https://piston-data.mojang.com/v1/objects/dff7cd177dbba6166dd782af2f49628e3045f1a4/management.properties"
+        }
+      },
+      "executable": false,
+      "type": "file"
+    },
+    "conf/net.properties": {
+      "downloads": {
+        "lzma": {
+          "sha1": "8a577beda8087ccd5713981a04b7d5781c567c3c",
+          "size": 2570,
+          "url": "https://piston-data.mojang.com/v1/objects/8a577beda8087ccd5713981a04b7d5781c567c3c/net.properties"
+        },
+        "raw": {
+          "sha1": "a68066ef9eea6f39d2dc9ba259cb68057dc14a22",
+          "size": 7341,
+          "url": "https://piston-data.mojang.com/v1/objects/a68066ef9eea6f39d2dc9ba259cb68057dc14a22/net.properties"
+        }
+      },
+      "executable": false,
+      "type": "file"
+    }
+  }
+}

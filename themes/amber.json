@@ -1,0 +1,59 @@
+{
+  "$schema": "./theme.schema.json",
+  "id": "amber",
+  "name": "Amber",
+  "author": "Luncher",
+  "base": "dark",
+  "colors": {
+    "bg": "#16171b",
+    "surface": "#1f2026",
+    "surface2": "#272930",
+    "surface3": "#31333b",
+    "border": "#ffffff17",
+    "text": "#ecebf3",
+    "textMuted": "#a9a8b6",
+    "textFaint": "#74737f",
+    "accent": "#fbbf24",
+    "accentText": "#2b1a00",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#fcd34d"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#181613",
+    "gradient": "radial-gradient(1100px 650px at 85% 0%, #3a2c14 0%, transparent 60%), linear-gradient(160deg, #1c1a16 0%, #141310 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": false,
+    "particles": "dust"
+  }
+}

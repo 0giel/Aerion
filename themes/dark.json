@@ -1,0 +1,59 @@
+{
+  "$schema": "./theme.schema.json",
+  "id": "dark",
+  "name": "Dark",
+  "author": "Luncher",
+  "base": "dark",
+  "colors": {
+    "bg": "#121316",
+    "surface": "#1a1b1f",
+    "surface2": "#222328",
+    "surface3": "#2b2c32",
+    "border": "#ffffff17",
+    "text": "#ecebf3",
+    "textMuted": "#a9a8b6",
+    "textFaint": "#74737f",
+    "accent": "#5b9dff",
+    "accentText": "#06142b",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#8fbcff"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "color",
+    "color": "#121316",
+    "gradient": null,
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": false,
+    "particles": "none"
+  }
+}

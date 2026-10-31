@@ -1,0 +1,41 @@
+[package]
+name = "luncher"
+description = "Luncher — a fast, themeable Minecraft: Java Edition launcher"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+default-run = "luncher"
+
+[lib]
+name = "luncher_lib"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "luncher"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+launcher-core = { workspace = true, features = ["specta"] }
+tauri = { version = "2.12", features = ["tray-icon", "specta"] }
+tauri-specta = { version = "=2.0.0-rc.26", features = ["derive", "typescript"] }
+specta.workspace = true
+specta-typescript = "=0.0.13"
+tauri-plugin-opener = "2.7"
+tauri-plugin-dialog = "2.8"
+tauri-plugin-single-instance = "2.5"
+tauri-plugin-window-state = "2.5"
+tokio.workspace = true
+tokio-util.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "ansi", "std"] }
+tracing-appender = "0.2"
+notify = { version = "8", default-features = false, features = ["macos_fsevent"] }
+reqwest.workspace = true
+base64 = "0.23"
+uuid = { version = "1", features = ["v4"] }
