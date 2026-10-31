@@ -149,7 +149,7 @@ mod tests {
             ("version_type", "release"),
             ("user_properties", "{}"),
             ("natives_directory", "/n"),
-            ("launcher_name", "luncher"),
+            ("launcher_name", "aerion"),
             ("launcher_version", "0.1.0"),
             ("classpath", "/l/a.jar:/l/b.jar"),
             ("resolution_width", "1280"),
@@ -163,10 +163,10 @@ mod tests {
     #[test]
     fn substitution_keeps_unknown_and_handles_unicode() {
         let v =
-            vars(r"C:\Users\Łukasz Kowalski\AppData\Roaming\Luncher\instances\Mój świat\minecraft");
+            vars(r"C:\Users\Łukasz Kowalski\AppData\Roaming\Aerion\instances\Mój świat\minecraft");
         assert_eq!(
             substitute("--gameDir=${game_directory}", &v),
-            r"--gameDir=C:\Users\Łukasz Kowalski\AppData\Roaming\Luncher\instances\Mój świat\minecraft"
+            r"--gameDir=C:\Users\Łukasz Kowalski\AppData\Roaming\Aerion\instances\Mój świat\minecraft"
         );
         assert_eq!(substitute("${unknown} ${", &v), "${unknown} ${");
         assert_eq!(

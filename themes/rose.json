@@ -2,7 +2,7 @@
   "$schema": "./theme.schema.json",
   "id": "rose",
   "name": "Rose",
-  "author": "Luncher",
+  "author": "Aerion",
   "base": "dark",
   "colors": {
     "bg": "#16171b",

@@ -1,4 +1,4 @@
-//! Luncher engine.
+//! Aerion engine.
 //!
 //! Everything a Minecraft launcher does, without any UI or Tauri dependency: metadata and
 //! downloads, Java runtimes, Microsoft accounts, instances, mod loaders, mod providers and

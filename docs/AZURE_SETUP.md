@@ -1,26 +1,26 @@
 # Microsoft sign-in: Azure app registration
 
 Minecraft accounts sign in through Microsoft. Every third-party launcher needs its **own** Azure
-application (client ID) that **Mojang has approved** for the Minecraft API. Luncher never ships a
+application (client ID) that **Mojang has approved** for the Minecraft API. Aerion never ships a
 client ID; you create one once and give it to the launcher.
 
-Everything else in Luncher (downloads, instances, mods, modpacks, themes) works without it.
+Everything else in Aerion (downloads, instances, mods, modpacks, themes) works without it.
 
 ## 1. Register the application
 
 1. Sign in at <https://entra.microsoft.com> (or <https://portal.azure.com> → *Microsoft Entra ID*)
    with any Microsoft account. A free account is enough; no subscription is charged.
 2. *Applications → App registrations → New registration*:
-   - **Name**: e.g. `Luncher` (shown on Microsoft's consent screen).
+   - **Name**: e.g. `Aerion` (shown on Microsoft's consent screen).
    - **Supported account types**: *Personal Microsoft accounts only*.
    - **Redirect URI**: platform *Public client/native (mobile & desktop)*, URI `http://localhost`.
-     (Luncher listens on a random local port; Microsoft ignores the port for `localhost`.)
+     (Aerion listens on a random local port; Microsoft ignores the port for `localhost`.)
    - *Register*.
 3. Copy the **Application (client) ID** from the *Overview* page (a GUID).
 4. *Authentication → Advanced settings → Allow public client flows* → **Yes** → *Save*.
    This enables the "Use a code" sign-in (device code flow) for machines without a browser.
-5. Nothing else is needed: no client secret (Luncher is a public client and uses PKCE), and no
-   API permissions to add — Luncher asks for `XboxLive.signin offline_access` at sign-in.
+5. Nothing else is needed: no client secret (Aerion is a public client and uses PKCE), and no
+   API permissions to add — Aerion asks for `XboxLive.signin offline_access` at sign-in.
 
 ## 2. Ask Mojang for Minecraft API access
 
@@ -30,11 +30,11 @@ New client IDs are rejected by the Minecraft services until Mojang reviews them.
    description of the launcher.
 2. Wait for approval (typically days, sometimes a few weeks). You will get an e-mail.
 
-Before approval the Microsoft and Xbox steps succeed, but the final step fails and Luncher shows
+Before approval the Microsoft and Xbox steps succeed, but the final step fails and Aerion shows
 *"Mojang has not approved this Azure app yet ("Invalid app registration")"*
 (`auth.invalidAppRegistration`). That is expected — nothing is wrong with your account.
 
-## 3. Give the client ID to Luncher
+## 3. Give the client ID to Aerion
 
 Any one of these, highest priority first:
 
@@ -50,7 +50,7 @@ repository — see `.env.example`.
 ## 4. Sign in
 
 *Accounts → Sign in with Microsoft* opens the system browser; after signing in, return to
-Luncher. *Use a code* shows a code and the Microsoft page to enter it on, from any device.
+Aerion. *Use a code* shows a code and the Microsoft page to enter it on, from any device.
 Tokens are stored only in the operating system's credential store (Windows Credential Manager,
 macOS Keychain, Secret Service/GNOME Keyring on Linux) and refreshed silently.
 

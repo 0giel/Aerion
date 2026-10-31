@@ -3,7 +3,7 @@ import type { Dict } from "./en";
 
 const pl: Dict = {
   app: {
-    name: "Luncher",
+    name: "Aerion",
     tagline: "Szybki launcher Minecraft: Java Edition z motywami",
     disclaimer: "Produkt nieoficjalny. Niezatwierdzony przez Mojang ani Microsoft i z nimi niezwiązany.",
   },
@@ -66,7 +66,7 @@ const pl: Dict = {
     group: "Grupa",
     noGroup: "Bez grupy",
     unknown: "Nieznane",
-    restartRequired: "Uruchom Luncher ponownie, aby zastosować tę zmianę.",
+    restartRequired: "Uruchom Aerion ponownie, aby zastosować tę zmianę.",
     dropHere: "Upuść pliki, aby zaimportować",
   },
   loaders: {
@@ -97,7 +97,7 @@ const pl: Dict = {
   },
   home: {
     greeting: "Witaj ponownie, {name}",
-    greetingAnon: "Witaj w Luncherze",
+    greetingAnon: "Witaj w Aerionie",
     noInstance: "Brak instancji",
     createFirst: "Utwórz pierwszą instancję",
     lastPlayed: "Ostatnio grane {when}",
@@ -369,7 +369,7 @@ const pl: Dict = {
     added: "Zalogowano jako {name}",
     clientIdTitle: "Logowanie Microsoft nie jest skonfigurowane",
     clientIdText:
-      "Luncher potrzebuje identyfikatora aplikacji Azure (client ID) zatwierdzonego przez Mojang. Postępuj według docs/AZURE_SETUP.md i wklej tu identyfikator.",
+      "Aerion potrzebuje identyfikatora aplikacji Azure (client ID) zatwierdzonego przez Mojang. Postępuj według docs/AZURE_SETUP.md i wklej tu identyfikator.",
     clientIdPlaceholder: "00000000-0000-0000-0000-000000000000",
     clientIdSave: "Zapisz client ID",
     keyringMissing:
@@ -476,7 +476,7 @@ const pl: Dict = {
     portable: "Tryb przenośny (plik 'portable' obok programu)",
     openLogs: "Logi launchera",
     version: "Wersja {version}",
-    about: "Luncher to otwarty launcher stawiający na niezawodność, szybkość i personalizację.",
+    about: "Aerion to otwarty launcher stawiający na niezawodność, szybkość i personalizację.",
     thirdParty:
       "Wykorzystuje Tauri, Svelte, biblioteki Rust oraz ikony zaadaptowane z Lucide (ISC). Pliki gry są pobierane z serwerów Mojang.",
     userAgent: "Identyfikacja w sieci",
@@ -544,7 +544,7 @@ const pl: Dict = {
     builtIn: "Wbudowany",
   },
   onboarding: {
-    welcome: "Witaj w Luncherze",
+    welcome: "Witaj w Aerionie",
     welcomeText: "Trzy kroki do gry: zaloguj się, utwórz instancję, kliknij Graj.",
     start: "Zaczynajmy",
     stepAccount: "Logowanie",

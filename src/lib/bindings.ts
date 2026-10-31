@@ -19,7 +19,7 @@ export const commands = {
 	frontendLog: (level: string, message: string) => __TAURI_INVOKE<null>("frontend_log", { level, message }),
 	listGameVersions: () => __TAURI_INVOKE<GameVersions>("list_game_versions"),
 	listLoaderVersions: (loader: LoaderKind, gameVersion: string) => __TAURI_INVOKE<LoaderVersion[]>("list_loader_versions", { loader, gameVersion }),
-	/**  System Java installations plus runtimes managed by Luncher. */
+	/**  System Java installations plus runtimes managed by Aerion. */
 	listJava: () => __TAURI_INVOKE<JavaInstall_Serialize[]>("list_java"),
 	testJvmArgs: (java: string, args: string[]) => __TAURI_INVOKE<null>("test_jvm_args", { java, args }),
 	getAccounts: () => __TAURI_INVOKE<AccountsView_Serialize>("get_accounts"),
@@ -47,7 +47,7 @@ export const commands = {
 	createShortcut: (id: string) => __TAURI_INVOKE<string>("create_shortcut", { id }),
 	/**  Re-check every file with full hashing and repair what is broken ("Verify files"). */
 	verifyInstance: (id: string) => __TAURI_INVOKE<string>("verify_instance", { id }),
-	/**  Import a `.mrpack`, CurseForge zip or Luncher archive (also used for drag & drop). */
+	/**  Import a `.mrpack`, CurseForge zip or Aerion archive (also used for drag & drop). */
 	importPack: (path: string) => __TAURI_INVOKE<string>("import_pack", { path }),
 	exportInstance: (id: string, path: string, options: ExportOptions_Deserialize) => __TAURI_INVOKE<string>("export_instance", { id, path, options }),
 	/**  Top-level entries of the game directory (export dialog checklist). */
@@ -567,9 +567,9 @@ export type JavaInstall_Serialize = {
 export type JavaSource = 
 /**  Found on the system (JAVA_HOME, PATH, common install folders, other launchers). */
 "system" | 
-/**  Installed by Luncher from Mojang's runtime repository. */
+/**  Installed by Aerion from Mojang's runtime repository. */
 "mojang" | 
-/**  Installed by Luncher from Eclipse Adoptium. */
+/**  Installed by Aerion from Eclipse Adoptium. */
 "adoptium";
 
 export type JvmPreset = 
@@ -669,7 +669,7 @@ export type NewInstance_Serialize = {
 
 export type Os = "windows" | "macos" | "linux";
 
-export type PackFormat = "mrpack" | "curseforge" | "luncher";
+export type PackFormat = "mrpack" | "curseforge" | "aerion";
 
 export type PlannedFile = PlannedFile_Serialize | PlannedFile_Deserialize;
 

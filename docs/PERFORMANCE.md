@@ -7,7 +7,7 @@ for the launcher at rest, no work while idle, smooth UI with long lists and logs
 
 Machine: Zorin OS 18.1 (X11), Linux 7.0, NVIDIA RTX 3060 Ti (driver 580), WebKitGTK 2.52.6,
 release build (`pnpm tauri build`, LTO, `codegen-units = 1`, `opt-level = 3`, stripped).
-Method: `scripts/perf-linux.sh` — start `target/release/luncher`, wait for the frontend's `UI ready` log line,
+Method: `scripts/perf-linux.sh` — start `target/release/aerion`, wait for the frontend's `UI ready` log line,
 idle 10 s on the home screen, then sum PSS/RSS over the launcher and its WebKit processes and
 sample CPU twice: 10–20 s after start (window focused, ambient animations running = "active")
 and 35–45 s (no input for 30 s = "idle"). Three runs, warm disk cache. PSS (proportional set
@@ -39,7 +39,7 @@ History on this machine (same method):
 
 | Artefact | Size |
 |----------|------|
-| `luncher` binary (x86_64, stripped, frontend embedded) | 20.2 MB |
+| `aerion` binary (x86_64, stripped, frontend embedded) | 20.2 MB |
 | `.deb` | 8.6 MB |
 | AppImage (bundles WebKitGTK + GTK) | 88.6 MB |
 | Frontend (all chunks) | 411 KB (140 KB gzip), 29 files |

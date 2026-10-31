@@ -1,4 +1,4 @@
-# Theming Luncher
+# Theming Aerion
 
 A theme is **one JSON file** of design tokens, optionally with a CSS file next to it. Every
 component reads only these tokens (CSS custom properties), so a theme can restyle the whole
@@ -7,8 +7,8 @@ launcher without touching code. Changes apply live — no restart.
 - Built-in themes: Nocturne (default), Dark, Light, AMOLED, Emerald, Rose, Amber
   (`themes/*.json` in the repository, embedded at build time).
 - Your themes: `<data>/themes/<id>.json` (+ `<id>.css`), images/videos in `<data>/themes/assets/`.
-  `<data>` is shown in **Settings → Data & storage** (Linux `~/.local/share/luncher`,
-  Windows `%LOCALAPPDATA%\Luncher`, macOS `~/Library/Application Support/Luncher`).
+  `<data>` is shown in **Settings → Data & storage** (Linux `~/.local/share/aerion`,
+  Windows `%LOCALAPPDATA%\Aerion`, macOS `~/Library/Application Support/Aerion`).
 - Schema: `themes/theme.schema.json`. The launcher also keeps a copy in `<data>/themes/`, so
   editors that understand JSON Schema (VS Code, JetBrains…) autocomplete and validate the file
   when it starts with `"$schema": "./theme.schema.json"`.

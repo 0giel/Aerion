@@ -110,7 +110,7 @@ fn launcher_line(text: String) -> LogLine {
     LogLine {
         time: crate::tasks::chrono_now_ms(),
         level: LogLevel::Raw,
-        thread: Some("Luncher".into()),
+        thread: Some("Aerion".into()),
         logger: None,
         text,
     }
@@ -123,7 +123,7 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
     let stop = CancellationToken::new();
     let header = vec![
         launcher_line(format!(
-            "Luncher {} — {} ({})",
+            "Aerion {} — {} ({})",
             env!("CARGO_PKG_VERSION"),
             plan.instance.name,
             plan.prepared.version.id

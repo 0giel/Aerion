@@ -142,7 +142,7 @@ pub async fn verify_instance(
     ))
 }
 
-/// Import a `.mrpack`, CurseForge zip or Luncher archive (also used for drag & drop).
+/// Import a `.mrpack`, CurseForge zip or Aerion archive (also used for drag & drop).
 #[tauri::command]
 #[specta::specta]
 pub async fn import_pack(
@@ -194,7 +194,7 @@ pub async fn import_pack(
                     )
                     .await?
                 }
-                PackFormat::Luncher => ImportResult {
+                PackFormat::Aerion => ImportResult {
                     instance: modpacks::native::import(&state.instances, &path).await?,
                     manual_downloads: vec![],
                 },
@@ -242,7 +242,7 @@ pub async fn export_instance(
                 PackFormat::Curseforge => {
                     modpacks::curseforge::export(&state.instances, &id, &dest, &options).await?
                 }
-                PackFormat::Luncher => {
+                PackFormat::Aerion => {
                     modpacks::native::export(&state.instances, &id, &dest).await?
                 }
             }

@@ -1,4 +1,4 @@
-//! Desktop shortcuts that start an instance directly (`luncher --launch <id>`).
+//! Desktop shortcuts that start an instance directly (`aerion --launch <id>`).
 
 use std::path::{Path, PathBuf};
 
@@ -65,11 +65,11 @@ fn create_in(
     let path = dir.join(format!("{base}.desktop"));
     let name = inst.name.replace(['\n', '\r'], " ");
     let content = format!(
-        "[Desktop Entry]\nType=Application\nName={name}\nComment=Minecraft — Luncher\nExec={} --launch {}\nIcon={}\nTerminal=false\nCategories=Game;\n",
+        "[Desktop Entry]\nType=Application\nName={name}\nComment=Minecraft — Aerion\nExec={} --launch {}\nIcon={}\nTerminal=false\nCategories=Game;\n",
         desktop_quote(&exe.display().to_string()),
         desktop_quote(&inst.id),
         icon.map(|i| i.display().to_string())
-            .unwrap_or_else(|| "luncher".into()),
+            .unwrap_or_else(|| "aerion".into()),
     );
     std::fs::write(&path, content).at(&path)?;
     use std::os::unix::fs::PermissionsExt;

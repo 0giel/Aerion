@@ -2,7 +2,7 @@
   "$schema": "./theme.schema.json",
   "id": "amoled",
   "name": "AMOLED",
-  "author": "Luncher",
+  "author": "Aerion",
   "base": "dark",
   "colors": {
     "bg": "#000000",

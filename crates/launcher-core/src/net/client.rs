@@ -12,16 +12,16 @@ use crate::error::{Error, Result};
 
 static TLS_INIT: Once = Once::new();
 
-/// `<author>/luncher/<version> (<contact>)`, as required by Modrinth. Author and contact are
-/// baked in at build time from `LUNCHER_UA_AUTHOR` / `LUNCHER_UA_CONTACT`.
+/// `<author>/aerion/<version> (<contact>)`, as required by Modrinth. Author and contact are
+/// baked in at build time from `AERION_UA_AUTHOR` / `AERION_UA_CONTACT`.
 pub fn user_agent() -> String {
-    let author = option_env!("LUNCHER_UA_AUTHOR")
+    let author = option_env!("AERION_UA_AUTHOR")
         .filter(|s| !s.is_empty())
-        .unwrap_or("luncher-dev");
-    let contact = option_env!("LUNCHER_UA_CONTACT")
+        .unwrap_or("aerion-dev");
+    let contact = option_env!("AERION_UA_CONTACT")
         .filter(|s| !s.is_empty())
         .unwrap_or("contact not configured");
-    format!("{author}/luncher/{} ({contact})", env!("CARGO_PKG_VERSION"))
+    format!("{author}/aerion/{} ({contact})", env!("CARGO_PKG_VERSION"))
 }
 
 #[derive(Debug, Clone, Default)]

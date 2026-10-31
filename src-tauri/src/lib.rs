@@ -1,4 +1,4 @@
-//! Luncher desktop app: Tauri shell around `launcher_core`.
+//! Aerion desktop app: Tauri shell around `launcher_core`.
 
 mod commands;
 mod games;
@@ -119,7 +119,7 @@ pub fn export_bindings(path: &std::path::Path) {
 fn init_tracing() {
     use tracing_subscriber::prelude::*;
     let default = if cfg!(debug_assertions) {
-        "info,luncher_lib=debug,launcher_core=debug"
+        "info,aerion_lib=debug,launcher_core=debug"
     } else {
         "info"
     };
@@ -129,7 +129,7 @@ fn init_tracing() {
         std::fs::create_dir_all(p.logs_dir()).ok()?;
         let appender = tracing_appender::rolling::RollingFileAppender::builder()
             .rotation(tracing_appender::rolling::Rotation::DAILY)
-            .filename_prefix("luncher")
+            .filename_prefix("aerion")
             .filename_suffix("log")
             .max_log_files(7)
             .build(p.logs_dir())
@@ -186,11 +186,11 @@ fn handle_launch_arg(app: &AppHandle, args: &[String]) {
 }
 
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "Luncher", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "show", "Aerion", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Zakończ / Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &quit])?;
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("Luncher")
+        .tooltip("Aerion")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -249,13 +249,13 @@ pub fn run(platform_notes: Vec<String>) {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(workers)
         .enable_all()
-        .thread_name("luncher-worker")
+        .thread_name("aerion-worker")
         .build()
         .expect("tokio runtime");
     tauri::async_runtime::set(runtime.handle().clone());
     // Lives for the whole process.
     std::mem::forget(runtime);
-    tracing::info!(version = env!("CARGO_PKG_VERSION"), "Luncher starting");
+    tracing::info!(version = env!("CARGO_PKG_VERSION"), "Aerion starting");
     for note in platform_notes {
         tracing::warn!("{note}");
     }
@@ -302,7 +302,7 @@ pub fn run(platform_notes: Vec<String>) {
             });
             // Development aid: keep the window above others (used for automated screenshots).
             if cfg!(debug_assertions)
-                && std::env::var_os("LUNCHER_DEV_ON_TOP").is_some()
+                && std::env::var_os("AERION_DEV_ON_TOP").is_some()
                 && let Some(w) = app.get_webview_window("main")
             {
                 let _ = w.set_always_on_top(true);
@@ -318,7 +318,7 @@ pub fn run(platform_notes: Vec<String>) {
                 });
             }
             #[cfg(debug_assertions)]
-            if let Some(file) = std::env::var_os("LUNCHER_DEV_EVAL") {
+            if let Some(file) = std::env::var_os("AERION_DEV_EVAL") {
                 dev_eval(app.handle().clone(), file.into());
             }
             let args: Vec<String> = std::env::args().collect();
@@ -339,22 +339,22 @@ pub fn run(platform_notes: Vec<String>) {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running Luncher");
+        .expect("error while running Aerion");
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn launch_argument() {
-        let args: Vec<String> = ["luncher", "--launch", "Mój świat"]
+        let args: Vec<String> = ["aerion", "--launch", "Mój świat"]
             .iter()
             .map(|s| s.to_string())
             .collect();
         assert_eq!(super::launch_arg(&args).as_deref(), Some("Mój świat"));
-        assert_eq!(super::launch_arg(&["luncher".into()]), None);
+        assert_eq!(super::launch_arg(&["aerion".into()]), None);
     }
 
-    /// `cargo test -p luncher export_bindings -- --ignored` regenerates the TypeScript bindings.
+    /// `cargo test -p aerion export_bindings -- --ignored` regenerates the TypeScript bindings.
     #[test]
     #[ignore]
     fn export_bindings() {

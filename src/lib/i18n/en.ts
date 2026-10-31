@@ -3,7 +3,7 @@
 
 const en = {
   app: {
-    name: "Luncher",
+    name: "Aerion",
     tagline: "A fast, themeable launcher for Minecraft: Java Edition",
     disclaimer: "Unofficial product. Not approved by or associated with Mojang or Microsoft.",
   },
@@ -66,7 +66,7 @@ const en = {
     group: "Group",
     noGroup: "No group",
     unknown: "Unknown",
-    restartRequired: "Restart Luncher to apply this change.",
+    restartRequired: "Restart Aerion to apply this change.",
     dropHere: "Drop files to import",
   },
   loaders: {
@@ -87,7 +87,7 @@ const en = {
   },
   home: {
     greeting: "Welcome back, {name}",
-    greetingAnon: "Welcome to Luncher",
+    greetingAnon: "Welcome to Aerion",
     noInstance: "No instance yet",
     createFirst: "Create your first instance",
     lastPlayed: "Last played {when}",
@@ -343,7 +343,7 @@ const en = {
     added: "Signed in as {name}",
     clientIdTitle: "Microsoft sign-in is not configured",
     clientIdText:
-      "Luncher needs an Azure application (client) ID approved by Mojang. Follow docs/AZURE_SETUP.md, then paste the ID here.",
+      "Aerion needs an Azure application (client) ID approved by Mojang. Follow docs/AZURE_SETUP.md, then paste the ID here.",
     clientIdPlaceholder: "00000000-0000-0000-0000-000000000000",
     clientIdSave: "Save client ID",
     keyringMissing:
@@ -449,7 +449,7 @@ const en = {
     portable: "Portable mode (a 'portable' file next to the program)",
     openLogs: "Launcher logs",
     version: "Version {version}",
-    about: "Luncher is an open launcher focused on reliability, speed and customization.",
+    about: "Aerion is an open launcher focused on reliability, speed and customization.",
     thirdParty:
       "Uses Tauri, Svelte, Rust crates and icons adapted from Lucide (ISC). Game files are downloaded from Mojang's servers.",
     userAgent: "Network identity",
@@ -516,7 +516,7 @@ const en = {
     builtIn: "Built-in",
   },
   onboarding: {
-    welcome: "Welcome to Luncher",
+    welcome: "Welcome to Aerion",
     welcomeText: "Let's get you playing in three steps: sign in, create an instance, press Play.",
     start: "Get started",
     stepAccount: "Sign in",

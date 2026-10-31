@@ -195,8 +195,8 @@ impl LoopbackLogin {
     }
 }
 
-const PAGE_OK: &str = "<!doctype html><meta charset=utf-8><title>Luncher</title><body style=\"font:16px system-ui;background:#16171b;color:#eee;display:grid;place-items:center;height:90vh\"><div><h2>✔ Zalogowano / Signed in</h2><p>Możesz zamknąć tę kartę i wrócić do Lunchera.<br>You can close this tab and return to Luncher.</p></div>";
-const PAGE_ERR: &str = "<!doctype html><meta charset=utf-8><title>Luncher</title><body style=\"font:16px system-ui;background:#16171b;color:#eee;display:grid;place-items:center;height:90vh\"><div><h2>✖ Logowanie przerwane / Sign-in cancelled</h2><p>Wróć do Lunchera, aby spróbować ponownie.<br>Return to Luncher to try again.</p></div>";
+const PAGE_OK: &str = "<!doctype html><meta charset=utf-8><title>Aerion</title><body style=\"font:16px system-ui;background:#16171b;color:#eee;display:grid;place-items:center;height:90vh\"><div><h2>✔ Zalogowano / Signed in</h2><p>Możesz zamknąć tę kartę i wrócić do Aeriona.<br>You can close this tab and return to Aerion.</p></div>";
+const PAGE_ERR: &str = "<!doctype html><meta charset=utf-8><title>Aerion</title><body style=\"font:16px system-ui;background:#16171b;color:#eee;display:grid;place-items:center;height:90vh\"><div><h2>✖ Logowanie przerwane / Sign-in cancelled</h2><p>Wróć do Aeriona, aby spróbować ponownie.<br>Return to Aerion to try again.</p></div>";
 
 async fn accept_code(listeners: &[TcpListener], state: &str) -> Result<String> {
     loop {

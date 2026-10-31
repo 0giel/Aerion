@@ -5,6 +5,18 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Renamed to Aerion; Azure app registered
+- The owner chose **Aerion** as the product name (D20). Everything user-visible and the crate
+  (`cargo test -p aerion`) were renamed; old data folder is migrated on first start (unit test),
+  old archives still import. Polish forms: "w Aerionie", "Aeriona".
+- Azure: the owner's Microsoft account had only a placeholder tenant (no user object — the
+  portal's "Interaction required" loop and Graph "User was not found"). After the owner created a
+  free Azure account (real "Default Directory"), the app registration was created with Azure CLI
+  via Microsoft Graph: personal accounts only, public client, redirect `http://localhost`,
+  fallback public client on. Client ID `b7169ac0-19f3-4bf2-a815-1e98829a891a` saved in the
+  owner's settings. Mojang review form: owner submits it (repo page without code prepared).
+
+
 ### Owner requests: icons, favourites, head tracking, skins tab
 - **Instance icons**: 16 original pixel-art icons + "your own image" (PNG/JPEG/WebP/GIF ≤ 2 MB,
   copied into the instance folder, served via the new `localimg://` scheme). Picker in the

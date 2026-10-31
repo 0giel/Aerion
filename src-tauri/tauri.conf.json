@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Luncher",
+  "productName": "Aerion",
   "version": "0.1.0",
-  "identifier": "pl.luncher.desktop",
+  "identifier": "pl.aerion.desktop",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Luncher",
+        "title": "Aerion",
         "width": 1200,
         "height": 760,
         "minWidth": 920,
@@ -60,7 +60,7 @@
     "targets": ["nsis", "msi", "deb", "appimage", "dmg"],
     "category": "Game",
     "shortDescription": "Minecraft: Java Edition launcher",
-    "longDescription": "Luncher is an unofficial, fast and themeable launcher for Minecraft: Java Edition with Modrinth and CurseForge integration. Not approved by or associated with Mojang or Microsoft.",
+    "longDescription": "Aerion is an unofficial, fast and themeable launcher for Minecraft: Java Edition with Modrinth and CurseForge integration. Not approved by or associated with Mojang or Microsoft.",
     "copyright": "Unofficial product. Not approved by or associated with Mojang or Microsoft.",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "windows": {

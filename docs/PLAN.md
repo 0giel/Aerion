@@ -1,4 +1,4 @@
-# Luncher — implementation plan
+# Aerion — implementation plan
 
 Status: **approved by the owner up front** ("do everything, then run the launcher"), so work
 continues through the milestones without stopping. Decisions taken along the way live in
@@ -63,7 +63,7 @@ Nothing below is from memory alone; each item was checked against the live API o
   `POST /version_files/update` (update check), `/tag/category`.
 - New fields in 2026 responses (`environment`, `disclosure_types`, `all_project_types`) → models
   are tolerant (`#[serde(default)]`, unknown fields ignored).
-- A unique `User-Agent` `author/luncher/version (contact)` is mandatory.
+- A unique `User-Agent` `author/aerion/version (contact)` is mandatory.
 
 ### CurseForge Core API v1
 - Base `https://api.curseforge.com`, header `x-api-key`. `GET /v1/mods/search` (gameId, classId,
@@ -150,8 +150,8 @@ themes/*.json (built-in themes, embedded at build time)
 docs/{PLAN,DECISIONS,THEMING,PERFORMANCE,AZURE_SETUP}.md · .github/workflows/ci.yml · .env.example
 ```
 
-### Data on disk (default root: `%LOCALAPPDATA%\Luncher`, `~/.local/share/luncher`,
-`~/Library/Application Support/Luncher`; `portable` file next to the exe ⇒ `<exe dir>/data`)
+### Data on disk (default root: `%LOCALAPPDATA%\Aerion`, `~/.local/share/aerion`,
+`~/Library/Application Support/Aerion`; `portable` file next to the exe ⇒ `<exe dir>/data`)
 ```
 settings.json  accounts.json (no secrets)  themes/  logs/
 cache/http/ (Mojang & Modrinth JSON, ETag)  cache/images/ (thumbnails; never CurseForge)
@@ -220,7 +220,7 @@ has been *verified* against its acceptance criterion. Details and the running lo
    accounts in a release build; CurseForge key → verify CF search/install/modpack live.
 7. ~~Icons, favourites, head tracking, skins tab~~ ✅ (owner requests, 2026-10-31)
 8. ~~Windows build~~ ✅ (cross-compiled installer, engine tests + 26.3 smoke under Wine) →
-   run `Luncher_0.1.0_x64-setup.exe` on a real Windows 10/11 machine; macOS still untested.
+   run `Aerion_0.1.0_x64-setup.exe` on a real Windows 10/11 machine; macOS still untested.
 
 ## 5. Risks and mitigations
 

@@ -87,7 +87,7 @@ Some X11 window managers (Mutter) ignore de-iconify requests; a minimised window
 re-shown, which always maps it un-minimised.
 
 ### D15 — Debug-only automation hooks
-`LUNCHER_DEV_EVAL`, console mirroring and page-load logging exist only under
+`AERION_DEV_EVAL`, console mirroring and page-load logging exist only under
 `cfg(debug_assertions)`, so UI walkthroughs can be scripted without a mouse. Release builds do not
 contain them.
 
@@ -117,3 +117,14 @@ rectangles). Custom images are copied into the instance folder as `icon-<millis>
 PNG/JPEG/WebP/GIF, ≤ 2 MB) and served by the `localimg://` scheme; a new name per change lets the
 response be cached forever. Favourites are a flag on the instance; lists put them first in the UI,
 the backend order stays "last played".
+
+### D20 — Renamed from "Luncher" to "Aerion" (2026-10-31)
+"Luncher" was a working name. Product name, identifier (`pl.aerion.desktop`), crate (`aerion`),
+data folder, keyring service, log files, User-Agent and `launcher_name` are now "Aerion". For
+existing users: the old data folder (`luncher` / `Luncher`) is moved to the new one on first start,
+`LUNCHER_HOME` is still read after `AERION_HOME`, and archives with the old
+`luncher-instance.json` marker still import. Hidden on-disk markers of installed runtimes and
+natives (`.luncher-runtime`, `.luncher-natives`) keep their names so nothing is re-downloaded.
+Secrets stored under the old keyring service are not migrated (only a CurseForge key could exist;
+Microsoft sign-in was never used).
+

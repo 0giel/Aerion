@@ -18,7 +18,7 @@ use tokio_util::sync::CancellationToken;
 use crate::games::GameRegistry;
 use crate::tasks::TaskRegistry;
 
-pub const KEYRING_SERVICE: &str = "luncher";
+pub const KEYRING_SERVICE: &str = "aerion";
 pub const CF_KEY_ENTRY: &str = "curseforge-api-key";
 
 pub struct AppState {

@@ -1,10 +1,10 @@
-# Luncher
+# Aerion
 
 A fast, themeable launcher for **Minecraft: Java Edition** — instances, mod loaders, Modrinth and
 CurseForge content, modpacks — built with Tauri 2 (Rust) and Svelte 5.
 
-> **Unofficial product.** Luncher is not approved by, endorsed by or associated with Mojang or
-> Microsoft. "Minecraft" is a trademark of Mojang Synergies AB. Luncher contains no game files:
+> **Unofficial product.** Aerion is not approved by, endorsed by or associated with Mojang or
+> Microsoft. "Minecraft" is a trademark of Mojang Synergies AB. Aerion contains no game files:
 > the game, libraries, assets and Java runtimes are downloaded at run time from Mojang's servers
 > (and Adoptium for missing Java builds), and you need a Minecraft licence to play.
 
@@ -70,23 +70,23 @@ prefix and `source scripts/env.sh` points the build at it (see [CONTRIBUTING.md]
 |----------|--------|
 | `LAUNCHER_MSA_CLIENT_ID` | Azure client ID (run time, or build time for distributed builds) |
 | `CURSEFORGE_API_KEY` | CurseForge key (otherwise entered in Settings) |
-| `LUNCHER_UA_AUTHOR`, `LUNCHER_UA_CONTACT` | Build time: identity in the Modrinth `User-Agent` (`author/luncher/version (contact)`) |
-| `LUNCHER_HOME` | Put all launcher data in this folder |
+| `AERION_UA_AUTHOR`, `AERION_UA_CONTACT` | Build time: identity in the Modrinth `User-Agent` (`author/aerion/version (contact)`) |
+| `AERION_HOME` | Put all launcher data in this folder (old name `LUNCHER_HOME` also accepted) |
 | `LAUNCHER_DEV_OFFLINE=1` | Debug builds only: offline accounts without a Microsoft account |
 
 See `.env.example`. Never commit a `.env` file.
 
-**Data folder**: Windows `%LOCALAPPDATA%\Luncher`, Linux `~/.local/share/luncher`, macOS
-`~/Library/Application Support/Luncher`. **Portable mode**: create an empty file named `portable`
+**Data folder**: Windows `%LOCALAPPDATA%\Aerion`, Linux `~/.local/share/aerion`, macOS
+`~/Library/Application Support/Aerion`. **Portable mode**: create an empty file named `portable`
 next to the executable — data then lives in `data/` beside it.
 
 ## Troubleshooting
 
-- **Linux: blank window.** Luncher works around two known causes automatically: broken fontconfig
+- **Linux: blank window.** Aerion works around two known causes automatically: broken fontconfig
   caches (symlinks between cache versions, left by newer Flatpak runtimes) and the NVIDIA DMA-BUF
   renderer. The log says when a workaround is active. To repair the font cache for every app:
   `find ~/.cache/fontconfig -name '*.cache-*' -type l -delete && fc-cache`.
-- **Linux + NVIDIA: game crashes in `libnvidia-glcore`.** Luncher sets
+- **Linux + NVIDIA: game crashes in `libnvidia-glcore`.** Aerion sets
   `__GL_THREADED_OPTIMIZATIONS=0` for the game by default; an instance variable overrides it.
 - **No sound in very old versions on PipeWire** (1.8.9–1.16.5 ship an old OpenAL); the game runs.
 - **"Invalid app registration"** — the Azure app awaits Mojang's approval
@@ -109,7 +109,7 @@ next to the executable — data then lives in `data/` beside it.
 |------|---------|
 | Rust tests / lint | `cargo test --workspace` · `cargo clippy --workspace --all-targets -- -D warnings` · `cargo fmt --all --check` |
 | Frontend checks | `pnpm check` · `pnpm lint` · `pnpm test` |
-| Regenerate IPC types | `cargo test -p luncher -- --ignored export_bindings` |
+| Regenerate IPC types | `cargo test -p aerion -- --ignored export_bindings` |
 | Vanilla smoke test | `cargo run -p launcher-core --example smoke -- 26.3` |
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org). CI runs on Windows,

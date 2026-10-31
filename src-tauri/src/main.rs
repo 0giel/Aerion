@@ -2,6 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    let notes = luncher_lib::platform::prepare_env();
-    luncher_lib::run(notes);
+    let notes = aerion_lib::platform::prepare_env();
+    aerion_lib::run(notes);
 }

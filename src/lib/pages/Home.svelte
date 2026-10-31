@@ -58,7 +58,7 @@
   <section class="hero fade-up">
     <div class="brand">
       <span class="logo"><Logo /></span>
-      <h1>Luncher</h1>
+      <h1>Aerion</h1>
       <p class="greet muted">
         {account ? t("home.greeting", { name: account.username }) : t("home.greetingAnon")}
       </p>

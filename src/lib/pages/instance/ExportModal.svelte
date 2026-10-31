@@ -26,7 +26,7 @@
     });
   });
 
-  const ext: Record<PackFormat, string> = { mrpack: "mrpack", curseforge: "zip", luncher: "zip" };
+  const ext: Record<PackFormat, string> = { mrpack: "mrpack", curseforge: "zip", aerion: "zip" };
 
   async function run() {
     const path = await saveDialog({
@@ -60,10 +60,10 @@
         <button aria-pressed={format === "curseforge"} onclick={() => (format = "curseforge")}
           >CurseForge (.zip)</button
         >
-        <button aria-pressed={format === "luncher"} onclick={() => (format = "luncher")}>Luncher</button>
+        <button aria-pressed={format === "aerion"} onclick={() => (format = "aerion")}>Aerion</button>
       </div>
     </div>
-    {#if format !== "luncher"}
+    {#if format !== "aerion"}
       <div class="row gap-3">
         <div class="field grow">
           <label for="ex-name">{t("common.name")}</label><input

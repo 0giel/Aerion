@@ -88,7 +88,7 @@ async fn main() {
         env: vec![],
         wrapper: vec![],
         auth: AuthInfo {
-            name: "LuncherDev".into(),
+            name: "AerionDev".into(),
             uuid: "7f3b3f2b2c6c3d6e9a1e6f4f0c1d2e3f".into(),
             access_token: "0".into(),
             xuid: "0".into(),

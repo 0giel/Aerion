@@ -174,7 +174,7 @@ class ThemeEngine {
     const css = this.preview ? this.previewCss : this.currentCss;
     if (!this.styleEl) {
       this.styleEl = document.createElement("style");
-      this.styleEl.id = "luncher-theme-css";
+      this.styleEl.id = "aerion-theme-css";
       document.head.appendChild(this.styleEl);
     }
     this.styleEl.textContent = css ?? "";

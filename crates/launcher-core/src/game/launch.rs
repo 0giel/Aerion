@@ -141,7 +141,7 @@ pub fn build_command(
     );
     set("user_properties", "{}".into());
     set("natives_directory", display_path(&prepared.natives_dir));
-    set("launcher_name", "luncher".into());
+    set("launcher_name", "aerion".into());
     set("launcher_version", env!("CARGO_PKG_VERSION").into());
     set("classpath", classpath);
     set("classpath_separator", sep.into());

@@ -18,10 +18,22 @@ pub struct Paths {
     pub portable: bool,
 }
 
+/// The launcher used to be called "Luncher": move its data folder to the new name once.
+/// Nothing happens when the new folder already exists or the move fails (e.g. another drive).
+fn migrate_old_root(old: &Path, new: &Path) {
+    if old.is_dir() && !new.exists() {
+        let _ = std::fs::rename(old, new);
+    }
+}
+
 impl Paths {
-    /// Resolve the root directory: `LUNCHER_HOME` env var, portable mode, or the OS default.
+    /// Resolve the root directory: `AERION_HOME` (or the old `LUNCHER_HOME`) env var, portable
+    /// mode, or the OS default.
     pub fn detect() -> Result<Self> {
-        if let Some(home) = std::env::var_os("LUNCHER_HOME").filter(|v| !v.is_empty()) {
+        if let Some(home) = ["AERION_HOME", "LUNCHER_HOME"]
+            .into_iter()
+            .find_map(|v| std::env::var_os(v).filter(|v| !v.is_empty()))
+        {
             return Ok(Self::at(PathBuf::from(home), false));
         }
         if let Some(exe_dir) = std::env::current_exe()
@@ -33,13 +45,15 @@ impl Paths {
         }
         let base = directories::BaseDirs::new()
             .ok_or_else(|| Error::Invalid("cannot determine the user's home directory".into()))?;
-        let root = if cfg!(windows) {
-            base.data_local_dir().join("Luncher")
+        let (dir, name, old) = if cfg!(windows) {
+            (base.data_local_dir(), "Aerion", "Luncher")
         } else if cfg!(target_os = "macos") {
-            base.data_dir().join("Luncher")
+            (base.data_dir(), "Aerion", "Luncher")
         } else {
-            base.data_dir().join("luncher")
+            (base.data_dir(), "aerion", "luncher")
         };
+        let root = dir.join(name);
+        migrate_old_root(&dir.join(old), &root);
         Ok(Self::at(root, false))
     }
 
@@ -128,5 +142,26 @@ pub fn display_path(p: &Path) -> String {
     #[cfg(not(windows))]
     {
         p.display().to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn migrates_the_old_data_folder_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let (old, new) = (dir.path().join("luncher"), dir.path().join("aerion"));
+        std::fs::create_dir_all(old.join("instances/Mój świat")).unwrap();
+        migrate_old_root(&old, &new);
+        assert!(new.join("instances/Mój świat").is_dir());
+        assert!(!old.exists());
+
+        // An existing new folder is never overwritten.
+        std::fs::create_dir_all(old.join("x")).unwrap();
+        migrate_old_root(&old, &new);
+        assert!(old.join("x").is_dir());
+        assert!(!new.join("x").exists());
     }
 }

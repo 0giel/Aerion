@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Measures the release build: start-up to "UI ready", memory (PSS/RSS) and idle CPU.
-# Usage: scripts/perf-linux.sh [runs]   (after `pnpm tauri build`; close other Luncher windows first)
+# Usage: scripts/perf-linux.sh [runs]   (after `pnpm tauri build`; close other Aerion windows first)
 cd "$(dirname "$0")/.."
 export LC_ALL=C
 source scripts/env.sh
-BIN=target/release/luncher
-LOG=$(ls -t ~/.local/share/luncher/logs/luncher*.log | head -1)
+BIN=target/release/aerion
+LOG=$(ls -t ~/.local/share/aerion/logs/aerion*.log | head -1)
 tree_pids() { local p=$1; echo $p; for c in $(pgrep -P $p); do tree_pids $c; done; }
 ticks() { local t=0; for p in "$@"; do [ -r /proc/$p/stat ] && t=$((t + $(awk '{print $14+$15}' /proc/$p/stat))); done; echo $t; }
 for run in $(seq 1 ${1:-3}); do
@@ -15,7 +15,7 @@ for run in $(seq 1 ${1:-3}); do
   pid=$!
   for i in $(seq 1 200); do
     sleep 0.05
-    LOG=$(ls -t ~/.local/share/luncher/logs/luncher*.log | head -1)
+    LOG=$(ls -t ~/.local/share/aerion/logs/aerion*.log | head -1)
     tail -n +$((before+1)) "$LOG" | grep -q "UI ready" && break
   done
   t1=$(date +%s.%N)

@@ -1,4 +1,4 @@
-//! Luncher's own archive: the whole instance (settings, content manifest, game directory).
+//! Aerion's own archive: the whole instance (settings, content manifest, game directory).
 
 use std::path::Path;
 
@@ -8,7 +8,17 @@ use crate::modpacks::excluded_from_export;
 use crate::util::archive::{ZipBuilder, extract_zip_prefix, read_zip_entry};
 use crate::util::fs::write_json;
 
-pub const MARKER: &str = "luncher-instance.json";
+pub const MARKER: &str = "aerion-instance.json";
+/// Archives exported before the launcher was renamed from "Luncher".
+pub const LEGACY_MARKER: &str = "luncher-instance.json";
+
+/// The instance settings stored in an archive, under the current or the legacy name.
+pub fn read_marker(archive: &Path) -> Result<Option<Vec<u8>>> {
+    match read_zip_entry(archive, MARKER)? {
+        Some(b) => Ok(Some(b)),
+        None => read_zip_entry(archive, LEGACY_MARKER),
+    }
+}
 
 pub async fn export(instances: &InstanceManager, id: &str, dest: &Path) -> Result<()> {
     let inst = instances.get(id).await?;
@@ -40,8 +50,8 @@ pub async fn export(instances: &InstanceManager, id: &str, dest: &Path) -> Resul
 pub async fn import(instances: &InstanceManager, archive: &Path) -> Result<Instance> {
     let a = archive.to_path_buf();
     let src: Instance = tokio::task::spawn_blocking(move || -> Result<Instance> {
-        let bytes = read_zip_entry(&a, MARKER)?
-            .ok_or_else(|| Error::Invalid("not a Luncher archive".into()))?;
+        let bytes =
+            read_marker(&a)?.ok_or_else(|| Error::Invalid("not an Aerion archive".into()))?;
         serde_json::from_slice(&bytes).map_err(|e| Error::parse(MARKER, e))
     })
     .await

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://luncher.invalid/theme.schema.json",
-  "title": "Luncher theme",
+  "$id": "https://aerion.invalid/theme.schema.json",
+  "title": "Aerion theme",
   "description": "One theme = this JSON file (+ optional <id>.css). Out-of-range values are clamped and invalid ones replaced by the default theme's, so a broken theme never breaks the UI. See docs/THEMING.md.",
   "type": "object",
   "required": ["name", "base", "colors"],

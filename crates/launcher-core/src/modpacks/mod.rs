@@ -1,4 +1,4 @@
-//! Modpacks: Modrinth `.mrpack`, CurseForge zip (`manifest.json`) and Luncher's own instance archive.
+//! Modpacks: Modrinth `.mrpack`, CurseForge zip (`manifest.json`) and Aerion's own instance archive.
 
 pub mod curseforge;
 pub mod mrpack;
@@ -18,7 +18,7 @@ use crate::util::archive::read_zip_entry;
 pub enum PackFormat {
     Mrpack,
     Curseforge,
-    Luncher,
+    Aerion,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -56,8 +56,8 @@ pub fn detect_format(path: &Path) -> Result<PackFormat> {
     if read_zip_entry(path, "modrinth.index.json")?.is_some() {
         return Ok(PackFormat::Mrpack);
     }
-    if read_zip_entry(path, native::MARKER)?.is_some() {
-        return Ok(PackFormat::Luncher);
+    if native::read_marker(path)?.is_some() {
+        return Ok(PackFormat::Aerion);
     }
     if let Some(bytes) = read_zip_entry(path, "manifest.json")?
         && serde_json::from_slice::<serde_json::Value>(&bytes)
@@ -72,7 +72,7 @@ pub fn detect_format(path: &Path) -> Result<PackFormat> {
         return Ok(PackFormat::Curseforge);
     }
     Err(Error::Invalid(
-        "not a supported modpack (.mrpack, CurseForge zip or Luncher archive)".into(),
+        "not a supported modpack (.mrpack, CurseForge zip or Aerion archive)".into(),
     ))
 }
 

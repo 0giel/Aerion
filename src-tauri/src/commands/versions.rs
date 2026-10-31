@@ -56,7 +56,7 @@ pub async fn list_loader_versions(
     Ok(loaders::versions(&state.engine().await, loader, &game_version).await?)
 }
 
-/// System Java installations plus runtimes managed by Luncher.
+/// System Java installations plus runtimes managed by Aerion.
 #[tauri::command]
 #[specta::specta]
 pub async fn list_java(state: State<'_, AppState>) -> CmdResult<Vec<JavaInstall>> {

@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 pub enum JavaSource {
     /// Found on the system (JAVA_HOME, PATH, common install folders, other launchers).
     System,
-    /// Installed by Luncher from Mojang's runtime repository.
+    /// Installed by Aerion from Mojang's runtime repository.
     Mojang,
-    /// Installed by Luncher from Eclipse Adoptium.
+    /// Installed by Aerion from Eclipse Adoptium.
     Adoptium,
 }
 

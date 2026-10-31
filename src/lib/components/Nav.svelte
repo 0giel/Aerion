@@ -47,7 +47,7 @@
 <nav class="nav" class:collapsed aria-label="Main">
   <div class="brand">
     <span class="logo"><Logo /></span>
-    <span class="name">Luncher</span>
+    <span class="name">Aerion</span>
   </div>
   <div class="items">
     {#each items as item (item.page)}

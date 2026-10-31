@@ -61,5 +61,5 @@ jobs:
       - name: IPC bindings are up to date
         if: runner.os == 'Linux'
         run: |
-          cargo test -p luncher -- --ignored export_bindings
+          cargo test -p aerion -- --ignored export_bindings
           git diff --exit-code src/lib/bindings.ts

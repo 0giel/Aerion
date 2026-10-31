@@ -428,7 +428,7 @@
         <div class="row gap-3">
           <span class="logo"><Logo /></span>
           <div class="col gap-1">
-            <h2>Luncher</h2>
+            <h2>Aerion</h2>
             <span class="small muted">{t("settings.version", { version: app.info?.version ?? "" })}</span>
           </div>
         </div>
