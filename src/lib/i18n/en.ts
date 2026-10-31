@@ -506,6 +506,9 @@ const en = {
     noTemplateHint:
       "No template: new instances start with Minecraft's defaults. Save one from an instance (instance → Settings).",
     clearTemplate: "Remove template",
+    followCursor: "Player model follows the cursor",
+    followCursorHint:
+      "The head on the home screen turns towards the mouse (also with reduced motion, then without easing).",
     gameHint: "Used by every instance unless the instance sets its own value (instance → Settings).",
     fullscreenDefault: "Start games in fullscreen",
     globalArgsHint: "Added to every instance; an instance's own arguments come after them.",
@@ -874,6 +877,13 @@ const en = {
     upToDate: "Aerion is up to date",
     autoCheck: "Check for Aerion updates at start",
     checkNow: "Check now",
+  },
+  memory: {
+    ofTotal: "of {total} GB in this computer",
+    tooHigh: "That leaves little memory for the system — the game or the computer may slow down.",
+    tooLow: "Below 2 GB most versions run poorly; modded ones may not start.",
+    globalHint: "Used by every instance that doesn't set its own. 4–6 GB suits vanilla, 6–8 GB modpacks.",
+    instanceHint: "Moving the slider gives this instance its own value.",
   },
   palette: {
     placeholder: "Type a command or search…",

@@ -1228,6 +1228,8 @@ export type Settings_Deserialize = {
 	lastInstance?: string | null,
 	selectedAccount?: string | null,
 	checkUpdates?: boolean,
+	/**  The player model on the home screen turns its head towards the cursor. */
+	followCursor?: boolean,
 };
 
 export type Settings_Serialize = {
@@ -1269,6 +1271,8 @@ export type Settings_Serialize = {
 	lastInstance: string | null,
 	selectedAccount: string | null,
 	checkUpdates: boolean,
+	/**  The player model on the home screen turns its head towards the cursor. */
+	followCursor: boolean,
 };
 
 export type Skin = Skin_Serialize | Skin_Deserialize;

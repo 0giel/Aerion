@@ -79,6 +79,8 @@ pub struct Settings {
     pub last_instance: Option<String>,
     pub selected_account: Option<String>,
     pub check_updates: bool,
+    /// The player model on the home screen turns its head towards the cursor.
+    pub follow_cursor: bool,
 }
 
 impl Default for Settings {
@@ -113,6 +115,7 @@ impl Default for Settings {
             last_instance: None,
             selected_account: None,
             check_updates: true,
+            follow_cursor: true,
         }
     }
 }

@@ -128,6 +128,7 @@
     <SkinViewer
       skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
       capeUrl={account?.capeUrl}
+      follow={app.settings?.followCursor ?? true}
       slim={account?.skinVariant === "slim"}
       scale={9}
     />

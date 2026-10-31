@@ -219,7 +219,13 @@
   <div class="layout">
     <aside class="preview card">
       <div class="viewer">
-        <SkinViewer skinUrl={previewUrl} capeUrl={previewCape} slim={previewSlim} scale={8} />
+        <SkinViewer
+          skinUrl={previewUrl}
+          capeUrl={previewCape}
+          slim={previewSlim}
+          scale={8}
+          follow={app.settings?.followCursor ?? true}
+        />
       </div>
       <div class="col gap-1 center">
         <strong class="truncate">{editing?.name ?? current?.name ?? t("skins.currentSkin")}</strong>

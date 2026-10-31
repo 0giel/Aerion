@@ -550,6 +550,9 @@ const pl: Dict = {
     noTemplateHint:
       "Brak szablonu: nowe instancje mają domyślne ustawienia Minecrafta. Zapisz go z instancji (instancja → Ustawienia).",
     clearTemplate: "Usuń szablon",
+    followCursor: "Postać śledzi kursor",
+    followCursorHint:
+      "Głowa postaci na ekranie głównym obraca się w stronę myszy (także przy ograniczonym ruchu — wtedy bez płynnego przejścia).",
     gameHint: "Używane przez każdą instancję, chyba że instancja ma własną wartość (instancja → Ustawienia).",
     fullscreenDefault: "Uruchamiaj gry na pełnym ekranie",
     globalArgsHint: "Dodawane do każdej instancji; własne argumenty instancji idą po nich.",
@@ -928,6 +931,14 @@ const pl: Dict = {
     upToDate: "Aerion jest aktualny",
     autoCheck: "Sprawdzaj aktualizacje Aeriona przy starcie",
     checkNow: "Sprawdź teraz",
+  },
+  memory: {
+    ofTotal: "z {total} GB w tym komputerze",
+    tooHigh: "Zostaje mało pamięci dla systemu — gra lub komputer mogą zwolnić.",
+    tooLow: "Poniżej 2 GB większość wersji działa słabo, a modowane mogą się nie uruchomić.",
+    globalHint:
+      "Używane przez każdą instancję bez własnej wartości. 4–6 GB wystarcza do czystej gry, 6–8 GB do modpacków.",
+    instanceHint: "Przesunięcie suwaka nadaje tej instancji własną wartość.",
   },
   palette: {
     placeholder: "Wpisz polecenie lub szukaj…",

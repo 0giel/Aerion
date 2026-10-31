@@ -5,6 +5,20 @@ Newest entries first.
 
 ## 2026-10-31
 
+### 0.1.5: head tracking on Windows, RAM slider
+- Owner: on Windows the player model doesn't look at the cursor. Cause: with Windows "Show
+  animations" off, WebView2 reports `prefers-reduced-motion`, and the model turned *all* motion
+  off, including cursor tracking. Tracking is a response to the user's own input, so it now has
+  its own setting ("Player model follows the cursor", on by default) and works with reduced
+  motion too (head snaps to the target, no easing or idle sway).
+- Checked in Chromium (headless Brave driven over CDP — same engine family as WebView2): normal
+  and forced reduced motion both track the cursor. The "visual bug" the owner saw on Windows
+  could not be reproduced there; waiting for a screenshot.
+- RAM: a shared `MemorySlider` (GB value, MB, total memory, GB marks, too-high/too-low warnings),
+  always visible in Settings → Java & memory (Automatic / Own) and in instance settings (moving
+  it gives the instance its own value).
+
+
 ### Big feature batch (0.1.4)
 - **Play without an account**: a dialog explains what is missing (sign in / session expired / no
   licence / sign-in pending Mojang approval) with buttons, instead of a toast.

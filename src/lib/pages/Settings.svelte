@@ -5,6 +5,7 @@
   import Switch from "../components/Switch.svelte";
   import Logo from "../components/Logo.svelte";
   import ThemeGalleryModal from "./ThemeGalleryModal.svelte";
+  import MemorySlider from "../components/MemorySlider.svelte";
   import { updates } from "../stores/updates.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
@@ -131,7 +132,6 @@
 
   const majors = [8, 17, 21, 25];
   const sysLang = LOCALES.find((l) => l.id === systemLocale())?.name ?? "";
-  const totalMb = $derived(app.info?.totalMemoryMb ?? 8192);
 </script>
 
 <div class="page settings">
@@ -248,6 +248,12 @@
           {/each}
         </div>
         <Switch
+          label={t("settings.followCursor")}
+          hint={t("settings.followCursorHint")}
+          checked={s.followCursor}
+          onchange={(v) => save({ followCursor: v })}
+        />
+        <Switch
           label={t("settings.followSystem")}
           checked={s.themeFollowSystem}
           onchange={(v) => save({ themeFollowSystem: v })}
@@ -284,32 +290,26 @@
         <h2>{t("settings.sections.java")}</h2>
         <div class="field">
           <span class="label">{t("settings.defaultMemory")}</span>
-          <label class="row check"
-            ><input
-              type="checkbox"
-              checked={s.maxMemoryMb === null}
-              onchange={(e) =>
-                save({
-                  maxMemoryMb: (e.target as HTMLInputElement).checked
-                    ? null
-                    : (app.info?.defaultMemoryMb ?? 4096),
-                })}
-            />{t("instance.settings.memoryAuto", { mb: app.info?.defaultMemoryMb ?? 4096 })}</label
-          >
-          {#if s.maxMemoryMb !== null}
-            <div class="row gap-3">
-              <input
-                type="range"
-                min="1024"
-                max={Math.max(2048, Math.floor((totalMb * 0.85) / 256) * 256)}
-                step="256"
-                value={s.maxMemoryMb}
-                onchange={(e) => save({ maxMemoryMb: Number((e.target as HTMLInputElement).value) })}
-                aria-label={t("settings.defaultMemory")}
-              />
-              <strong class="mono">{s.maxMemoryMb} MB</strong>
-            </div>
-          {/if}
+          <div class="segmented" role="group" aria-label={t("settings.defaultMemory")}>
+            <button
+              type="button"
+              aria-pressed={s.maxMemoryMb === null}
+              onclick={() => save({ maxMemoryMb: null })}
+              >{t("instance.settings.memoryAuto", { mb: app.info?.defaultMemoryMb ?? 4096 })}</button
+            >
+            <button
+              type="button"
+              aria-pressed={s.maxMemoryMb !== null}
+              onclick={() => save({ maxMemoryMb: s.maxMemoryMb ?? app.info?.defaultMemoryMb ?? 4096 })}
+              >{t("instance.settings.own")}</button
+            >
+          </div>
+          <MemorySlider
+            label={t("settings.defaultMemory")}
+            value={s.maxMemoryMb ?? app.info?.defaultMemoryMb ?? 4096}
+            onchange={(mb) => save({ maxMemoryMb: mb })}
+          />
+          <span class="hint">{t("memory.globalHint")}</span>
         </div>
         <div class="field">
           <span class="label">{t("settings.jvmPreset")}</span>

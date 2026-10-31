@@ -13,11 +13,15 @@
     capeUrl = null,
     slim = false,
     scale = 9,
+    follow = true,
   }: {
     skinUrl: string | null | undefined;
     capeUrl?: string | null;
     slim?: boolean;
     scale?: number;
+    /** Turn the head towards the cursor (a response to the user's own input, so it also works
+     *  with reduced motion — then without easing). */
+    follow?: boolean;
   } = $props();
 
   type Vec3 = [number, number, number];
@@ -409,8 +413,17 @@
     if (moving) trackRaf = requestAnimationFrame(track);
   }
 
+  /** Reduced motion: no easing, just redraw once per frame with the head on target. */
+  let snapRaf = 0;
+  function snap() {
+    snapRaf = 0;
+    const [by, bp] = body();
+    head = headTarget(by, bp);
+    draw(by, bp, head.yaw, head.pitch, clock);
+  }
+
   $effect(() => {
-    if (!motion) return;
+    if (!follow) return;
     const move = (e: PointerEvent) => {
       const c = canvas;
       if (!c) return;
@@ -422,26 +435,30 @@
         x: (Math.atan2(e.clientX - hx, DEPTH) * 180) / Math.PI,
         y: (Math.atan2(hy - e.clientY, DEPTH) * 180) / Math.PI,
       };
-      if (!trackRaf && animate) {
-        lastStep = performance.now();
-        trackRaf = requestAnimationFrame(track);
-      }
+      kick();
     };
     const out = (e: PointerEvent) => {
       if (e.relatedTarget) return;
       aim = null;
-      if (!trackRaf && animate) {
+      kick();
+    };
+    function kick() {
+      if (!motion) {
+        if (!snapRaf) snapRaf = requestAnimationFrame(snap);
+      } else if (!trackRaf && animate) {
         lastStep = performance.now();
         trackRaf = requestAnimationFrame(track);
       }
-    };
+    }
     window.addEventListener("pointermove", move, { passive: true });
     document.addEventListener("pointerout", out, { passive: true });
     return () => {
       window.removeEventListener("pointermove", move);
       document.removeEventListener("pointerout", out);
       cancelAnimationFrame(trackRaf);
+      cancelAnimationFrame(snapRaf);
       trackRaf = 0;
+      snapRaf = 0;
       aim = null;
       head = { yaw: 0, pitch: 0 };
     };

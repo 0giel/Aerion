@@ -2,6 +2,7 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { untrack } from "svelte";
   import Icon from "../../components/Icon.svelte";
+  import MemorySlider from "../../components/MemorySlider.svelte";
   import { app } from "../../stores/app.svelte";
   import { dialogs } from "../../stores/dialogs.svelte";
   import { toasts } from "../../stores/toasts.svelte";
@@ -311,20 +312,12 @@
         >{t("instance.settings.own")}</button
       >
     </div>
-    {#if !memoryAuto}
-      <div class="row gap-3">
-        <input
-          type="range"
-          min="1024"
-          max={maxSlider}
-          step="256"
-          bind:value={draft.maxMemoryMb}
-          aria-label={t("instance.settings.memory")}
-        />
-        <strong class="mono mem">{draft.maxMemoryMb ?? autoMb} MB</strong>
-      </div>
-      <span class="hint">{t("instance.settings.memoryHint", { total: Math.round(totalMb / 1024) })}</span>
-    {/if}
+    <MemorySlider
+      label={t("instance.settings.maxMemory")}
+      value={memoryAuto ? globalMax : (draft.maxMemoryMb ?? globalMax)}
+      onchange={(mb) => ((memoryAuto = false), (draft.maxMemoryMb = mb))}
+    />
+    <span class="hint">{t("memory.instanceHint")}</span>
     <span class="label">{t("instance.settings.minMemory")}</span>
     <div class="row wrap gap-2">
       <div class="segmented" role="group" aria-label={t("instance.settings.minMemory")}>
@@ -609,10 +602,6 @@
     border-radius: var(--r-sm);
     background: var(--c-surface-2);
     word-break: break-all;
-  }
-  .mem {
-    min-width: 6.5rem;
-    text-align: right;
   }
   .savebar {
     position: sticky;
