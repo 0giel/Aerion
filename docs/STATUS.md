@@ -51,6 +51,15 @@ Newest entries first.
   when the NVIDIA driver is loaded (`game::launch::default_env`); variables set on the instance
   or in the launcher's own environment take precedence.
 
+### Frontend tests (vitest, 15 tests)
+- `i18n/dictionaries.test.ts`: pl/en have the same keys and placeholders, no empty strings, Polish
+  plurals have one/few/many/other, and **every error code and crash kind in the Rust sources has a
+  translation** (read via `?raw` imports, so a new untranslated code fails CI).
+- `theme/schema.test.ts`: all 7 built-in themes survive normalisation unchanged; missing fields
+  fall back; numbers are clamped; CSS injection / `url()` / path traversal in assets are rejected;
+  motion tokens honour reduced motion.
+- `api.test.ts`: `instanceTitle`.
+
 ### Documentation
 - `README.md` (features, unofficial disclaimer, build/run, configuration, troubleshooting),
   `docs/AZURE_SETUP.md`, `docs/THEMING.md`, `docs/DECISIONS.md` (D1–D15),
@@ -99,7 +108,7 @@ Newest entries first.
 - **Frontend** — all pages written; `pnpm check`, `pnpm lint`, `pnpm build` clean.
 
 ## Not started yet
-- `docs/PERFORMANCE.md` (needs a release build); vitest tests for i18n/theme schema.
+- `docs/PERFORMANCE.md` (needs a release build).
 - Live UI tests: Fabric + Sodium/Fabric API install, Forge/NeoForge launches, modpack import.
 - Release bundles (`pnpm tauri build`), performance measurements.
 - Owner actions: Azure app registration + Mojang review (client ID), CurseForge API key.
