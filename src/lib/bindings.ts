@@ -157,6 +157,9 @@ export const commands = {
 	exportTheme: (theme: ThemeFile_Deserialize, path: string) => __TAURI_INVOKE<null>("export_theme", { theme, path }),
 	/**  Import a theme file (plain theme JSON or an exported bundle). Returns the stored theme. */
 	importTheme: (path: string) => __TAURI_INVOKE<ThemeFile_Serialize>("import_theme", { path }),
+	galleryThemes: () => __TAURI_INVOKE<GalleryTheme_Serialize[]>("gallery_themes"),
+	/**  Download a gallery theme into the user's themes (JSON only: gallery themes carry no CSS). */
+	installGalleryTheme: (id: string) => __TAURI_INVOKE<string>("install_gallery_theme", { id }),
 	listTasks: () => __TAURI_INVOKE<TaskInfo_Serialize[]>("list_tasks"),
 	cancelTask: (id: string) => __TAURI_INVOKE<boolean>("cancel_task", { id }),
 	dismissTask: (id: string) => __TAURI_INVOKE<null>("dismiss_task", { id }),
@@ -485,6 +488,33 @@ export type GalleryImage_Serialize = {
 	thumbnailUrl: string | null,
 	title: string | null,
 	description: string | null,
+};
+
+export type GalleryPreview = {
+	bg: string,
+	surface: string,
+	text: string,
+	accent: string,
+};
+
+export type GalleryTheme = GalleryTheme_Serialize | GalleryTheme_Deserialize;
+
+export type GalleryTheme_Deserialize = {
+	id: string,
+	name: string,
+	author?: string,
+	description?: string,
+	file: string,
+	preview?: GalleryPreview | null,
+};
+
+export type GalleryTheme_Serialize = {
+	id: string,
+	name: string,
+	author: string,
+	description: string,
+	file: string,
+	preview: GalleryPreview | null,
 };
 
 export type GameLogEvent = GameLogEvent_Serialize | GameLogEvent_Deserialize;

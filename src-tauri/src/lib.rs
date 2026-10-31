@@ -114,6 +114,8 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             commands::themes::add_theme_asset,
             commands::themes::export_theme,
             commands::themes::import_theme,
+            commands::themes::gallery_themes,
+            commands::themes::install_gallery_theme,
             commands::tasks::list_tasks,
             commands::tasks::cancel_task,
             commands::tasks::dismiss_task,

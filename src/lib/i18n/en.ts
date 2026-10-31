@@ -852,6 +852,15 @@ const en = {
       folder: "Folder",
     },
   },
+  gallery: {
+    open: "Theme gallery",
+    title: "Theme gallery",
+    failed: "The gallery could not be loaded. Check your internet connection.",
+    install: "Install & use",
+    use: "Use",
+    applied: "Theme {name} applied",
+    submit: "Share your theme",
+  },
   palette: {
     placeholder: "Type a command or search…",
     empty: "No matches",

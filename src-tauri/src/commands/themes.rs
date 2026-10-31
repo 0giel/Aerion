@@ -242,3 +242,87 @@ pub async fn import_theme(state: State<'_, AppState>, path: String) -> CmdResult
     save_user_theme(state, file.clone()).await?;
     Ok(file)
 }
+
+/// Community theme gallery: an index and theme files in the project's GitHub repository.
+const GALLERY: &str = "https://raw.githubusercontent.com/0giel/Aerion/main/themes/";
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct GalleryPreview {
+    pub bg: String,
+    pub surface: String,
+    pub text: String,
+    pub accent: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct GalleryTheme {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub author: String,
+    #[serde(default)]
+    pub description: String,
+    pub file: String,
+    pub preview: Option<GalleryPreview>,
+}
+
+#[derive(Deserialize)]
+struct GalleryIndex {
+    themes: Vec<GalleryTheme>,
+}
+
+/// The gallery's file names are `<id>.json` and nothing else (they become URL paths).
+fn gallery_file_ok(t: &GalleryTheme) -> bool {
+    valid_id(&t.id) && t.file == format!("{}.json", t.id)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn gallery_themes(state: State<'_, AppState>) -> CmdResult<Vec<GalleryTheme>> {
+    let engine = state.engine().await;
+    let index: GalleryIndex = engine
+        .http
+        .get_json(&format!("{GALLERY}index.json"))
+        .await?;
+    Ok(index
+        .themes
+        .into_iter()
+        .filter(gallery_file_ok)
+        .take(200)
+        .collect())
+}
+
+/// Download a gallery theme into the user's themes (JSON only: gallery themes carry no CSS).
+#[tauri::command]
+#[specta::specta]
+pub async fn install_gallery_theme(state: State<'_, AppState>, id: String) -> CmdResult<String> {
+    if !valid_id(&id) {
+        return Err(bad("invalid theme id"));
+    }
+    let bytes = state
+        .engine()
+        .await
+        .http
+        .get_bytes(&format!("{GALLERY}{id}.json"))
+        .await?;
+    if bytes.len() > 512 * 1024 {
+        return Err(bad("theme is too large"));
+    }
+    let mut json: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_slice(&bytes).map_err(|e| bad(&e.to_string()))?;
+    json.insert("id".into(), serde_json::Value::String(id.clone()));
+    json.remove("$schema");
+    let text = serde_json::to_string_pretty(&json).map_err(|e| bad(&e.to_string()))?;
+    save_user_theme(
+        state,
+        ThemeFile {
+            id: id.clone(),
+            json: text,
+            css: None,
+        },
+    )
+    .await?;
+    Ok(id)
+}

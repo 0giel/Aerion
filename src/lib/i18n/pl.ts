@@ -906,6 +906,15 @@ const pl: Dict = {
       folder: "Folder",
     },
   },
+  gallery: {
+    open: "Galeria motywów",
+    title: "Galeria motywów",
+    failed: "Nie udało się wczytać galerii. Sprawdź połączenie z internetem.",
+    install: "Zainstaluj i użyj",
+    use: "Użyj",
+    applied: "Zastosowano motyw {name}",
+    submit: "Udostępnij swój motyw",
+  },
   palette: {
     placeholder: "Wpisz polecenie lub szukaj…",
     empty: "Brak wyników",

@@ -4,6 +4,7 @@
   import Icon from "../components/Icon.svelte";
   import Switch from "../components/Switch.svelte";
   import Logo from "../components/Logo.svelte";
+  import ThemeGalleryModal from "./ThemeGalleryModal.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { toasts } from "../stores/toasts.svelte";
@@ -25,6 +26,7 @@
   let javas = $state.raw<JavaInstall[]>([]);
   let proxy = $state(app.settings?.proxy ?? "");
   let clientId = $state(app.settings?.msaClientId ?? "");
+  let galleryOpen = $state(false);
   let optionsTemplate = $state.raw<{ source: string; savedAt: number } | null>(null);
   $effect(() => {
     commands
@@ -184,6 +186,9 @@
         <div class="row between">
           <h2>{t("settings.sections.appearance")}</h2>
           <div class="row">
+            <button class="btn sm" onclick={() => (galleryOpen = true)}
+              ><Icon name="sparkles" size={15} />{t("gallery.open")}</button
+            >
             <button class="btn sm" onclick={importTheme}
               ><Icon name="upload" size={15} />{t("settings.importTheme")}</button
             >
@@ -613,6 +618,8 @@
     </div>
   {/if}
 </div>
+
+<ThemeGalleryModal bind:open={galleryOpen} />
 
 <style>
   .num {
