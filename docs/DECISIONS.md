@@ -136,3 +136,31 @@ the latest release's jar is fetched once) and caches them under `cache/textures`
 `mc:<texture>`; the 16 old pixel-art keys map to similar textures. Without a jar (offline, fresh
 install) icons fall back to the launcher logo.
 
+### D22 — Launcher updates through signed GitHub Releases (2026-10-31)
+`tauri-plugin-updater` reads `latest.json` from the latest GitHub release of 0giel/Aerion and
+verifies each download with the minisign public key in `tauri.conf.json`. The private key lives
+only in `~/.config/aerion-signing/` (back it up: without it no update can reach existing installs).
+Windows, macOS and AppImage update in place; `.deb` installs only get a "new version" notice with a
+download link (the system package manager owns them). `scripts/release.sh` builds and prepares
+the release folder.
+
+### D23 — Importing other launchers' instances (2026-10-31)
+Metadata comes from each launcher's own files (launcher_profiles.json, instance.cfg +
+mmc-pack.json, minecraftinstance.json, SKlauncher's instances.json). Modrinth App keeps its
+metadata in an internal SQLite schema that changes between versions, so its game version and
+loader are read from `logs/latest.log` instead (and confirmed by the user). Copies skip other
+launchers' shared files and anything with credentials (`launcher_*`, `*accounts*`); "use this
+folder" imports point the instance at the existing folder without a marker, so deleting the
+instance never deletes it.
+
+### D24 — Worlds, servers and screenshots read from game files (2026-10-31)
+A small NBT reader/writer (`util::nbt`) reads `level.dat` names and edits `servers.dat` keeping
+unknown tags; server status uses the Server List Ping protocol (no SRV lookup yet). World
+backups are zips in `instances/<id>/.backups/worlds`; automatic ones (before mod updates and
+version changes) keep the last three per world, and restoring first backs up the current state.
+
+### D25 — Theme gallery is a folder in the repository (2026-10-31)
+No server: `themes/index.json` and theme files in github.com/0giel/Aerion are fetched by the
+backend; installs are JSON only (no custom CSS from the network) and go through the same
+validation as local themes.
+

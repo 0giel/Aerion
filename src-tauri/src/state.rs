@@ -38,6 +38,8 @@ pub struct AppState {
     pub cf_key_from_env: bool,
     pub login: Mutex<Option<CancellationToken>>,
     pub device_code: tokio::sync::Mutex<Option<DeviceCode>>,
+    /// Found by `check_app_update`, installed by `install_app_update`.
+    pub pending_update: tokio::sync::Mutex<Option<tauri_plugin_updater::Update>>,
 }
 
 impl AppState {
@@ -85,6 +87,7 @@ impl AppState {
             cf_key_from_env,
             login: Mutex::new(None),
             device_code: tokio::sync::Mutex::new(None),
+            pending_update: tokio::sync::Mutex::new(None),
             paths,
         })
     }

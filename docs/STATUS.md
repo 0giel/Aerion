@@ -5,6 +5,33 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Big feature batch (0.1.4)
+- **Play without an account**: a dialog explains what is missing (sign in / session expired / no
+  licence / sign-in pending Mojang approval) with buttons, instead of a toast.
+- **Statistics page** (`Ctrl+6`): total play time, sessions (new per-instance counter), most
+  played instances, favourite versions and loaders, most used mods, worlds/screenshots counts.
+- **Worlds tab**: worlds with names/icons from `level.dat`, zip backups (manual; automatic before
+  mod updates and version changes, last 3 kept), restore with an automatic backup of the current
+  state, backups of deleted worlds.
+- **Screenshots tab**: gallery + viewer (arrow keys), open in system viewer, delete.
+- **Servers tab**: `servers.dat` list (add/remove, unknown fields kept), live status (MOTD,
+  players, version, icon, ping) and **Join** (Quick Play).
+- **Game settings sync**: copy options.txt/OptiFine/shader settings from or to instances; a
+  template applied to every new instance.
+- **Update an instance to a newer Minecraft version**: plan (mods updated / already compatible /
+  unavailable / unknown), loader availability check, world backup, update in place or as a copy;
+  "X available" badge in the instance header.
+- **Import from other launchers** (D23): official launcher, Prism/MultiMC, Modrinth App,
+  CurseForge, SKlauncher, any folder; copy or use in place. Verified detection on this machine
+  (Modrinth App profile → NeoForge 1.21.1 from its log, 5 SKlauncher instances, .minecraft).
+- **Theme gallery** (D25): 8 new themes prepared in `~/Desktop/aerion-strona/themes` for upload.
+- **Launcher updates** (D22): signed, from GitHub Releases; banner + Settings switch/"Check now".
+- Tests: engine 107, Tauri 12, vitest 18 (NBT, worlds, servers + fake-server ping, screenshots,
+  options, stats, upgrade plan, importers).
+- Not verified live: Join/ping against a real server, update install (needs a published
+  release), gallery (needs the themes folder in the repository).
+
+
 ### Game locations, global/per-instance settings, capes, nicer player model (0.1.3)
 - **Instance game folder anywhere** (`Instance.gameDir`): chosen in the new-instance dialog or
   moved later (instance → Settings → Game folder; rename on the same drive, copy + delete across

@@ -9,6 +9,7 @@ pub mod mods;
 pub mod skins;
 pub mod tasks;
 pub mod themes;
+pub mod updates;
 pub mod versions;
 pub mod worlds;
 

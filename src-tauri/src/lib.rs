@@ -114,6 +114,8 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             commands::themes::add_theme_asset,
             commands::themes::export_theme,
             commands::themes::import_theme,
+            commands::updates::check_app_update,
+            commands::updates::install_app_update,
             commands::themes::gallery_themes,
             commands::themes::install_gallery_theme,
             commands::tasks::list_tasks,
@@ -299,6 +301,7 @@ pub fn run(platform_notes: Vec<String>) {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_window_state::Builder::default().with_state_flags(StateFlags::all() & !StateFlags::VISIBLE).build())
         .register_asynchronous_uri_scheme_protocol("img", protocols::img)
         .register_asynchronous_uri_scheme_protocol("themeasset", protocols::theme_asset)

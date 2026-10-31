@@ -5,6 +5,7 @@
   import Switch from "../components/Switch.svelte";
   import Logo from "../components/Logo.svelte";
   import ThemeGalleryModal from "./ThemeGalleryModal.svelte";
+  import { updates } from "../stores/updates.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { toasts } from "../stores/toasts.svelte";
@@ -180,6 +181,21 @@
           checked={s.showConsoleOnLaunch}
           onchange={(v) => save({ showConsoleOnLaunch: v })}
         />
+        <div class="row wrap gap-2">
+          <div class="grow">
+            <Switch
+              label={t("appUpdate.autoCheck")}
+              checked={s.checkUpdates}
+              onchange={(v) => save({ checkUpdates: v })}
+            />
+          </div>
+          <button class="btn sm" disabled={updates.checking} onclick={() => updates.check(true)}
+            >{#if updates.checking}<span class="spinner"></span>{:else}<Icon
+                name="refresh"
+                size={14}
+              />{/if}{t("appUpdate.checkNow")}</button
+          >
+        </div>
       </section>
 
       <section id="set-appearance" class="card col gap-3">

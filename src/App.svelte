@@ -8,6 +8,7 @@
   import Toasts from "./lib/components/Toasts.svelte";
   import Dialogs from "./lib/components/Dialogs.svelte";
   import AccountHelp from "./lib/components/AccountHelp.svelte";
+  import UpdateBanner from "./lib/components/UpdateBanner.svelte";
   import CommandPalette from "./lib/components/CommandPalette.svelte";
   import Modal from "./lib/components/Modal.svelte";
   import Icon from "./lib/components/Icon.svelte";
@@ -152,6 +153,7 @@
 <Toasts />
 <Dialogs />
 <AccountHelp />
+<UpdateBanner />
 
 {#if dragging}
   <div class="drop" aria-hidden="true">

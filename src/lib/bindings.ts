@@ -157,6 +157,9 @@ export const commands = {
 	exportTheme: (theme: ThemeFile_Deserialize, path: string) => __TAURI_INVOKE<null>("export_theme", { theme, path }),
 	/**  Import a theme file (plain theme JSON or an exported bundle). Returns the stored theme. */
 	importTheme: (path: string) => __TAURI_INVOKE<ThemeFile_Serialize>("import_theme", { path }),
+	checkAppUpdate: () => __TAURI_INVOKE<AppUpdate_Serialize | null>("check_app_update"),
+	/**  Download, verify (signature), install and restart. */
+	installAppUpdate: () => __TAURI_INVOKE<null>("install_app_update"),
 	galleryThemes: () => __TAURI_INVOKE<GalleryTheme_Serialize[]>("gallery_themes"),
 	/**  Download a gallery theme into the user's themes (JSON only: gallery themes carry no CSS). */
 	installGalleryTheme: (id: string) => __TAURI_INVOKE<string>("install_gallery_theme", { id }),
@@ -270,6 +273,26 @@ export type AppInfo_Serialize = {
 	keyringError: string | null,
 	devOffline: boolean,
 	userAgent: string,
+};
+
+export type AppUpdate = AppUpdate_Serialize | AppUpdate_Deserialize;
+
+export type AppUpdate_Deserialize = {
+	version: string,
+	notes?: string | null,
+	/**  The update can be installed from inside the launcher. */
+	canInstall: boolean,
+	/**  Download page for manual installs. */
+	url: string,
+};
+
+export type AppUpdate_Serialize = {
+	version: string,
+	notes: string | null,
+	/**  The update can be installed from inside the launcher. */
+	canInstall: boolean,
+	/**  Download page for manual installs. */
+	url: string,
 };
 
 export type Arch = "x86" | "x64" | "arm64" | "arm";

@@ -220,7 +220,10 @@ has been *verified* against its acceptance criterion. Details and the running lo
    verify Microsoft sign-in, skins/capes and offline accounts in a release build. CurseForge key →
    verify CF search/install/modpack live.
 7. ~~Icons, favourites, head tracking, skins tab~~ ✅ (owner requests, 2026-10-31)
-8. ~~Windows build~~ ✅ (cross-compiled installer, engine tests + 26.3 smoke under Wine) →
+8. ~~Account dialog, stats, worlds/backups, screenshots, servers, options sync, version upgrade,
+   import from launchers, theme gallery, launcher updates~~ ✅ (0.1.4)
+9. Owner: publish release v0.1.4 on GitHub and upload `themes/` → verify self-update and gallery.
+10. ~~Windows build~~ ✅ (cross-compiled installer, engine tests + 26.3 smoke under Wine) →
    run `Aerion_0.1.0_x64-setup.exe` on a real Windows 10/11 machine; macOS still untested.
 
 ## 5. Risks and mitigations
