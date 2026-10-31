@@ -15,7 +15,7 @@ launcher without touching code. Changes apply live — no restart.
 
 ## Three ways to make a theme
 
-1. **Theme editor** — Settings → Appearance → *Customize…*. Every change previews immediately;
+1. **Theme editor** — Settings → Appearance → *Theme editor*. Every change previews immediately;
    *Save theme* writes `<data>/themes/<id>.json` and selects it. Built-in themes are never
    overwritten: editing one creates a copy ("Nocturne ✦").
 2. **By hand** — copy a built-in theme into `<data>/themes/`, give it a new `id`/`name`, edit.
