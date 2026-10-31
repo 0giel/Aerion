@@ -1,8 +1,13 @@
 # Aerion
 
-**Aerion** is a free desktop launcher for **Minecraft: Java Edition** (Windows and Linux), built
-as a personal project. It opens in under half a second, uses about 180 MB of RAM and can be themed
-to look exactly the way you like.
+**Aerion** is a fast and **highly customizable** launcher for **Minecraft: Java Edition**
+(Windows and Linux). Change its colors, layout, fonts, background (even your own image or video),
+particles and icons — all live, without restarting — and make it look exactly the way you like.
+Under the hood it stays light: it opens in under half a second and uses about 180 MB of RAM.
+
+**Highlights:** theme editor with live preview · 7 built-in themes · custom backgrounds and CSS ·
+shareable themes · Minecraft-texture instance icons · Fabric, Quilt, Forge, NeoForge ·
+Modrinth mods and modpacks · skins and capes.
 
 > **Unofficial product.** Aerion is not approved by or associated with Mojang or Microsoft.
 > "Minecraft" is a trademark of Mojang Synergies AB.
