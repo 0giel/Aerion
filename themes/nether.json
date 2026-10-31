@@ -1,0 +1,58 @@
+{
+  "id": "nether",
+  "name": "Nether",
+  "author": "Aerion",
+  "base": "dark",
+  "colors": {
+    "bg": "#1a0f0e",
+    "surface": "#241614",
+    "surface2": "#2f1c19",
+    "surface3": "#3b2420",
+    "border": "#ffffff17",
+    "text": "#f8e8e2",
+    "textMuted": "#c9a69b",
+    "textFaint": "#8e6f66",
+    "accent": "#ff7a3d",
+    "accentText": "#2e0f02",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#ffb08a"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#1a0f0e",
+    "gradient": "radial-gradient(900px 550px at 50% 110%, #5a1a0e 0%, transparent 65%), linear-gradient(180deg, #170d0c 0%, #1f100d 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "sparkles"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "id": "redstone",
+  "name": "Redstone",
+  "author": "Aerion",
+  "base": "dark",
+  "colors": {
+    "bg": "#121214",
+    "surface": "#1b1b1f",
+    "surface2": "#232328",
+    "surface3": "#2d2d33",
+    "border": "#ffffff17",
+    "text": "#ececf1",
+    "textMuted": "#a7a7b3",
+    "textFaint": "#73737e",
+    "accent": "#cc2a2e",
+    "accentText": "#ffffff",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#ff7b7d"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#121214",
+    "gradient": "radial-gradient(900px 560px at 50% -10%, #3a1214 0%, transparent 60%), linear-gradient(170deg, #141416 0%, #0d0d0f 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "sparkles"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "id": "forest",
+  "name": "Forest",
+  "author": "Aerion",
+  "base": "dark",
+  "colors": {
+    "bg": "#121611",
+    "surface": "#1a2018",
+    "surface2": "#212a1f",
+    "surface3": "#2a3527",
+    "border": "#ffffff17",
+    "text": "#eaf2e4",
+    "textMuted": "#a9b8a0",
+    "textFaint": "#76846e",
+    "accent": "#8bc34a",
+    "accentText": "#13240a",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#b5df85"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#121611",
+    "gradient": "radial-gradient(1000px 620px at 20% 0%, #24391c 0%, transparent 60%), linear-gradient(165deg, #141812 0%, #0d100c 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "dust"
+  }
+}

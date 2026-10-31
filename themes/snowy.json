@@ -1,0 +1,58 @@
+{
+  "id": "snowy",
+  "name": "Snowy Taiga",
+  "author": "Aerion",
+  "base": "light",
+  "colors": {
+    "bg": "#eef3f7",
+    "surface": "#ffffff",
+    "surface2": "#f3f6f9",
+    "surface3": "#e5ecf2",
+    "border": "#1b263118",
+    "text": "#1b2631",
+    "textMuted": "#4c5d6d",
+    "textFaint": "#7a8a99",
+    "accent": "#256fb0",
+    "accentText": "#ffffff",
+    "success": "#1f9d55",
+    "warning": "#b7791f",
+    "danger": "#d64545",
+    "info": "#2f80c8",
+    "focus": "#1b5f9b"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#eef3f7",
+    "gradient": "radial-gradient(1000px 600px at 80% -10%, #d6e6f3 0%, transparent 60%), linear-gradient(170deg, #f3f7fa 0%, #e7eef4 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "snow"
+  }
+}

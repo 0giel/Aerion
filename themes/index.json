@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "themes": [
+    {
+      "id": "cherry",
+      "name": "Cherry Blossom",
+      "author": "Aerion",
+      "description": "Soft pink petals on a deep plum night.",
+      "file": "cherry.json",
+      "preview": {
+        "bg": "#1a1418",
+        "surface": "#241b21",
+        "text": "#f6e9ef",
+        "accent": "#f49ac1"
+      }
+    },
+    {
+      "id": "ocean",
+      "name": "Deep Ocean",
+      "author": "Aerion",
+      "description": "Calm blues of the ocean monument.",
+      "file": "ocean.json",
+      "preview": {
+        "bg": "#0e1620",
+        "surface": "#14202d",
+        "text": "#e6f1fb",
+        "accent": "#4cc9f0"
+      }
+    },
+    {
+      "id": "nether",
+      "name": "Nether",
+      "author": "Aerion",
+      "description": "Hot netherrack reds and glowing lava.",
+      "file": "nether.json",
+      "preview": {
+        "bg": "#1a0f0e",
+        "surface": "#241614",
+        "text": "#f8e8e2",
+        "accent": "#ff7a3d"
+      }
+    },
+    {
+      "id": "end",
+      "name": "The End",
+      "author": "Aerion",
+      "description": "Pale end stone under a void-purple sky.",
+      "file": "end.json",
+      "preview": {
+        "bg": "#110d18",
+        "surface": "#1a1424",
+        "text": "#f1ecfa",
+        "accent": "#c792ea"
+      }
+    },
+    {
+      "id": "forest",
+      "name": "Forest",
+      "author": "Aerion",
+      "description": "Mossy greens and oak bark browns.",
+      "file": "forest.json",
+      "preview": {
+        "bg": "#121611",
+        "surface": "#1a2018",
+        "text": "#eaf2e4",
+        "accent": "#8bc34a"
+      }
+    },
+    {
+      "id": "snowy",
+      "name": "Snowy Taiga",
+      "author": "Aerion",
+      "description": "A light theme with falling snow.",
+      "file": "snowy.json",
+      "preview": {
+        "bg": "#eef3f7",
+        "surface": "#ffffff",
+        "text": "#1b2631",
+        "accent": "#256fb0"
+      }
+    },
+    {
+      "id": "desert",
+      "name": "Desert",
+      "author": "Aerion",
+      "description": "Warm sandstone and sunset gold.",
+      "file": "desert.json",
+      "preview": {
+        "bg": "#19150f",
+        "surface": "#231d15",
+        "text": "#f7efe1",
+        "accent": "#f2b950"
+      }
+    },
+    {
+      "id": "redstone",
+      "name": "Redstone",
+      "author": "Aerion",
+      "description": "Dark stone with powered-redstone accents.",
+      "file": "redstone.json",
+      "preview": {
+        "bg": "#121214",
+        "surface": "#1b1b1f",
+        "text": "#ececf1",
+        "accent": "#cc2a2e"
+      }
+    }
+  ]
+}
