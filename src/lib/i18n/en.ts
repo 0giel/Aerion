@@ -692,6 +692,32 @@ const en = {
     modelHint: "Pick the one where the arms look right in the preview.",
     deleteTitle: "Delete {name} from the library?",
   },
+  accountHelp: {
+    signIn: {
+      title: "Sign in to play",
+      text: "Minecraft: Java Edition needs a Microsoft account that owns the game.",
+      step1: 'Open Accounts and choose "Sign in with Microsoft".',
+      step2: "Sign in in the browser with the account you bought Minecraft with.",
+      step3: "Come back to Aerion and press Play.",
+    },
+    relogin: {
+      title: "Sign in again",
+      text: "Your Microsoft session has expired or was revoked. Sign in once more and you can play.",
+    },
+    license: {
+      title: "This account doesn't own Minecraft",
+      text: "The Microsoft account you signed in with has no Minecraft: Java Edition (or no profile yet — Game Pass players: start the official launcher once).",
+    },
+    pending: {
+      title: "Microsoft sign-in isn't active yet",
+      text: "This copy of Aerion is waiting for Mojang to approve its sign-in. Once approved, signing in works without any update.",
+    },
+    offlineNote:
+      "Offline play becomes available after a Microsoft account that owns the game has been added.",
+    buy: "Get Minecraft",
+    signInButton: "Sign in",
+    signInAgain: "Sign in again",
+  },
   palette: {
     placeholder: "Type a command or search…",
     empty: "No matches",

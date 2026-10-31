@@ -724,6 +724,31 @@ const pl: Dict = {
     modelHint: "Wybierz ten, przy którym ręce w podglądzie wyglądają dobrze.",
     deleteTitle: "Usunąć {name} z biblioteki?",
   },
+  accountHelp: {
+    signIn: {
+      title: "Zaloguj się, aby grać",
+      text: "Minecraft: Java Edition wymaga konta Microsoft z kupioną grą.",
+      step1: "Otwórz Konta i wybierz „Zaloguj przez Microsoft”.",
+      step2: "Zaloguj się w przeglądarce kontem, na którym kupiłeś Minecrafta.",
+      step3: "Wróć do Aeriona i kliknij Graj.",
+    },
+    relogin: {
+      title: "Zaloguj się ponownie",
+      text: "Sesja Microsoft wygasła lub została cofnięta. Zaloguj się jeszcze raz i możesz grać.",
+    },
+    license: {
+      title: "To konto nie ma Minecrafta",
+      text: "Konto Microsoft, którym się zalogowałeś, nie ma Minecraft: Java Edition (albo jeszcze profilu — gracze Game Pass: uruchom raz oficjalny launcher).",
+    },
+    pending: {
+      title: "Logowanie Microsoft nie jest jeszcze aktywne",
+      text: "Ta kopia Aeriona czeka na zatwierdzenie logowania przez Mojang. Po zatwierdzeniu logowanie zadziała bez aktualizacji.",
+    },
+    offlineNote: "Granie offline odblokuje się po dodaniu konta Microsoft z kupioną grą.",
+    buy: "Kup Minecrafta",
+    signInButton: "Zaloguj się",
+    signInAgain: "Zaloguj ponownie",
+  },
   palette: {
     placeholder: "Wpisz polecenie lub szukaj…",
     empty: "Brak wyników",

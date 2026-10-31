@@ -15,9 +15,21 @@ import {
 import { i18n, t } from "../i18n/index.svelte";
 import { themes } from "../theme/engine.svelte";
 import { router } from "./router.svelte";
+import { ui } from "./ui.svelte";
 import { toasts } from "./toasts.svelte";
 
 const MAX_LOG_LINES = 20_000;
+
+/** Launch failures explained by the account help dialog instead of a toast. */
+export const ACCOUNT_HELP = new Set([
+  "auth.noAccount",
+  "auth.offlineNotAllowed",
+  "auth.sessionExpired",
+  "auth.noLicense",
+  "auth.noProfile",
+  "auth.clientIdMissing",
+  "auth.invalidAppRegistration",
+]);
 
 class AppStore {
   ready = $state(false);
@@ -106,7 +118,9 @@ class AppStore {
     this.tasks = prev ? this.tasks.map((x) => (x.id === task.id ? task : x)) : [...this.tasks, task];
     if (prev?.status === task.status || task.status === "running") return;
     if (task.status === "failed") {
-      toasts.error(errorMessage(task.error));
+      const code = task.error?.code ?? "";
+      if (task.kind === "launch" && ACCOUNT_HELP.has(code)) ui.accountHelp = code;
+      else toasts.error(errorMessage(task.error));
     } else if (task.status === "done") {
       this.onTaskDone(task);
     }
@@ -224,15 +238,17 @@ class AppStore {
   }
 
   async launch(id: string) {
+    // No account at all: explain before starting anything.
+    if (!this.selectedAccount) {
+      ui.accountHelp = "auth.noAccount";
+      return;
+    }
     try {
       await commands.launchInstance(id, null);
     } catch (e) {
-      toasts.error(
-        errorMessage(e),
-        e && (e as { code?: string }).code?.startsWith("auth.")
-          ? { label: t("nav.accounts"), run: () => router.go("accounts") }
-          : undefined,
-      );
+      const code = (e as { code?: string })?.code ?? "";
+      if (ACCOUNT_HELP.has(code)) ui.accountHelp = code;
+      else toasts.error(errorMessage(e));
     }
   }
 

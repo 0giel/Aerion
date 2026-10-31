@@ -7,6 +7,7 @@
   import TaskPanel from "./lib/components/TaskPanel.svelte";
   import Toasts from "./lib/components/Toasts.svelte";
   import Dialogs from "./lib/components/Dialogs.svelte";
+  import AccountHelp from "./lib/components/AccountHelp.svelte";
   import CommandPalette from "./lib/components/CommandPalette.svelte";
   import Modal from "./lib/components/Modal.svelte";
   import Icon from "./lib/components/Icon.svelte";
@@ -149,6 +150,7 @@
 {/if}
 <Toasts />
 <Dialogs />
+<AccountHelp />
 
 {#if dragging}
   <div class="drop" aria-hidden="true">
