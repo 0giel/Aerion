@@ -202,7 +202,7 @@ has been *verified* against its acceptance criterion. Details and the running lo
 | M1 | Vanilla engine end-to-end + minimal "pick version → Play" | 26.3, 1.21.11, 1.20.1, 1.16.5, 1.8.9 and latest snapshot reach the title screen | ✅ smoke tool for all; 26.3 also via the UI |
 | M2 | Microsoft accounts, keyring, offline gating | full chain unit-tested against a mock server; real login once Azure ID is approved | ✅ unit-tested; live login needs the owner's Azure ID |
 | M3 | Instances + full UI (list, wizard, edit, clone, groups, console) | CRUD + launch from UI | create + launch + console verified; edit/clone/groups pending |
-| M4 | Fabric, Quilt | Fabric 26.3 / 1.21.11 and Quilt 1.21.11 launch | ✅ Fabric 1.21.11 via UI; Quilt pending |
+| M4 | Fabric, Quilt | Fabric 26.3 / 1.21.11 and Quilt 1.21.11 launch | ✅ Fabric 1.21.11 (UI) and Quilt 1.21.11 |
 | M5 | Modrinth browser, install with dependencies, enable/disable, updates + undo, hash recognition | Sodium + Fabric API install and run | ✅ install, toggle, update check (channel fix); undo pending |
 | M6 | CurseForge in the same browser (user key, missing `downloadUrl` handling) | mocked integration tests; live once a key is entered | code + mocks; live needs a key |
 | M7 | Modpacks (.mrpack / CurseForge zip import+export, own format), resource packs, shaders | a Modrinth pack installs and starts | ✅ Fabulously Optimized (149 mods) installs from the browser and starts; export pending |
@@ -213,7 +213,7 @@ has been *verified* against its acceptance criterion. Details and the running lo
 ### Next steps (in order)
 1. ~~Fix the blank window~~ ✅ · ~~onboarding → offline account → 26.3 → Play through the UI~~ ✅
 2. ~~Wizard with a loader, Fabric + Sodium/Fabric API from Modrinth~~ ✅
-3. ~~Forge 1.20.1 and NeoForge 26.3 launches~~ ✅ · ~~a `.mrpack` install~~ ✅ · Quilt; Forge 1.8.9.
+3. ~~Forge 1.20.1 and NeoForge 26.3 launches~~ ✅ · ~~a `.mrpack` install~~ ✅ · ~~Quilt~~ ✅ · Forge 1.8.9.
 4. ~~Docs: README, DECISIONS, THEMING (+ schema), AZURE_SETUP~~ ✅ · PERFORMANCE (after the release build).
 5. ~~Vitest tests (i18n shape, theme schema)~~ ✅ · release build + bundles, performance measurements.
 

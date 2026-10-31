@@ -36,6 +36,7 @@ Newest entries first.
 - **Launch: Fabric 1.21.11 with 49 mods reached the title screen** (~13 s incl. loader install,
   Java 21); Sodium loaded and applied its NVIDIA workarounds. Loader version is pinned on first launch.
 - Enable/disable toggles rename to/from `.jar.disabled`.
+- **Quilt 1.21.11**: loader 0.24.0 (newest stable; betas skipped) → title screen in 22 s.
 - **Fixed:** "Check updates" offered `Sodium 0.8.15-beta.1` for a stable install (Modrinth's
   `version_files/update` ignores channels). Entries now record their release channel
   (`release`), and updates never move to a less stable channel — falls back to the newest version
@@ -71,6 +72,9 @@ Newest entries first.
 - Mods → Modpacks → "Fabulously Optimized" → *Install as new instance*: 52 files + Fabric 0.19.5 for
   MC 26.2 in ~8 s, modpack provenance stored on the instance. **Launch: 149 mods, title screen in
   25 s** (incl. downloading MC 26.2).
+- Export → import round trip: "Fabric 1.21.11" exported as `.mrpack` (index with Modrinth CDN URLs
+  for Sodium/Fabric API + `overrides/options.txt`, no jars embedded) and re-imported as a working
+  instance (removed afterwards).
 - **Fixed:** the theme editor's live-preview effect read and wrote the theme engine's state
   (`setPreview` → `apply`), which Svelte aborts with `effect_update_depth_exceeded`. The call is now
   `untrack`ed; editing a colour previews instantly and "Undo changes" restores the theme.
