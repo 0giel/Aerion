@@ -51,6 +51,14 @@ Newest entries first.
   when the NVIDIA driver is loaded (`game::launch::default_env`); variables set on the instance
   or in the launcher's own environment take precedence.
 
+### Verified: modpack from the browser (M7) and theme editor (M9)
+- Mods → Modpacks → "Fabulously Optimized" → *Install as new instance*: 52 files + Fabric 0.19.5 for
+  MC 26.2 in ~8 s, modpack provenance stored on the instance. **Launch: 149 mods, title screen in
+  25 s** (incl. downloading MC 26.2).
+- **Fixed:** the theme editor's live-preview effect read and wrote the theme engine's state
+  (`setPreview` → `apply`), which Svelte aborts with `effect_update_depth_exceeded`. The call is now
+  `untrack`ed; editing a colour previews instantly and "Undo changes" restores the theme.
+
 ### UI fixes from the walkthrough
 - Onboarding card was stuck in the left grid track when the sidebar is hidden → `main` always uses
   the last track.

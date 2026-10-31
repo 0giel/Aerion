@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
   import Icon from "../components/Icon.svelte";
   import Switch from "../components/Switch.svelte";
@@ -44,7 +44,10 @@
   let css = $state(themes.user.find((u) => u.theme.id === base.id)?.css ?? "");
 
   $effect(() => {
-    themes.setPreview($state.snapshot(draft) as Theme, css);
+    const theme = $state.snapshot(draft) as Theme;
+    const style = css;
+    // `setPreview` reads and writes the engine's state; only the draft should re-run this.
+    untrack(() => themes.setPreview(theme, style));
   });
   onDestroy(() => themes.setPreview(null));
 
