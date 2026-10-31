@@ -54,7 +54,31 @@ Newest entries first.
   when the NVIDIA driver is loaded (`game::launch::default_env`); variables set on the instance
   or in the launcher's own environment take precedence.
 
-### Frontend tests (vitest, 15 tests)
+### Performance pass (release build)
+- First measurement: UI ready 0.32–0.37 s after process start ✅; memory ~228 MB PSS (launcher
+  87 MB + WebKit web process ~128 MB + network 16 MB) — over the 200 MB target; **idle CPU ~81 %**.
+- Cause of the CPU use: WebKitGTK (no GPU compositing here) repaints the whole window for every
+  animated frame; ribbons ~45 %, particles ~32 % (measured by toggling layers).
+- Fix (D16): static ribbons; particles + player model only while the launcher is in use, on a
+  shared 20 fps clock; particles redraw only their own boxes → **idle ~1 %**, interacting ~32 %.
+- Memory (D17): Tokio limited to 4 workers, glibc `M_ARENA_MAX=2` → 216 MB settled.
+- Memory (D13): a per-mapping breakdown showed Mesa's EGL vendor (libgallium + **libLLVM, 12.8 MB
+  per process**) loaded into both WebKit processes although NVIDIA drives the only GPU. On
+  NVIDIA-only machines EGL is now restricted to NVIDIA's vendor file → **~200 MB at 10 s, ~182 MB
+  settled**. Hybrid laptops / Mesa / nouveau are untouched; webview-only variables are stripped
+  from the game's environment. `WEBKIT_DISABLE_COMPOSITING_MODE` and
+  `WEBKIT_SKIA_ENABLE_CPU_RENDERING` were tried and changed nothing.
+- **Final release numbers** (`scripts/perf-linux.sh 3`, now samples CPU while in use and idle):
+  UI ready 0.37–0.42 s ✅ (target 1.5 s), PSS 197–201 MB at 10 s / 179–183 MB settled ✅
+  (target 200 MB), idle CPU 0.6–0.9 % ✅, in use 23–35 %. Sizes: binary 20.2 MB, `.deb` 8.6 MB,
+  AppImage 88.6 MB. Details in `PERFORMANCE.md`.
+- Bundling on this machine needs two pkg-config overrides (devroot `.pc` files point at the
+  devroot, linuxdeploy's GTK plugin reads `gtk+-3.0.pc`): see "Release bundles" in `CONTRIBUTING.md`.
+- The DMA-BUF renderer also works on this NVIDIA/X11 machine (`WEBKIT_DISABLE_DMABUF_RENDERER=0`)
+  with the same CPU profile; the NVIDIA workaround stays as the safer default.
+- Instance titles no longer repeat what the name already says ("Forge 1.20.1 · 1.20.1 · Forge").
+
+### Frontend tests (vitest, 16 tests)
 - `i18n/dictionaries.test.ts`: pl/en have the same keys and placeholders, no empty strings, Polish
   plurals have one/few/many/other, and **every error code and crash kind in the Rust sources has a
   translation** (read via `?raw` imports, so a new untranslated code fails CI).
@@ -65,7 +89,7 @@ Newest entries first.
 
 ### Documentation
 - `README.md` (features, unofficial disclaimer, build/run, configuration, troubleshooting),
-  `docs/AZURE_SETUP.md`, `docs/THEMING.md`, `docs/DECISIONS.md` (D1–D15),
+  `docs/AZURE_SETUP.md`, `docs/THEMING.md`, `docs/DECISIONS.md` (D1–D17),
   `themes/theme.schema.json` (JSON Schema; also copied to `<data>/themes/` at start-up so editors
   validate user themes; excluded from the built-in theme glob).
 - Background videos now pause while the window is hidden or motion is off.
@@ -113,8 +137,9 @@ Newest entries first.
 - **Tauri shell** — 61 typed commands + 4 events (tauri-specta), image proxy, theme watcher, tray.
 - **Frontend** — all pages written; `pnpm check`, `pnpm lint`, `pnpm build` clean.
 
-## Not started yet
-- `docs/PERFORMANCE.md` (needs a release build).
-- Live UI tests: Fabric + Sodium/Fabric API install, Forge/NeoForge launches, modpack import.
-- Release bundles (`pnpm tauri build`), performance measurements.
-- Owner actions: Azure app registration + Mojang review (client ID), CurseForge API key.
+## Not verified yet
+- Microsoft sign-in end to end (needs the owner's Azure app + Mojang approval) and therefore
+  offline accounts in a release build (they unlock only after a licensed account).
+- CurseForge search/install/modpacks live (needs a CurseForge API key).
+- Windows and macOS builds (code paths exist; CI builds them, nobody has run them).
+- Undo of a mod update through the UI.

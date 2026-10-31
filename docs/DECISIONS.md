@@ -73,6 +73,14 @@ culling, depth sort) looks the same on every engine and needs no WebGL or librar
 - **NVIDIA (proprietary driver)**: `WEBKIT_DISABLE_DMABUF_RENDERER=1` for the launcher window, and
   `__GL_THREADED_OPTIMIZATIONS=0` for the game (NeoForge 26.3's early window segfaulted in
   `libnvidia-glcore`). Explicit user/instance values always win.
+- **EGL vendors (NVIDIA-only machines)**: GLVND loads Mesa's EGL vendor into both WebKit
+  processes even when the NVIDIA driver drives every GPU, where Mesa can only offer a software
+  rasteriser; its LLVM alone costs ~30 MB PSS. When every DRM card uses the `nvidia` driver,
+  `__EGL_VENDOR_LIBRARY_FILENAMES` points at NVIDIA's vendor file. Hybrid laptops and Mesa or
+  nouveau systems are left alone; a user-set `__EGL_VENDOR_LIBRARY_*` disables it.
+- Variables the launcher sets only for its webview (DMA-BUF, EGL) are removed from the game's
+  environment (`util::sys::private_env`); the private fontconfig file is kept, it is valid for
+  any process.
 
 ### D14 — Restoring the window after the game
 Some X11 window managers (Mutter) ignore de-iconify requests; a minimised window is hidden and
@@ -82,3 +90,16 @@ re-shown, which always maps it un-minimised.
 `LUNCHER_DEV_EVAL`, console mirroring and page-load logging exist only under
 `cfg(debug_assertions)`, so UI walkthroughs can be scripted without a mouse. Release builds do not
 contain them.
+
+### D16 — Ambient animation only while the launcher is in use (2026-10-31)
+Measured on WebKitGTK without GPU compositing: every animated frame repaints the whole window
+regardless of the dirty area, so the decorative home screen cost ~83 % of a core at rest. Ribbons
+are now static; particles and the player model animate only while the window is visible, focused
+and received input in the last 30 s, on one shared ~20 fps clock (`stores/ambient.svelte.ts`).
+Idle: ~1 % CPU; while interacting: ~30 %. On GPU-composited engines (WebView2, WKWebView) the same
+code is far cheaper; the gating still saves battery.
+
+### D17 — Fewer threads and malloc arenas
+The engine mostly waits on I/O: the Tokio runtime uses at most 4 workers (default was one per
+core), and on Linux/glibc `M_ARENA_MAX=2` stops each thread from keeping its own arena of freed
+memory resident.
