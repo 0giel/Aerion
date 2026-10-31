@@ -5,6 +5,17 @@ Newest entries first.
 
 ## 2026-10-31
 
+### 0.1.7: more natural layout + customizable sidebar and home (D26)
+- Home: Play with an instance dropdown (split button); quick actions (new instance, mods, skins,
+  statistics) instead of a text menu duplicating the sidebar; optional summary block (total play
+  time, instances, last session); favourites & recent.
+- Sidebar: Accounts out of the default list (account button at the bottom), favourite instances
+  section with one-click open/start, "customize" button; Ctrl+1…9 follow the arranged order.
+- "Customize menu" / "Customize home screen" dialogs (also in Settings → Appearance): order with
+  ↑/↓, show/hide (Home/Settings/Play locked), favourites in menu, player left/right/hidden,
+  restore defaults. Checked live: reorder, hide, reset, player left, summary shown.
+
+
 ### 0.1.6: external links were all blocked
 - Owner: "Download" in the update dialog does nothing (0.1.4 .deb found 0.1.5 correctly). The log
   showed `Not allowed to open url …`: the capability listed `opener:allow-open-url` without a URL

@@ -763,6 +763,44 @@ export type JvmPreset =
 /**  Smallest footprint: returns memory to the OS, compact headers on Java 25+. */
 "lowMemory";
 
+/**  One entry of a user-arranged list (sidebar items, home blocks): order is the list order. */
+export type LayoutItem = {
+	id: string,
+	visible: boolean,
+};
+
+/**
+ *  How the user arranged the sidebar and the home screen. Empty lists mean the built-in
+ *  default; unknown ids are ignored and new ones appended by the UI, so updates never lose items.
+ */
+export type LayoutPrefs = LayoutPrefs_Serialize | LayoutPrefs_Deserialize;
+
+/**
+ *  How the user arranged the sidebar and the home screen. Empty lists mean the built-in
+ *  default; unknown ids are ignored and new ones appended by the UI, so updates never lose items.
+ */
+export type LayoutPrefs_Deserialize = {
+	nav?: LayoutItem[],
+	/**  Favourite instances listed in the sidebar for one-click access. */
+	navFavorites?: boolean,
+	home?: LayoutItem[],
+	/**  `right`, `left` or `hidden`. */
+	homePlayer?: string,
+};
+
+/**
+ *  How the user arranged the sidebar and the home screen. Empty lists mean the built-in
+ *  default; unknown ids are ignored and new ones appended by the UI, so updates never lose items.
+ */
+export type LayoutPrefs_Serialize = {
+	nav: LayoutItem[],
+	/**  Favourite instances listed in the sidebar for one-click access. */
+	navFavorites: boolean,
+	home: LayoutItem[],
+	/**  `right`, `left` or `hidden`. */
+	homePlayer: string,
+};
+
 export type License = License_Serialize | License_Deserialize;
 
 export type License_Deserialize = {
@@ -1230,6 +1268,7 @@ export type Settings_Deserialize = {
 	checkUpdates?: boolean,
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor?: boolean,
+	layout?: LayoutPrefs_Deserialize,
 };
 
 export type Settings_Serialize = {
@@ -1273,6 +1312,7 @@ export type Settings_Serialize = {
 	checkUpdates: boolean,
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor: boolean,
+	layout: LayoutPrefs_Serialize,
 };
 
 export type Skin = Skin_Serialize | Skin_Deserialize;

@@ -35,6 +35,40 @@ pub enum ModSource {
     Both,
 }
 
+/// One entry of a user-arranged list (sidebar items, home blocks): order is the list order.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct LayoutItem {
+    pub id: String,
+    pub visible: bool,
+}
+
+/// How the user arranged the sidebar and the home screen. Empty lists mean the built-in
+/// default; unknown ids are ignored and new ones appended by the UI, so updates never lose items.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase", default)]
+pub struct LayoutPrefs {
+    pub nav: Vec<LayoutItem>,
+    /// Favourite instances listed in the sidebar for one-click access.
+    pub nav_favorites: bool,
+    pub home: Vec<LayoutItem>,
+    /// `right`, `left` or `hidden`.
+    pub home_player: String,
+}
+
+impl Default for LayoutPrefs {
+    fn default() -> Self {
+        Self {
+            nav: vec![],
+            nav_favorites: true,
+            home: vec![],
+            home_player: "right".into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase", default)]
@@ -81,6 +115,7 @@ pub struct Settings {
     pub check_updates: bool,
     /// The player model on the home screen turns its head towards the cursor.
     pub follow_cursor: bool,
+    pub layout: LayoutPrefs,
 }
 
 impl Default for Settings {
@@ -116,6 +151,7 @@ impl Default for Settings {
             selected_account: None,
             check_updates: true,
             follow_cursor: true,
+            layout: LayoutPrefs::default(),
         }
     }
 }
@@ -164,6 +200,18 @@ impl Settings {
                     "memory must be between 256 MB and 256 GB".into(),
                 ));
             }
+        }
+        let l = &self.layout;
+        if l.nav.len() > 64
+            || l.home.len() > 64
+            || l.nav.iter().chain(&l.home).any(|i| {
+                i.id.is_empty()
+                    || i.id.len() > 32
+                    || !i.id.bytes().all(|b| b.is_ascii_alphanumeric())
+            })
+            || !matches!(l.home_player.as_str(), "right" | "left" | "hidden")
+        {
+            return Err(crate::Error::Invalid("invalid layout".into()));
         }
         if self
             .env_vars

@@ -164,3 +164,13 @@ No server: `themes/index.json` and theme files in github.com/0giel/Aerion are fe
 backend; installs are JSON only (no custom CSS from the network) and go through the same
 validation as local themes.
 
+### D26 — User-arranged sidebar and home screen (2026-10-31)
+`settings.layout` stores ordered `{id, visible}` lists for the sidebar and the home blocks plus
+two options (favourites in the sidebar, player model left/right/hidden). Empty lists mean the
+built-in default; the UI drops unknown ids and appends new ones, so future items appear without
+migrations. Home and Settings can't be hidden (nobody locks themselves out); reordering uses
+↑/↓ buttons, not drag and drop — keyboard accessible, and HTML5 drag and drop is unavailable in
+WebView2 while the window accepts dropped files. Defaults were rearranged at the same time: Play
+got an instance dropdown, the text menu that duplicated the sidebar became quick actions, Accounts
+moved out of the sidebar list (the account button at its bottom opens it).
+

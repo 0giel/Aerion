@@ -3,22 +3,17 @@
   import SkinFace from "./SkinFace.svelte";
   import { DEFAULT_SKIN } from "../api";
   import Logo from "./Logo.svelte";
+  import InstanceIcon from "./InstanceIcon.svelte";
+  import { layout } from "../stores/layout.svelte";
+  import { ui } from "../stores/ui.svelte";
   import { router, type Page } from "../stores/router.svelte";
   import { app } from "../stores/app.svelte";
   import { t } from "../i18n/index.svelte";
 
   let { onpalette }: { onpalette: () => void } = $props();
 
-  const items: { page: Page; icon: string; key: string }[] = [
-    { page: "home", icon: "home", key: "nav.home" },
-    { page: "instances", icon: "grid", key: "nav.instances" },
-    { page: "mods", icon: "package", key: "nav.mods" },
-    { page: "accounts", icon: "user", key: "nav.accounts" },
-    { page: "skins", icon: "shirt", key: "nav.skins" },
-    { page: "stats", icon: "chart", key: "nav.stats" },
-    { page: "console", icon: "terminal", key: "nav.console" },
-    { page: "settings", icon: "settings", key: "nav.settings" },
-  ];
+  const items = $derived(layout.nav.filter((i) => i.visible));
+  const favorites = $derived(layout.navFavorites ? app.instances.filter((i) => i.favorite).slice(0, 6) : []);
 
   let collapsed = $state(readCollapsed());
   function readCollapsed() {
@@ -65,6 +60,33 @@
       </button>
     {/each}
   </div>
+  {#if favorites.length}
+    <div class="favs" aria-label={t("instances.favorites")}>
+      <span class="section label">{t("instances.favorites")}</span>
+      {#each favorites as f (f.id)}
+        {@const isRunning = !!app.running[f.id]}
+        <div class="fav">
+          <button
+            class="item"
+            aria-current={router.page === "instance" && router.params.id === f.id ? "page" : undefined}
+            title={f.name}
+            onclick={() => router.go("instance", { id: f.id })}
+          >
+            <InstanceIcon name={f.name} loader={f.loader} icon={f.icon} id={f.id} size={20} />
+            <span class="label truncate">{f.name}</span>
+            {#if isRunning}<span class="dot"></span>{/if}
+          </button>
+          <button
+            class="icon-btn sm quick"
+            aria-label={t(isRunning ? "common.stop" : "common.play") + ": " + f.name}
+            title={t(isRunning ? "common.stop" : "common.play")}
+            onclick={() => (isRunning ? app.stop(f.id) : app.launch(f.id))}
+            ><Icon name={isRunning ? "stop" : "play"} size={13} /></button
+          >
+        </div>
+      {/each}
+    </div>
+  {/if}
   <div class="spacer"></div>
   <button class="item palette" onclick={onpalette} title={t("palette.placeholder")}>
     <Icon name="command" size={17} />
@@ -79,13 +101,22 @@
     <SkinFace skinUrl={account ? (account.skinUrl ?? DEFAULT_SKIN) : null} size={28} />
     <span class="label truncate">{account?.username ?? t("accounts.empty")}</span>
   </button>
-  <button
-    class="icon-btn collapse"
-    onclick={toggle}
-    aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
-  >
-    <Icon name="panelLeft" size={17} />
-  </button>
+  <div class="tools">
+    <button
+      class="icon-btn collapse"
+      onclick={toggle}
+      aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
+      title={collapsed ? t("nav.expand") : t("nav.collapse")}
+    >
+      <Icon name="panelLeft" size={17} />
+    </button>
+    <button
+      class="icon-btn customize"
+      onclick={() => (ui.customize = "nav")}
+      aria-label={t("layout.navTitle")}
+      title={t("layout.navTitle")}><Icon name="sliders" size={16} /></button
+    >
+  </div>
 </nav>
 
 <style>
@@ -195,8 +226,45 @@
     gap: 0.6rem;
     color: var(--c-text);
   }
-  .collapse {
-    align-self: flex-end;
+  .tools {
+    display: flex;
+    justify-content: space-between;
+  }
+  .favs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-top: var(--sp-3);
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .section {
+    padding: 0 0.6rem 0.2rem;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--c-text-faint);
+  }
+  .fav {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .fav .item {
+    flex: 1;
+    min-width: 0;
+    height: 2.3rem;
+    font-size: 0.88rem;
+  }
+  .fav .quick {
+    position: absolute;
+    right: 0.25rem;
+    opacity: 0;
+    transition: opacity var(--dur) var(--ease);
+  }
+  .fav:hover .quick,
+  .fav .quick:focus-visible {
+    opacity: 1;
   }
   .collapsed .label,
   .collapsed .name {
@@ -211,8 +279,14 @@
     justify-content: center;
     padding: 0 0 0.9rem;
   }
-  .collapsed .collapse {
-    align-self: center;
+  .collapsed .tools {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .collapsed .section,
+  .collapsed .fav .quick {
+    display: none;
   }
 
   /* Top bar layout (theme option). */
@@ -239,7 +313,8 @@
     width: auto;
     height: 3px;
   }
-  :global([data-sidebar="top"]) .collapse {
+  :global([data-sidebar="top"]) .collapse,
+  :global([data-sidebar="top"]) .favs {
     display: none;
   }
   :global([data-sidebar="top"]) .dot {

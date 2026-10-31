@@ -9,6 +9,8 @@
   import Dialogs from "./lib/components/Dialogs.svelte";
   import AccountHelp from "./lib/components/AccountHelp.svelte";
   import UpdateBanner from "./lib/components/UpdateBanner.svelte";
+  import CustomizeModal from "./lib/components/CustomizeModal.svelte";
+  import { layout } from "./lib/stores/layout.svelte";
   import CommandPalette from "./lib/components/CommandPalette.svelte";
   import Modal from "./lib/components/Modal.svelte";
   import Icon from "./lib/components/Icon.svelte";
@@ -70,7 +72,8 @@
     }
   }
 
-  const order: Page[] = ["home", "instances", "mods", "accounts", "skins", "stats", "console", "settings"];
+  // Ctrl+1…9 follow the sidebar as the user arranged it.
+  const order = $derived(layout.nav.filter((i) => i.visible).map((i) => i.page));
   function onkeydown(e: KeyboardEvent) {
     const mod = e.ctrlKey || e.metaKey;
     if (!mod) return;
@@ -80,7 +83,7 @@
     } else if (e.key.toLowerCase() === "n" && app.ready) {
       ui.newInstanceOpen = true;
       e.preventDefault();
-    } else if (/^[1-8]$/.test(e.key)) {
+    } else if (/^[1-9]$/.test(e.key) && order[Number(e.key) - 1]) {
       router.go(order[Number(e.key) - 1]);
       e.preventDefault();
     }
@@ -154,6 +157,7 @@
 <Dialogs />
 <AccountHelp />
 <UpdateBanner />
+<CustomizeModal />
 
 {#if dragging}
   <div class="drop" aria-hidden="true">

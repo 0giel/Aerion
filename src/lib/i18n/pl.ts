@@ -112,6 +112,13 @@ const pl: Dict = {
     menuConsole: "Konsola",
     running: "Uruchomiona",
     signInHint: "Zaloguj się kontem Microsoft, aby grać",
+    noPlayYet: "Jeszcze nie grano",
+    actions: {
+      newInstance: "Nowa instancja",
+      mods: "Przeglądaj mody",
+      skins: "Skiny",
+      stats: "Statystyki",
+    },
   },
   instances: {
     title: "Instancje",
@@ -553,6 +560,8 @@ const pl: Dict = {
     followCursor: "Postać śledzi kursor",
     followCursorHint:
       "Głowa postaci na ekranie głównym obraca się w stronę myszy (także przy ograniczonym ruchu — wtedy bez płynnego przejścia).",
+    customizeMenu: "Dostosuj menu",
+    customizeHome: "Dostosuj ekran główny",
     gameHint: "Używane przez każdą instancję, chyba że instancja ma własną wartość (instancja → Ustawienia).",
     fullscreenDefault: "Uruchamiaj gry na pełnym ekranie",
     globalArgsHint: "Dodawane do każdej instancji; własne argumenty instancji idą po nich.",
@@ -939,6 +948,29 @@ const pl: Dict = {
     globalHint:
       "Używane przez każdą instancję bez własnej wartości. 4–6 GB wystarcza do czystej gry, 6–8 GB do modpacków.",
     instanceHint: "Przesunięcie suwaka nadaje tej instancji własną wartość.",
+  },
+  layout: {
+    navTitle: "Dostosuj menu",
+    homeTitle: "Dostosuj ekran główny",
+    hint: "Ustaw kolejność strzałkami, a oczkiem pokaż lub ukryj pozycję. Zmiany działają od razu.",
+    up: "Przesuń {name} w górę",
+    down: "Przesuń {name} w dół",
+    hide: "Ukryj {name}",
+    show: "Pokaż {name}",
+    locked: "Zawsze widoczne",
+    navFavorites: "Ulubione instancje w menu",
+    navFavoritesHint: "Jednym kliknięciem otworzysz lub uruchomisz instancję.",
+    player: "Postać gracza",
+    sides: { left: "Po lewej", right: "Po prawej", hidden: "Ukryta" },
+    reset: "Przywróć domyślne",
+    done: "Gotowe",
+    home: {
+      greeting: "Logo i powitanie",
+      play: "Przycisk Graj",
+      actions: "Szybkie akcje",
+      summary: "Podsumowanie",
+      recent: "Ulubione i ostatnie",
+    },
   },
   palette: {
     placeholder: "Wpisz polecenie lub szukaj…",

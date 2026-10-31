@@ -9,6 +9,7 @@
   import { updates } from "../stores/updates.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
+  import { ui } from "../stores/ui.svelte";
   import { toasts } from "../stores/toasts.svelte";
   import { themes } from "../theme/engine.svelte";
   import {
@@ -202,6 +203,12 @@
         <div class="row between">
           <h2>{t("settings.sections.appearance")}</h2>
           <div class="row">
+            <button class="btn sm" onclick={() => (ui.customize = "nav")}
+              ><Icon name="sliders" size={15} />{t("settings.customizeMenu")}</button
+            >
+            <button class="btn sm" onclick={() => (ui.customize = "home")}
+              ><Icon name="home" size={15} />{t("settings.customizeHome")}</button
+            >
             <button class="btn sm" onclick={() => (galleryOpen = true)}
               ><Icon name="sparkles" size={15} />{t("gallery.open")}</button
             >
