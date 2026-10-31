@@ -19,6 +19,7 @@ use tokio::sync::Mutex;
 use crate::error::{Error, IoContext, Result};
 use crate::java::flags::{JvmPreset, validate_syntax};
 use crate::util::fs::{copy_dir_sync, read_json, write_json};
+use crate::util::image::ImageKind;
 use crate::util::names::{folder_name, validate_display_name};
 use crate::util::now_secs;
 
@@ -99,6 +100,8 @@ pub struct Instance {
     pub join_server: Option<String>,
     /// Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder.
     pub icon: Option<String>,
+    /// Pinned by the user: listed first and shown under "Favourites".
+    pub favorite: bool,
     pub group: Option<String>,
     pub tags: Vec<String>,
     pub notes: Option<String>,
@@ -128,6 +131,7 @@ impl Default for Instance {
             resolution: None,
             join_server: None,
             icon: None,
+            favorite: false,
             group: None,
             tags: vec![],
             notes: None,
@@ -157,6 +161,40 @@ pub struct InstanceManager {
 }
 
 const FILE: &str = "instance.json";
+/// Custom icons are files named `icon-<millis>.<ext>` in the instance folder; a new name per
+/// change keeps cached images from going stale.
+const ICON_PREFIX: &str = "icon-";
+const MAX_ICON_BYTES: u64 = 2 * 1024 * 1024;
+
+/// Built-in icon key (`grass`, `diamond`, …) or `file:icon-<millis>.<ext>`.
+pub fn validate_icon(icon: &str) -> Result<()> {
+    let ok = match icon.strip_prefix("file:") {
+        Some(file) => is_icon_file(file),
+        None => {
+            !icon.is_empty()
+                && icon.len() <= 32
+                && icon
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+        }
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(Error::Invalid(format!("invalid icon {icon:?}")))
+    }
+}
+
+/// `icon-<digits>.<png|jpg|webp|gif>`.
+pub fn is_icon_file(name: &str) -> bool {
+    name.strip_prefix(ICON_PREFIX)
+        .and_then(|rest| rest.split_once('.'))
+        .is_some_and(|(stamp, ext)| {
+            !stamp.is_empty()
+                && stamp.bytes().all(|b| b.is_ascii_digit())
+                && ImageKind::from_ext(ext).is_some_and(|k| k.ext() == ext)
+        })
+}
 
 impl InstanceManager {
     pub fn new(root: PathBuf) -> Self {
@@ -228,6 +266,9 @@ impl InstanceManager {
 
     pub async fn create(&self, spec: NewInstance) -> Result<Instance> {
         let name = validate_display_name(&spec.name)?;
+        if let Some(icon) = &spec.icon {
+            validate_icon(icon)?;
+        }
         if spec.game_version.trim().is_empty() {
             return Err(Error::Invalid("missing game version".into()));
         }
@@ -243,7 +284,7 @@ impl InstanceManager {
             game_version: spec.game_version.trim().to_owned(),
             loader: spec.loader,
             loader_version: spec.loader_version.filter(|v| !v.is_empty()),
-            icon: spec.icon,
+            icon: spec.icon.filter(|i| !i.starts_with("file:")),
             group: spec.group.filter(|g| !g.trim().is_empty()),
             created_at: now_secs(),
             ..Instance::default()
@@ -258,6 +299,9 @@ impl InstanceManager {
         let current = self.get(&edited.id).await?;
         edited.name = validate_display_name(&edited.name)?;
         validate_syntax(&edited.jvm_args)?;
+        if let Some(icon) = &edited.icon {
+            validate_icon(icon)?;
+        }
         if edited
             .game_args
             .iter()
@@ -295,6 +339,68 @@ impl InstanceManager {
         f(&mut inst);
         self.write(&inst).await?;
         Ok(inst)
+    }
+
+    pub async fn set_favorite(&self, id: &str, favorite: bool) -> Result<Instance> {
+        self.modify(id, |i| i.favorite = favorite).await
+    }
+
+    /// Built-in icon key, or `None` for the default icon. Custom image files are removed.
+    pub async fn set_icon(&self, id: &str, icon: Option<String>) -> Result<Instance> {
+        if let Some(i) = &icon {
+            if i.starts_with("file:") {
+                return Err(Error::Invalid("use import_icon for image files".into()));
+            }
+            validate_icon(i)?;
+        }
+        let inst = self.modify(id, |i| i.icon = icon).await?;
+        self.remove_icon_files(id, None).await;
+        Ok(inst)
+    }
+
+    /// Copy a user-picked image (PNG, JPEG, WebP or GIF, at most 2 MB) into the instance
+    /// folder and use it as the icon.
+    pub async fn import_icon(&self, id: &str, source: &Path) -> Result<Instance> {
+        let dir = self.dir(id)?;
+        self.get(id).await?;
+        let meta = tokio::fs::metadata(source).await.at(source)?;
+        if meta.len() > MAX_ICON_BYTES {
+            return Err(Error::FileTooLarge {
+                max_kb: MAX_ICON_BYTES / 1024,
+            });
+        }
+        let bytes = tokio::fs::read(source).await.at(source)?;
+        let kind = ImageKind::sniff(&bytes).ok_or(Error::UnsupportedImage)?;
+        let millis = chrono::Utc::now().timestamp_millis();
+        let name = format!("{ICON_PREFIX}{millis}.{}", kind.ext());
+        let path = dir.join(&name);
+        tokio::fs::write(&path, &bytes).await.at(&path)?;
+        let inst = self
+            .modify(id, |i| i.icon = Some(format!("file:{name}")))
+            .await?;
+        self.remove_icon_files(id, Some(&name)).await;
+        Ok(inst)
+    }
+
+    /// Path of a custom icon file (validated name) for serving it to the UI.
+    pub fn icon_file(&self, id: &str, name: &str) -> Result<PathBuf> {
+        if !is_icon_file(name) {
+            return Err(Error::Invalid(format!("invalid icon file {name:?}")));
+        }
+        Ok(self.dir(id)?.join(name))
+    }
+
+    async fn remove_icon_files(&self, id: &str, keep: Option<&str>) {
+        let Ok(dir) = self.dir(id) else { return };
+        let Ok(mut rd) = tokio::fs::read_dir(&dir).await else {
+            return;
+        };
+        while let Ok(Some(e)) = rd.next_entry().await {
+            let name = e.file_name().to_string_lossy().into_owned();
+            if is_icon_file(&name) && Some(name.as_str()) != keep {
+                let _ = tokio::fs::remove_file(e.path()).await;
+            }
+        }
     }
 
     pub async fn record_play(&self, id: &str, started: i64, secs: u64) -> Result<()> {
@@ -423,5 +529,52 @@ mod tests {
         m.delete(&b.id).await.unwrap();
         assert_eq!(m.list().await.len(), 2);
         assert!(m.dir("../escape").unwrap_err().info().code == "instance.notFound");
+    }
+
+    #[tokio::test]
+    async fn icons_and_favourites() {
+        let dir = tempfile::tempdir().unwrap();
+        let m = InstanceManager::new(dir.path().join("instances"));
+        let mut s = spec("Ikony");
+        s.icon = Some("diamond".into());
+        let a = m.create(s).await.unwrap();
+        assert_eq!(a.icon.as_deref(), Some("diamond"));
+        let mut bad = spec("Zła");
+        bad.icon = Some("../x".into());
+        assert!(m.create(bad).await.is_err());
+
+        let png = dir.path().join("pic.png");
+        std::fs::write(&png, crate::util::image::test_png(32, 32)).unwrap();
+        let a = m.import_icon(&a.id, &png).await.unwrap();
+        let file = a
+            .icon
+            .as_deref()
+            .unwrap()
+            .strip_prefix("file:")
+            .unwrap()
+            .to_owned();
+        assert!(m.icon_file(&a.id, &file).unwrap().is_file());
+        assert!(m.icon_file(&a.id, "../instance.json").is_err());
+        let txt = dir.path().join("note.txt");
+        std::fs::write(&txt, b"hello").unwrap();
+        assert_eq!(
+            m.import_icon(&a.id, &txt).await.unwrap_err().info().code,
+            "image.unsupported"
+        );
+
+        let a = m.set_icon(&a.id, Some("sword".into())).await.unwrap();
+        assert_eq!(a.icon.as_deref(), Some("sword"));
+        assert!(
+            !m.icon_file(&a.id, &file).unwrap().exists(),
+            "old file removed"
+        );
+        assert!(
+            m.set_icon(&a.id, Some("file:icon-1.png".into()))
+                .await
+                .is_err()
+        );
+
+        assert!(m.set_favorite(&a.id, true).await.unwrap().favorite);
+        assert!(m.get(&a.id).await.unwrap().favorite);
     }
 }

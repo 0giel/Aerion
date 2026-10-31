@@ -37,6 +37,11 @@ export const commands = {
 	createInstance: (spec: NewInstance_Deserialize) => __TAURI_INVOKE<Instance_Serialize>("create_instance", { spec }),
 	updateInstance: (instance: Instance_Deserialize) => __TAURI_INVOKE<Instance_Serialize>("update_instance", { instance }),
 	deleteInstance: (id: string) => __TAURI_INVOKE<null>("delete_instance", { id }),
+	setInstanceFavorite: (id: string, favorite: boolean) => __TAURI_INVOKE<Instance_Serialize>("set_instance_favorite", { id, favorite }),
+	/**  Built-in icon key, or `None` for the default icon. */
+	setInstanceIcon: (id: string, icon: string | null) => __TAURI_INVOKE<Instance_Serialize>("set_instance_icon", { id, icon }),
+	/**  Use an image file picked by the user as the icon. */
+	importInstanceIcon: (id: string, path: string) => __TAURI_INVOKE<Instance_Serialize>("import_instance_icon", { id, path }),
 	cloneInstance: (id: string, name: string) => __TAURI_INVOKE<Instance_Serialize>("clone_instance", { id, name }),
 	instanceGroups: () => __TAURI_INVOKE<string[]>("instance_groups"),
 	createShortcut: (id: string) => __TAURI_INVOKE<string>("create_shortcut", { id }),
@@ -82,6 +87,21 @@ export const commands = {
 	curseforgeStatus: () => __TAURI_INVOKE<CurseForgeStatus>("curseforge_status"),
 	/**  Validate and store (or remove) the user's CurseForge API key in the OS keyring. */
 	setCurseforgeKey: (key: string | null) => __TAURI_INVOKE<CurseForgeStatus>("set_curseforge_key", { key }),
+	listSkins: () => __TAURI_INVOKE<SavedSkin[]>("list_skins"),
+	/**  Add a PNG picked by the user to the library. */
+	addSkin: (path: string, name: string, variant: SkinVariant) => __TAURI_INVOKE<SavedSkin>("add_skin", { path, name, variant }),
+	/**  Copy an account's current skin into the library. */
+	saveAccountSkin: (accountId: string, name: string) => __TAURI_INVOKE<SavedSkin>("save_account_skin", { accountId, name }),
+	updateSkin: (id: string, name: string, variant: SkinVariant) => __TAURI_INVOKE<SavedSkin>("update_skin", { id, name, variant }),
+	deleteSkin: (id: string) => __TAURI_INVOKE<null>("delete_skin", { id }),
+	/**  Upload a library skin to the account (Microsoft accounts only). */
+	applySkin: (accountId: string, skinId: string) => __TAURI_INVOKE<Account_Serialize>("apply_skin", { accountId, skinId }),
+	/**  Back to the default skin. */
+	resetSkin: (accountId: string) => __TAURI_INVOKE<Account_Serialize>("reset_skin", { accountId }),
+	/**  Capes the account owns (live from Minecraft services). */
+	accountCapes: (accountId: string) => __TAURI_INVOKE<Skin_Serialize[]>("account_capes", { accountId }),
+	/**  Show a cape (`None` hides it). */
+	setCape: (accountId: string, capeId: string | null) => __TAURI_INVOKE<Account_Serialize>("set_cape", { accountId, capeId }),
 	listUserThemes: () => __TAURI_INVOKE<ThemeFile_Serialize[]>("list_user_themes"),
 	saveUserTheme: (theme: ThemeFile_Deserialize) => __TAURI_INVOKE<null>("save_user_theme", { theme }),
 	deleteUserTheme: (id: string) => __TAURI_INVOKE<null>("delete_user_theme", { id }),
@@ -479,6 +499,8 @@ export type Instance_Deserialize = {
 	joinServer?: string | null,
 	/**  Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder. */
 	icon?: string | null,
+	/**  Pinned by the user: listed first and shown under "Favourites". */
+	favorite?: boolean,
 	group?: string | null,
 	tags?: string[],
 	notes?: string | null,
@@ -509,6 +531,8 @@ export type Instance_Serialize = {
 	joinServer: string | null,
 	/**  Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder. */
 	icon: string | null,
+	/**  Pinned by the user: listed first and shown under "Favourites". */
+	favorite: boolean,
 	group: string | null,
 	tags: string[],
 	notes: string | null,
@@ -845,6 +869,13 @@ export type RunningGame = {
 	command: string,
 };
 
+export type SavedSkin = {
+	id: string,
+	name: string,
+	variant: SkinVariant,
+	addedAt: number,
+};
+
 export type SearchPage = SearchPage_Serialize | SearchPage_Deserialize;
 
 export type SearchPage_Deserialize = {
@@ -947,6 +978,36 @@ export type Settings_Serialize = {
 	lastInstance: string | null,
 	selectedAccount: string | null,
 	checkUpdates: boolean,
+};
+
+export type Skin = Skin_Serialize | Skin_Deserialize;
+
+export type SkinVariant = 
+/**  4-pixel arms ("Steve"). */
+"classic" | 
+/**  3-pixel arms ("Alex"). */
+"slim";
+
+export type Skin_Deserialize = {
+	/**  Mojang's texture id (needed to select a cape). */
+	id?: string,
+	url: string,
+	/**  Cape name, e.g. `Migrator`. */
+	alias?: string | null,
+	/**  `CLASSIC` or `SLIM`. */
+	variant?: string,
+	state?: string,
+};
+
+export type Skin_Serialize = {
+	/**  Mojang's texture id (needed to select a cape). */
+	id: string,
+	url: string,
+	/**  Cape name, e.g. `Migrator`. */
+	alias: string | null,
+	/**  `CLASSIC` or `SLIM`. */
+	variant: string,
+	state: string,
 };
 
 export type SortOrder = "relevance" | "downloads" | "updated" | "newest";

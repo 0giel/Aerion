@@ -35,7 +35,13 @@ impl Default for Endpoints {
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
 pub struct Skin {
+    /// Mojang's texture id (needed to select a cape).
+    #[serde(default)]
+    pub id: String,
     pub url: String,
+    /// Cape name, e.g. `Migrator`.
+    #[serde(default)]
+    pub alias: Option<String>,
     /// `CLASSIC` or `SLIM`.
     #[serde(default)]
     pub variant: String,
@@ -44,6 +50,7 @@ pub struct Skin {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct Profile {
     /// UUID without dashes.
     pub id: String,

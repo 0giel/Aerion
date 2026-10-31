@@ -21,6 +21,8 @@
     overlay: [number, number] | null;
     inflate: number;
     mirror?: boolean;
+    /** Turns on the neck towards the cursor. */
+    head?: boolean;
   }
   interface Face {
     /** Skin texture rectangle. */
@@ -52,7 +54,7 @@
     const aw = slim ? 3 : 4;
     const legacy = image?.naturalHeight === 32;
     return [
-      { size: [8, 8, 8], pos: [0, -10, 0], uv: [0, 0], overlay: [32, 0], inflate: 0.5 },
+      { size: [8, 8, 8], pos: [0, -10, 0], uv: [0, 0], overlay: [32, 0], inflate: 0.5, head: true },
       { size: [8, 12, 4], pos: [0, 0, 0], uv: [16, 16], overlay: legacy ? null : [16, 32], inflate: 0.25 },
       {
         size: [aw, 12, 4],
@@ -113,7 +115,11 @@
     });
   }
 
-  function draw(yawDeg: number, pitchDeg: number) {
+  const NECK: Vec3 = [0, -6, 0];
+  const rad = (deg: number) => (deg * Math.PI) / 180;
+
+  /** Body yaw/pitch of the view, plus the head's own turn relative to the body. */
+  function draw(yawDeg: number, pitchDeg: number, headYaw = 0, headPitch = 0) {
     const c = canvas;
     const ctx = c?.getContext("2d");
     if (!c || !ctx) return;
@@ -133,6 +139,27 @@
       return [x1, y * cp - z1 * sp, y * sp + z1 * cp];
     };
     const point = ([x, y, z]: Vec3): Vec3 => rot([x, y - 2, z]);
+    // The head turns in model space around the neck before the view rotation.
+    const [hsy, hcy, hsp, hcp] = [
+      Math.sin(rad(headYaw)),
+      Math.cos(rad(headYaw)),
+      Math.sin(rad(headPitch)),
+      Math.cos(rad(headPitch)),
+    ];
+    // Nod around the head's own x axis first, then turn: a neck, not a tilted turntable.
+    const turn = ([x, y, z]: Vec3): Vec3 => {
+      const y1 = y * hcp - z * hsp;
+      const z1 = y * hsp + z * hcp;
+      return [x * hcy + z1 * hsy, y1, -x * hsy + z1 * hcy];
+    };
+    const turnPoint = (p: Vec3): Vec3 => {
+      const [x, y, z] = turn([p[0] - NECK[0], p[1] - NECK[1], p[2] - NECK[2]]);
+      return [x + NECK[0], y + NECK[1], z + NECK[2]];
+    };
+    const posed = (part: Part, f: Face): Face =>
+      part.head && (headYaw || headPitch)
+        ? { ...f, origin: turnPoint(f.origin), u: turn(f.u), v: turn(f.v), normal: turn(f.normal) }
+        : f;
     const s = scale * dpr;
     const ox = (cssW / 2) * dpr;
     const oy = (cssH / 2) * dpr;
@@ -141,7 +168,8 @@
     for (const part of parts) {
       for (const outer of [false, true]) {
         if (outer && (!part.overlay || !image)) continue;
-        for (const face of cuboid(part, outer)) {
+        for (const raw of cuboid(part, outer)) {
+          const face = posed(part, raw);
           if (rot(face.normal)[2] <= 1e-6) continue;
           const o = face.origin;
           const centre: Vec3 = [
@@ -187,27 +215,74 @@
   let manual = $state(false);
   let dragging = false;
   let lastX = 0;
-  const motion = $derived(themes.active.motion.enabled && !themes.reducedMotion && !manual);
+  const motion = $derived(themes.active.motion.enabled && !themes.reducedMotion);
   const animate = $derived(motion && ambient.active);
   // Sway clock in ms; it only advances while animating, so pausing and resuming doesn't jump.
   let clock = 0;
+  const PITCH = -12;
   const sway = () => {
     const k = (1 - Math.cos((Math.PI * clock) / 9000)) / 2;
-    return [-32 + 60 * k, -12 + 2 * k] as const;
+    return [-32 + 60 * k, PITCH + 2 * k] as const;
   };
+  const body = () => (manual ? ([yaw, PITCH] as const) : sway());
+
+  // Head tracking: the cursor position in the window (null when it left the window), and the
+  // head's current turn, eased towards it.
+  let cursor: { x: number; y: number } | null = null;
+  let head = { yaw: 0, pitch: 0 };
+  /** Distance (CSS px) of the virtual eye plane: smaller = the head turns sooner. */
+  const DEPTH = 420;
+  const clamp = (v: number, lim: number) => Math.max(-lim, Math.min(lim, v));
+
+  function headTarget(bodyYaw: number, bodyPitch: number) {
+    const c = canvas;
+    if (!cursor || !c) return { yaw: 0, pitch: 0 };
+    const r = c.getBoundingClientRect();
+    // The head's centre is 12 model units above the canvas centre.
+    const hx = r.left + r.width / 2;
+    const hy = r.top + r.height / 2 - 12 * scale;
+    const toYaw = (Math.atan2(cursor.x - hx, DEPTH) * 180) / Math.PI;
+    const toPitch = (Math.atan2(hy - cursor.y, DEPTH) * 180) / Math.PI;
+    // Facing the cursor means undoing the body's own yaw and the view pitch.
+    return { yaw: clamp(toYaw - bodyYaw, 60), pitch: clamp(toPitch - bodyPitch, 35) };
+  }
+
+  $effect(() => {
+    if (!motion) return;
+    const move = (e: PointerEvent) => (cursor = { x: e.clientX, y: e.clientY });
+    const out = (e: PointerEvent) => {
+      if (!e.relatedTarget) cursor = null;
+    };
+    window.addEventListener("pointermove", move, { passive: true });
+    document.addEventListener("pointerout", out, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerout", out);
+      cursor = null;
+      head = { yaw: 0, pitch: 0 };
+    };
+  });
 
   $effect(() => {
     // Track everything `draw` reads so a static model redraws on change.
     void [parts, image, scale, canvas];
     if (!animate) {
-      if (manual) draw(yaw, -12);
-      else draw(...sway());
+      // Reads `manual` and `yaw`, so dragging redraws a static model too.
+      draw(...body(), head.yaw, head.pitch);
       return;
     }
-    // Sway between -32° and 28° (9 s each way) on the shared ambient clock.
+    // Sway between -32° and 28° (9 s each way) on the shared ambient clock; the head eases
+    // towards the cursor.
     return onAmbientFrame((dt) => {
-      clock += dt;
-      draw(...sway());
+      if (!manual) clock += dt;
+      const [by, bp] = body();
+      const target = headTarget(by, bp);
+      const k = 1 - Math.exp(-dt / 110);
+      head = {
+        yaw: head.yaw + (target.yaw - head.yaw) * k,
+        pitch: head.pitch + (target.pitch - head.pitch) * k,
+      };
+      draw(by, bp, head.yaw, head.pitch);
     });
   });
 

@@ -1,6 +1,7 @@
 pub mod archive;
 pub mod fs;
 pub mod hash;
+pub mod image;
 pub mod jwt;
 pub mod names;
 pub mod sys;

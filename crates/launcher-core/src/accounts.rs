@@ -357,6 +357,45 @@ impl Accounts {
         self.save(&s).await
     }
 
+    /// A valid Minecraft services token of a Microsoft account (refreshed when needed).
+    pub async fn microsoft_token(
+        &self,
+        id: &str,
+        http: &Http,
+        ep: &Endpoints,
+        client_id: Option<&str>,
+    ) -> Result<String> {
+        let kind = self
+            .state()
+            .await
+            .accounts
+            .iter()
+            .find(|a| a.id == id)
+            .map(|a| a.kind)
+            .ok_or(AuthError::NoAccount)?;
+        if kind != AccountKind::Microsoft {
+            return Err(Error::SkinNeedsMicrosoft);
+        }
+        Ok(self
+            .launch_auth(id, http, ep, client_id)
+            .await?
+            .1
+            .access_token)
+    }
+
+    /// Mirror a profile returned by Minecraft services (after a skin or cape change).
+    pub async fn apply_profile(&self, id: &str, profile: &crate::auth::Profile) -> Result<()> {
+        let _g = self.lock.lock().await;
+        let skin = profile.active_skin().cloned();
+        let cape = profile.active_cape().map(|c| c.url.clone());
+        self.update(id, |a| {
+            a.skin_url = skin.as_ref().map(|s| s.url.clone());
+            a.skin_variant = skin.as_ref().map(|s| s.variant.to_ascii_lowercase());
+            a.cape_url = cape;
+        })
+        .await
+    }
+
     /// Credentials for launching: cached token if still valid for 10 minutes, otherwise a
     /// silent refresh through the whole chain (rotating the stored refresh token).
     pub async fn launch_auth(

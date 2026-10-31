@@ -23,6 +23,7 @@
     { page: "instances", icon: "grid", key: "nav.instances" },
     { page: "mods", icon: "package", key: "nav.mods" },
     { page: "accounts", icon: "user", key: "nav.accounts" },
+    { page: "skins", icon: "shirt", key: "nav.skins" },
     { page: "console", icon: "terminal", key: "nav.console" },
     { page: "settings", icon: "settings", key: "nav.settings" },
   ];

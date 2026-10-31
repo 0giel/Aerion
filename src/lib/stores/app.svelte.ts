@@ -156,6 +156,33 @@ class AppStore {
     this.instances = await commands.listInstances();
   }
 
+  private replaceInstance(inst: Instance) {
+    this.instances = this.instances.map((i) => (i.id === inst.id ? inst : i));
+  }
+
+  async toggleFavorite(id: string) {
+    const inst = this.instances.find((i) => i.id === id);
+    if (!inst) return;
+    try {
+      this.replaceInstance(await commands.setInstanceFavorite(id, !inst.favorite));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
+  /** A built-in icon key (or `null`), or an image file to import. */
+  async setInstanceIcon(id: string, icon: string | null, file: string | null) {
+    try {
+      this.replaceInstance(
+        file ? await commands.importInstanceIcon(id, file) : await commands.setInstanceIcon(id, icon),
+      );
+      return true;
+    } catch (e) {
+      toasts.error(errorMessage(e));
+      return false;
+    }
+  }
+
   async refreshAccounts() {
     this.accounts = await commands.getAccounts();
   }

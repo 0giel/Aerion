@@ -2,6 +2,7 @@
   import { untrack } from "svelte";
   import Modal from "../components/Modal.svelte";
   import Icon from "../components/Icon.svelte";
+  import IconPicker from "../components/IconPicker.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { toasts } from "../stores/toasts.svelte";
@@ -27,6 +28,8 @@
   let loaderVersions = $state.raw<LoaderVersion[] | null>(null);
   let loaderVersion = $state("");
   let group = $state("");
+  let icon = $state<string | null>(null);
+  let iconFile = $state<string | null>(null);
   let busy = $state(false);
   let loadError = $state<string | null>(null);
 
@@ -77,9 +80,13 @@
         gameVersion,
         loader,
         loaderVersion: loader === "vanilla" ? null : loaderVersion || null,
-        icon: null,
+        icon,
         group: group.trim() || null,
       });
+      if (iconFile) {
+        // The instance exists either way; a bad image only costs the custom icon.
+        await commands.importInstanceIcon(inst.id, iconFile).catch((e) => toasts.error(errorMessage(e)));
+      }
       await app.refreshInstances();
       await app.saveSettings({ lastInstance: inst.id });
       open = false;
@@ -173,6 +180,10 @@
         {/if}
       </div>
     {/if}
+    <div class="field">
+      <span class="label">{t("newInstance.icon")}</span>
+      <IconPicker bind:icon bind:file={iconFile} name={name || gameVersion} {loader} />
+    </div>
   </form>
   {#snippet footer()}
     <button class="btn ghost" onclick={() => (open = false)}>{t("common.cancel")}</button>

@@ -44,6 +44,41 @@ pub async fn update_instance(
 
 #[tauri::command]
 #[specta::specta]
+pub async fn set_instance_favorite(
+    state: State<'_, AppState>,
+    id: String,
+    favorite: bool,
+) -> CmdResult<Instance> {
+    Ok(state.instances.set_favorite(&id, favorite).await?)
+}
+
+/// Built-in icon key, or `None` for the default icon.
+#[tauri::command]
+#[specta::specta]
+pub async fn set_instance_icon(
+    state: State<'_, AppState>,
+    id: String,
+    icon: Option<String>,
+) -> CmdResult<Instance> {
+    Ok(state.instances.set_icon(&id, icon).await?)
+}
+
+/// Use an image file picked by the user as the icon.
+#[tauri::command]
+#[specta::specta]
+pub async fn import_instance_icon(
+    state: State<'_, AppState>,
+    id: String,
+    path: String,
+) -> CmdResult<Instance> {
+    Ok(state
+        .instances
+        .import_icon(&id, std::path::Path::new(&path))
+        .await?)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub async fn delete_instance(state: State<'_, AppState>, id: String) -> CmdResult<()> {
     if state.games.is_running(&id) {
         return Err(launcher_core::Error::AlreadyRunning.into());

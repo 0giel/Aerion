@@ -4,6 +4,7 @@ export type Page =
   | "instance"
   | "mods"
   | "accounts"
+  | "skins"
   | "console"
   | "settings"
   | "themeEditor"

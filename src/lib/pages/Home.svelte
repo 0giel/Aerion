@@ -18,7 +18,10 @@
       ? app.tasks.find((x) => x.instanceId === current.id && x.kind === "launch" && x.status === "running")
       : undefined,
   );
-  const recent = $derived(app.instances.slice(0, 5));
+  // Favourites first, then the most recently played (the list is already in that order).
+  const ordered = $derived([...app.instances].sort((a, b) => Number(b.favorite) - Number(a.favorite)));
+  const recent = $derived(ordered.slice(0, 5));
+  const hasFavorites = $derived(app.instances.some((i) => i.favorite));
   let pickerOpen = $state(false);
 
   function play() {
@@ -86,15 +89,16 @@
         </button>
         {#if pickerOpen}
           <div class="picker card raised" role="listbox" aria-label={t("home.chooseInstance")}>
-            {#each app.instances as i (i.id)}
+            {#each ordered as i (i.id)}
               <button
                 class="pick"
                 role="option"
                 aria-selected={i.id === current?.id}
                 onclick={() => choose(i)}
               >
-                <InstanceIcon name={i.name} loader={i.loader} size={30} />
+                <InstanceIcon name={i.name} loader={i.loader} icon={i.icon} id={i.id} size={30} />
                 <span class="grow truncate">{i.name}</span>
+                {#if i.favorite}<span class="fav-mark"><Icon name="star" size={13} /></span>{/if}
                 <span class="tiny faint">{instanceVersionLabel(i)}</span>
               </button>
             {/each}
@@ -126,7 +130,7 @@
 
   {#if recent.length > 1}
     <section class="recent fade-up">
-      <div class="section-title">{t("home.recent")}</div>
+      <div class="section-title">{t(hasFavorites ? "home.favoritesAndRecent" : "home.recent")}</div>
       <div class="cards">
         {#each recent as i (i.id)}
           <button
@@ -135,11 +139,12 @@
             onclick={() => choose(i)}
             ondblclick={() => router.go("instance", { id: i.id })}
           >
-            <InstanceIcon name={i.name} loader={i.loader} size={34} />
+            <InstanceIcon name={i.name} loader={i.loader} icon={i.icon} id={i.id} size={34} />
             <span class="col gap-1 grow" style="min-width:0">
               <span class="truncate strong">{i.name}</span>
               <span class="tiny faint truncate">{instanceVersionLabel(i)}</span>
             </span>
+            {#if i.favorite}<span class="fav-mark"><Icon name="star" size={13} /></span>{/if}
             {#if app.running[i.id]}<span class="live"></span>{/if}
           </button>
         {/each}
@@ -332,6 +337,13 @@
     background: var(--c-text);
     opacity: 0.7;
     margin-bottom: 1.2rem;
+  }
+  .fav-mark {
+    display: inline-flex;
+    color: var(--c-warning);
+  }
+  .fav-mark :global(svg) {
+    fill: currentColor;
   }
   .recent {
     grid-column: 1 / -1;

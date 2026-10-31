@@ -103,6 +103,18 @@ pub enum Error {
     #[error("game is already running")]
     AlreadyRunning,
 
+    #[error("unsupported image format")]
+    UnsupportedImage,
+
+    #[error("file is larger than {max_kb} KB")]
+    FileTooLarge { max_kb: u64 },
+
+    #[error("a skin must be 64×64 or 64×32 pixels, this one is {width}×{height}")]
+    SkinSize { width: u32, height: u32 },
+
+    #[error("changing the skin needs a Microsoft account")]
+    SkinNeedsMicrosoft,
+
     #[error("{0}")]
     Invalid(String),
 }
@@ -284,6 +296,17 @@ impl Error {
             }
             Error::LoaderInstall(_) => "loader.installFailed",
             Error::AlreadyRunning => "launch.alreadyRunning",
+            Error::UnsupportedImage => "image.unsupported",
+            Error::FileTooLarge { max_kb } => {
+                put("max", max_kb.to_string());
+                "file.tooLarge"
+            }
+            Error::SkinSize { width, height } => {
+                put("width", width.to_string());
+                put("height", height.to_string());
+                "skin.size"
+            }
+            Error::SkinNeedsMicrosoft => "skin.needsMicrosoft",
             Error::Invalid(_) => "generic",
         };
         ErrorInfo {

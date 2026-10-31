@@ -25,6 +25,7 @@
     instance: () => import("./lib/pages/InstanceDetail.svelte"),
     mods: () => import("./lib/pages/Mods.svelte"),
     accounts: () => import("./lib/pages/Accounts.svelte"),
+    skins: () => import("./lib/pages/Skins.svelte"),
     console: () => import("./lib/pages/Console.svelte"),
     settings: () => import("./lib/pages/Settings.svelte"),
     themeEditor: () => import("./lib/pages/ThemeEditor.svelte"),
@@ -66,7 +67,7 @@
     }
   }
 
-  const order: Page[] = ["home", "instances", "mods", "accounts", "console", "settings"];
+  const order: Page[] = ["home", "instances", "mods", "accounts", "skins", "console", "settings"];
   function onkeydown(e: KeyboardEvent) {
     const mod = e.ctrlKey || e.metaKey;
     if (!mod) return;
@@ -76,7 +77,7 @@
     } else if (e.key.toLowerCase() === "n" && app.ready) {
       ui.newInstanceOpen = true;
       e.preventDefault();
-    } else if (/^[1-6]$/.test(e.key)) {
+    } else if (/^[1-7]$/.test(e.key)) {
       router.go(order[Number(e.key) - 1]);
       e.preventDefault();
     }

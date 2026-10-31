@@ -13,6 +13,7 @@
   let query = $state("");
   let sort = $state<Sort>("recent");
   let group = $state<string | null>(null);
+  let favoritesOnly = $state(false);
 
   const groups = $derived(
     [...new Set(app.instances.map((i) => i.group).filter((g): g is string => !!g))].sort(),
@@ -23,6 +24,7 @@
     const q = fold(query.trim());
     const filtered = app.instances.filter(
       (i) =>
+        (!favoritesOnly || i.favorite) &&
         (!group || i.group === group) &&
         (!q ||
           fold(`${i.name} ${i.gameVersion} ${i.loader} ${i.group ?? ""} ${i.tags.join(" ")}`).includes(q)),
@@ -33,7 +35,8 @@
       version: (a, b) => b.gameVersion.localeCompare(a.gameVersion, undefined, { numeric: true }),
       created: (a, b) => b.createdAt - a.createdAt,
     };
-    return [...filtered].sort(by[sort]);
+    // Favourites stay on top whatever the sort order.
+    return [...filtered].sort((a, b) => Number(b.favorite) - Number(a.favorite) || by[sort](a, b));
   });
 
   async function importPack() {
@@ -73,10 +76,18 @@
     <span class="grow"></span>
     <span class="small faint">{t("instances.count", { n: list.length })}</span>
   </div>
-  {#if groups.length}
+  {#if groups.length || app.instances.some((i) => i.favorite)}
     <div class="row wrap groups">
-      <button class="chip" aria-pressed={group === null} onclick={() => (group = null)}
-        >{t("instances.allGroups")}</button
+      <button
+        class="chip"
+        aria-pressed={group === null && !favoritesOnly}
+        onclick={() => ((group = null), (favoritesOnly = false))}>{t("instances.allGroups")}</button
+      >
+      <button
+        class="chip fav-chip"
+        aria-pressed={favoritesOnly}
+        onclick={() => (favoritesOnly = !favoritesOnly)}
+        ><Icon name="star" size={14} />{t("instances.favorites")}</button
       >
       {#each groups as g (g)}
         <button class="chip" aria-pressed={group === g} onclick={() => (group = g)}>{g}</button>
@@ -103,8 +114,16 @@
         <article class="tile card" class:running>
           <button class="open" onclick={() => router.go("instance", { id: inst.id })} aria-label={inst.name}
           ></button>
+          <button
+            class="icon-btn sm star"
+            class:on={inst.favorite}
+            aria-pressed={inst.favorite}
+            title={t(inst.favorite ? "instances.unfavorite" : "instances.favorite")}
+            aria-label={t(inst.favorite ? "instances.unfavorite" : "instances.favorite")}
+            onclick={() => app.toggleFavorite(inst.id)}><Icon name="star" size={16} /></button
+          >
           <div class="row">
-            <InstanceIcon name={inst.name} loader={inst.loader} size={46} />
+            <InstanceIcon name={inst.name} loader={inst.loader} icon={inst.icon} id={inst.id} size={46} />
             <div class="col gap-1 grow" style="min-width:0">
               <strong class="truncate">{inst.name}</strong>
               <span class="small muted truncate">{instanceVersionLabel(inst)}</span>
@@ -197,5 +216,30 @@
   .play {
     position: relative;
     align-self: flex-start;
+  }
+  .star {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    opacity: 0;
+    transition: opacity var(--dur) var(--ease);
+  }
+  .tile:hover .star,
+  .star:focus-visible,
+  .star.on {
+    opacity: 1;
+  }
+  .star.on,
+  .fav-chip[aria-pressed="true"] {
+    color: var(--c-warning);
+  }
+  .star.on :global(svg),
+  .fav-chip[aria-pressed="true"] :global(svg) {
+    fill: currentColor;
+  }
+  .fav-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
   }
 </style>

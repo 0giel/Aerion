@@ -65,6 +65,9 @@ impl Paths {
     pub fn accounts_file(&self) -> PathBuf {
         self.root.join("accounts.json")
     }
+    pub fn skins_dir(&self) -> PathBuf {
+        self.root.join("skins")
+    }
     pub fn themes_dir(&self) -> PathBuf {
         self.root.join("themes")
     }

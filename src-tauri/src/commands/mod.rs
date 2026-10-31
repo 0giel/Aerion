@@ -6,6 +6,7 @@ pub mod app;
 pub mod instances;
 pub mod launch;
 pub mod mods;
+pub mod skins;
 pub mod tasks;
 pub mod themes;
 pub mod versions;

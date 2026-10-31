@@ -5,6 +5,9 @@
 //!   through here. `nc=1` disables caching (CurseForge content, per their API terms).
 //! * `themeasset://localhost/<name>` — files from `<root>/themes/assets` (backgrounds), with
 //!   `Range` support for video.
+//! * `localimg://localhost/instance/<id>/<icon file>` and `localimg://localhost/skin/<id>` —
+//!   custom instance icons and skins from the library. File names are unique per change, so
+//!   responses are cached forever.
 
 use std::net::IpAddr;
 
@@ -191,6 +194,58 @@ pub fn theme_asset<R: Runtime>(
     });
 }
 
+/// A request path of the `localimg` scheme.
+#[derive(Debug, PartialEq)]
+enum LocalImg {
+    InstanceIcon { id: String, file: String },
+    Skin(String),
+}
+
+fn parse_local_img(path: &str) -> Option<LocalImg> {
+    let mut parts = path.trim_start_matches('/').split('/');
+    let img = match (parts.next()?, parts.next()?, parts.next()) {
+        ("instance", id, Some(file)) => LocalImg::InstanceIcon {
+            id: percent_decode(id),
+            file: percent_decode(file),
+        },
+        ("skin", id, None) => LocalImg::Skin(percent_decode(id)),
+        _ => return None,
+    };
+    parts.next().is_none().then_some(img)
+}
+
+pub fn local_img<R: Runtime>(
+    ctx: UriSchemeContext<'_, R>,
+    request: Request<Vec<u8>>,
+    responder: UriSchemeResponder,
+) {
+    let app = ctx.app_handle().clone();
+    tauri::async_runtime::spawn(async move {
+        let state = app.state::<AppState>();
+        let file = match parse_local_img(request.uri().path()) {
+            Some(LocalImg::InstanceIcon { id, file }) => state.instances.icon_file(&id, &file),
+            Some(LocalImg::Skin(id)) => state.skins.file(&id),
+            None => return responder.respond(empty(StatusCode::BAD_REQUEST)),
+        };
+        let Ok(path) = file else {
+            return responder.respond(empty(StatusCode::BAD_REQUEST));
+        };
+        let Ok(data) = tokio::fs::read(&path).await else {
+            return responder.respond(empty(StatusCode::NOT_FOUND));
+        };
+        let Some(kind) = launcher_core::util::image::ImageKind::sniff(&data) else {
+            return responder.respond(empty(StatusCode::UNSUPPORTED_MEDIA_TYPE));
+        };
+        let resp = Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, kind.content_type())
+            .header(header::CACHE_CONTROL, "max-age=31536000, immutable")
+            .header("X-Content-Type-Options", "nosniff")
+            .body(data);
+        responder.respond(resp.unwrap_or_default());
+    });
+}
+
 fn percent_decode(s: &str) -> String {
     let bytes = s.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
@@ -198,7 +253,9 @@ fn percent_decode(s: &str) -> String {
     while i < bytes.len() {
         if bytes[i] == b'%'
             && i + 2 < bytes.len()
-            && let Ok(v) = u8::from_str_radix(&s[i + 1..i + 3], 16)
+            && let Some(v) = std::str::from_utf8(&bytes[i + 1..i + 3])
+                .ok()
+                .and_then(|h| u8::from_str_radix(h, 16).ok())
         {
             out.push(v);
             i += 3;
@@ -257,6 +314,30 @@ mod tests {
         for h in ["cdn.modrinth.com", "media.forgecdn.net", "8.8.8.8"] {
             assert!(!is_private(h), "{h}");
         }
+    }
+
+    #[test]
+    fn percent_decode_never_panics() {
+        assert_eq!(percent_decode("%aż"), "%aż");
+        assert_eq!(percent_decode("a%2"), "a%2");
+    }
+
+    #[test]
+    fn local_img_paths() {
+        assert_eq!(
+            parse_local_img("/instance/M%C3%B3j%20%C5%9Bwiat/icon-1.png"),
+            Some(LocalImg::InstanceIcon {
+                id: "Mój świat".into(),
+                file: "icon-1.png".into()
+            })
+        );
+        assert_eq!(
+            parse_local_img("/skin/0123abcd"),
+            Some(LocalImg::Skin("0123abcd".into()))
+        );
+        assert_eq!(parse_local_img("/instance/a/b/c"), None);
+        assert_eq!(parse_local_img("/other/x"), None);
+        assert_eq!(parse_local_img("/skin/a/b"), None);
     }
 
     #[test]

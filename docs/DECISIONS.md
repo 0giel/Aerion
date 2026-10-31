@@ -103,3 +103,17 @@ code is far cheaper; the gating still saves battery.
 The engine mostly waits on I/O: the Tokio runtime uses at most 4 workers (default was one per
 core), and on Linux/glibc `M_ARENA_MAX=2` stops each thread from keeping its own arena of freed
 memory resident.
+
+### D18 — Skins through the official API, library kept locally (2026-10-31)
+Skin and cape changes use Minecraft services (`POST /minecraft/profile/skins` multipart,
+`DELETE …/skins/active`, `PUT/DELETE …/capes/active`) with the account's normal token — no
+third-party skin servers. Saved skins live in `<root>/skins` (`skins.json` + `<uuid>.png`),
+validated as 64×64 / 64×32 PNG by reading the `IHDR` header (no image-decoding dependency).
+Offline accounts can use the library and preview but cannot change what others see in game.
+
+### D19 — Instance icons: built-in pixel art or a file with a unique name (2026-10-31)
+Built-in icons are original 16×16 pixel art (`src/lib/instanceIcons.ts`, rendered as merged SVG
+rectangles). Custom images are copied into the instance folder as `icon-<millis>.<ext>` (sniffed
+PNG/JPEG/WebP/GIF, ≤ 2 MB) and served by the `localimg://` scheme; a new name per change lets the
+response be cached forever. Favourites are a flag on the instance; lists put them first in the UI,
+the backend order stays "last played".

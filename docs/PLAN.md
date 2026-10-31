@@ -218,7 +218,8 @@ has been *verified* against its acceptance criterion. Details and the running lo
 5. ~~Vitest tests (i18n shape, theme schema)~~ ✅ · ~~release build + bundles, performance measurements~~ ✅
 6. Owner: Azure registration (`docs/AZURE_SETUP.md`) → verify Microsoft sign-in and offline
    accounts in a release build; CurseForge key → verify CF search/install/modpack live.
-7. ~~Windows build~~ ✅ (cross-compiled installer, engine tests + 26.3 smoke under Wine) →
+7. ~~Icons, favourites, head tracking, skins tab~~ ✅ (owner requests, 2026-10-31)
+8. ~~Windows build~~ ✅ (cross-compiled installer, engine tests + 26.3 smoke under Wine) →
    run `Luncher_0.1.0_x64-setup.exe` on a real Windows 10/11 machine; macOS still untested.
 
 ## 5. Risks and mitigations

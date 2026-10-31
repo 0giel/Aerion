@@ -42,6 +42,9 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             instances::create_instance,
             instances::update_instance,
             instances::delete_instance,
+            instances::set_instance_favorite,
+            instances::set_instance_icon,
+            instances::import_instance_icon,
             instances::clone_instance,
             instances::instance_groups,
             instances::create_shortcut,
@@ -72,6 +75,15 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             mods::install_modpack,
             mods::curseforge_status,
             mods::set_curseforge_key,
+            commands::skins::list_skins,
+            commands::skins::add_skin,
+            commands::skins::save_account_skin,
+            commands::skins::update_skin,
+            commands::skins::delete_skin,
+            commands::skins::apply_skin,
+            commands::skins::reset_skin,
+            commands::skins::account_capes,
+            commands::skins::set_cape,
             commands::themes::list_user_themes,
             commands::themes::save_user_theme,
             commands::themes::delete_user_theme,
@@ -264,6 +276,7 @@ pub fn run(platform_notes: Vec<String>) {
         .plugin(tauri_plugin_window_state::Builder::default().with_state_flags(StateFlags::all() & !StateFlags::VISIBLE).build())
         .register_asynchronous_uri_scheme_protocol("img", protocols::img)
         .register_asynchronous_uri_scheme_protocol("themeasset", protocols::theme_asset)
+        .register_asynchronous_uri_scheme_protocol("localimg", protocols::local_img)
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
             builder.mount_events(app);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import en from "./en";
 import pl from "./pl";
+import { INSTANCE_ICONS } from "../instanceIcons";
 // The engine's error codes and crash kinds, read from the Rust sources so a new code without a
 // translation fails here.
 import errorRs from "../../../crates/launcher-core/src/error.rs?raw";
@@ -30,10 +31,36 @@ const placeholders = (v: string | Record<string, string>): Set<string> =>
     ),
   );
 
+// Every component and module, to check the keys passed to `t()`.
+const sources = import.meta.glob(["../**/*.svelte", "../**/*.ts", "../../*.svelte", "!../**/*.test.ts"], {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
 const enLeaves = leaves(en as unknown as Tree);
 const plLeaves = leaves(pl as unknown as Tree);
 
 describe("translations", () => {
+  it("contain every literal key used with t()", () => {
+    expect(Object.keys(sources).length).toBeGreaterThan(30);
+    const groups = new Set([...enLeaves.keys()].map((k) => k.split(".")[0]));
+    const missing = new Set<string>();
+    for (const [file, text] of Object.entries(sources)) {
+      for (const m of text.matchAll(/\bt\(\s*"([a-zA-Z0-9_.]+)"/g)) {
+        const key = m[1];
+        // Only keys of known groups (`t("x")` may also be another function's call).
+        if (groups.has(key.split(".")[0]) && !enLeaves.has(key)) missing.add(`${key} (${file})`);
+      }
+    }
+    expect([...missing]).toEqual([]);
+  });
+
+  it("contain every built-in instance icon name", () => {
+    const keys = Object.keys(INSTANCE_ICONS).map((k) => `iconPicker.icons.${k}`);
+    expect(keys.filter((k) => !enLeaves.has(k))).toEqual([]);
+  });
+
   it("have the same keys", () => {
     expect([...plLeaves.keys()].sort()).toEqual([...enLeaves.keys()].sort());
   });

@@ -7,6 +7,8 @@
   import ContentTab from "./instance/ContentTab.svelte";
   import SettingsTab from "./instance/SettingsTab.svelte";
   import ExportModal from "./instance/ExportModal.svelte";
+  import Modal from "../components/Modal.svelte";
+  import IconPicker from "../components/IconPicker.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { dialogs } from "../stores/dialogs.svelte";
@@ -19,6 +21,24 @@
   let tab = $state<Tab>((router.params.tab as Tab) ?? "content");
   let menuOpen = $state(false);
   let exportOpen = $state(false);
+  let iconOpen = $state(false);
+  let iconChoice = $state<string | null>(null);
+  let iconFile = $state<string | null>(null);
+  let iconBusy = $state(false);
+
+  function editIcon() {
+    iconChoice = inst?.icon ?? null;
+    iconFile = null;
+    iconOpen = true;
+  }
+
+  async function saveIcon() {
+    iconBusy = true;
+    // Keeping the current custom image needs no change.
+    const unchanged = !iconFile && iconChoice === (inst?.icon ?? null);
+    if (unchanged || (await app.setInstanceIcon(id, iconChoice, iconFile))) iconOpen = false;
+    iconBusy = false;
+  }
 
   const inst = $derived(app.instances.find((i) => i.id === id));
   const running = $derived(!!app.running[id]);
@@ -94,7 +114,15 @@
       <button class="icon-btn" onclick={() => router.back()} aria-label={t("common.back")}
         ><Icon name="arrowLeft" /></button
       >
-      <InstanceIcon name={inst.name} loader={inst.loader} size={58} />
+      <button
+        class="icon-edit"
+        title={t("instance.changeIcon")}
+        aria-label={t("instance.changeIcon")}
+        onclick={editIcon}
+        ><InstanceIcon name={inst.name} loader={inst.loader} icon={inst.icon} id={inst.id} size={58} /><span
+          class="pen"><Icon name="pencil" size={13} /></span
+        ></button
+      >
       <div class="col gap-1 grow" style="min-width:0">
         <h1 class="truncate">{inst.name}</h1>
         <div class="row wrap small muted">
@@ -109,6 +137,14 @@
             >{/if}
         </div>
       </div>
+      <button
+        class="icon-btn fav"
+        class:on={inst.favorite}
+        title={t(inst.favorite ? "instances.unfavorite" : "instances.favorite")}
+        aria-label={t(inst.favorite ? "instances.unfavorite" : "instances.favorite")}
+        aria-pressed={inst.favorite}
+        onclick={() => app.toggleFavorite(id)}><Icon name="star" /></button
+      >
       <button
         class="icon-btn"
         title={t("common.openFolder")}
@@ -188,10 +224,56 @@
       {/if}
     </section>
     <ExportModal bind:open={exportOpen} instance={inst} />
+    <Modal bind:open={iconOpen} title={t("instance.changeIcon")} width="30rem">
+      <IconPicker
+        bind:icon={iconChoice}
+        bind:file={iconFile}
+        name={inst.name}
+        loader={inst.loader}
+        id={inst.id}
+      />
+      {#snippet footer()}
+        <button class="btn ghost" onclick={() => (iconOpen = false)}>{t("common.cancel")}</button>
+        <button class="btn primary" disabled={iconBusy} onclick={saveIcon}>{t("common.save")}</button>
+      {/snippet}
+    </Modal>
   {/if}
 </div>
 
 <style>
+  .icon-edit {
+    position: relative;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: calc(var(--r-md) * 1.1);
+  }
+  .pen {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--c-surface-3);
+    color: var(--c-text);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+    opacity: 0;
+    transition: opacity var(--dur) var(--ease);
+  }
+  .icon-edit:hover .pen,
+  .icon-edit:focus-visible .pen {
+    opacity: 1;
+  }
+  .fav.on {
+    color: var(--c-warning);
+  }
+  .fav.on :global(svg) {
+    fill: currentColor;
+  }
   .detail {
     display: flex;
     flex-direction: column;

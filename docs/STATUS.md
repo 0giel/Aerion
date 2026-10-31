@@ -5,6 +5,28 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Owner requests: icons, favourites, head tracking, skins tab
+- **Instance icons**: 16 original pixel-art icons + "your own image" (PNG/JPEG/WebP/GIF ≤ 2 MB,
+  copied into the instance folder, served via the new `localimg://` scheme). Picker in the
+  new-instance dialog and on the instance page (click the icon). `set_instance_icon`,
+  `import_instance_icon`; icon values validated in the engine.
+- **Favourites**: star on instance tiles and the instance header; "Favourites" filter chip;
+  favourites first in lists, the home picker and the home quick bar ("Favourites & recent").
+- **Player model looks at the cursor**: the head turns on the neck (±60° yaw, ±35° pitch, eased),
+  the body keeps swaying; runs on the shared ambient clock, off with reduced motion.
+  Checked on screen (cursor top-left / bottom-right): the first version rolled the head when
+  looking up and sideways; fixed to nod-then-turn (verified numerically, no new screenshot).
+- **Skins tab** (`Ctrl+5`): skin library (add PNGs by dialog or drag & drop, name, classic/slim
+  with live 3D preview, delete), wear a skin, save the current skin, reset to default, choose or
+  hide a cape. Uses Minecraft services directly (D18). Wiremock tests for upload (multipart),
+  reset and cape; library CRUD tests. **Not verified live** — needs a Microsoft account.
+- New error codes with translations: `image.unsupported`, `file.tooLarge`, `skin.size`,
+  `skin.needsMicrosoft`. New vitest: every literal `t("…")` key used in the UI exists in the
+  dictionary (it caught nothing, but a typo now fails CI).
+- Fixed a possible panic in the custom-scheme percent decoder (multi-byte char after `%`).
+- Tests: engine 89, Tauri 10, vitest 18.
+
+
 ### Windows build (cross-compiled on Linux)
 - Rootless toolchain `scripts/windows-cross.sh`: clang-cl/lld-link/llvm-rc 20 and NSIS unpacked
   from Ubuntu packages, `cargo-xwin` (MSVC CRT + Windows SDK), target `x86_64-pc-windows-msvc`

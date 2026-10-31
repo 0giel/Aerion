@@ -45,6 +45,9 @@ export type ImportResult = {
 export type ErrorInfo = B.ErrorInfo;
 export type FolderTarget = B.FolderTarget;
 export type PackFormat = B.PackFormat;
+export type SavedSkin = B.SavedSkin;
+export type SkinVariant = B.SkinVariant;
+export type Cape = B.Skin_Serialize;
 
 export const LOADERS: LoaderKind[] = ["vanilla", "fabric", "quilt", "forge", "neoforge"];
 
@@ -75,10 +78,12 @@ function b64url(s: string): string {
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+const LOCAL_IMG = IS_WINDOWS ? "http://localimg.localhost/" : "localimg://localhost/";
+
 /** Route a remote image through the backend proxy (`img://`), which the CSP allows. */
 export function imgUrl(url: string | null | undefined, opts?: { noCache?: boolean }): string | undefined {
   if (!url) return undefined;
-  if (url.startsWith("data:") || url.startsWith("blob:")) return url;
+  if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith(LOCAL_IMG)) return url;
   if (!/^https?:\/\//i.test(url)) return undefined;
   const base = IS_WINDOWS ? "http://img.localhost/" : "img://localhost/";
   return base + b64url(url) + (opts?.noCache ? "?nc=1" : "");
@@ -87,6 +92,17 @@ export function imgUrl(url: string | null | undefined, opts?: { noCache?: boolea
 /** Images of CurseForge content must not be cached (API terms). */
 export function providerImg(provider: Provider, url: string | null | undefined): string | undefined {
   return imgUrl(url, { noCache: provider === "curseforge" });
+}
+
+/** A custom instance icon (`icon: "file:…"`), served from the instance folder. */
+export function instanceIconUrl(id: string, icon: string | null | undefined): string | undefined {
+  const file = icon?.startsWith("file:") ? icon.slice(5) : null;
+  return file ? `${LOCAL_IMG}instance/${encodeURIComponent(id)}/${encodeURIComponent(file)}` : undefined;
+}
+
+/** A skin from the launcher's skin library. */
+export function savedSkinUrl(id: string): string {
+  return `${LOCAL_IMG}skin/${encodeURIComponent(id)}`;
 }
 
 export function themeAssetUrl(name: string): string {

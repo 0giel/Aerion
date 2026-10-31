@@ -10,6 +10,7 @@ use launcher_core::mods::curseforge::CurseForge;
 use launcher_core::mods::modrinth::Modrinth;
 use launcher_core::paths::Paths;
 use launcher_core::settings::Settings;
+use launcher_core::skins::SkinLibrary;
 use launcher_core::{Engine, Result};
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
@@ -26,6 +27,7 @@ pub struct AppState {
     pub engine: RwLock<Engine>,
     pub accounts: Accounts,
     pub instances: InstanceManager,
+    pub skins: SkinLibrary,
     pub tasks: TaskRegistry,
     pub games: GameRegistry,
     pub endpoints: Endpoints,
@@ -69,6 +71,7 @@ impl AppState {
         Ok(Self {
             accounts: Accounts::new(paths.accounts_file(), keyring.clone()),
             instances: InstanceManager::new(paths.instances_dir()),
+            skins: SkinLibrary::new(paths.skins_dir()),
             settings: RwLock::new(settings),
             engine: RwLock::new(engine),
             tasks: TaskRegistry::default(),
