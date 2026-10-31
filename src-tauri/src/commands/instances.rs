@@ -2,11 +2,12 @@ use std::path::PathBuf;
 
 use launcher_core::ErrorInfo;
 use launcher_core::game::install::prepare;
+use launcher_core::importers::{self, ExternalInstance};
 use launcher_core::instances::launch::{ensure_version, pick_java};
 use launcher_core::instances::{Instance, NewInstance, shortcut};
 use launcher_core::modpacks::{self, ExportOptions, ImportResult, PackFormat};
 use launcher_core::net::download::VerifyMode;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 use super::CmdResult;
 use crate::state::AppState;
@@ -294,4 +295,93 @@ pub async fn list_game_dir(state: State<'_, AppState>, id: String) -> CmdResult<
     }
     out.sort();
     Ok(out)
+}
+
+/// Instances of other launchers found on this computer.
+#[tauri::command]
+#[specta::specta]
+pub async fn detect_external_instances() -> CmdResult<Vec<ExternalInstance>> {
+    Ok(tokio::task::spawn_blocking(importers::detect)
+        .await
+        .map_err(|e| launcher_core::Error::Invalid(e.to_string()))?)
+}
+
+/// Read a folder the user picked as a possible game folder.
+#[tauri::command]
+#[specta::specta]
+pub async fn inspect_external_folder(path: String) -> CmdResult<ExternalInstance> {
+    Ok(
+        tokio::task::spawn_blocking(move || importers::inspect_folder(&PathBuf::from(path)))
+            .await
+            .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??,
+    )
+}
+
+/// Import another launcher's instance: copy its files (default) or use its folder in place
+/// (`link`). `ext` carries the version/loader the user confirmed.
+#[tauri::command]
+#[specta::specta]
+pub async fn import_external(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    ext: ExternalInstance,
+    name: String,
+    link: bool,
+) -> CmdResult<String> {
+    let game_version = ext
+        .game_version
+        .clone()
+        .filter(|v| !v.trim().is_empty())
+        .ok_or_else(|| launcher_core::Error::Invalid("choose the Minecraft version".into()))?;
+    let app2 = app.clone();
+    Ok(state.tasks.spawn(
+        &app,
+        "import",
+        "task.import",
+        Some(name.clone()),
+        None,
+        move |ctx| async move {
+            let state = app2.state::<AppState>();
+            let inst = state
+                .instances
+                .create(NewInstance {
+                    name,
+                    game_version,
+                    loader: ext.loader,
+                    loader_version: ext.loader_version.clone(),
+                    icon: None,
+                    group: None,
+                    game_dir: link.then(|| ext.game_dir.clone()),
+                    link_existing: link,
+                })
+                .await?;
+            if !link {
+                ctx.stage("stage.copyFiles", None);
+                let (src, dst) = (ext.game_dir.clone(), state.instances.game_dir(&inst.id)?);
+                let top = src.clone();
+                tokio::task::spawn_blocking(move || {
+                    // Only the game folder's own top-level entries are filtered.
+                    launcher_core::util::fs::copy_dir_sync(&src, &dst, &|p| {
+                        p.parent() == Some(top.as_path())
+                            && p.file_name()
+                                .is_some_and(|n| importers::skip_on_copy(&n.to_string_lossy()))
+                    })
+                })
+                .await
+                .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+            }
+            // Recognise mods (for updates); a failure only costs that.
+            ctx.stage("stage.identify", None);
+            if let Ok(content) = state.instances.content(&inst.id) {
+                let _ = content.scan().await;
+                let cf = state.curseforge().await;
+                let _ = content.identify(&state.modrinth().await, Some(&cf)).await;
+            }
+            let result = ImportResult {
+                instance: inst,
+                manual_downloads: vec![],
+            };
+            Ok(serde_json::to_string(&result).ok())
+        },
+    ))
 }

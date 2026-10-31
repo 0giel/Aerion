@@ -2,6 +2,7 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import Icon from "../components/Icon.svelte";
   import InstanceIcon from "../components/InstanceIcon.svelte";
+  import ImportLaunchersModal from "./ImportLaunchersModal.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { ui } from "../stores/ui.svelte";
@@ -39,6 +40,8 @@
     return [...filtered].sort((a, b) => Number(b.favorite) - Number(a.favorite) || by[sort](a, b));
   });
 
+  let launchersOpen = $state(false);
+
   async function importPack() {
     const file = await openDialog({
       multiple: false,
@@ -51,6 +54,9 @@
 <div class="page">
   <header class="page-header">
     <h1 class="grow">{t("instances.title")}</h1>
+    <button class="btn" onclick={() => (launchersOpen = true)}
+      ><Icon name="download" size={16} />{t("importLaunchers.button")}</button
+    >
     <button class="btn" onclick={importPack}><Icon name="upload" size={16} />{t("instances.import")}</button>
     <button class="btn primary" onclick={() => (ui.newInstanceOpen = true)}
       ><Icon name="plus" size={16} />{t("instances.new")}</button
@@ -148,6 +154,8 @@
     </div>
   {/if}
 </div>
+
+<ImportLaunchersModal bind:open={launchersOpen} />
 
 <style>
   .toolbar {

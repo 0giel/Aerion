@@ -49,6 +49,15 @@ export const commands = {
 	 *  data folder with `None`.
 	 */
 	moveInstanceGameDir: (id: string, path: string | null) => __TAURI_INVOKE<Instance_Serialize>("move_instance_game_dir", { id, path }),
+	/**  Instances of other launchers found on this computer. */
+	detectExternalInstances: () => __TAURI_INVOKE<ExternalInstance_Serialize[]>("detect_external_instances"),
+	/**  Read a folder the user picked as a possible game folder. */
+	inspectExternalFolder: (path: string) => __TAURI_INVOKE<ExternalInstance_Serialize>("inspect_external_folder", { path }),
+	/**
+	 *  Import another launcher's instance: copy its files (default) or use its folder in place
+	 *  (`link`). `ext` carries the version/loader the user confirmed.
+	 */
+	importExternal: (ext: ExternalInstance_Deserialize, name: string, link: boolean) => __TAURI_INVOKE<string>("import_external", { ext, name, link }),
 	cloneInstance: (id: string, name: string) => __TAURI_INVOKE<Instance_Serialize>("clone_instance", { id, name }),
 	instanceGroups: () => __TAURI_INVOKE<string[]>("instance_groups"),
 	createShortcut: (id: string) => __TAURI_INVOKE<string>("create_shortcut", { id }),
@@ -430,6 +439,34 @@ export type ExportOptions_Serialize = {
 	include: string[],
 };
 
+export type ExternalInstance = ExternalInstance_Serialize | ExternalInstance_Deserialize;
+
+export type ExternalInstance_Deserialize = {
+	source: ExternalSource,
+	name: string,
+	gameDir: string,
+	/**  `None` when it couldn't be determined (the user picks it). */
+	gameVersion?: string | null,
+	loader: LoaderKind,
+	loaderVersion?: string | null,
+	mods: number,
+	worlds: number,
+};
+
+export type ExternalInstance_Serialize = {
+	source: ExternalSource,
+	name: string,
+	gameDir: string,
+	/**  `None` when it couldn't be determined (the user picks it). */
+	gameVersion: string | null,
+	loader: LoaderKind,
+	loaderVersion: string | null,
+	mods: number,
+	worlds: number,
+};
+
+export type ExternalSource = "official" | "prism" | "modrinth" | "curseforge" | "sklauncher" | "folder";
+
 export type FolderTarget = { kind: "root" } | { kind: "data" } | { kind: "logs" } | { kind: "themes" } | { kind: "instance"; id: string } | { kind: "gameDir"; id: string } | { kind: "content"; id: string; content: ContentKind } | { kind: "screenshots"; id: string } | 
 /**  A file or folder inside the launcher's directories (crash reports, exports). */
 { kind: "path"; path: string };
@@ -773,6 +810,11 @@ export type NewInstance_Deserialize = {
 	group?: string | null,
 	/**  Put the game folder here instead of the launcher's data folder (must be empty or new). */
 	gameDir?: string | null,
+	/**
+	 *  Use `game_dir` as it is (another launcher's folder): it may hold files, gets no marker
+	 *  and is therefore never deleted with the instance.
+	 */
+	linkExisting?: boolean,
 };
 
 export type NewInstance_Serialize = {
@@ -784,6 +826,11 @@ export type NewInstance_Serialize = {
 	group: string | null,
 	/**  Put the game folder here instead of the launcher's data folder (must be empty or new). */
 	gameDir: string | null,
+	/**
+	 *  Use `game_dir` as it is (another launcher's folder): it may hold files, gets no marker
+	 *  and is therefore never deleted with the instance.
+	 */
+	linkExisting: boolean,
 };
 
 export type OptionsTemplate = {

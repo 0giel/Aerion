@@ -9,6 +9,7 @@ pub mod auth;
 pub mod engine;
 pub mod error;
 pub mod game;
+pub mod importers;
 pub mod instances;
 pub mod java;
 pub mod loaders;

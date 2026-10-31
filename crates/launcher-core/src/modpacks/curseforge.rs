@@ -107,6 +107,7 @@ pub async fn import(
             icon: None,
             group: None,
             game_dir: None,
+            link_existing: false,
         })
         .await?;
     let id = inst.id.clone();

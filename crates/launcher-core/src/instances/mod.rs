@@ -173,6 +173,10 @@ pub struct NewInstance {
     /// Put the game folder here instead of the launcher's data folder (must be empty or new).
     #[serde(default)]
     pub game_dir: Option<PathBuf>,
+    /// Use `game_dir` as it is (another launcher's folder): it may hold files, gets no marker
+    /// and is therefore never deleted with the instance.
+    #[serde(default)]
+    pub link_existing: bool,
 }
 
 pub struct InstanceManager {
@@ -337,6 +341,12 @@ impl InstanceManager {
         let dir = self.root.join(&id);
         let game_dir = spec.game_dir.clone().filter(|p| !p.as_os_str().is_empty());
         match &game_dir {
+            Some(g) if spec.link_existing => {
+                if !g.is_absolute() || !g.is_dir() {
+                    return Err(Error::Invalid(format!("{} is not a folder", g.display())));
+                }
+                tokio::fs::create_dir_all(&dir).await.at(&dir)?;
+            }
             Some(g) => {
                 let (g, i) = (g.clone(), id.clone());
                 tokio::task::spawn_blocking(move || prepare_external_game_dir(&g, &i))
@@ -612,6 +622,7 @@ mod tests {
             icon: None,
             group: Some("Survival".into()),
             game_dir: None,
+            link_existing: false,
         }
     }
 
