@@ -88,6 +88,14 @@ export const commands = {
 	checkContentUpdates: (instanceId: string) => __TAURI_INVOKE<UpdateInfo_Serialize[]>("check_content_updates", { instanceId }),
 	applyContentUpdates: (instanceId: string, updates: UpdateInfo_Deserialize[]) => __TAURI_INVOKE<string>("apply_content_updates", { instanceId, updates }),
 	undoContentUpdate: (instanceId: string) => __TAURI_INVOKE<boolean>("undo_content_update", { instanceId }),
+	/**  What moving an instance to `target` would do to its mods. */
+	instanceUpgradePlan: (instanceId: string, target: string) => __TAURI_INVOKE<UpgradeCheck_Serialize>("instance_upgrade_plan", { instanceId, target }),
+	/**
+	 *  Move an instance (or a copy named `copy_name`) to another Minecraft version: back up worlds,
+	 *  update mods, disable the chosen unavailable ones, switch version (latest loader for it).
+	 *  The task result is the upgraded instance's id.
+	 */
+	upgradeInstance: (instanceId: string, target: string, updates: UpdateInfo_Deserialize[], disable: ContentRef[], copyName: string | null) => __TAURI_INVOKE<string>("upgrade_instance", { instanceId, target, updates, disable, copyName }),
 	listContentBackups: (instanceId: string) => __TAURI_INVOKE<BackupInfo[]>("list_content_backups", { instanceId }),
 	/**  Copy local files (drag & drop) into the instance. */
 	addContentFiles: (instanceId: string, kind: ContentKind, paths: string[]) => __TAURI_INVOKE<number>("add_content_files", { instanceId, kind, paths }),
@@ -331,6 +339,12 @@ export type ContentEntry_Serialize = {
 };
 
 export type ContentKind = "mod" | "modpack" | "resourcePack" | "shader" | "dataPack";
+
+export type ContentRef = {
+	fileName: string,
+	kind: ContentKind,
+	title: string,
+};
 
 export type CrashInfo = CrashInfo_Serialize | CrashInfo_Deserialize;
 
@@ -1299,6 +1313,49 @@ export type UpdateInfo_Serialize = {
 	title: string,
 	current: string | null,
 	version: ProjectVersion_Serialize,
+};
+
+export type UpgradeCheck = UpgradeCheck_Serialize | UpgradeCheck_Deserialize;
+
+export type UpgradeCheck_Deserialize = {
+	plan: UpgradePlan_Deserialize,
+	/**  The instance's mod loader exists for the target version (always true for vanilla). */
+	loaderAvailable: boolean,
+};
+
+export type UpgradeCheck_Serialize = {
+	plan: UpgradePlan_Serialize,
+	/**  The instance's mod loader exists for the target version (always true for vanilla). */
+	loaderAvailable: boolean,
+};
+
+/**  What moving an instance to another game version means for its content. */
+export type UpgradePlan = UpgradePlan_Serialize | UpgradePlan_Deserialize;
+
+/**  What moving an instance to another game version means for its content. */
+export type UpgradePlan_Deserialize = {
+	target: string,
+	/**  New versions to download for the target. */
+	updates: UpdateInfo_Deserialize[],
+	/**  Installed versions that already support the target. */
+	compatible: string[],
+	/**  No version for the target: disabled on upgrade unless the user keeps them. */
+	unavailable: ContentRef[],
+	/**  Added by hand (unknown origin): kept as they are. */
+	unknown: string[],
+};
+
+/**  What moving an instance to another game version means for its content. */
+export type UpgradePlan_Serialize = {
+	target: string,
+	/**  New versions to download for the target. */
+	updates: UpdateInfo_Serialize[],
+	/**  Installed versions that already support the target. */
+	compatible: string[],
+	/**  No version for the target: disabled on upgrade unless the user keeps them. */
+	unavailable: ContentRef[],
+	/**  Added by hand (unknown origin): kept as they are. */
+	unknown: string[],
 };
 
 export type VersionFile = VersionFile_Serialize | VersionFile_Deserialize;

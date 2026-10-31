@@ -157,6 +157,15 @@ class AppStore {
       case "update":
         void this.refreshInstances();
         break;
+      case "upgrade": {
+        void this.refreshInstances();
+        const id: string | null = task.result ? JSON.parse(task.result) : null;
+        toasts.success(
+          t("instance.upgrade.done", { name: task.subject ?? "" }),
+          id ? { label: t("common.open"), run: () => router.go("instance", { id }) } : undefined,
+        );
+        break;
+      }
       default:
         void this.refreshInstances();
     }

@@ -73,6 +73,8 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             mods::check_content_updates,
             mods::apply_content_updates,
             mods::undo_content_update,
+            mods::instance_upgrade_plan,
+            mods::upgrade_instance,
             mods::list_content_backups,
             mods::add_content_files,
             mods::install_modpack,

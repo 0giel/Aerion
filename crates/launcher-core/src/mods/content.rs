@@ -63,6 +63,31 @@ pub struct UpdateInfo {
     pub version: ProjectVersion,
 }
 
+/// What moving an instance to another game version means for its content.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct UpgradePlan {
+    pub target: String,
+    /// New versions to download for the target.
+    pub updates: Vec<UpdateInfo>,
+    /// Installed versions that already support the target.
+    pub compatible: Vec<String>,
+    /// No version for the target: disabled on upgrade unless the user keeps them.
+    pub unavailable: Vec<ContentRef>,
+    /// Added by hand (unknown origin): kept as they are.
+    pub unknown: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct ContentRef {
+    pub file_name: String,
+    pub kind: ContentKind,
+    pub title: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
@@ -518,6 +543,70 @@ impl ContentManager {
         Ok(out)
     }
 
+    /// Sort every enabled entry for a move to `target`: update, keep, unavailable or unknown.
+    pub async fn upgrade_plan(
+        &self,
+        modrinth: &Modrinth,
+        curseforge: Option<&CurseForge>,
+        target: &str,
+        loader: LoaderKind,
+    ) -> Result<UpgradePlan> {
+        let updates = self
+            .check_updates(modrinth, curseforge, target, loader)
+            .await?;
+        let updated: HashSet<&str> = updates.iter().map(|u| u.file_name.as_str()).collect();
+        let entries = self.load().await.entries;
+        let mut plan = UpgradePlan {
+            target: target.to_owned(),
+            updates: vec![],
+            compatible: vec![],
+            unavailable: vec![],
+            unknown: vec![],
+        };
+        let cf = curseforge.filter(|c| c.has_key());
+        for kind in ContentKind::INSTALLABLE {
+            let loaders = loaders_for(kind, loader, target);
+            let rest: Vec<&ContentEntry> = entries
+                .iter()
+                .filter(|e| e.kind == kind && e.enabled && !updated.contains(e.file_name.as_str()))
+                .collect();
+            let mr_hashes: Vec<String> = rest
+                .iter()
+                .filter(|e| e.provider == Some(Provider::Modrinth) && !e.sha1.is_empty())
+                .map(|e| e.sha1.clone())
+                .collect();
+            // Present for the target = the installed version (or a newer one we skipped for its
+            // channel) supports it.
+            let mr_found = modrinth
+                .latest_for_hashes(&mr_hashes, &loaders, target)
+                .await?;
+            for e in rest {
+                let r = ContentRef {
+                    file_name: e.file_name.clone(),
+                    kind,
+                    title: e.title.clone(),
+                };
+                let ok = match (e.provider, &e.project_id) {
+                    (Some(Provider::Modrinth), _) => Some(mr_found.contains_key(&e.sha1)),
+                    (Some(Provider::Curseforge), Some(pid)) => match cf {
+                        Some(cf) => {
+                            Some(!cf.versions(pid, Some(target), &loaders).await?.is_empty())
+                        }
+                        None => None,
+                    },
+                    _ => None,
+                };
+                match ok {
+                    Some(true) => plan.compatible.push(e.title.clone()),
+                    Some(false) => plan.unavailable.push(r),
+                    None => plan.unknown.push(e.title.clone()),
+                }
+            }
+        }
+        plan.updates = updates;
+        Ok(plan)
+    }
+
     fn backups_dir(&self) -> PathBuf {
         self.instance_dir.join(".backups")
     }
@@ -726,6 +815,88 @@ mod tests {
         assert!(!mods.join("sodium.jar.disabled").exists());
         assert_eq!(m.scan().await.unwrap().len(), 2);
         assert!(m.remove(ContentKind::Mod, "../x").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn upgrade_plan_sorts_content() {
+        use crate::instances::LoaderKind;
+        use crate::net::{cache::HttpCache, client::Http, client::NetConfig};
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let versions: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/modrinth/versions-sodium-26.3-fabric.json"
+            ))
+            .unwrap(),
+        )
+        .unwrap();
+        let release = &versions[2];
+        let release_sha1 = release["files"][0]["hashes"]["sha1"].as_str().unwrap();
+        let server = MockServer::start().await;
+        // For the target: "upd" has a newer version, the installed release already fits,
+        // "gone" has nothing.
+        Mock::given(method("POST"))
+            .and(path("/version_files/update"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "upd": release, release_sha1: release,
+            })))
+            .mount(&server)
+            .await;
+        let cache_dir = tempfile::tempdir().unwrap();
+        let http = Http::new(&NetConfig::default()).unwrap();
+        let mut modrinth = Modrinth::new(
+            http.clone(),
+            HttpCache::new(cache_dir.path().to_path_buf(), http),
+        );
+        modrinth.base = server.uri();
+        let entry = |file: &str, sha1: &str, version: &str, provider| ContentEntry {
+            file_name: file.into(),
+            kind: ContentKind::Mod,
+            enabled: true,
+            provider,
+            project_id: provider.map(|_| "AANobbMI".into()),
+            version_id: Some(version.into()),
+            title: file.trim_end_matches(".jar").into(),
+            version_number: None,
+            release: Some(ReleaseKind::Release),
+            icon_url: None,
+            page_url: None,
+            sha1: sha1.into(),
+            size: 1,
+            modified: 0,
+            installed_at: 0,
+            dependency: false,
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let m = ContentManager::new(dir.path().to_path_buf());
+        let mr = Some(Provider::Modrinth);
+        m.save(&Manifest {
+            entries: vec![
+                entry("upd.jar", "upd", "OLD", mr),
+                entry(
+                    "same.jar",
+                    release_sha1,
+                    release["id"].as_str().unwrap(),
+                    mr,
+                ),
+                entry("gone.jar", "gone", "X", mr),
+                entry("local.jar", "local", "?", None),
+            ],
+        })
+        .await
+        .unwrap();
+        let plan = m
+            .upgrade_plan(&modrinth, None, "26.3", LoaderKind::Fabric)
+            .await
+            .unwrap();
+        assert_eq!(plan.updates.len(), 1);
+        assert_eq!(plan.updates[0].file_name, "upd.jar");
+        assert_eq!(plan.compatible, ["same"]);
+        assert_eq!(plan.unavailable.len(), 1);
+        assert_eq!(plan.unavailable[0].file_name, "gone.jar");
+        assert_eq!(plan.unknown, ["local"]);
     }
 
     /// Modrinth's update endpoint returns the newest version on any channel; a stable mod

@@ -10,13 +10,14 @@
   import WorldsTab from "./instance/WorldsTab.svelte";
   import ScreenshotsTab from "./instance/ScreenshotsTab.svelte";
   import ServersTab from "./instance/ServersTab.svelte";
+  import UpgradeModal from "./instance/UpgradeModal.svelte";
   import Modal from "../components/Modal.svelte";
   import IconPicker from "../components/IconPicker.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { dialogs } from "../stores/dialogs.svelte";
   import { toasts } from "../stores/toasts.svelte";
-  import { commands, errorMessage, instanceVersionLabel } from "../api";
+  import { commands, errorMessage, instanceVersionLabel, type GameVersions } from "../api";
   import { formatPlayTime, formatRelative, t } from "../i18n/index.svelte";
 
   const id = router.params.id ?? "";
@@ -25,6 +26,22 @@
   let menuOpen = $state(false);
   let exportOpen = $state(false);
   let iconOpen = $state(false);
+  let upgradeOpen = $state(false);
+  let versions = $state.raw<GameVersions | null>(null);
+  $effect(() => {
+    commands
+      .listGameVersions()
+      .then((v) => (versions = v))
+      .catch(() => {});
+  });
+  // A newer release than the instance's (manifest order: newest first).
+  const newerRelease = $derived.by(() => {
+    if (!versions || !inst) return null;
+    const list = versions.versions;
+    const cur = list.findIndex((v) => v.id === inst.gameVersion);
+    const latest = list.findIndex((v) => v.id === versions!.latestRelease);
+    return cur > latest && latest >= 0 ? versions.latestRelease : null;
+  });
   let iconChoice = $state<string | null>(null);
   let iconFile = $state<string | null>(null);
   let iconBusy = $state(false);
@@ -132,6 +149,11 @@
           <span class="badge accent"
             >{instanceVersionLabel(inst)}{inst.loaderVersion ? ` ${inst.loaderVersion}` : ""}</span
           >
+          {#if newerRelease}<button class="badge newer" onclick={() => (upgradeOpen = true)}
+              ><Icon name="upload" size={12} />{t("instance.upgrade.available", {
+                version: newerRelease,
+              })}</button
+            >{/if}
           {#if inst.modpack}<span class="badge">{t("instances.modpack", { name: inst.modpack.name })}</span
             >{/if}
           {#if inst.group}<span class="badge">{inst.group}</span>{/if}
@@ -163,6 +185,9 @@
         >
         {#if menuOpen}
           <div class="menu card raised" role="menu">
+            <button role="menuitem" onclick={() => ((menuOpen = false), (upgradeOpen = true))}
+              ><Icon name="upload" size={16} />{t("instance.upgrade.menu")}</button
+            >
             <button role="menuitem" onclick={clone}
               ><Icon name="copy" size={16} />{t("instances.clone")}</button
             >
@@ -233,6 +258,7 @@
       {/if}
     </section>
     <ExportModal bind:open={exportOpen} instance={inst} />
+    <UpgradeModal bind:open={upgradeOpen} instance={inst} {versions} />
     <Modal bind:open={iconOpen} title={t("instance.changeIcon")} width="30rem">
       <IconPicker
         bind:icon={iconChoice}
@@ -250,6 +276,15 @@
 </div>
 
 <style>
+  .newer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid color-mix(in srgb, var(--c-success) 45%, transparent);
+    color: var(--c-success);
+    background: color-mix(in srgb, var(--c-success) 12%, transparent);
+    cursor: pointer;
+  }
   .icon-edit {
     position: relative;
     padding: 0;

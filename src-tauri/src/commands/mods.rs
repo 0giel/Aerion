@@ -5,7 +5,9 @@ use launcher_core::ErrorInfo;
 use launcher_core::accounts::SecretStore;
 use launcher_core::instances::{LoaderKind, ModpackInfo};
 use launcher_core::modpacks::{self, ImportResult};
-use launcher_core::mods::content::{BackupInfo, ContentEntry, UpdateInfo, safe_file_name};
+use launcher_core::mods::content::{
+    BackupInfo, ContentEntry, ContentRef, UpdateInfo, UpgradePlan, safe_file_name,
+};
 use launcher_core::mods::curseforge::CurseForge;
 use launcher_core::mods::merge_pages;
 use launcher_core::mods::model::*;
@@ -595,4 +597,108 @@ pub async fn set_curseforge_key(
         configured: key.is_some(),
         from_env: false,
     })
+}
+
+#[derive(Debug, Clone, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct UpgradeCheck {
+    pub plan: UpgradePlan,
+    /// The instance's mod loader exists for the target version (always true for vanilla).
+    pub loader_available: bool,
+}
+
+/// What moving an instance to `target` would do to its mods.
+#[tauri::command]
+#[specta::specta]
+pub async fn instance_upgrade_plan(
+    state: State<'_, AppState>,
+    instance_id: String,
+    target: String,
+) -> CmdResult<UpgradeCheck> {
+    let inst = state.instances.get(&instance_id).await?;
+    let content = state.instances.content(&instance_id)?;
+    content.scan().await?;
+    let cf = state.curseforge().await;
+    let plan = content
+        .upgrade_plan(&state.modrinth().await, Some(&cf), &target, inst.loader)
+        .await?;
+    let loader_available = inst.loader == LoaderKind::Vanilla
+        || !launcher_core::loaders::versions(&state.engine().await, inst.loader, &target)
+            .await
+            .unwrap_or_default()
+            .is_empty();
+    Ok(UpgradeCheck {
+        plan,
+        loader_available,
+    })
+}
+
+/// Move an instance (or a copy named `copy_name`) to another Minecraft version: back up worlds,
+/// update mods, disable the chosen unavailable ones, switch version (latest loader for it).
+/// The task result is the upgraded instance's id.
+#[tauri::command]
+#[specta::specta]
+pub async fn upgrade_instance(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    target: String,
+    updates: Vec<UpdateInfo>,
+    disable: Vec<ContentRef>,
+    copy_name: Option<String>,
+) -> CmdResult<String> {
+    if state.games.is_running(&instance_id) {
+        return Err(launcher_core::Error::AlreadyRunning.into());
+    }
+    let inst = state.instances.get(&instance_id).await?;
+    let app2 = app.clone();
+    Ok(state.tasks.spawn(
+        &app,
+        "upgrade",
+        "task.upgrade",
+        Some(format!("{} → {target}", inst.name)),
+        Some(instance_id.clone()),
+        move |ctx| async move {
+            let state = app2.state::<AppState>();
+            let id = match copy_name {
+                Some(name) => {
+                    ctx.stage("stage.copyInstance", None);
+                    state
+                        .instances
+                        .clone_instance(&instance_id, &name)
+                        .await?
+                        .id
+                }
+                None => instance_id,
+            };
+            ctx.stage("stage.worldBackup", None);
+            let (dir, game) = (state.instances.dir(&id)?, state.instances.game_dir(&id)?);
+            tokio::task::spawn_blocking(move || {
+                launcher_core::instances::worlds::backup_all(&dir, &game)
+            })
+            .await
+            .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+            let content = state.instances.content(&id)?;
+            if !updates.is_empty() {
+                let engine = state.engine().await;
+                content
+                    .apply_updates(&engine.downloader, &updates, &ctx)
+                    .await?;
+            }
+            for c in &disable {
+                content.set_enabled(c.kind, &c.file_name, false).await?;
+            }
+            ctx.check()?;
+            let t = target.clone();
+            state
+                .instances
+                .modify(&id, move |i| {
+                    i.game_version = t;
+                    i.loader_version = None;
+                    i.version_id = None;
+                })
+                .await?;
+            Ok(serde_json::to_string(&id).ok())
+        },
+    ))
 }
