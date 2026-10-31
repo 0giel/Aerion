@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use launcher_core::accounts::{Accounts, KeyringStore, SecretStore};
 use launcher_core::auth::Endpoints;
 use launcher_core::auth::msa::DeviceCode;
+use launcher_core::game::textures::Textures;
 use launcher_core::instances::InstanceManager;
 use launcher_core::mods::curseforge::CurseForge;
 use launcher_core::mods::modrinth::Modrinth;
@@ -28,6 +29,7 @@ pub struct AppState {
     pub accounts: Accounts,
     pub instances: InstanceManager,
     pub skins: SkinLibrary,
+    pub textures: Textures,
     pub tasks: TaskRegistry,
     pub games: GameRegistry,
     pub endpoints: Endpoints,
@@ -72,6 +74,7 @@ impl AppState {
             accounts: Accounts::new(paths.accounts_file(), keyring.clone()),
             instances: InstanceManager::new(paths.instances_dir()),
             skins: SkinLibrary::new(paths.skins_dir()),
+            textures: Textures::default(),
             settings: RwLock::new(settings),
             engine: RwLock::new(engine),
             tasks: TaskRegistry::default(),

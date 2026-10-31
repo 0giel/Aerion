@@ -166,10 +166,12 @@ const FILE: &str = "instance.json";
 const ICON_PREFIX: &str = "icon-";
 const MAX_ICON_BYTES: u64 = 2 * 1024 * 1024;
 
-/// Built-in icon key (`grass`, `diamond`, …) or `file:icon-<millis>.<ext>`.
+/// `mc:<texture>` (a Minecraft item/block texture, e.g. `mc:item/diamond`),
+/// `file:icon-<millis>.<ext>`, or an older built-in key (`grass`, `diamond`, …).
 pub fn validate_icon(icon: &str) -> Result<()> {
     let ok = match icon.strip_prefix("file:") {
         Some(file) => is_icon_file(file),
+        None if icon.starts_with("mc:") => crate::game::textures::valid_texture(&icon[3..]),
         None => {
             !icon.is_empty()
                 && icon.len() <= 32
@@ -562,8 +564,16 @@ mod tests {
             "image.unsupported"
         );
 
-        let a = m.set_icon(&a.id, Some("sword".into())).await.unwrap();
-        assert_eq!(a.icon.as_deref(), Some("sword"));
+        let a = m
+            .set_icon(&a.id, Some("mc:item/diamond_sword".into()))
+            .await
+            .unwrap();
+        assert_eq!(a.icon.as_deref(), Some("mc:item/diamond_sword"));
+        assert!(
+            m.set_icon(&a.id, Some("mc:entity/creeper".into()))
+                .await
+                .is_err()
+        );
         assert!(
             !m.icon_file(&a.id, &file).unwrap().exists(),
             "old file removed"

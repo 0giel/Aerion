@@ -128,3 +128,11 @@ natives (`.luncher-runtime`, `.luncher-natives`) keep their names so nothing is 
 Secrets stored under the old keyring service are not migrated (only a CurseForge key could exist;
 Microsoft sign-in was never used).
 
+### D21 — Instance icons are Minecraft textures read at run time (2026-10-31)
+The owner preferred real game textures to the original pixel art (D19). The specification forbids
+shipping Minecraft assets, so `game::textures` reads item/block textures from a client jar that
+the launcher downloads from Mojang anyway (newest installed jar with the 1.13+ layout; otherwise
+the latest release's jar is fetched once) and caches them under `cache/textures`. Icon values are
+`mc:<texture>`; the 16 old pixel-art keys map to similar textures. Without a jar (offline, fresh
+install) icons fall back to the launcher logo.
+

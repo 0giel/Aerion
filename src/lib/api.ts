@@ -100,6 +100,11 @@ export function instanceIconUrl(id: string, icon: string | null | undefined): st
   return file ? `${LOCAL_IMG}instance/${encodeURIComponent(id)}/${encodeURIComponent(file)}` : undefined;
 }
 
+/** A Minecraft texture (`item/diamond`), read by the backend from a Mojang client jar. */
+export function textureUrl(texture: string): string {
+  return `${LOCAL_IMG}mc/${texture.split("/").map(encodeURIComponent).join("/")}`;
+}
+
 /** A skin from the launcher's skin library. */
 export function savedSkinUrl(id: string): string {
   return `${LOCAL_IMG}skin/${encodeURIComponent(id)}`;

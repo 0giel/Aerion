@@ -8,6 +8,8 @@
 //! * `localimg://localhost/instance/<id>/<icon file>` and `localimg://localhost/skin/<id>` —
 //!   custom instance icons and skins from the library. File names are unique per change, so
 //!   responses are cached forever.
+//! * `localimg://localhost/mc/<item|block>/<name>` — a Minecraft texture, read from a client jar
+//!   downloaded from Mojang (see `game::textures`).
 
 use std::net::IpAddr;
 
@@ -199,6 +201,7 @@ pub fn theme_asset<R: Runtime>(
 enum LocalImg {
     InstanceIcon { id: String, file: String },
     Skin(String),
+    Texture(String),
 }
 
 fn parse_local_img(path: &str) -> Option<LocalImg> {
@@ -209,6 +212,7 @@ fn parse_local_img(path: &str) -> Option<LocalImg> {
             file: percent_decode(file),
         },
         ("skin", id, None) => LocalImg::Skin(percent_decode(id)),
+        ("mc", kind, Some(name)) => LocalImg::Texture(format!("{kind}/{name}")),
         _ => return None,
     };
     parts.next().is_none().then_some(img)
@@ -225,6 +229,24 @@ pub fn local_img<R: Runtime>(
         let file = match parse_local_img(request.uri().path()) {
             Some(LocalImg::InstanceIcon { id, file }) => state.instances.icon_file(&id, &file),
             Some(LocalImg::Skin(id)) => state.skins.file(&id),
+            Some(LocalImg::Texture(name)) => {
+                let engine = state.engine.read().await;
+                return match state.textures.get(&engine, &name).await {
+                    Ok(data) => responder.respond(
+                        Response::builder()
+                            .status(StatusCode::OK)
+                            .header(header::CONTENT_TYPE, "image/png")
+                            .header(header::CACHE_CONTROL, "max-age=604800")
+                            .header("X-Content-Type-Options", "nosniff")
+                            .body(data)
+                            .unwrap_or_default(),
+                    ),
+                    Err(e) => {
+                        tracing::debug!(%name, error = %e, "texture unavailable");
+                        responder.respond(empty(StatusCode::NOT_FOUND))
+                    }
+                };
+            }
             None => return responder.respond(empty(StatusCode::BAD_REQUEST)),
         };
         let Ok(path) = file else {
@@ -334,6 +356,10 @@ mod tests {
         assert_eq!(
             parse_local_img("/skin/0123abcd"),
             Some(LocalImg::Skin("0123abcd".into()))
+        );
+        assert_eq!(
+            parse_local_img("/mc/item/diamond"),
+            Some(LocalImg::Texture("item/diamond".into()))
         );
         assert_eq!(parse_local_img("/instance/a/b/c"), None);
         assert_eq!(parse_local_img("/other/x"), None);

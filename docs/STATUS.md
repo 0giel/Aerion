@@ -5,6 +5,14 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Instance icons from Minecraft textures (0.1.2)
+- 52 item/block textures (diamond, swords, golden apple, nether star, grass block, TNT, …)
+  replace the pixel-art set; read at run time from a Mojang client jar (D21) and served as
+  `localimg://…/mc/<texture>`; old icon values map to similar textures. All 52 verified present
+  (16×16) in the 26.2 jar; checked on screen.
+- Icon picker: the selection ring now hugs the icon (same corner radius + 5 px), scrollable grid.
+
+
 ### Player model head tracking: smoother (0.1.1)
 - Owner: "the model that looks at the cursor lags". It redrew on the shared 20 fps clock with a
   110 ms easing constant. Now a dedicated rAF loop runs only while the head is turning, easing

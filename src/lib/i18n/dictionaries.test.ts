@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import en from "./en";
 import pl from "./pl";
-import { INSTANCE_ICONS } from "../instanceIcons";
+import { MC_ICONS, iconLabelKey } from "../instanceIcons";
 // The engine's error codes and crash kinds, read from the Rust sources so a new code without a
 // translation fails here.
 import errorRs from "../../../crates/launcher-core/src/error.rs?raw";
@@ -56,8 +56,8 @@ describe("translations", () => {
     expect([...missing]).toEqual([]);
   });
 
-  it("contain every built-in instance icon name", () => {
-    const keys = Object.keys(INSTANCE_ICONS).map((k) => `iconPicker.icons.${k}`);
+  it("contain every instance icon name", () => {
+    const keys = MC_ICONS.map(iconLabelKey);
     expect(keys.filter((k) => !enLeaves.has(k))).toEqual([]);
   });
 

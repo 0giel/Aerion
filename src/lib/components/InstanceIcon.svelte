@@ -1,7 +1,7 @@
 <script lang="ts">
   import Logo from "./Logo.svelte";
-  import { instanceIconUrl, type LoaderKind } from "../api";
-  import { INSTANCE_ICONS, iconRects } from "../instanceIcons";
+  import { instanceIconUrl, textureUrl, type LoaderKind } from "../api";
+  import { iconTexture } from "../instanceIcons";
 
   let {
     name,
@@ -13,7 +13,7 @@
     name: string;
     loader?: LoaderKind;
     size?: number;
-    /** Built-in key, `file:<name>` (needs `id`) or nothing for the launcher logo. */
+    /** `mc:<texture>`, `file:<name>` (needs `id`) or nothing for the launcher logo. */
     icon?: string | null;
     id?: string;
   } = $props();
@@ -21,10 +21,11 @@
   // A stable hue per instance name, tinted towards the theme accent.
   const hue = $derived([...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7));
   const file = $derived(id ? instanceIconUrl(id, icon) : undefined);
-  const builtIn = $derived(icon && INSTANCE_ICONS[icon] ? iconRects(icon) : null);
+  const texture = $derived(iconTexture(icon));
+  // A missing image (no client jar yet, offline) falls back to the logo.
   let broken = $state(false);
   $effect(() => {
-    void file;
+    void [file, texture];
     broken = false;
   });
 </script>
@@ -32,12 +33,8 @@
 <div class="icon" style:width="{size}px" style:height="{size}px" style:--h={hue} data-loader={loader}>
   {#if file && !broken}
     <img src={file} alt="" onerror={() => (broken = true)} />
-  {:else if builtIn}
-    <svg class="pixels" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-      {#each builtIn as r, i (i)}
-        <rect x={r.x} y={r.y} width={r.w} height="1" fill={r.fill} />
-      {/each}
-    </svg>
+  {:else if texture && !broken}
+    <img class="texture" src={textureUrl(texture)} alt="" onerror={() => (broken = true)} />
   {:else}
     <span class="glyph"><Logo /></span>
   {/if}
@@ -64,10 +61,12 @@
     height: 100%;
     object-fit: cover;
   }
-  .pixels {
-    width: 72%;
-    height: 72%;
-    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.3));
+  img.texture {
+    width: 68%;
+    height: 68%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.35));
   }
   .glyph {
     width: 58%;
