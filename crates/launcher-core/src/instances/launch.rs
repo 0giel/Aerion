@@ -5,7 +5,9 @@ use std::path::PathBuf;
 use crate::Engine;
 use crate::error::{Error, Result};
 use crate::game::install::{Prepared, prepare};
-use crate::game::launch::{AuthInfo, CommandSpec, LaunchOptions, build_command, prepare_game_dir};
+use crate::game::launch::{
+    AuthInfo, CommandSpec, LaunchOptions, build_command, default_env, prepare_game_dir,
+};
 use crate::instances::{Instance, InstanceManager, LoaderKind};
 use crate::java::detect::{detect_system, inspect};
 use crate::java::flags::{default_max_memory_mb, probe_args};
@@ -57,6 +59,19 @@ pub async fn ensure_version(
         })
         .await?;
     Ok(id)
+}
+
+/// Launcher defaults overlaid with the instance's own variables (which win).
+fn merge_env(
+    defaults: Vec<(String, String)>,
+    instance: &std::collections::BTreeMap<String, String>,
+) -> Vec<(String, String)> {
+    let mut env: Vec<(String, String)> = defaults
+        .into_iter()
+        .filter(|(k, _)| !instance.contains_key(k))
+        .collect();
+    env.extend(instance.iter().map(|(k, v)| (k.clone(), v.clone())));
+    env
 }
 
 pub async fn pick_java(
@@ -140,11 +155,7 @@ pub async fn plan(
         extra_game_args: inst.game_args.clone(),
         resolution: inst.resolution.map(|r| (r.width, r.height)),
         quick_play_server: inst.join_server.clone().filter(|s| !s.trim().is_empty()),
-        env: inst
-            .env_vars
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect(),
+        env: merge_env(default_env(engine.env.os), &inst.env_vars),
         wrapper: inst
             .wrapper
             .as_deref()
@@ -162,4 +173,26 @@ pub async fn plan(
         max_memory_mb,
         game_dir,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::merge_env;
+
+    #[test]
+    fn instance_env_overrides_defaults() {
+        let defaults = vec![
+            ("__GL_THREADED_OPTIMIZATIONS".to_owned(), "0".to_owned()),
+            ("A".to_owned(), "1".to_owned()),
+        ];
+        let instance = [("__GL_THREADED_OPTIMIZATIONS".to_owned(), "1".to_owned())].into();
+        let env = merge_env(defaults, &instance);
+        assert_eq!(
+            env,
+            vec![
+                ("A".to_owned(), "1".to_owned()),
+                ("__GL_THREADED_OPTIMIZATIONS".to_owned(), "1".to_owned()),
+            ]
+        );
+    }
 }

@@ -41,6 +41,16 @@ Newest entries first.
   (`release`), and updates never move to a less stable channel — falls back to the newest version
   on an allowed channel. Wiremock test `updates_keep_the_release_channel`.
 
+### Verified: Forge and NeoForge (M8)
+- **Forge 1.20.1 (47.4.28)**: installer with all 6 processors (installertools ×3, jarsplitter,
+  ForgeAutoRenamingTool, binarypatcher) → title screen in 27 s (Java 17).
+- **NeoForge 26.3 (26.3.0.100)**: one processor (installertools fatjar). First launch crashed with
+  SIGSEGV in `libnvidia-glcore` (FML early-window thread) after GL_INVALID_OPERATION errors.
+  `__GL_THREADED_OPTIMIZATIONS=0` fixes it → **title screen in 10 s**.
+- **Fixed:** the launcher now sets `__GL_THREADED_OPTIMIZATIONS=0` for game processes on Linux
+  when the NVIDIA driver is loaded (`game::launch::default_env`); variables set on the instance
+  or in the launcher's own environment take precedence.
+
 ### UI fixes from the walkthrough
 - Onboarding card was stuck in the left grid track when the sidebar is hidden → `main` always uses
   the last track.

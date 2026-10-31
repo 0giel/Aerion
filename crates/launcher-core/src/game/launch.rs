@@ -81,6 +81,21 @@ pub fn mask(text: &str, secrets: &[String]) -> String {
     out
 }
 
+/// Environment defaults for the game process; instance variables override them.
+pub fn default_env(os: Os) -> Vec<(String, String)> {
+    let mut env = Vec::new();
+    // NVIDIA's threaded GL optimisations crash early loading windows in native code (NeoForge
+    // 26.3: SIGSEGV in libnvidia-glcore) and are known to hurt Minecraft; Sodium turns them off
+    // for itself as well.
+    if os == Os::Linux
+        && std::env::var_os("__GL_THREADED_OPTIMIZATIONS").is_none()
+        && Path::new("/proc/driver/nvidia/version").exists()
+    {
+        env.push(("__GL_THREADED_OPTIMIZATIONS".into(), "0".into()));
+    }
+    env
+}
+
 pub fn build_command(
     prepared: &Prepared,
     opts: &LaunchOptions,
