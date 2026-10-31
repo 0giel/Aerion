@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Minimal permissions for the main window. All file system and network access goes through the app's own commands.",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:event:default",
     "core:window:allow-show",
@@ -12,7 +14,14 @@
     "core:window:allow-set-title",
     "core:webview:allow-internal-toggle-devtools",
     "core:path:default",
-    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://*"
+        }
+      ]
+    },
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-message",

@@ -5,6 +5,15 @@ Newest entries first.
 
 ## 2026-10-31
 
+### 0.1.6: external links were all blocked
+- Owner: "Download" in the update dialog does nothing (0.1.4 .deb found 0.1.5 correctly). The log
+  showed `Not allowed to open url …`: the capability listed `opener:allow-open-url` without a URL
+  scope, so Tauri refused every external link (update download, buy Minecraft, mod pages, the
+  Microsoft code page, theme submissions) since the beginning. Now scoped to `https://*`
+  (verified in a dev instance: https opens, http stays blocked).
+- Update check itself works (0.1.4 detected 0.1.5 from GitHub Releases).
+
+
 ### 0.1.5: head tracking on Windows, RAM slider
 - Owner: on Windows the player model doesn't look at the cursor. Cause: with Windows "Show
   animations" off, WebView2 reports `prefers-reduced-motion`, and the model turned *all* motion
