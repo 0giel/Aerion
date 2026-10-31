@@ -14,6 +14,11 @@ Newest entries first.
 - "Customize menu" / "Customize home screen" dialogs (also in Settings → Appearance): order with
   ↑/↓, show/hide (Home/Settings/Play locked), favourites in menu, player left/right/hidden,
   restore defaults. Checked live: reorder, hide, reset, player left, summary shown.
+- Before publishing, the owner spotted Settings → Appearance: six buttons in one row cut off
+  labels ("Importuj motyw…", "Dostosuj…"). Now a Theme group (gallery, import, folder, theme
+  editor — renamed from the ambiguous "Customize…") and a Layout group with a short explanation;
+  both wrap. Section jumps from the chip row land below it (it wraps to two lines at 1200 px and
+  covered the heading). Checked live: no button overflows, section top 7 px under the chip row.
 
 
 ### 0.1.6: external links were all blocked
