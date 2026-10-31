@@ -180,9 +180,10 @@
   .item:hover {
     border-color: var(--c-accent);
   }
+  /* Same width for every launcher name, so the instance names line up. */
   .src {
     flex: none;
-    min-width: 6.5rem;
+    width: 8.5rem;
     justify-content: center;
   }
   .path {

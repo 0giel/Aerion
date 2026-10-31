@@ -1,6 +1,7 @@
 <script lang="ts">
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { untrack } from "svelte";
+  import Advanced from "../../components/Advanced.svelte";
   import Icon from "../../components/Icon.svelte";
   import MemorySlider from "../../components/MemorySlider.svelte";
   import { app } from "../../stores/app.svelte";
@@ -299,7 +300,7 @@
   </section>
 
   <section class="card col gap-3">
-    <h3>{t("instance.settings.memory")} & {t("instance.settings.java")}</h3>
+    <h3>{t("instance.settings.memoryAndJava")}</h3>
     <span class="label">{t("instance.settings.maxMemory")}</span>
     <div class="segmented" role="group" aria-label={t("instance.settings.maxMemory")}>
       <button type="button" aria-pressed={memoryAuto} onclick={() => (memoryAuto = true)}
@@ -318,75 +319,80 @@
       onchange={(mb) => ((memoryAuto = false), (draft.maxMemoryMb = mb))}
     />
     <span class="hint">{t("memory.instanceHint")}</span>
-    <span class="label">{t("instance.settings.minMemory")}</span>
-    <div class="row wrap gap-2">
-      <div class="segmented" role="group" aria-label={t("instance.settings.minMemory")}>
-        <button type="button" aria-pressed={!minMemoryOwn} onclick={() => (minMemoryOwn = false)}
-          >{t("instance.settings.useGlobal", {
-            value: g?.minMemoryMb ? `${g.minMemoryMb} MB` : t("common.auto"),
-          })}</button
-        >
-        <button
-          type="button"
-          aria-pressed={minMemoryOwn}
-          onclick={() => ((minMemoryOwn = true), (draft.minMemoryMb ??= 1024))}
-          >{t("instance.settings.own")}</button
-        >
-      </div>
-      {#if minMemoryOwn}
-        <input
-          class="input num"
-          type="number"
-          min="256"
-          max={maxSlider}
-          step="256"
-          bind:value={draft.minMemoryMb}
-          aria-label={t("instance.settings.minMemory")}
-        /><span class="faint">MB</span>
-      {/if}
-    </div>
-    <div class="field">
-      <span class="label">{t("instance.settings.preset")}</span>
-      <div class="segmented" role="group">
-        {#each presets as p (p ?? "default")}
-          <button type="button" aria-pressed={draft.jvmPreset === p} onclick={() => (draft.jvmPreset = p)}
-            >{p
-              ? t(`instance.settings.presets.${p}`)
-              : t("instance.settings.useGlobal", {
-                  value: t(`instance.settings.presets.${g?.jvmPreset ?? "standard"}`),
-                })}</button
+    <Advanced
+      hint={t("instance.settings.memoryAdvancedHint")}
+      open={minMemoryOwn || !!draft.jvmPreset || customJava}
+    >
+      <span class="label">{t("instance.settings.minMemory")}</span>
+      <div class="row wrap gap-2">
+        <div class="segmented" role="group" aria-label={t("instance.settings.minMemory")}>
+          <button type="button" aria-pressed={!minMemoryOwn} onclick={() => (minMemoryOwn = false)}
+            >{t("instance.settings.useGlobal", {
+              value: g?.minMemoryMb ? `${g.minMemoryMb} MB` : t("common.auto"),
+            })}</button
           >
-        {/each}
-      </div>
-      {#if draft.jvmPreset}<span class="hint">{t(`instance.settings.presetHints.${draft.jvmPreset}`)}</span
-        >{/if}
-    </div>
-    <div class="field">
-      <span class="label">{t("instance.settings.java")}</span>
-      <div class="segmented" role="group">
-        <button type="button" aria-pressed={!customJava} onclick={() => (customJava = false)}
-          >{t("instance.settings.javaAuto")}</button
-        >
-        <button type="button" aria-pressed={customJava} onclick={() => (customJava = true)}
-          >{t("instance.settings.javaCustom")}</button
-        >
-      </div>
-      {#if customJava}
-        <div class="row">
-          <input
-            class="input mono grow"
-            bind:value={draft.javaPath}
-            list="javas"
-            placeholder="/usr/lib/jvm/.../bin/java"
-          />
-          <button class="btn" onclick={pickJava}>{t("common.browse")}</button>
+          <button
+            type="button"
+            aria-pressed={minMemoryOwn}
+            onclick={() => ((minMemoryOwn = true), (draft.minMemoryMb ??= 1024))}
+            >{t("instance.settings.own")}</button
+          >
         </div>
-        <datalist id="javas"
-          >{#each javas as j (j.path)}<option value={j.path}>Java {j.version} ({j.arch})</option
-            >{/each}</datalist
-        >
-      {/if}
-    </div>
+        {#if minMemoryOwn}
+          <input
+            class="input num"
+            type="number"
+            min="256"
+            max={maxSlider}
+            step="256"
+            bind:value={draft.minMemoryMb}
+            aria-label={t("instance.settings.minMemory")}
+          /><span class="faint">MB</span>
+        {/if}
+      </div>
+      <div class="field">
+        <span class="label">{t("instance.settings.preset")}</span>
+        <div class="segmented" role="group">
+          {#each presets as p (p ?? "default")}
+            <button type="button" aria-pressed={draft.jvmPreset === p} onclick={() => (draft.jvmPreset = p)}
+              >{p
+                ? t(`instance.settings.presets.${p}`)
+                : t("instance.settings.useGlobal", {
+                    value: t(`instance.settings.presets.${g?.jvmPreset ?? "standard"}`),
+                  })}</button
+            >
+          {/each}
+        </div>
+        {#if draft.jvmPreset}<span class="hint">{t(`instance.settings.presetHints.${draft.jvmPreset}`)}</span
+          >{/if}
+      </div>
+      <div class="field">
+        <span class="label">{t("instance.settings.java")}</span>
+        <div class="segmented" role="group">
+          <button type="button" aria-pressed={!customJava} onclick={() => (customJava = false)}
+            >{t("instance.settings.javaAuto")}</button
+          >
+          <button type="button" aria-pressed={customJava} onclick={() => (customJava = true)}
+            >{t("instance.settings.javaCustom")}</button
+          >
+        </div>
+        {#if customJava}
+          <div class="row">
+            <input
+              class="input mono grow"
+              bind:value={draft.javaPath}
+              list="javas"
+              placeholder="/usr/lib/jvm/.../bin/java"
+            />
+            <button class="btn" onclick={pickJava}>{t("common.browse")}</button>
+          </div>
+          <datalist id="javas"
+            >{#each javas as j (j.path)}<option value={j.path}>Java {j.version} ({j.arch})</option
+              >{/each}</datalist
+          >
+        {/if}
+      </div>
+    </Advanced>
   </section>
 
   <section class="card col gap-3">
@@ -484,7 +490,11 @@
   </section>
 
   <details class="card advanced">
-    <summary><h3>{t("instance.settings.advanced")}</h3></summary>
+    <summary
+      ><span class="chev"><Icon name="chevronRight" size={16} /></span>
+      <h3>{t("instance.settings.advanced")}</h3>
+      <span class="small faint">{t("instance.settings.advancedHint")}</span></summary
+    >
     <div class="col gap-3" style="margin-top: var(--sp-3)">
       <div class="field">
         <label for="s-jvm">{t("instance.settings.jvmArgs")}</label>
@@ -614,11 +624,21 @@
     border-color: color-mix(in srgb, var(--c-accent) 45%, var(--c-border));
   }
   .advanced summary {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
     cursor: pointer;
     list-style: none;
   }
-  .advanced summary h3 {
-    display: inline;
+  .advanced summary::-webkit-details-marker {
+    display: none;
+  }
+  .chev {
+    display: inline-flex;
+    transition: transform var(--dur) var(--ease);
+  }
+  .advanced[open] .chev {
+    transform: rotate(90deg);
   }
   .danger-zone {
     border-color: color-mix(in srgb, var(--c-danger) 35%, var(--c-border));

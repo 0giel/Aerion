@@ -39,6 +39,9 @@
   let loading = $state(false);
   let error = $state<string | null>(null);
   let cfKey = $state(false);
+  /** Shown after picking CurseForge without an API key: what to do instead of a dead button. */
+  let cfPrompt = $state(false);
+  let catsOpen = $state(false);
   let selected = $state.raw<ProjectSummary | null>(null);
   let installed = $state.raw<Set<string>>(new Set());
   let searchInput: HTMLInputElement | undefined = $state();
@@ -49,6 +52,10 @@
   const filterLoader = $derived(
     kind === "modpack" || !target || target.loader === "vanilla" ? null : target.loader,
   );
+  function pickSource(next: ModSource) {
+    cfPrompt = !cfKey;
+    if (cfKey) source = next;
+  }
   const effectiveSource = $derived<ModSource>(!cfKey && source !== "modrinth" ? "modrinth" : source);
   const categoryProvider = $derived<Provider>(effectiveSource === "curseforge" ? "curseforge" : "modrinth");
 
@@ -157,28 +164,36 @@
       <select class="select" bind:value={targetId}>
         <option value="">{t("mods.noTarget")}</option>
         {#each app.instances as i (i.id)}<option value={i.id}
-            >{i.name} ({i.gameVersion}{i.loader !== "vanilla" ? ` · ${loaderLabel(i.loader)}` : ""})</option
+            >{i.name}{i.name.includes(i.gameVersion) ? "" : ` (${i.gameVersion})`}</option
           >{/each}
       </select>
     </label>
     <div class="segmented" role="group" aria-label={t("mods.source")}>
-      <button aria-pressed={effectiveSource === "modrinth"} onclick={() => (source = "modrinth")}
-        >Modrinth</button
-      >
       <button
-        aria-pressed={effectiveSource === "curseforge"}
-        disabled={!cfKey}
-        title={cfKey ? "" : t("mods.cfNoKey")}
-        onclick={() => (source = "curseforge")}>CurseForge</button
+        aria-pressed={effectiveSource === "modrinth"}
+        onclick={() => {
+          source = "modrinth";
+          cfPrompt = false;
+        }}>Modrinth</button
       >
-      <button
-        aria-pressed={effectiveSource === "both"}
-        disabled={!cfKey}
-        title={cfKey ? "" : t("mods.cfNoKey")}
-        onclick={() => (source = "both")}>{t("mods.sourceBoth")}</button
+      <button aria-pressed={effectiveSource === "curseforge"} onclick={() => pickSource("curseforge")}
+        >CurseForge</button
+      >
+      <button aria-pressed={effectiveSource === "both"} onclick={() => pickSource("both")}
+        >{t("mods.sourceBoth")}</button
       >
     </div>
   </header>
+
+  {#if cfPrompt}
+    <div class="alert info">
+      <Icon name="info" size={18} /><span class="grow">{t("mods.cfNoKey")}</span>
+      <button class="btn sm" onclick={() => router.go("settings")}>{t("mods.openSettings")}</button>
+      <button class="icon-btn sm" aria-label={t("common.close")} onclick={() => (cfPrompt = false)}
+        ><Icon name="x" size={15} /></button
+      >
+    </div>
+  {/if}
 
   <div class="kinds row wrap" role="tablist">
     {#each kinds as k (k.kind)}
@@ -218,18 +233,25 @@
     {:else if kind !== "modpack"}
       <span class="faint">{t("mods.pickInstance")}</span>
     {/if}
-    {#if !cfKey}<span class="faint">· {t("mods.cfNoKey")}</span>{/if}
     <span class="grow"></span>
     <span class="faint">{t("mods.results", { n: total })}</span>
   </div>
 
   {#if categoryList.length}
-    <div class="cats row">
-      {#each categoryList.slice(0, 40) as c (c.id)}
-        <button class="chip" aria-pressed={categories.includes(c.id)} onclick={() => toggleCategory(c.id)}
-          >{c.name.replace(/-/g, " ")}</button
-        >
-      {/each}
+    <div class="cats-wrap row">
+      <div class="cats row wrap" class:open={catsOpen}>
+        {#each categoryList.slice(0, 40) as c (c.id)}
+          <button class="chip" aria-pressed={categories.includes(c.id)} onclick={() => toggleCategory(c.id)}
+            >{c.name.replace(/-/g, " ")}</button
+          >
+        {/each}
+      </div>
+      <button class="btn sm ghost more" aria-expanded={catsOpen} onclick={() => (catsOpen = !catsOpen)}
+        >{catsOpen ? t("mods.lessCategories") : t("mods.moreCategories")}<Icon
+          name={catsOpen ? "chevronUp" : "chevronDown"}
+          size={14}
+        /></button
+      >
     </div>
   {/if}
 
@@ -342,10 +364,21 @@
   .filters .badge :global(.icon) {
     margin-right: 0.15rem;
   }
+  .cats-wrap {
+    align-items: flex-start;
+  }
+  /* One row of categories until expanded; the rest are a click away instead of off screen. */
   .cats {
-    overflow-x: auto;
-    padding-bottom: 0.2rem;
-    flex-wrap: nowrap;
+    flex: 1;
+    min-width: 0;
+    max-height: 2rem;
+    overflow: hidden;
+  }
+  .cats.open {
+    max-height: none;
+  }
+  .more {
+    flex: none;
   }
   .cats .chip {
     text-transform: capitalize;

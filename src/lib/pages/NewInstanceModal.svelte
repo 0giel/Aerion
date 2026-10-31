@@ -3,6 +3,7 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import Modal from "../components/Modal.svelte";
   import Icon from "../components/Icon.svelte";
+  import Advanced from "../components/Advanced.svelte";
   import IconPicker from "../components/IconPicker.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
@@ -190,24 +191,27 @@
       </div>
     {/if}
     <div class="field">
-      <span class="label">{t("newInstance.location")}</span>
-      <div class="row gap-2">
-        <code class="loc grow truncate" title={gameDir ?? ""}
-          >{gameDir ?? t("newInstance.locationDefault")}</code
-        >
-        <button type="button" class="btn sm" onclick={pickLocation}
-          ><Icon name="folder" size={14} />{t("newInstance.locationPick")}</button
-        >
-        {#if gameDir}<button type="button" class="btn sm ghost" onclick={() => (gameDir = null)}
-            >{t("common.default")}</button
-          >{/if}
-      </div>
-      <span class="hint">{t("newInstance.locationHint")}</span>
-    </div>
-    <div class="field">
       <span class="label">{t("newInstance.icon")}</span>
       <IconPicker bind:icon bind:file={iconFile} name={name || gameVersion} {loader} />
     </div>
+    <!-- Most players keep the game inside Aerion's data folder; another disk is an expert choice. -->
+    <Advanced hint={t("newInstance.location")} open={!!gameDir}>
+      <div class="field">
+        <span class="label">{t("newInstance.location")}</span>
+        <div class="row gap-2">
+          {#if gameDir}<code class="loc grow truncate" title={gameDir}>{gameDir}</code>{:else}<span
+              class="grow small muted">{t("newInstance.locationDefault")}</span
+            >{/if}
+          <button type="button" class="btn sm" onclick={pickLocation}
+            ><Icon name="folder" size={14} />{t("newInstance.locationPick")}</button
+          >
+          {#if gameDir}<button type="button" class="btn sm ghost" onclick={() => (gameDir = null)}
+              >{t("common.default")}</button
+            >{/if}
+        </div>
+        <span class="hint">{t("newInstance.locationHint")}</span>
+      </div>
+    </Advanced>
   </form>
   {#snippet footer()}
     <button class="btn ghost" onclick={() => (open = false)}>{t("common.cancel")}</button>

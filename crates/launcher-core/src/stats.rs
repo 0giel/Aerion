@@ -87,6 +87,11 @@ fn group(instances: &[Instance], key: impl Fn(&Instance) -> String) -> Vec<Group
     out
 }
 
+/// Launches are counted since 0.1.4; an instance played before that has had at least one session.
+fn sessions(i: &Instance) -> u32 {
+    i.launches.max(u32::from(i.last_played.is_some()))
+}
+
 pub async fn compute(manager: &InstanceManager) -> Stats {
     let instances = manager.list().await;
     let mut mods: HashMap<String, ModStat> = HashMap::new();
@@ -147,13 +152,13 @@ pub async fn compute(manager: &InstanceManager) -> Stats {
             loader: i.loader,
             game_version: i.game_version.clone(),
             play_secs: i.play_time_secs,
-            launches: i.launches,
+            launches: sessions(i),
         })
         .collect();
     per_instance.sort_by_key(|i| std::cmp::Reverse(i.play_secs));
     Stats {
         total_play_secs: instances.iter().map(|i| i.play_time_secs).sum(),
-        total_launches: instances.iter().map(|i| i.launches).sum(),
+        total_launches: instances.iter().map(sessions).sum(),
         instance_count: instances.len() as u32,
         world_count: worlds,
         screenshot_count: shots,
@@ -208,5 +213,18 @@ mod tests {
             (s.versions[1].key.as_str(), s.versions[1].instances),
             ("26.3", 2)
         );
+    }
+
+    #[test]
+    fn sessions_before_launch_counting() {
+        let mut i: Instance = serde_json::from_str(
+            r#"{"id":"a","name":"A","gameVersion":"26.3","loader":"vanilla","createdAt":0}"#,
+        )
+        .unwrap();
+        assert_eq!(sessions(&i), 0);
+        i.last_played = Some(1);
+        assert_eq!(sessions(&i), 1);
+        i.launches = 4;
+        assert_eq!(sessions(&i), 4);
     }
 }

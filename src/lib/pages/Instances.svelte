@@ -128,7 +128,7 @@
             aria-label={t(inst.favorite ? "instances.unfavorite" : "instances.favorite")}
             onclick={() => app.toggleFavorite(inst.id)}><Icon name="star" size={16} /></button
           >
-          <div class="row">
+          <div class="row head">
             <InstanceIcon name={inst.name} loader={inst.loader} icon={inst.icon} id={inst.id} size={46} />
             <div class="col gap-1 grow" style="min-width:0">
               <strong class="truncate">{inst.name}</strong>
@@ -210,20 +210,27 @@
     border-radius: inherit;
     cursor: pointer;
   }
+  /* Room for the favourite star, so long names end in an ellipsis before it. */
+  .head {
+    padding-right: 1.4rem;
+  }
   .meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.8rem;
+    min-height: 1.4rem;
   }
   .meta span {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
   }
+  /* Play buttons line up across a row of tiles whatever the metadata above them. */
   .play {
     position: relative;
     align-self: flex-start;
+    margin-top: auto;
   }
   .star {
     position: absolute;

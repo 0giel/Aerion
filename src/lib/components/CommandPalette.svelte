@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "./Icon.svelte";
-  import { router, type Page } from "../stores/router.svelte";
+  import { router } from "../stores/router.svelte";
+  import { layout } from "../stores/layout.svelte";
   import { app } from "../stores/app.svelte";
   import { themes } from "../theme/engine.svelte";
   import { t } from "../i18n/index.svelte";
@@ -18,23 +19,14 @@
     run: () => void;
   }
 
-  const pages: { page: Page; icon: string; key: string }[] = [
-    { page: "home", icon: "home", key: "nav.home" },
-    { page: "instances", icon: "grid", key: "nav.instances" },
-    { page: "mods", icon: "package", key: "nav.mods" },
-    { page: "accounts", icon: "user", key: "nav.accounts" },
-    { page: "skins", icon: "shirt", key: "nav.skins" },
-    { page: "stats", icon: "chart", key: "nav.stats" },
-    { page: "console", icon: "terminal", key: "nav.console" },
-    { page: "settings", icon: "settings", key: "nav.settings" },
-  ];
-
   const commands = $derived.by((): Command[] => {
-    const list: Command[] = pages.map((p, i) => ({
+    // Every page, in the user's sidebar order; Ctrl+1…9 count only the pages shown there.
+    let shortcut = 0;
+    const list: Command[] = layout.nav.map((p) => ({
       id: `page:${p.page}`,
       icon: p.icon,
       label: t("palette.goTo", { page: t(p.key) }),
-      hint: `Ctrl ${i + 1}`,
+      hint: p.visible && shortcut < 9 ? `Ctrl ${++shortcut}` : undefined,
       run: () => router.go(p.page),
     }));
     list.push({ id: "new", icon: "plus", label: t("palette.newInstance"), hint: "Ctrl N", run: onnew });

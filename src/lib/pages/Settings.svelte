@@ -2,6 +2,7 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import Icon from "../components/Icon.svelte";
+  import Advanced from "../components/Advanced.svelte";
   import Switch from "../components/Switch.svelte";
   import Logo from "../components/Logo.svelte";
   import ThemeGalleryModal from "./ThemeGalleryModal.svelte";
@@ -46,17 +47,7 @@
     }
   }
 
-  const sections = [
-    "general",
-    "appearance",
-    "java",
-    "game",
-    "network",
-    "accounts",
-    "mods",
-    "data",
-    "about",
-  ] as const;
+  const sections = ["general", "appearance", "java", "game", "mods", "data", "advanced", "about"] as const;
 
   // Game defaults are edited as text and saved when a field loses focus.
   const lines = (v: string) =>
@@ -331,53 +322,55 @@
           />
           <span class="hint">{t("memory.globalHint")}</span>
         </div>
-        <div class="field">
-          <span class="label">{t("settings.jvmPreset")}</span>
-          <div class="segmented" role="group">
-            {#each ["standard", "performance", "lowMemory"] as p (p)}<button
-                aria-pressed={s.jvmPreset === p}
-                onclick={() => save({ jvmPreset: p as JvmPreset })}
-                >{t(`instance.settings.presets.${p}`)}</button
-              >{/each}
-          </div>
-          <span class="hint">{t(`instance.settings.presetHints.${s.jvmPreset}`)}</span>
-        </div>
-        <Switch
-          label={t("settings.autoJava")}
-          hint={t("settings.autoJavaHint")}
-          checked={s.javaAutoInstall}
-          onchange={(v) => save({ javaAutoInstall: v })}
-        />
-        <div class="field">
-          <div class="row between">
-            <span class="label">{t("settings.javaOverrides")}</span><button
-              class="btn sm ghost"
-              onclick={detectJava}><Icon name="refresh" size={14} />{t("settings.detectJava")}</button
-            >
-          </div>
-          <span class="hint">{t("settings.javaOverridesHint")}</span>
-          {#each majors as m (m)}
-            <div class="row java-row">
-              <span class="badge">Java {m}</span>
-              <select
-                class="select"
-                value={s.javaOverrides[String(m)] ?? ""}
-                onchange={(e) => {
-                  const v = (e.target as HTMLSelectElement).value;
-                  const next = { ...s.javaOverrides };
-                  if (v) next[String(m)] = v;
-                  else delete next[String(m)];
-                  save({ javaOverrides: next });
-                }}
-              >
-                <option value="">{t("common.auto")}</option>
-                {#each javas.filter((j) => j.major === m) as j (j.path)}<option value={j.path}
-                    >{j.version} · {j.vendor ?? j.source} · {j.path}</option
-                  >{/each}
-              </select>
+        <Advanced hint={t("settings.javaAdvancedHint")}>
+          <div class="field">
+            <span class="label">{t("settings.jvmPreset")}</span>
+            <div class="segmented" role="group">
+              {#each ["standard", "performance", "lowMemory"] as p (p)}<button
+                  aria-pressed={s.jvmPreset === p}
+                  onclick={() => save({ jvmPreset: p as JvmPreset })}
+                  >{t(`instance.settings.presets.${p}`)}</button
+                >{/each}
             </div>
-          {/each}
-        </div>
+            <span class="hint">{t(`instance.settings.presetHints.${s.jvmPreset}`)}</span>
+          </div>
+          <Switch
+            label={t("settings.autoJava")}
+            hint={t("settings.autoJavaHint")}
+            checked={s.javaAutoInstall}
+            onchange={(v) => save({ javaAutoInstall: v })}
+          />
+          <div class="field">
+            <div class="row between">
+              <span class="label">{t("settings.javaOverrides")}</span><button
+                class="btn sm ghost"
+                onclick={detectJava}><Icon name="refresh" size={14} />{t("settings.detectJava")}</button
+              >
+            </div>
+            <span class="hint">{t("settings.javaOverridesHint")}</span>
+            {#each majors as m (m)}
+              <div class="row java-row">
+                <span class="badge">Java {m}</span>
+                <select
+                  class="select"
+                  value={s.javaOverrides[String(m)] ?? ""}
+                  onchange={(e) => {
+                    const v = (e.target as HTMLSelectElement).value;
+                    const next = { ...s.javaOverrides };
+                    if (v) next[String(m)] = v;
+                    else delete next[String(m)];
+                    save({ javaOverrides: next });
+                  }}
+                >
+                  <option value="">{t("common.auto")}</option>
+                  {#each javas.filter((j) => j.major === m) as j (j.path)}<option value={j.path}
+                      >{j.version} · {j.vendor ?? j.source} · {j.path}</option
+                    >{/each}
+                </select>
+              </div>
+            {/each}
+          </div>
+        </Advanced>
       </section>
 
       <section id="set-game" class="card col gap-3">
@@ -394,29 +387,6 @@
             {#if optionsTemplate}<button class="btn sm ghost" onclick={clearTemplate}
                 ><Icon name="trash" size={14} />{t("settings.clearTemplate")}</button
               >{/if}
-          </div>
-        </div>
-        <div class="field">
-          <span class="label">{t("instance.settings.minMemory")}</span>
-          <div class="row wrap gap-2">
-            <label class="row check"
-              ><input
-                type="checkbox"
-                checked={s.minMemoryMb === null}
-                onchange={(e) => save({ minMemoryMb: (e.target as HTMLInputElement).checked ? null : 1024 })}
-              />{t("common.auto")}</label
-            >
-            {#if s.minMemoryMb !== null}
-              <input
-                class="input num"
-                type="number"
-                min="256"
-                step="256"
-                value={s.minMemoryMb}
-                onchange={(e) => save({ minMemoryMb: Number((e.target as HTMLInputElement).value) || null })}
-                aria-label={t("instance.settings.minMemory")}
-              /><span class="faint">MB</span>
-            {/if}
           </div>
         </div>
         <div class="grid2">
@@ -443,7 +413,7 @@
                 value={s.resolution?.height ?? ""}
                 onchange={(e) => {
                   const h = Number((e.target as HTMLInputElement).value);
-                  if (s.resolution && h) save({ resolution: { ...s.resolution, height: h } });
+                  save({ resolution: h ? { width: s.resolution?.width ?? 854, height: h } : null });
                 }}
               />
             </div>
@@ -457,101 +427,79 @@
             />
           </div>
         </div>
-        <div class="field">
-          <label for="g-jvm">{t("instance.settings.jvmArgs")}</label>
-          <textarea
-            id="g-jvm"
-            class="textarea mono"
-            rows="2"
-            spellcheck="false"
-            value={s.jvmArgs.join("\n")}
-            onchange={(e) => save({ jvmArgs: lines((e.target as HTMLTextAreaElement).value) })}></textarea>
-          <span class="hint">{t("settings.globalArgsHint")}</span>
-        </div>
-        <div class="field">
-          <label for="g-game">{t("instance.settings.gameArgs")}</label>
-          <textarea
-            id="g-game"
-            class="textarea mono"
-            rows="2"
-            spellcheck="false"
-            value={s.gameArgs.join("\n")}
-            onchange={(e) => save({ gameArgs: lines((e.target as HTMLTextAreaElement).value) })}></textarea>
-        </div>
-        <div class="grid2">
+        <Advanced hint={t("settings.gameAdvancedHint")}>
           <div class="field">
-            <label for="g-wrap">{t("instance.settings.wrapper")}</label>
-            <input
-              id="g-wrap"
-              class="input mono"
-              placeholder="gamemoderun"
-              value={s.wrapper ?? ""}
-              onchange={(e) => save({ wrapper: (e.target as HTMLInputElement).value.trim() || null })}
-            />
-            <span class="hint">{t("instance.settings.wrapperHint")}</span>
+            <span class="label">{t("instance.settings.minMemory")}</span>
+            <div class="row wrap gap-2">
+              <label class="row check"
+                ><input
+                  type="checkbox"
+                  checked={s.minMemoryMb === null}
+                  onchange={(e) =>
+                    save({ minMemoryMb: (e.target as HTMLInputElement).checked ? null : 1024 })}
+                />{t("common.auto")}</label
+              >
+              {#if s.minMemoryMb !== null}
+                <input
+                  class="input num"
+                  type="number"
+                  min="256"
+                  step="256"
+                  value={s.minMemoryMb}
+                  onchange={(e) =>
+                    save({ minMemoryMb: Number((e.target as HTMLInputElement).value) || null })}
+                  aria-label={t("instance.settings.minMemory")}
+                /><span class="faint">MB</span>
+              {/if}
+            </div>
           </div>
           <div class="field">
-            <label for="g-env">{t("instance.settings.env")}</label>
+            <label for="g-jvm">{t("instance.settings.jvmArgs")}</label>
             <textarea
-              id="g-env"
+              id="g-jvm"
               class="textarea mono"
               rows="2"
               spellcheck="false"
-              value={envToText(s.envVars)}
-              onchange={(e) => save({ envVars: textToEnv((e.target as HTMLTextAreaElement).value) })}
-            ></textarea>
-            <span class="hint">{t("instance.settings.envHint")}</span>
+              value={s.jvmArgs.join("\n")}
+              onchange={(e) => save({ jvmArgs: lines((e.target as HTMLTextAreaElement).value) })}></textarea>
+            <span class="hint">{t("settings.globalArgsHint")}</span>
           </div>
-        </div>
-      </section>
-
-      <section id="set-network" class="card col gap-3">
-        <h2>{t("settings.sections.network")}</h2>
-        <div class="field">
-          <label for="conc">{t("settings.concurrency")}: <strong>{s.downloadConcurrency}</strong></label>
-          <input
-            id="conc"
-            type="range"
-            min="1"
-            max="32"
-            value={s.downloadConcurrency}
-            onchange={(e) => save({ downloadConcurrency: Number((e.target as HTMLInputElement).value) })}
-          />
-        </div>
-        <div class="field">
-          <label for="proxy">{t("settings.proxy")}</label>
-          <div class="row">
-            <input
-              id="proxy"
-              class="input mono"
-              bind:value={proxy}
-              placeholder={t("settings.proxyPlaceholder")}
-            /><button class="btn" onclick={() => save({ proxy: proxy.trim() || null })}
-              >{t("common.save")}</button
-            >
+          <div class="field">
+            <label for="g-game">{t("instance.settings.gameArgs")}</label>
+            <textarea
+              id="g-game"
+              class="textarea mono"
+              rows="2"
+              spellcheck="false"
+              value={s.gameArgs.join("\n")}
+              onchange={(e) => save({ gameArgs: lines((e.target as HTMLTextAreaElement).value) })}></textarea>
           </div>
-          <span class="hint">{t("settings.proxyHint")}</span>
-        </div>
-      </section>
-
-      <section id="set-accounts" class="card col gap-3">
-        <h2>{t("settings.sections.accounts")}</h2>
-        <div class="field">
-          <label for="cid">{t("settings.clientId")}</label>
-          <div class="row">
-            <input
-              id="cid"
-              class="input mono"
-              bind:value={clientId}
-              placeholder={t("accounts.clientIdPlaceholder")}
-            /><button
-              class="btn"
-              onclick={() => save({ msaClientId: clientId.trim() || null }).then(() => app.refreshAccounts())}
-              >{t("common.save")}</button
-            >
+          <div class="grid2">
+            <div class="field">
+              <label for="g-wrap">{t("instance.settings.wrapper")}</label>
+              <input
+                id="g-wrap"
+                class="input mono"
+                placeholder="gamemoderun"
+                value={s.wrapper ?? ""}
+                onchange={(e) => save({ wrapper: (e.target as HTMLInputElement).value.trim() || null })}
+              />
+              <span class="hint">{t("instance.settings.wrapperHint")}</span>
+            </div>
+            <div class="field">
+              <label for="g-env">{t("instance.settings.env")}</label>
+              <textarea
+                id="g-env"
+                class="textarea mono"
+                rows="2"
+                spellcheck="false"
+                value={envToText(s.envVars)}
+                onchange={(e) => save({ envVars: textToEnv((e.target as HTMLTextAreaElement).value) })}
+              ></textarea>
+              <span class="hint">{t("instance.settings.envHint")}</span>
+            </div>
           </div>
-          <span class="hint">{t("settings.clientIdHint")}</span>
-        </div>
+        </Advanced>
       </section>
 
       <section id="set-mods" class="card col gap-3">
@@ -631,6 +579,52 @@
           <button class="btn sm" onclick={() => commands.openFolder({ kind: "logs" })}
             ><Icon name="terminal" size={15} />{t("settings.openLogs")}</button
           >
+        </div>
+      </section>
+
+      <section id="set-advanced" class="card col gap-3">
+        <h2>{t("settings.sections.advanced")}</h2>
+        <span class="hint">{t("settings.advancedHint")}</span>
+        <div class="field">
+          <label for="conc">{t("settings.concurrency")}: <strong>{s.downloadConcurrency}</strong></label>
+          <input
+            id="conc"
+            type="range"
+            min="1"
+            max="32"
+            value={s.downloadConcurrency}
+            onchange={(e) => save({ downloadConcurrency: Number((e.target as HTMLInputElement).value) })}
+          />
+        </div>
+        <div class="field">
+          <label for="proxy">{t("settings.proxy")}</label>
+          <div class="row">
+            <input
+              id="proxy"
+              class="input mono"
+              bind:value={proxy}
+              placeholder={t("settings.proxyPlaceholder")}
+            /><button class="btn" onclick={() => save({ proxy: proxy.trim() || null })}
+              >{t("common.save")}</button
+            >
+          </div>
+          <span class="hint">{t("settings.proxyHint")}</span>
+        </div>
+        <div class="field">
+          <label for="cid">{t("settings.clientId")}</label>
+          <div class="row">
+            <input
+              id="cid"
+              class="input mono"
+              bind:value={clientId}
+              placeholder={t("accounts.clientIdPlaceholder")}
+            /><button
+              class="btn"
+              onclick={() => save({ msaClientId: clientId.trim() || null }).then(() => app.refreshAccounts())}
+              >{t("common.save")}</button
+            >
+          </div>
+          <span class="hint">{t("settings.clientIdHint")}</span>
         </div>
       </section>
 

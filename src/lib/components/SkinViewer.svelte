@@ -231,6 +231,18 @@
     };
   }
 
+  /** Camera: the model turns (yaw) first, then the view tilts (pitch) about the screen's x axis,
+   *  so the player stays upright from every side. */
+  function viewer(yawDeg: number, pitchDeg: number) {
+    const [sy, cy] = [Math.sin(rad(yawDeg)), Math.cos(rad(yawDeg))];
+    const [sp, cp] = [Math.sin(rad(pitchDeg)), Math.cos(rad(pitchDeg))];
+    return ([x, y, z]: Vec3): Vec3 => {
+      const x1 = x * cy + z * sy;
+      const z1 = -x * sy + z * cy;
+      return [x1, y * cp - z1 * sp, y * sp + z1 * cp];
+    };
+  }
+
   interface Pose {
     pivot: Vec3;
     turn: (v: Vec3) => Vec3;
@@ -260,7 +272,7 @@
     if (c.width !== Math.round(cssW * dpr)) c.width = Math.round(cssW * dpr);
     if (c.height !== Math.round(cssH * dpr)) c.height = Math.round(cssH * dpr);
 
-    const rot = rotator(yawDeg, pitchDeg);
+    const rot = viewer(yawDeg, pitchDeg);
     // Points are taken relative to the model centre (y = 2) first.
     const point = ([x, y, z]: Vec3): Vec3 => rot([x, y - 2, z]);
     const s = scale * dpr;
@@ -268,7 +280,7 @@
     const oy = (cssH / 2) * dpr;
     const pose = poses(headYaw, headPitch, t);
 
-    const visible: { face: Face; depth: number; shade: number; cape: boolean }[] = [];
+    const visible: { face: Face; depth: number; shade: number; kind: Kind }[] = [];
     for (const { part, outer, faces } of geometry) {
       const p = pose[part.kind];
       for (const raw of faces) {
@@ -303,11 +315,16 @@
           face,
           depth: point(centre)[2] + (outer ? 0.01 : 0),
           shade,
-          cape: part.kind === "cape",
+          kind: part.kind,
         });
       }
     }
-    visible.sort((a, b) => a.depth - b.depth);
+    // Face centres can't order the large cape against the legs, but its place is known: it hangs
+    // behind the body, so it is painted first when the front is in view, and from behind over
+    // the body and limbs (still under the head, which overhangs it from above).
+    const fromBehind = rot([0, 0, -1])[2] > 0;
+    const layer = (k: Kind) => (k === "cape" ? (fromBehind ? 1 : -1) : fromBehind && k === "head" ? 2 : 0);
+    visible.sort((a, b) => layer(a.kind) - layer(b.kind) || a.depth - b.depth);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, c.width, c.height);
@@ -324,8 +341,8 @@
     ctx.fillRect(-rx, -rx, 2 * rx, 2 * rx);
 
     const blank = skin ? "" : getComputedStyle(c).getPropertyValue("--c-surface-3").trim() || "#444";
-    for (const { face, shade, cape: isCape } of visible) {
-      const tex = isCape ? cape : skin;
+    for (const { face, shade, kind } of visible) {
+      const tex = kind === "cape" ? cape : skin;
       // HD textures: scale texture coordinates from the 64-px layout.
       const k = tex ? tex[0].width / 64 : 1;
       const [tu, tv, tw, th] = face.tex;
@@ -381,8 +398,11 @@
 
   function headTarget(bodyYaw: number, bodyPitch: number) {
     if (!aim) return { yaw: 0, pitch: 0 };
-    // Facing the cursor means undoing the body's own yaw and the view pitch.
-    return { yaw: clamp(aim.x - bodyYaw, 60), pitch: clamp(aim.y - bodyPitch, 35) };
+    // Facing the cursor means undoing the body's own yaw and the view pitch. A model turned away
+    // (dragged round) can't look at the viewer; its head stays straight instead of twisting.
+    const yaw = ((((aim.x - bodyYaw) % 360) + 540) % 360) - 180;
+    if (Math.abs(yaw) > 90) return { yaw: 0, pitch: 0 };
+    return { yaw: clamp(yaw, 60), pitch: clamp(aim.y - bodyPitch, 35) };
   }
 
   /** Advance sway and head easing by `dt` ms and draw. Returns whether the head still moves. */

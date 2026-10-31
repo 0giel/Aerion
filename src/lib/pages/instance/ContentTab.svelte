@@ -181,11 +181,14 @@
       {/each}
     </div>
     <div class="row wrap">
-      <button class="btn sm" onclick={checkUpdates} disabled={checking}
-        ><Icon name="refresh" size={15} />{checking
-          ? t("instance.content.checking")
-          : t("instance.content.checkUpdates")}</button
-      >
+      <!-- Nothing to update or identify in an empty instance. -->
+      {#if entries.length}
+        <button class="btn sm" onclick={checkUpdates} disabled={checking}
+          ><Icon name="refresh" size={15} />{checking
+            ? t("instance.content.checking")
+            : t("instance.content.checkUpdates")}</button
+        >
+      {/if}
       {#if updates?.length}
         <button class="btn sm primary" onclick={updateAll}
           ><Icon name="download" size={15} />{t("instance.content.updateAll", { n: updates.length })}</button
@@ -197,12 +200,14 @@
         aria-label={t("instance.content.undo")}
         onclick={undo}><Icon name="undo" size={16} /></button
       >
-      <button
-        class="icon-btn sm"
-        title={t("instance.content.identify")}
-        aria-label={t("instance.content.identify")}
-        onclick={identify}><Icon name="search" size={16} /></button
-      >
+      {#if entries.length}
+        <button
+          class="icon-btn sm"
+          title={t("instance.content.identify")}
+          aria-label={t("instance.content.identify")}
+          onclick={identify}><Icon name="search" size={16} /></button
+        >
+      {/if}
       <button
         class="icon-btn sm"
         title={t("common.openFolder")}

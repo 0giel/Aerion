@@ -12,15 +12,15 @@ use crate::error::{Error, Result};
 
 static TLS_INIT: Once = Once::new();
 
-/// `<author>/aerion/<version> (<contact>)`, as required by Modrinth. Author and contact are
-/// baked in at build time from `AERION_UA_AUTHOR` / `AERION_UA_CONTACT`.
+/// `<author>/aerion/<version> (<contact>)`, as required by Modrinth. Forks can bake in their own
+/// author and contact at build time with `AERION_UA_AUTHOR` / `AERION_UA_CONTACT`.
 pub fn user_agent() -> String {
     let author = option_env!("AERION_UA_AUTHOR")
         .filter(|s| !s.is_empty())
-        .unwrap_or("aerion-dev");
+        .unwrap_or("0giel");
     let contact = option_env!("AERION_UA_CONTACT")
         .filter(|s| !s.is_empty())
-        .unwrap_or("contact not configured");
+        .unwrap_or("github.com/0giel/Aerion");
     format!("{author}/aerion/{} ({contact})", env!("CARGO_PKG_VERSION"))
 }
 

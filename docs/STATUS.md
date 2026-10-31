@@ -5,6 +5,38 @@ Newest entries first.
 
 ## 2026-10-31
 
+### 0.1.8: bug pass and calmer settings (D27)
+- Player model leaned when turned: the view pitch was applied in the model's frame before the
+  yaw, so from the side or back the camera tilt became a sideways lean. The camera now turns the
+  model first and tilts the view afterwards (upright from every side). The cape is painted by
+  rule (behind the body from the front, over body and limbs from behind, under the head) because
+  face-centre depth sorting put a leg over it. A model dragged to face away keeps its head
+  straight instead of twisting it towards the cursor. Checked in a headless browser at 0°, 40°,
+  90°, 140°, 180° and 230°.
+- Walkthrough of every page in a dev instance with a layout audit (clipped text, off-screen
+  controls, overlapping buttons) and screenshots. Fixed:
+  - Command palette showed fixed Ctrl+1…8 hints that no longer matched the arranged sidebar;
+    it now lists pages in sidebar order and numbers only the visible ones (as the shortcuts do).
+  - Statistics showed 0 sessions next to minutes of play: launches are counted since 0.1.4, so
+    an instance played before counts as at least one session (unit test). "Favourite versions"
+    renamed "Most played versions" (favourites are a different feature).
+  - Instance tiles: long names ran under the favourite star; Play buttons were misaligned when a
+    tile had a group badge.
+  - Mods: CurseForge buttons without an API key were silently disabled and a hint repeated on
+    every visit; now they explain what to do once, with an "Open settings" button. Categories
+    spilled off screen in one scrolling row; now one row with "More categories". The "Install
+    to" list repeated the version already in the instance name and was cut off.
+  - Import from other launchers: names now line up (fixed-width launcher badge).
+  - Global settings: setting only the window height did nothing (needed a width first).
+  - About said "open launcher" (the code is not public) and the User-Agent read
+    "aerion-dev … (contact not configured)" in release builds; it now names the project.
+- Less to take in for most players, everything still there for experts: rarely used options
+  (JVM preset, Java per version, initial memory, JVM/game arguments, wrapper, environment,
+  game folder location of a new instance) sit in collapsed "Advanced" groups that say what they
+  contain; network and Azure client ID moved into one "Advanced" settings section; shorter
+  section names keep the chip row on one line. Content tab hides "Check for updates" and
+  "Identify" while the instance is empty.
+
 ### 0.1.7: more natural layout + customizable sidebar and home (D26)
 - Home: Play with an instance dropdown (split button); quick actions (new instance, mods, skins,
   statistics) instead of a text menu duplicating the sidebar; optional summary block (total play

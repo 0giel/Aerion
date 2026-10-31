@@ -174,3 +174,10 @@ WebView2 while the window accepts dropped files. Defaults were rearranged at the
 got an instance dropdown, the text menu that duplicated the sidebar became quick actions, Accounts
 moved out of the sidebar list (the account button at its bottom opens it).
 
+### D27 — Simple by default, advanced on request (2026-10-31)
+The owner's goal: nobody should feel lost in the basic screens, but demanding players keep every
+option. Options most players never change are grouped in collapsed "Advanced" disclosures
+(`components/Advanced.svelte`) whose summary lists what is inside, so they stay discoverable
+and searchable by eye; a disclosure opens by itself when it holds a non-default value (e.g. an
+instance with its own Java). No global "expert mode" switch: it would hide options without a
+trace and split support answers into two versions of each screen.
