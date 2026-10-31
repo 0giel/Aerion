@@ -452,6 +452,8 @@
     z-index: 3;
     padding: var(--sp-2) 0;
     margin-bottom: var(--sp-2);
+    /* Same width as the cards, so the fade does not read as a bar across the page. */
+    max-width: 52rem;
     background: linear-gradient(var(--c-bg) 70%, transparent);
   }
   .body {

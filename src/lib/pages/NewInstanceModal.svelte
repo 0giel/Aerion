@@ -189,6 +189,9 @@
 </Modal>
 
 <style>
+  .two {
+    align-items: flex-start;
+  }
   .two > .field {
     flex: 1 1 0;
   }
