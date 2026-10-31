@@ -5,6 +5,15 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Player model head tracking: smoother (0.1.1)
+- Owner: "the model that looks at the cursor lags". It redrew on the shared 20 fps clock with a
+  110 ms easing constant. Now a dedicated rAF loop runs only while the head is turning, easing
+  45 ms, and the target is computed on pointer moves (no per-frame layout reads).
+- Measured with a synthetic circular cursor (dev, WebKitGTK): model frames **22.5 → 41 fps**
+  (median gap 43 → 23 ms), CPU while moving the mouse 52 → 58 %; idle unchanged.
+- Version bumped to 0.1.1 so the `.deb` installs as an upgrade.
+
+
 ### Renamed to Aerion; Azure app registered
 - The owner chose **Aerion** as the product name (D20). Everything user-visible and the crate
   (`cargo test -p aerion`) were renamed; old data folder is migrated on first start (unit test),

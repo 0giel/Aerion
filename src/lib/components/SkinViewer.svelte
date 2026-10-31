@@ -226,39 +226,87 @@
   };
   const body = () => (manual ? ([yaw, PITCH] as const) : sway());
 
-  // Head tracking: the cursor position in the window (null when it left the window), and the
-  // head's current turn, eased towards it.
-  let cursor: { x: number; y: number } | null = null;
+  // Head tracking: where the head should look (null = straight ahead) and its current turn.
+  // The target is computed on pointer moves, not per frame, so frames never force a layout.
+  let aim: { x: number; y: number } | null = null;
   let head = { yaw: 0, pitch: 0 };
   /** Distance (CSS px) of the virtual eye plane: smaller = the head turns sooner. */
   const DEPTH = 420;
+  /** Easing time constant: the head covers ~95 % of a turn in 3× this. */
+  const EASE_MS = 45;
+  /** While the head turns, the model redraws on every display frame (measured ~41 fps here,
+   *  +6 % CPU) instead of the 20 fps ambient clock; it falls back once the head has settled. */
+  const TRACK_MS = 15;
   const clamp = (v: number, lim: number) => Math.max(-lim, Math.min(lim, v));
 
   function headTarget(bodyYaw: number, bodyPitch: number) {
-    const c = canvas;
-    if (!cursor || !c) return { yaw: 0, pitch: 0 };
-    const r = c.getBoundingClientRect();
-    // The head's centre is 12 model units above the canvas centre.
-    const hx = r.left + r.width / 2;
-    const hy = r.top + r.height / 2 - 12 * scale;
-    const toYaw = (Math.atan2(cursor.x - hx, DEPTH) * 180) / Math.PI;
-    const toPitch = (Math.atan2(hy - cursor.y, DEPTH) * 180) / Math.PI;
+    if (!aim) return { yaw: 0, pitch: 0 };
     // Facing the cursor means undoing the body's own yaw and the view pitch.
-    return { yaw: clamp(toYaw - bodyYaw, 60), pitch: clamp(toPitch - bodyPitch, 35) };
+    return { yaw: clamp(aim.x - bodyYaw, 60), pitch: clamp(aim.y - bodyPitch, 35) };
+  }
+
+  /** Advance sway and head easing by `dt` ms and draw. Returns whether the head still moves. */
+  function step(dt: number): boolean {
+    if (!manual) clock += dt;
+    const [by, bp] = body();
+    const target = headTarget(by, bp);
+    const k = 1 - Math.exp(-dt / EASE_MS);
+    head = {
+      yaw: head.yaw + (target.yaw - head.yaw) * k,
+      pitch: head.pitch + (target.pitch - head.pitch) * k,
+    };
+    draw(by, bp, head.yaw, head.pitch);
+    return Math.abs(target.yaw - head.yaw) + Math.abs(target.pitch - head.pitch) > 0.3;
+  }
+
+  // Fast loop while the head is turning; the ambient clock covers the slow sway otherwise.
+  let trackRaf = 0;
+  let lastStep = 0;
+  function track(now: number) {
+    trackRaf = 0;
+    if (!animate) return;
+    let moving = true;
+    if (now - lastStep >= TRACK_MS) {
+      moving = step(Math.min(100, now - lastStep));
+      lastStep = now;
+    }
+    if (moving) trackRaf = requestAnimationFrame(track);
   }
 
   $effect(() => {
     if (!motion) return;
-    const move = (e: PointerEvent) => (cursor = { x: e.clientX, y: e.clientY });
+    const move = (e: PointerEvent) => {
+      const c = canvas;
+      if (!c) return;
+      const r = c.getBoundingClientRect();
+      // The head's centre is 12 model units above the canvas centre.
+      const hx = r.left + r.width / 2;
+      const hy = r.top + r.height / 2 - 12 * scale;
+      aim = {
+        x: (Math.atan2(e.clientX - hx, DEPTH) * 180) / Math.PI,
+        y: (Math.atan2(hy - e.clientY, DEPTH) * 180) / Math.PI,
+      };
+      if (!trackRaf && animate) {
+        lastStep = performance.now();
+        trackRaf = requestAnimationFrame(track);
+      }
+    };
     const out = (e: PointerEvent) => {
-      if (!e.relatedTarget) cursor = null;
+      if (e.relatedTarget) return;
+      aim = null;
+      if (!trackRaf && animate) {
+        lastStep = performance.now();
+        trackRaf = requestAnimationFrame(track);
+      }
     };
     window.addEventListener("pointermove", move, { passive: true });
     document.addEventListener("pointerout", out, { passive: true });
     return () => {
       window.removeEventListener("pointermove", move);
       document.removeEventListener("pointerout", out);
-      cursor = null;
+      cancelAnimationFrame(trackRaf);
+      trackRaf = 0;
+      aim = null;
       head = { yaw: 0, pitch: 0 };
     };
   });
@@ -271,18 +319,12 @@
       draw(...body(), head.yaw, head.pitch);
       return;
     }
-    // Sway between -32° and 28° (9 s each way) on the shared ambient clock; the head eases
-    // towards the cursor.
+    // Sway between -32° and 28° (9 s each way) on the shared ambient clock, unless the fast
+    // tracking loop is already drawing.
     return onAmbientFrame((dt) => {
-      if (!manual) clock += dt;
-      const [by, bp] = body();
-      const target = headTarget(by, bp);
-      const k = 1 - Math.exp(-dt / 110);
-      head = {
-        yaw: head.yaw + (target.yaw - head.yaw) * k,
-        pitch: head.pitch + (target.pitch - head.pitch) * k,
-      };
-      draw(by, bp, head.yaw, head.pitch);
+      if (trackRaf) return;
+      step(dt);
+      lastStep = performance.now();
     });
   });
 
