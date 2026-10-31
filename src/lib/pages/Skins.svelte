@@ -401,6 +401,9 @@
 </Modal>
 
 <style>
+  .alert {
+    margin-bottom: var(--sp-4);
+  }
   .layout {
     display: flex;
     gap: var(--sp-4);
