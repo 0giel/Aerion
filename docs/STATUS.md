@@ -5,6 +5,13 @@ Newest entries first.
 
 ## 2026-10-31
 
+### Mojang review submitted
+- The owner submitted the Minecraft API review form (new AppID, client ID
+  `b7169ac0-19f3-4bf2-a815-1e98829a891a`, website https://github.com/0giel/Aerion — a public page
+  with README and screenshots, no source code). Waiting for Mojang's e-mail; until then sign-in
+  ends with `auth.invalidAppRegistration`, which is expected.
+
+
 ### Instance icons from Minecraft textures (0.1.2)
 - 52 item/block textures (diamond, swords, golden apple, nether star, grass block, TNT, …)
   replace the pixel-art set; read at run time from a Mojang client jar (D21) and served as

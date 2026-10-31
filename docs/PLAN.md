@@ -216,8 +216,9 @@ has been *verified* against its acceptance criterion. Details and the running lo
 3. ~~Forge 1.20.1 and NeoForge 26.3 launches~~ ✅ · ~~a `.mrpack` install~~ ✅ · ~~Quilt~~ ✅ · ~~Forge 1.8.9~~ ✅
 4. ~~Docs: README, DECISIONS, THEMING (+ schema), AZURE_SETUP~~ ✅ · ~~PERFORMANCE~~ ✅
 5. ~~Vitest tests (i18n shape, theme schema)~~ ✅ · ~~release build + bundles, performance measurements~~ ✅
-6. Owner: Azure registration (`docs/AZURE_SETUP.md`) → verify Microsoft sign-in and offline
-   accounts in a release build; CurseForge key → verify CF search/install/modpack live.
+6. ~~Owner: Azure registration~~ ✅ · ~~Mojang review form~~ ✅ submitted 2026-10-31 → after approval:
+   verify Microsoft sign-in, skins/capes and offline accounts in a release build. CurseForge key →
+   verify CF search/install/modpack live.
 7. ~~Icons, favourites, head tracking, skins tab~~ ✅ (owner requests, 2026-10-31)
 8. ~~Windows build~~ ✅ (cross-compiled installer, engine tests + 26.3 smoke under Wine) →
    run `Aerion_0.1.0_x64-setup.exe` on a real Windows 10/11 machine; macOS still untested.
