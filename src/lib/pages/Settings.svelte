@@ -127,6 +127,9 @@
     }
   }
 
+  // Sections scroll in below the sticky chip row, which wraps to two lines on narrow windows.
+  let tocHeight = $state(0);
+
   function scrollTo(id: string) {
     document.getElementById(`set-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -137,14 +140,14 @@
 
 <div class="page settings">
   <header class="page-header"><h1>{t("settings.title")}</h1></header>
-  <nav class="toc row wrap">
+  <nav class="toc row wrap" bind:clientHeight={tocHeight}>
     {#each sections as sec (sec)}<button class="chip" onclick={() => scrollTo(sec)}
         >{t(`settings.sections.${sec}`)}</button
       >{/each}
   </nav>
 
   {#if s}
-    <div class="col gap-4 body">
+    <div class="col gap-4 body" style:--toc-h="{tocHeight}px">
       <section id="set-general" class="card col gap-3">
         <h2>{t("settings.sections.general")}</h2>
         <div class="field">
@@ -200,15 +203,10 @@
       </section>
 
       <section id="set-appearance" class="card col gap-3">
-        <div class="row between">
-          <h2>{t("settings.sections.appearance")}</h2>
-          <div class="row">
-            <button class="btn sm" onclick={() => (ui.customize = "nav")}
-              ><Icon name="sliders" size={15} />{t("settings.customizeMenu")}</button
-            >
-            <button class="btn sm" onclick={() => (ui.customize = "home")}
-              ><Icon name="home" size={15} />{t("settings.customizeHome")}</button
-            >
+        <h2>{t("settings.sections.appearance")}</h2>
+        <div class="row wrap between gap-2">
+          <span class="label">{t("settings.themeLabel")}</span>
+          <div class="row wrap gap-2">
             <button class="btn sm" onclick={() => (galleryOpen = true)}
               ><Icon name="sparkles" size={15} />{t("gallery.open")}</button
             >
@@ -255,12 +253,6 @@
           {/each}
         </div>
         <Switch
-          label={t("settings.followCursor")}
-          hint={t("settings.followCursorHint")}
-          checked={s.followCursor}
-          onchange={(v) => save({ followCursor: v })}
-        />
-        <Switch
           label={t("settings.followSystem")}
           checked={s.themeFollowSystem}
           onchange={(v) => save({ themeFollowSystem: v })}
@@ -291,6 +283,27 @@
             </div>
           </div>
         {/if}
+        <hr class="sep" />
+        <div class="row wrap between gap-2">
+          <div class="col layout-text">
+            <span class="label">{t("settings.layoutLabel")}</span>
+            <span class="small muted">{t("settings.layoutHint")}</span>
+          </div>
+          <div class="row wrap gap-2">
+            <button class="btn sm" onclick={() => (ui.customize = "nav")}
+              ><Icon name="sliders" size={15} />{t("settings.customizeMenu")}</button
+            >
+            <button class="btn sm" onclick={() => (ui.customize = "home")}
+              ><Icon name="home" size={15} />{t("settings.customizeHome")}</button
+            >
+          </div>
+        </div>
+        <Switch
+          label={t("settings.followCursor")}
+          hint={t("settings.followCursorHint")}
+          checked={s.followCursor}
+          onchange={(v) => save({ followCursor: v })}
+        />
       </section>
 
       <section id="set-java" class="card col gap-3">
@@ -662,6 +675,9 @@
     max-width: 52rem;
     padding-bottom: 3rem;
   }
+  .body > section {
+    scroll-margin-top: calc(var(--toc-h) + var(--sp-2));
+  }
   .grid2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -670,6 +686,16 @@
   .check {
     gap: 0.5rem;
     cursor: pointer;
+  }
+  .sep {
+    width: 100%;
+    margin: var(--sp-1) 0;
+    border: 0;
+    border-top: 1px solid var(--c-border);
+  }
+  .layout-text {
+    gap: 0.15rem;
+    flex: 1 1 14rem;
   }
   .themes {
     display: grid;

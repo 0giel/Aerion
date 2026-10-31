@@ -560,6 +560,9 @@ const pl: Dict = {
     followCursor: "Postać śledzi kursor",
     followCursorHint:
       "Głowa postaci na ekranie głównym obraca się w stronę myszy (także przy ograniczonym ruchu — wtedy bez płynnego przejścia).",
+    themeLabel: "Motyw",
+    layoutLabel: "Układ",
+    layoutHint: "Kolejność i widoczność pozycji w menu bocznym oraz bloków na ekranie głównym.",
     customizeMenu: "Dostosuj menu",
     customizeHome: "Dostosuj ekran główny",
     gameHint: "Używane przez każdą instancję, chyba że instancja ma własną wartość (instancja → Ustawienia).",
@@ -580,7 +583,7 @@ const pl: Dict = {
     followSystem: "Zgodnie z jasnym/ciemnym trybem systemu",
     lightTheme: "Motyw jasny",
     darkTheme: "Motyw ciemny",
-    editTheme: "Dostosuj…",
+    editTheme: "Edytor motywów",
     importTheme: "Importuj motyw…",
     themesFolder: "Folder motywów",
     defaultMemory: "Domyślna pamięć",

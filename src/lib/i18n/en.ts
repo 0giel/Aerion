@@ -516,6 +516,9 @@ const en = {
     followCursor: "Player model follows the cursor",
     followCursorHint:
       "The head on the home screen turns towards the mouse (also with reduced motion, then without easing).",
+    themeLabel: "Theme",
+    layoutLabel: "Layout",
+    layoutHint: "Order and visibility of sidebar items and home screen blocks.",
     customizeMenu: "Customize menu",
     customizeHome: "Customize home screen",
     gameHint: "Used by every instance unless the instance sets its own value (instance → Settings).",
@@ -536,7 +539,7 @@ const en = {
     followSystem: "Follow the system light/dark mode",
     lightTheme: "Light theme",
     darkTheme: "Dark theme",
-    editTheme: "Customize…",
+    editTheme: "Theme editor",
     importTheme: "Import theme…",
     themesFolder: "Themes folder",
     defaultMemory: "Default memory",
