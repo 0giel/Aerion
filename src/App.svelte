@@ -168,9 +168,15 @@
     grid-template-rows: auto 1fr;
   }
   .content {
+    /* Always the last track, also when the navigation is hidden (onboarding, splash). */
+    grid-column: -2;
     min-width: 0;
     min-height: 0;
     position: relative;
+  }
+  :global([data-sidebar="top"]) .content {
+    grid-column: auto;
+    grid-row: -2;
   }
   .splash,
   .fatal {

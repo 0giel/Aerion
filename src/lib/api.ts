@@ -100,3 +100,15 @@ export function loaderLabel(l: LoaderKind | string): string {
 export function instanceVersionLabel(i: Pick<Instance, "gameVersion" | "loader" | "loaderVersion">): string {
   return i.loader === "vanilla" ? i.gameVersion : `${i.gameVersion} · ${loaderLabel(i.loader)}`;
 }
+
+/** "Name · 1.21.11 · Fabric", without repeating the version when the name already is one. */
+export function instanceTitle(
+  i: Pick<Instance, "name" | "gameVersion" | "loader" | "loaderVersion">,
+): string {
+  const version = instanceVersionLabel(i);
+  return i.name === version || i.name === i.gameVersion ? version : `${i.name} · ${version}`;
+}
+
+/** Default Steve skin, fetched at runtime from Mojang's texture server (never bundled). */
+export const DEFAULT_SKIN =
+  "https://textures.minecraft.net/texture/31f477eb1a7beee631c2ca64d06f8f68fa93a3386d04452ab27f43acdf1b60cb";

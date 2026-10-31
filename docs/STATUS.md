@@ -1,8 +1,52 @@
-# Work status (2026-10-31)
+# Work status
 
-Snapshot of where the implementation stands; see `PLAN.md` for milestones.
+Running log of what is verified; milestones and next steps live in [`PLAN.md`](PLAN.md).
+Newest entries first.
 
-## Done and verified
+## 2026-10-31
+
+### Fixed: blank window on Linux (WebKitGTK hang)
+- Symptom: `pnpm tauri dev` showed only the native background colour; no JS ran.
+- Root cause (not our code — the system `MiniBrowser` hung the same way): 35 of the 52
+  `~/.cache/fontconfig/*-le64.cache-9` files on this machine are **symlinks to `*-le64.cache-12`**
+  files written by a newer fontconfig (probably a Flatpak runtime). The system fontconfig 2.15 reads
+  them as its own format and `WebKitWebProcess` then spins at 100 % CPU before requesting the page.
+  Found by elimination: graphics env vars, allocator, JIT and sandbox made no difference; a fresh
+  `XDG_CACHE_HOME` worked; bisecting the cache files pinned it to cache-9 + cache-12 together.
+- Fix (`src-tauri/src/platform.rs`): at start-up on Linux the launcher counts cache files that are
+  symlinks to a different cache version; if any exist it writes a copy of `/etc/fonts/fonts.conf`
+  whose per-user cache dir points to `<data>/cache/fontconfig` and sets `FONTCONFIG_FILE`. The
+  user's cache is never modified; a warning with the manual fix is logged
+  (`delete those links and run fc-cache`). Unit-tested. The NVIDIA DMA-BUF workaround moved there too.
+- Result: page load starts 0.2 s after process start, `UI ready` at ~0.6 s.
+
+### Verified through the UI (dev build, this machine)
+- Onboarding: language switch (pl/en), sign-in step (shows the Azure client-ID notice), "first
+  instance" creates **Minecraft 26.3**, finish → home.
+- Accounts: dev offline account (`LAUNCHER_DEV_OFFLINE=1`) added and selected.
+- **Play from the home screen: 26.3 started with Java 25 (Mojang runtime) and reached the title
+  screen** (log: sound engine started, texture atlases created). Expected offline-only errors:
+  Realms/user-properties 401. Stop button killed the game; play time was recorded.
+
+### UI fixes from the walkthrough
+- Onboarding card was stuck in the left grid track when the sidebar is hidden → `main` always uses
+  the last track.
+- Player model rewritten from CSS 3D to a **2D canvas with an orthographic projection** (WebKitGTK
+  without GPU compositing flattens `preserve-3d`, so the back faces covered the front). Back-face
+  culling + depth sort; ~30 fps idle sway, paused when hidden; drag to rotate.
+- Default skin when an account has none: Steve, fetched at runtime from `textures.minecraft.net`
+  through the image proxy (nothing bundled).
+- "26.3 · 26.3" under Play → `instanceTitle()` drops the duplicate.
+- Restoring the window after the game exits: Mutter (X11) ignores de-iconify, so a minimised window
+  is hidden and re-shown first (`show_main`).
+
+### Dev tooling added (debug builds only)
+- Page-load events in the log; page console mirrored to stdout (`CONSOLE …`, Linux).
+- `LUNCHER_DEV_EVAL=<file>`: the file's JS is evaluated in the window whenever it changes — used to
+  script UI walkthroughs without moving the mouse.
+- `LUNCHER_DEV_ON_TOP=1`: window stays on top for `xwd -name Luncher` screenshots.
+
+## 2026-10-30
 - **Engine (`crates/launcher-core`)** — builds, `cargo clippy -D warnings` clean, 82 unit/integration
   tests green (fixtures from live APIs, wiremock for HTTP).
 - **Vanilla launch end-to-end** (smoke tool `cargo run -p launcher-core --example smoke -- <ver>`):
@@ -16,19 +60,9 @@ Snapshot of where the implementation stands; see `PLAN.md` for milestones.
 - **Tauri shell** — 61 typed commands + 4 events (tauri-specta), image proxy, theme watcher, tray.
 - **Frontend** — all pages written; `pnpm check`, `pnpm lint`, `pnpm build` clean.
 
-## In progress
-- **Blank window in `pnpm tauri dev` on this machine** (Zorin, NVIDIA 580, WebKitGTK 2.52):
-  the window shows only the native background color (`#141519`), no frontend log line arrives,
-  so the page JavaScript apparently does not run (or WebKit does not paint). Next checks:
-  1. `freezePrototype: true` in `tauri.conf.json` → try `false`;
-  2. dev CSP (`devCsp`) blocking the Vite module/HMR → try without CSP;
-  3. `WEBKIT_DISABLE_COMPOSITING_MODE=1` (NVIDIA);
-  4. `frontend_log` command + global error handlers were added to surface JS errors.
-- Screenshots: `LUNCHER_DEV_ON_TOP=1` (debug builds) keeps the window on top for `xwd -name Luncher`.
-
 ## Not started yet
 - `docs/DECISIONS.md`, `docs/THEMING.md` (+ `themes/theme.schema.json`), `docs/AZURE_SETUP.md`,
   `docs/PERFORMANCE.md`, `README.md`; vitest tests for i18n/theme schema.
-- Live tests through the UI: Fabric + Sodium/Fabric API install, Forge/NeoForge launches, modpack import.
+- Live UI tests: Fabric + Sodium/Fabric API install, Forge/NeoForge launches, modpack import.
 - Release bundles (`pnpm tauri build`), performance measurements.
 - Owner actions: Azure app registration + Mojang review (client ID), CurseForge API key.

@@ -1,6 +1,8 @@
 <script lang="ts">
-  // CSS-3D player model built from the skin texture (no WebGL, no extra libraries).
-  // Each body part is a cuboid whose six faces show the matching UV region of the skin.
+  // Player model drawn on a 2D canvas (no WebGL, no libraries, no CSS 3D — WebKitGTK without GPU
+  // compositing flattens `preserve-3d`). Each body part is a cuboid; every face is an affine
+  // image of its skin UV rectangle under an orthographic projection. Back faces are culled and
+  // the rest painted far-to-near.
   import { imgUrl } from "../api";
   import { themes } from "../theme/engine.svelte";
 
@@ -19,25 +21,35 @@
     inflate: number;
     mirror?: boolean;
   }
+  interface Face {
+    /** Skin texture rectangle. */
+    tex: [number, number, number, number];
+    /** Corner at texture (0,0) and the edges along texture x and y, in model units. */
+    origin: Vec3;
+    u: Vec3;
+    v: Vec3;
+    normal: Vec3;
+  }
 
-  let texHeight = $state(64);
-  let loaded = $state(false);
+  const WIDTH = 20;
+  const HEIGHT = 34;
+
+  let canvas: HTMLCanvasElement | undefined = $state();
+  let image = $state.raw<HTMLImageElement | null>(null);
   const url = $derived(imgUrl(skinUrl));
 
   $effect(() => {
-    loaded = false;
+    image = null;
     if (!url) return;
     const img = new Image();
-    img.onload = () => {
-      texHeight = img.naturalHeight === 32 ? 32 : 64;
-      loaded = true;
-    };
+    img.onload = () => (image = img);
     img.src = url;
+    return () => (img.onload = null);
   });
 
   const parts = $derived.by((): Part[] => {
     const aw = slim ? 3 : 4;
-    const legacy = texHeight === 32;
+    const legacy = image?.naturalHeight === 32;
     return [
       { size: [8, 8, 8], pos: [0, -10, 0], uv: [0, 0], overlay: [32, 0], inflate: 0.5 },
       { size: [8, 12, 4], pos: [0, 0, 0], uv: [16, 16], overlay: legacy ? null : [16, 32], inflate: 0.25 },
@@ -65,45 +77,137 @@
     ];
   });
 
-  interface Face {
-    name: string;
-    w: number;
-    h: number;
-    u: number;
-    v: number;
-    transform: string;
+  /** Faces of a cuboid centred at `pos` (y down, the player faces +z), Minecraft UV layout. */
+  function cuboid(part: Part, outer: boolean): Face[] {
+    const [w, h, d] = part.size;
+    const [u0, v0] = outer && part.overlay ? part.overlay : part.uv;
+    const k = outer ? part.inflate : 0;
+    const [x, y, z] = [w / 2 + k, h / 2 + k, d / 2 + k];
+    const [W, H, D] = [2 * x, 2 * y, 2 * z];
+    const faces: Face[] = [
+      { tex: [u0 + d, v0 + d, w, h], origin: [-x, -y, z], u: [W, 0, 0], v: [0, H, 0], normal: [0, 0, 1] },
+      {
+        tex: [u0 + 2 * d + w, v0 + d, w, h],
+        origin: [x, -y, -z],
+        u: [-W, 0, 0],
+        v: [0, H, 0],
+        normal: [0, 0, -1],
+      },
+      { tex: [u0, v0 + d, d, h], origin: [-x, -y, -z], u: [0, 0, D], v: [0, H, 0], normal: [-1, 0, 0] },
+      { tex: [u0 + d + w, v0 + d, d, h], origin: [x, -y, z], u: [0, 0, -D], v: [0, H, 0], normal: [1, 0, 0] },
+      { tex: [u0 + d, v0, w, d], origin: [-x, -y, -z], u: [W, 0, 0], v: [0, 0, D], normal: [0, -1, 0] },
+      { tex: [u0 + d + w, v0, w, d], origin: [-x, y, z], u: [W, 0, 0], v: [0, 0, -D], normal: [0, 1, 0] },
+    ];
+    const [px, py, pz] = part.pos;
+    const flip = (p: Vec3): Vec3 => (part.mirror ? [-p[0], p[1], p[2]] : p);
+    return faces.map((f) => {
+      const o = flip(f.origin);
+      return {
+        ...f,
+        origin: [o[0] + px, o[1] + py, o[2] + pz],
+        u: flip(f.u),
+        v: flip(f.v),
+        normal: flip(f.normal),
+      };
+    });
   }
 
-  function faces([w, h, d]: Vec3, [u, v]: [number, number], s: number): Face[] {
-    return [
-      { name: "front", w, h, u: u + d, v: v + d, transform: `translateZ(${(d / 2) * s}px)` },
-      {
-        name: "back",
-        w,
-        h,
-        u: u + d + w + d,
-        v: v + d,
-        transform: `rotateY(180deg) translateZ(${(d / 2) * s}px)`,
-      },
-      { name: "right", w: d, h, u, v: v + d, transform: `rotateY(-90deg) translateZ(${(w / 2) * s}px)` },
-      {
-        name: "left",
-        w: d,
-        h,
-        u: u + d + w,
-        v: v + d,
-        transform: `rotateY(90deg) translateZ(${(w / 2) * s}px)`,
-      },
-      { name: "top", w, h: d, u: u + d, v, transform: `rotateX(90deg) translateZ(${(h / 2) * s}px)` },
-      { name: "bottom", w, h: d, u: u + d + w, v, transform: `rotateX(-90deg) translateZ(${(h / 2) * s}px)` },
-    ];
+  function draw(yawDeg: number, pitchDeg: number) {
+    const c = canvas;
+    const ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = WIDTH * scale;
+    const cssH = HEIGHT * scale;
+    if (c.width !== Math.round(cssW * dpr)) c.width = Math.round(cssW * dpr);
+    if (c.height !== Math.round(cssH * dpr)) c.height = Math.round(cssH * dpr);
+
+    const [sy, cy] = [Math.sin((yawDeg * Math.PI) / 180), Math.cos((yawDeg * Math.PI) / 180)];
+    const [sp, cp] = [Math.sin((pitchDeg * Math.PI) / 180), Math.cos((pitchDeg * Math.PI) / 180)];
+    // Rotate around Y (yaw), then X (pitch). Directions use `rot`; points are taken relative to
+    // the model centre (y = 2) first.
+    const rot = ([x, y, z]: Vec3): Vec3 => {
+      const x1 = x * cy + z * sy;
+      const z1 = -x * sy + z * cy;
+      return [x1, y * cp - z1 * sp, y * sp + z1 * cp];
+    };
+    const point = ([x, y, z]: Vec3): Vec3 => rot([x, y - 2, z]);
+    const s = scale * dpr;
+    const ox = (cssW / 2) * dpr;
+    const oy = (cssH / 2) * dpr;
+
+    const visible: { face: Face; depth: number; outer: boolean }[] = [];
+    for (const part of parts) {
+      for (const outer of [false, true]) {
+        if (outer && (!part.overlay || !image)) continue;
+        for (const face of cuboid(part, outer)) {
+          if (rot(face.normal)[2] <= 1e-6) continue;
+          const o = face.origin;
+          const centre: Vec3 = [
+            o[0] + (face.u[0] + face.v[0]) / 2,
+            o[1] + (face.u[1] + face.v[1]) / 2,
+            o[2] + (face.u[2] + face.v[2]) / 2,
+          ];
+          visible.push({ face, depth: point(centre)[2] + (outer ? 0.01 : 0), outer });
+        }
+      }
+    }
+    visible.sort((a, b) => a.depth - b.depth);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.imageSmoothingEnabled = false;
+    const blank = image ? "" : getComputedStyle(c).getPropertyValue("--c-surface-3").trim() || "#444";
+    for (const { face } of visible) {
+      const [tu, tv, tw, th] = face.tex;
+      const o = point(face.origin);
+      const u = rot(face.u);
+      const v = rot(face.v);
+      // Texture pixel (a, b) → origin + a/tw·u + b/th·v, projected orthographically.
+      ctx.setTransform(
+        (u[0] / tw) * s,
+        (u[1] / tw) * s,
+        (v[0] / th) * s,
+        (v[1] / th) * s,
+        ox + o[0] * s,
+        oy + o[1] * s,
+      );
+      if (image) {
+        // A hair of overlap hides seams between neighbouring faces.
+        ctx.drawImage(image, tu, tv, tw, th, -0.02, -0.02, tw + 0.04, th + 0.04);
+      } else {
+        ctx.fillStyle = blank;
+        ctx.fillRect(0, 0, tw, th);
+      }
+    }
   }
 
   let yaw = $state(-24);
+  let manual = $state(false);
   let dragging = false;
   let lastX = 0;
-  const animate = $derived(themes.active.motion.enabled && !themes.reducedMotion);
-  let manual = $state(false);
+  const animate = $derived(themes.active.motion.enabled && !themes.reducedMotion && !manual);
+
+  $effect(() => {
+    // Track everything `draw` reads so a static model redraws on change.
+    void [parts, image, scale, canvas];
+    if (!animate) {
+      draw(yaw, -12);
+      return;
+    }
+    // Idle sway between -32° and 28° (9 s each way), ~30 fps; rAF pauses while hidden.
+    let frame = 0;
+    let last = 0;
+    const tick = (t: number) => {
+      frame = requestAnimationFrame(tick);
+      if (t - last < 33) return;
+      last = t;
+      const k = (1 - Math.cos((Math.PI * t) / 9000)) / 2;
+      draw(-32 + 60 * k, -12 + 2 * k);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  });
 
   function down(e: PointerEvent) {
     dragging = true;
@@ -129,96 +233,19 @@
   onpointermove={move}
   onpointerup={up}
   onpointercancel={up}
-  style:--s="{scale}px"
-  style:height="{34 * scale}px"
-  style:width="{20 * scale}px"
 >
-  <div class="model" class:spin={animate && !manual} style:--yaw="{yaw}deg">
-    {#each parts as part, pi (pi)}
-      <div
-        class="part"
-        style:transform="translate3d({part.pos[0] * scale}px, {part.pos[1] * scale}px, {part.pos[2] *
-          scale}px)"
-      >
-        {#each [false, true] as outer (outer)}
-          {#if !outer || part.overlay}
-            {@const uv = outer && part.overlay ? part.overlay : part.uv}
-            {@const kx = outer ? (part.size[0] + part.inflate * 2) / part.size[0] : 1}
-            {@const ky = outer ? (part.size[1] + part.inflate * 2) / part.size[1] : 1}
-            {@const kz = outer ? (part.size[2] + part.inflate * 2) / part.size[2] : 1}
-            <div
-              class="layer"
-              class:outer
-              style:transform="scale3d({kx}, {ky}, {kz}){part.mirror ? ' scaleX(-1)' : ''}"
-            >
-              {#each faces(part.size, uv, scale) as f (f.name)}
-                <div
-                  class="face"
-                  class:blank={!loaded}
-                  style:width="{f.w * scale}px"
-                  style:height="{f.h * scale}px"
-                  style:margin-left="{(-f.w * scale) / 2}px"
-                  style:margin-top="{(-f.h * scale) / 2}px"
-                  style:transform={f.transform}
-                  style:background-image={loaded && url ? `url("${url}")` : undefined}
-                  style:background-size="{64 * scale}px {texHeight * scale}px"
-                  style:background-position="{-f.u * scale}px {-f.v * scale}px"
-                ></div>
-              {/each}
-            </div>
-          {/if}
-        {/each}
-      </div>
-    {/each}
-  </div>
+  <canvas bind:this={canvas} style:width="{WIDTH * scale}px" style:height="{HEIGHT * scale}px"></canvas>
 </div>
 
 <style>
   .viewer {
-    position: relative;
-    perspective: 1400px;
     cursor: grab;
     touch-action: none;
   }
+  canvas {
+    display: block;
+  }
   .viewer:active {
     cursor: grabbing;
-  }
-  .model {
-    position: absolute;
-    left: 50%;
-    top: 42%;
-    transform-style: preserve-3d;
-    transform: rotateX(-12deg) rotateY(var(--yaw));
-  }
-  .model.spin {
-    animation: idle 9s ease-in-out infinite alternate;
-  }
-  @keyframes idle {
-    from {
-      transform: rotateX(-12deg) rotateY(-32deg);
-    }
-    to {
-      transform: rotateX(-10deg) rotateY(28deg);
-    }
-  }
-  .part,
-  .layer {
-    position: absolute;
-    transform-style: preserve-3d;
-  }
-  .face {
-    position: absolute;
-    left: 0;
-    top: 0;
-    image-rendering: pixelated;
-    backface-visibility: hidden;
-    background-repeat: no-repeat;
-  }
-  .face.blank {
-    background: linear-gradient(160deg, var(--c-surface-3), var(--c-surface-2));
-    border: 1px solid var(--c-border);
-  }
-  .outer .face.blank {
-    display: none;
   }
 </style>

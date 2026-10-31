@@ -5,7 +5,7 @@
   import { app } from "../stores/app.svelte";
   import { dialogs } from "../stores/dialogs.svelte";
   import { toasts } from "../stores/toasts.svelte";
-  import { commands, errorMessage, type Account } from "../api";
+  import { commands, DEFAULT_SKIN, errorMessage, type Account } from "../api";
   import { formatRelative, t } from "../i18n/index.svelte";
 
   let waiting = $state(false);
@@ -161,7 +161,7 @@
         {#each view.accounts as a (a.id)}
           {@const selected = view.selected === a.id}
           <article class="card account" class:selected>
-            <SkinFace skinUrl={a.skinUrl} size={46} />
+            <SkinFace skinUrl={a.skinUrl ?? DEFAULT_SKIN} size={46} />
             <div class="col gap-1 grow" style="min-width:0">
               <div class="row" style="gap: 0.5rem">
                 <strong class="truncate">{a.username}</strong>

@@ -7,7 +7,7 @@
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { ui } from "../stores/ui.svelte";
-  import { instanceVersionLabel, type Instance } from "../api";
+  import { DEFAULT_SKIN, instanceTitle, instanceVersionLabel, type Instance } from "../api";
   import { formatPlayTime, formatRelative, t } from "../i18n/index.svelte";
 
   const account = $derived(app.selectedAccount);
@@ -67,7 +67,7 @@
           <Icon name={running ? "stop" : current ? "play" : "plus"} size={20} />
           {running ? t("common.stop") : current ? t("common.play") : t("home.createFirst")}
         </span>
-        {#if current}<span class="sub">{current.name} · {instanceVersionLabel(current)}</span>{/if}
+        {#if current}<span class="sub">{instanceTitle(current)}</span>{/if}
       </button>
       {#if launchTask}
         <div class="launching" aria-live="polite">
@@ -121,7 +121,7 @@
   <aside class="player fade-up" aria-label={account?.username ?? ""}>
     <div class="player-name">{account?.username ?? "Steve"}</div>
     <div class="underline"></div>
-    <SkinViewer skinUrl={account?.skinUrl} slim={account?.skinVariant === "slim"} scale={9} />
+    <SkinViewer skinUrl={account?.skinUrl ?? DEFAULT_SKIN} slim={account?.skinVariant === "slim"} scale={9} />
   </aside>
 
   {#if recent.length > 1}

@@ -2457,12 +2457,14 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tauri-plugin-window-state",
  "tauri-specta",
+ "tempfile",
  "tokio",
  "tokio-util",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
  "uuid",
+ "webkit2gtk",
 ]
 
 [[package]]

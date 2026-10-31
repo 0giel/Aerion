@@ -87,14 +87,22 @@ impl GameRegistry {
         if let Some(s) = self.lock().get(id) {
             return s.logs.iter().cloned().collect();
         }
-        self.last.lock().unwrap_or_else(|e| e.into_inner()).get(id).map(|l| l.iter().cloned().collect()).unwrap_or_default()
+        self.last
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(id)
+            .map(|l| l.iter().cloned().collect())
+            .unwrap_or_default()
     }
 
     pub fn clear_logs(&self, id: &str) {
         if let Some(s) = self.lock().get_mut(id) {
             s.logs.clear();
         }
-        self.last.lock().unwrap_or_else(|e| e.into_inner()).remove(id);
+        self.last
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(id);
     }
 }
 
@@ -114,8 +122,18 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
     let id = plan.instance.id.clone();
     let stop = CancellationToken::new();
     let header = vec![
-        launcher_line(format!("Luncher {} — {} ({})", env!("CARGO_PKG_VERSION"), plan.instance.name, plan.prepared.version.id)),
-        launcher_line(format!("Java {} ({}) — {}", plan.java.version, plan.java.arch, plan.java.path.display())),
+        launcher_line(format!(
+            "Luncher {} — {} ({})",
+            env!("CARGO_PKG_VERSION"),
+            plan.instance.name,
+            plan.prepared.version.id
+        )),
+        launcher_line(format!(
+            "Java {} ({}) — {}",
+            plan.java.version,
+            plan.java.arch,
+            plan.java.path.display()
+        )),
         launcher_line(format!("Memory: {} MB", plan.max_memory_mb)),
     ];
     let info = RunningGame {
@@ -125,9 +143,27 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
         java: plan.java.path.display().to_string(),
         command: plan.spec.redacted(),
     };
-    state.games.lock().insert(id.clone(), Session { info, stop: stop.clone(), logs: header.clone().into() });
-    let _ = GameLogEvent { instance_id: id.clone(), lines: header }.emit(&app);
-    let _ = GameStateEvent { instance_id: id.clone(), state: GameState::Running, exit_code: None, crash: None, play_secs: 0.0 }.emit(&app);
+    state.games.lock().insert(
+        id.clone(),
+        Session {
+            info,
+            stop: stop.clone(),
+            logs: header.clone().into(),
+        },
+    );
+    let _ = GameLogEvent {
+        instance_id: id.clone(),
+        lines: header,
+    }
+    .emit(&app);
+    let _ = GameStateEvent {
+        instance_id: id.clone(),
+        state: GameState::Running,
+        exit_code: None,
+        crash: None,
+        play_secs: 0.0,
+    }
+    .emit(&app);
 
     if let Some(w) = app.get_webview_window("main") {
         match after_launch {
@@ -173,7 +209,11 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
             }
         }
         if !batch.is_empty() {
-            let _ = GameLogEvent { instance_id: log_id.clone(), lines: batch }.emit(&app_logs);
+            let _ = GameLogEvent {
+                instance_id: log_id.clone(),
+                lines: batch,
+            }
+            .emit(&app_logs);
         }
     });
 
@@ -188,7 +228,15 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
         let session = state.games.lock().remove(&id);
         let tail: Vec<String> = session
             .as_ref()
-            .map(|s| s.logs.iter().rev().take(400).rev().map(|l| l.text.clone()).collect())
+            .map(|s| {
+                s.logs
+                    .iter()
+                    .rev()
+                    .take(400)
+                    .rev()
+                    .map(|l| l.text.clone())
+                    .collect()
+            })
             .unwrap_or_default();
         let (code, killed, secs) = match &result {
             Ok(exit) => (exit.code, exit.killed, exit.duration_secs),
@@ -197,31 +245,53 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
                 (None, false, 0)
             }
         };
-        let crash = if killed { None } else { analyze(code, &tail, &game_dir, started, max_mb) };
+        let crash = if killed {
+            None
+        } else {
+            analyze(code, &tail, &game_dir, started, max_mb)
+        };
         let crash = match (&result, crash) {
             (Err(e), None) => {
                 let mut params = std::collections::BTreeMap::new();
                 params.insert("error".into(), e.to_string());
-                Some(CrashInfo { kind: "startFailed".into(), params, description: None, report_path: None, excerpt: e.to_string(), exit_code: None })
+                Some(CrashInfo {
+                    kind: "startFailed".into(),
+                    params,
+                    description: None,
+                    report_path: None,
+                    excerpt: e.to_string(),
+                    exit_code: None,
+                })
             }
             (_, c) => c,
         };
         if let Some(s) = session {
-            state.games.last.lock().unwrap_or_else(|e| e.into_inner()).insert(id.clone(), s.logs);
+            state
+                .games
+                .last
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .insert(id.clone(), s.logs);
         }
-        let started_secs = started.duration_since(SystemTime::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
+        let started_secs = started
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0);
         let _ = state.instances.record_play(&id, started_secs, secs).await;
-        let _ = GameStateEvent { instance_id: id, state: GameState::Exited, exit_code: code, crash: crash.clone(), play_secs: secs as f64 }.emit(&app);
+        let _ = GameStateEvent {
+            instance_id: id,
+            state: GameState::Exited,
+            exit_code: code,
+            crash: crash.clone(),
+            play_secs: secs as f64,
+        }
+        .emit(&app);
         if quit_after && crash.is_none() && state.games.running().is_empty() {
             app.exit(0);
             return;
         }
-        if let Some(w) = app.get_webview_window("main") {
-            if crash.is_some() || after_launch != AfterLaunch::Keep {
-                let _ = w.show();
-                let _ = w.unminimize();
-                let _ = w.set_focus();
-            }
+        if crash.is_some() || after_launch != AfterLaunch::Keep {
+            crate::show_main(&app);
         }
     });
 }

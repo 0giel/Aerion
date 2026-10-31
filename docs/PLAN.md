@@ -193,19 +193,29 @@ Instances store human-editable JSON; no SQLite is needed (hundreds of records at
 
 ## 4. Milestones (each ends with fmt + clippy + tests + lint green and a commit)
 
-| M | Scope | Acceptance |
-|---|-------|------------|
-| M0 | Skeleton, CI, lint, theme tokens + 2 themes, i18n pl/en | app window opens, `cargo test`, `pnpm check` green |
-| M1 | Vanilla engine end-to-end + minimal "pick version → Play" | 26.3, 1.21.11, 1.20.1, 1.16.5, 1.8.9 and latest snapshot reach the title screen |
-| M2 | Microsoft accounts, keyring, offline gating | full chain unit-tested against a mock server; real login once Azure ID is approved |
-| M3 | Instances + full UI (list, wizard, edit, clone, groups, console) | CRUD + launch from UI |
-| M4 | Fabric, Quilt | Fabric 26.3 / 1.21.11 and Quilt 1.21.11 launch |
-| M5 | Modrinth browser, install with dependencies, enable/disable, updates + undo, hash recognition | Sodium + Fabric API install and run |
-| M6 | CurseForge in the same browser (user key, missing `downloadUrl` handling) | mocked integration tests; live once a key is entered |
-| M7 | Modpacks (.mrpack / CurseForge zip import+export, own format), resource packs, shaders | a Modrinth pack installs and starts |
-| M8 | NeoForge, Forge | NeoForge 26.3, Forge 1.20.1, Forge 1.8.9 launch |
-| M9 | Theme editor, built-in themes, THEMING.md | live edits without restart; export/import |
-| M10 | Performance audit, accessibility, crash analysis polish, tray, updater hook, bundles, README | targets measured in PERFORMANCE.md |
+The code for M0–M9 was written in one pass (commit `79add78`); the **Status** column tracks what
+has been *verified* against its acceptance criterion. Details and the running log: [`STATUS.md`](STATUS.md).
+
+| M | Scope | Acceptance | Status |
+|---|-------|------------|--------|
+| M0 | Skeleton, CI, lint, theme tokens + 2 themes, i18n pl/en | app window opens, `cargo test`, `pnpm check` green | ✅ (blank-window fontconfig hang fixed 2026-10-31) |
+| M1 | Vanilla engine end-to-end + minimal "pick version → Play" | 26.3, 1.21.11, 1.20.1, 1.16.5, 1.8.9 and latest snapshot reach the title screen | ✅ smoke tool for all; 26.3 also via the UI |
+| M2 | Microsoft accounts, keyring, offline gating | full chain unit-tested against a mock server; real login once Azure ID is approved | ✅ unit-tested; live login needs the owner's Azure ID |
+| M3 | Instances + full UI (list, wizard, edit, clone, groups, console) | CRUD + launch from UI | code done; UI test pending |
+| M4 | Fabric, Quilt | Fabric 26.3 / 1.21.11 and Quilt 1.21.11 launch | code + fixture tests; launch pending |
+| M5 | Modrinth browser, install with dependencies, enable/disable, updates + undo, hash recognition | Sodium + Fabric API install and run | code + fixture tests; live pending |
+| M6 | CurseForge in the same browser (user key, missing `downloadUrl` handling) | mocked integration tests; live once a key is entered | code + mocks; live needs a key |
+| M7 | Modpacks (.mrpack / CurseForge zip import+export, own format), resource packs, shaders | a Modrinth pack installs and starts | code + tests; live pending |
+| M8 | NeoForge, Forge | NeoForge 26.3, Forge 1.20.1, Forge 1.8.9 launch | code + fixture tests; launch pending |
+| M9 | Theme editor, built-in themes, THEMING.md | live edits without restart; export/import | editor + 7 themes done; THEMING.md pending |
+| M10 | Performance audit, accessibility, crash analysis polish, tray, updater hook, bundles, README | targets measured in PERFORMANCE.md | not started |
+
+### Next steps (in order)
+1. ~~Fix the blank window~~ ✅ · ~~onboarding → offline account → 26.3 → Play through the UI~~ ✅
+2. Instances page + wizard (new instance with a loader), settings (after-launch, memory, Java).
+3. Fabric + Sodium/Fabric API from Modrinth; Forge 1.20.1 and NeoForge 26.3 launches; a `.mrpack` import.
+4. Docs: README, DECISIONS, THEMING (+ `themes/theme.schema.json`), AZURE_SETUP, PERFORMANCE.
+5. Vitest tests (i18n shape, theme schema), release build + bundles, performance measurements.
 
 ## 5. Risks and mitigations
 

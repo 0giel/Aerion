@@ -77,6 +77,10 @@ impl Paths {
     pub fn image_cache_dir(&self) -> PathBuf {
         self.data.join("cache").join("images")
     }
+    /// Private fontconfig cache, used only when the user's cache is unusable (Linux).
+    pub fn fontconfig_cache_dir(&self) -> PathBuf {
+        self.data.join("cache").join("fontconfig")
+    }
     pub fn meta_dir(&self) -> PathBuf {
         self.data.join("meta")
     }

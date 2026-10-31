@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "./Icon.svelte";
   import SkinFace from "./SkinFace.svelte";
+  import { DEFAULT_SKIN } from "../api";
   import Logo from "./Logo.svelte";
   import { router, type Page } from "../stores/router.svelte";
   import { app } from "../stores/app.svelte";
@@ -73,7 +74,7 @@
     onclick={() => router.go("accounts")}
     title={account?.username ?? t("nav.accounts")}
   >
-    <SkinFace skinUrl={account?.skinUrl} size={28} />
+    <SkinFace skinUrl={account ? (account.skinUrl ?? DEFAULT_SKIN) : null} size={28} />
     <span class="label truncate">{account?.username ?? t("accounts.empty")}</span>
   </button>
   <button
