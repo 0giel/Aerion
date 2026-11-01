@@ -29,6 +29,7 @@ import pl.aerion.mod.Txt;
 import pl.aerion.mod.features.Crosshair;
 import pl.aerion.mod.features.Features;
 import pl.aerion.mod.features.Sounds;
+import pl.aerion.mod.features.Waypoints;
 import pl.aerion.mod.platform.Gfx;
 
 /**
@@ -43,7 +44,7 @@ public final class AerionMenu implements Page {
 	};
 	private static final float TEXT = 8f, SMALL = 7f, TITLE = 10f;
 	private static final int ROW = 16, SIDE = 92, GAP = 5;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "worldLook", "hitColor", "screens"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 440, WIN_H = 250;
 
@@ -122,6 +123,21 @@ public final class AerionMenu implements Page {
 			Map.entry("session", List.of(Option.toggle("label", true))),
 			Map.entry("day", List.of(Option.toggle("time", true))),
 			Map.entry("light", List.of(Option.toggle("colored", true), Option.toggle("sky", false))),
+			Map.entry("packs", List.of(Option.toggle("all", false), Option.toggle("hideEmpty", true))),
+			Map.entry("armorWarn", List.of(Option.number("threshold", 15, 1, 60), Option.toggle("held", true), Option.toggle("sound", true), Option.toggle("blink", true))),
+			Map.entry("bossbar", List.of(Option.toggle("hide", false))),
+			Map.entry("scoreboard", List.of(Option.toggle("hide", false))),
+			Map.entry("chatbox", List.of(Option.toggle("hide", false))),
+			Map.entry("blockOutline", List.of(
+					Option.colour("color", "#ffffff"), Option.number("opacity", 100, 0, 100), Option.number("width", 2, 1, 8),
+					Option.colour("fillColor", "accent"), Option.number("fill", 0, 0, 100))),
+			Map.entry("chat", List.of(Option.toggle("time", true), Option.toggle("seconds", false), Option.toggle("stack", true), Option.toggle("history", true))),
+			Map.entry("perspective", List.of(Option.toggle("hold", true), Option.select("view", "back", "back", "front"))),
+			Map.entry("fovKey", List.of(Option.number("fov", 110, 10, 170))),
+			Map.entry("worldLook", List.of(
+					Option.toggle("fixTime", true), Option.number("hour", 12, 0, 23), Option.select("weather", "clear", "game", "clear", "rain", "thunder"))),
+			Map.entry("hitColor", List.of(Option.colour("color", "#55aaff"), Option.number("opacity", 70, 0, 100))),
+			Map.entry("screens", List.of(Option.select("veil", "none", "none2", "dark", "theme"), Option.number("opacity", 50, 0, 100), Option.toggle("blur", true))),
 			Map.entry("lightLevels", List.of(
 					Option.select("mode", "block", "block", "combined"), Option.number("radius", 8, 2, 16), Option.number("maxLevel", 15, 0, 15),
 					Option.number("scale", 100, 40, 300), Option.colour("lowColor", "#ff5555"), Option.colour("midColor", "#ffe25a"), Option.colour("highColor", "#55dd77"))),
@@ -153,7 +169,7 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	private enum Section { HUD, FEATURES, SOUNDS, KEYS, LOOK }
+	private enum Section { HUD, FEATURES, SOUNDS, WAYPOINTS, KEYS, LOOK }
 
 	private enum Sub { GENERAL, LOOK, KEY }
 
@@ -171,7 +187,11 @@ public final class AerionMenu implements Page {
 
 	private final List<Hit> hits = new ArrayList<>();
 	private Hit sliding;
-	private boolean changed, clipping;
+	private boolean changed, clipping, gameOptionsChanged;
+	/** The waypoint whose name is being typed. */
+	private Waypoints.Point naming;
+	/** The first key replaces the suggested name. */
+	private boolean namingFresh;
 	/** Drawing units per GUI pixel: the menu has its own size, whatever the game's GUI scale. */
 	private float toUnits = 1f;
 	private int unitsW, unitsH;
@@ -191,7 +211,7 @@ public final class AerionMenu implements Page {
 	private final Map<String, Float> eased = new HashMap<>();
 	private final Map<String, Integer> cards = new HashMap<>();
 	private String cardKey;
-	private int cardTop;
+	private int cardTop, cardIndex;
 	private long lastFrame;
 	private float dt = 0.016f;
 
@@ -235,6 +255,7 @@ public final class AerionMenu implements Page {
 		}
 		if (button != InputConstants.MOUSE_BUTTON_LEFT) return false;
 		hexRow = null;
+		naming = null;
 		for (Hit h : List.copyOf(hits)) {
 			if (h.clipped && (py < viewTop || py >= viewBottom)) continue;
 			if (h.contains(px, py)) {
@@ -253,6 +274,16 @@ public final class AerionMenu implements Page {
 		if (capturing != null) {
 			if (!escape) bind(key);
 			capturing = null;
+			return true;
+		}
+		if (naming != null) {
+			if (key.getValue() == InputConstants.KEY_BACKSPACE) {
+				naming.name = namingFresh || naming.name.isEmpty() ? "" : naming.name.substring(0, naming.name.length() - 1);
+				namingFresh = false;
+			} else if (escape || key.getValue() == InputConstants.KEY_RETURN) {
+				if (naming.name.isBlank()) naming.name = Lang.tr("aerion.waypoint.default");
+				naming = null;
+			}
 			return true;
 		}
 		if (hexRow != null) {
@@ -288,6 +319,12 @@ public final class AerionMenu implements Page {
 
 	@Override
 	public boolean charTyped(int codepoint) {
+		if (naming != null) {
+			if (namingFresh) naming.name = "";
+			namingFresh = false;
+			if (naming.name.length() < 32 && !Character.isISOControl(codepoint)) naming.name += new String(Character.toChars(codepoint));
+			return true;
+		}
 		if (hexRow != null) {
 			if (Character.digit(codepoint, 16) >= 0 && hexText.length() < 6) {
 				hexText += Character.toLowerCase((char) codepoint);
@@ -335,12 +372,16 @@ public final class AerionMenu implements Page {
 	public void close() {
 		if (changed) AerionClient.saveHud();
 		changed = false;
+		if (gameOptionsChanged) Minecraft.getInstance().options.save();
+		gameOptionsChanged = false;
+		Waypoints.save();
 	}
 
 	// --- window ------------------------------------------------------------------------------
 	@Override
 	public void render(Gfx gfx, int mx, int my) {
 		hits.clear();
+		cardIndex = 0;
 		g = gfx;
 		Theme t = AerionClient.theme();
 		text = t != null ? t.text : 0xFFFFFFFF;
@@ -411,6 +452,7 @@ public final class AerionMenu implements Page {
 			case HUD -> tiles(mainX, mainW, found(List.of(Features.MODULE_IDS)));
 			case FEATURES -> tiles(mainX, mainW, found(List.of(FEATURES)));
 			case SOUNDS -> soundsPage();
+			case WAYPOINTS -> waypointsPage();
 			case KEYS -> keysPage();
 			case LOOK -> lookPage();
 		}
@@ -434,6 +476,7 @@ public final class AerionMenu implements Page {
 		ny = navItem(left + 4, ny, Section.HUD, "fps", "aerion.nav.hud");
 		ny = navItem(left + 4, ny, Section.FEATURES, "zoom", "aerion.nav.features");
 		ny = navItem(left + 4, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
+		ny = navItem(left + 4, ny, Section.WAYPOINTS, "waypoints", "aerion.nav.waypoints");
 		ny = navItem(left + 4, ny, Section.KEYS, "keys", "aerion.nav.keys");
 		navItem(left + 4, ny, Section.LOOK, "look", "aerion.nav.look");
 		int by = top + h - 21;
@@ -466,6 +509,7 @@ public final class AerionMenu implements Page {
 			case HUD -> "hud";
 			case FEATURES -> "features";
 			case SOUNDS -> "sounds";
+			case WAYPOINTS -> "waypoints";
 			case KEYS -> "keys";
 			case LOOK -> "look";
 		};
@@ -529,7 +573,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private boolean searchable() {
-		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK;
+		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK && section != Section.WAYPOINTS;
 	}
 
 	/** Typing goes straight here, so there is nothing to click first. */
@@ -546,7 +590,11 @@ public final class AerionMenu implements Page {
 			note(Lang.tr("aerion.sound.empty"));
 			return;
 		}
-		int cols = items.size() < 8 ? 2 : Math.max(2, (w + GAP) / (96 + GAP));
+		// Three columns, or two when a name wouldn't fit in full.
+		int cols = Math.max(2, (w + GAP) / (96 + GAP));
+		float widest = 0;
+		for (String id : items) widest = Math.max(widest, Txt.width(name(id), TEXT));
+		if (widest > (w - (cols - 1) * GAP) / cols - 56) cols = 2;
 		int cw = (w - (cols - 1) * GAP) / cols, ch = 26;
 		HudConfig cfg = AerionClient.hud();
 		for (int i = 0; i < items.size(); i++) {
@@ -600,6 +648,7 @@ public final class AerionMenu implements Page {
 			beginCard(Lang.tr("aerion.sec.options"));
 			for (Option o : options) option(m, o);
 			if (options.stream().anyMatch(o -> o.key.equals("format"))) note(Lang.tr("aerion.panel.formatHint"));
+			if (List.of("bossbar", "scoreboard", "chatbox").contains(detail)) note(Lang.tr("aerion.hint.element"));
 			endCard();
 		}
 		beginCard(Lang.tr("aerion.sec.place"));
@@ -644,9 +693,23 @@ public final class AerionMenu implements Page {
 		}
 		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(f, o);
 		if (detail.equals("hurtCam")) note(Lang.tr("aerion.hint.hurtCam"));
+		if (detail.equals("chat")) chatOpacity();
 		if (y == cardTop + 5) note(Lang.tr("aerion.hint.noOptions"));
 		endCard();
 		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) note(Lang.tr("aerion.panel.serverWarning"));
+	}
+
+	/** The game's own chat options, here because they belong with the rest. */
+	private void chatOpacity() {
+		var options = Minecraft.getInstance().options;
+		slider(Lang.tr("aerion.chat.background"), (int) Math.round(options.textBackgroundOpacity().get() * 100), 0, 100, 5, "%", v -> {
+			options.textBackgroundOpacity().set(v / 100.0);
+			gameOptionsChanged = true;
+		});
+		slider(Lang.tr("aerion.chat.text"), (int) Math.round(options.chatOpacity().get() * 100), 10, 100, 5, "%", v -> {
+			options.chatOpacity().set(v / 100.0);
+			gameOptionsChanged = true;
+		});
 	}
 
 	/** The crosshair on a sample of sky and ground. */
@@ -662,14 +725,18 @@ public final class AerionMenu implements Page {
 	}
 
 	private void option(JsonObject m, Option o) {
-		String label = Lang.tr(o.key.equals("format") || o.key.equals("colored") && !detail.equals("armor")
+		option(m, o, detail);
+	}
+
+	private void option(JsonObject m, Option o, String owner) {
+		String label = Lang.tr(o.key.equals("format") || o.key.equals("colored") && !owner.equals("armor") && !owner.equals("light")
 				? "aerion.opt." + o.key
-				: "aerion.opt." + detail + "." + o.key);
+				: "aerion.opt." + owner + "." + o.key);
 		String value = HudConfig.opt(m, o.key, o.def);
 		if (o.isToggle()) {
 			toggle(label, "1".equals(value), v -> setOption(m, o.key, v ? "1" : "0"));
 		} else if (o.color) {
-			color(detail + "." + o.key, label, new String[] {"accent"}, new String[] {Lang.tr("aerion.style.accent")}, value, v -> setOption(m, o.key, v));
+			color(owner + "." + o.key, label, new String[] {"accent"}, new String[] {Lang.tr("aerion.style.accent")}, value, v -> setOption(m, o.key, v));
 		} else if (o.choices != null) {
 			String[] labels = o.labels;
 			if (labels == null) {
@@ -962,11 +1029,64 @@ public final class AerionMenu implements Page {
 		if (event != null) Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event, 1f));
 	}
 
+	// --- waypoints ---------------------------------------------------------------------------
+	private void waypointsPage() {
+		HudConfig cfg = AerionClient.hud();
+		JsonObject f = cfg.feature("waypoints");
+		beginCard(null);
+		toggle(Lang.tr("aerion.waypoint.show"), HudConfig.bool(f, "enabled", false), v -> f.addProperty("enabled", v));
+		for (Option o : List.of(Option.toggle("beam", true), Option.toggle("distance", true), Option.toggle("minimap", true), Option.number("scale", 100, 40, 300))) {
+			option(f, o, "waypoints");
+		}
+		endCard();
+		var player = Minecraft.getInstance().player;
+		if (player == null) return;
+		String add = Lang.tr("aerion.waypoint.add");
+		button(x, y, Math.round(Txt.width(add, TEXT)) + 20, 15, add, true, () -> {
+			f.addProperty("enabled", true);
+			changed = true;
+			naming = Waypoints.addHere(Lang.tr("aerion.waypoint.default"));
+			namingFresh = true;
+		});
+		y += 19;
+		List<Waypoints.Point> points = Waypoints.all();
+		if (points.isEmpty()) {
+			note(Lang.tr("aerion.waypoint.empty"));
+			return;
+		}
+		beginCard(null);
+		for (Waypoints.Point w : List.copyOf(points)) waypointRow(w, player);
+		endCard();
+	}
+
+	private void waypointRow(Waypoints.Point w, net.minecraft.client.player.LocalPlayer player) {
+		String id = "wp" + System.identityHashCode(w);
+		int rowY = y, right = x + colW;
+		Draw.control(g, x, rowY + 3, 10, 10, 2, line, Waypoints.color(w));
+		hit(x, rowY + 2, 10, 12, f -> expanded = id.equals(expanded) ? null : id, false);
+		boolean editing = naming == w;
+		String shown = editing ? w.name + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : "") : w.name;
+		Txt.draw(g, ellipsize(shown, colW - 140), x + 15, rowY + ROW / 2f, TEXT, w.enabled ? text : muted);
+		hit(x + 15, rowY, colW - 140, ROW, f -> naming = w, false);
+		boolean sameWorld = Waypoints.dimension(player).equals(w.dimension);
+		String where = sameWorld
+				? Math.round(Math.sqrt(player.distanceToSqr(w.x + 0.5, w.y, w.z + 0.5))) + " m"
+				: Lang.tr("aerion.waypoint.otherDim");
+		Txt.draw(g, where, right - 36 - Txt.width(where, SMALL), rowY + ROW / 2f, SMALL, muted);
+		iconButton(right - 31, rowY + 1, 14, w.enabled ? "freelook" : "hide", () -> {
+			w.enabled = !w.enabled;
+			Waypoints.save();
+		});
+		iconButton(right - 15, rowY + 1, 14, "close", () -> Waypoints.remove(w));
+		y += ROW;
+		if (id.equals(expanded)) color(id, Lang.tr("aerion.waypoint.color"), new String[] {}, new String[] {}, w.color, v -> w.color = v);
+	}
+
 	// --- keys --------------------------------------------------------------------------------
 	private void keyTab() {
 		KeyMapping k = Features.key(detail);
 		String label = switch (detail) {
-			case "zoom", "freelook" -> Lang.tr("aerion.key.hold");
+			case "zoom", "freelook", "perspective", "fovKey" -> Lang.tr("aerion.key.hold");
 			case "toggleSprint" -> Lang.tr("aerion.key.sprint");
 			case "toggleSneak" -> Lang.tr("aerion.key.sneak");
 			default -> Lang.tr("aerion.key.toggle");
@@ -991,6 +1111,14 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.crosshair"), Features.key("crosshair"));
 		keyRow(Lang.tr("aerion.feature.hurtCam"), Features.key("hurtCam"));
 		keyRow(Lang.tr("aerion.feature.lightLevels"), Features.key("lightLevels"));
+		keyRow(Lang.tr("aerion.feature.blockOutline"), Features.key("blockOutline"));
+		keyRow(Lang.tr("aerion.feature.chat"), Features.key("chat"));
+		keyRow(Lang.tr("aerion.feature.perspective"), Features.key("perspective"));
+		keyRow(Lang.tr("aerion.feature.fovKey"), Features.key("fovKey"));
+		keyRow(Lang.tr("aerion.feature.worldLook"), Features.key("worldLook"));
+		keyRow(Lang.tr("aerion.feature.hitColor"), Features.key("hitColor"));
+		keyRow(Lang.tr("aerion.feature.screens"), Features.key("screens"));
+		keyRow(Lang.tr("aerion.waypoint.add"), Features.key("waypointAdd"));
 		keyRow(Lang.tr("aerion.key.sprint"), Features.key("toggleSprint"));
 		keyRow(Lang.tr("aerion.key.sneak"), Features.key("toggleSneak"));
 		endCard();
@@ -1085,7 +1213,7 @@ public final class AerionMenu implements Page {
 
 	/** A group of settings on a slightly lighter panel; its height comes from the last frame. */
 	private void beginCard(String title) {
-		cardKey = section + ":" + detail + ":" + sub + ":" + title;
+		cardKey = section + ":" + detail + ":" + sub + ":" + cardIndex++;
 		cardTop = y;
 		Integer h = cards.get(cardKey);
 		if (h != null) Draw.rounded(g, x, y, colW, h, 4, tile);

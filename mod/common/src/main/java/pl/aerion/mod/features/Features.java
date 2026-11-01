@@ -13,9 +13,11 @@ import net.minecraft.client.CameraType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import pl.aerion.mod.AerionClient;
+import pl.aerion.mod.Lang;
 import pl.aerion.mod.hud.HudConfig;
 import pl.aerion.mod.hud.HudEditor;
 import pl.aerion.mod.mixin.OptionInstanceAccessor;
@@ -32,11 +34,11 @@ public final class Features {
 
 	/** Every HUD module; each can have a key that switches it on and off. */
 	public static final String[] MODULE_IDS = {
-		"fps", "coords", "direction", "speed", "cps", "keystrokes", "armor", "totems", "items", "potions", "death", "ping", "clock", "session", "day", "light", "memory", "minimap", "toggles"
+		"fps", "coords", "direction", "speed", "cps", "keystrokes", "armor", "totems", "items", "potions", "death", "armorWarn", "ping", "clock", "session", "day", "light", "memory", "packs", "minimap", "toggles", "bossbar", "scoreboard", "chatbox"
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels;
+	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -53,7 +55,16 @@ public final class Features {
 			crosshair = new KeyMapping("key.aerion.crosshair", InputConstants.UNKNOWN.getValue(), cat);
 			hurtCam = new KeyMapping("key.aerion.hurtCam", InputConstants.UNKNOWN.getValue(), cat);
 			lightLevels = new KeyMapping("key.aerion.lightLevels", InputConstants.UNKNOWN.getValue(), cat);
-			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels));
+			blockOutline = new KeyMapping("key.aerion.blockOutline", InputConstants.UNKNOWN.getValue(), cat);
+			chat = new KeyMapping("key.aerion.chat", InputConstants.UNKNOWN.getValue(), cat);
+			perspective = new KeyMapping("key.aerion.perspective", InputConstants.KEY_V, cat);
+			fovKey = new KeyMapping("key.aerion.fovKey", InputConstants.UNKNOWN.getValue(), cat);
+			worldLook = new KeyMapping("key.aerion.worldLook", InputConstants.UNKNOWN.getValue(), cat);
+			hitColor = new KeyMapping("key.aerion.hitColor", InputConstants.UNKNOWN.getValue(), cat);
+			screens = new KeyMapping("key.aerion.screens", InputConstants.UNKNOWN.getValue(), cat);
+			waypointAdd = new KeyMapping("key.aerion.waypointAdd", InputConstants.UNKNOWN.getValue(), cat);
+			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -83,6 +94,14 @@ public final class Features {
 			case "crosshair" -> crosshair;
 			case "hurtCam" -> hurtCam;
 			case "lightLevels" -> lightLevels;
+			case "blockOutline" -> blockOutline;
+			case "chat" -> chat;
+			case "perspective" -> perspective;
+			case "fovKey" -> fovKey;
+			case "worldLook" -> worldLook;
+			case "hitColor" -> hitColor;
+			case "screens" -> screens;
+			case "waypointAdd" -> waypointAdd;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -99,7 +118,7 @@ public final class Features {
 	}
 
 	// --- zoom -------------------------------------------------------------------------------
-	private static float zoomNow = 1f;
+	private static float zoomNow = 1f, fovNow = 1f;
 	private static long lastFrame;
 
 	/** Multiplies the field of view; eases in and out when "smooth" is on. */
@@ -108,13 +127,25 @@ public final class Features {
 		boolean want = zoom != null && HudConfig.bool(z, "enabled", true) && zoom.isDown();
 		float factor = Math.max(2, Math.min(10, HudConfig.num(z, "factor", 4)));
 		float target = want ? 1f / factor : 1f;
+		float fovTarget = 1f;
+		JsonObject fk = feature("fovKey");
+		if (fovKey != null && HudConfig.bool(fk, "enabled", false) && fovKey.isDown()) {
+			int base = Math.max(1, Minecraft.getInstance().options.fov().get());
+			try {
+				fovTarget = Math.max(10, Math.min(170, Integer.parseInt(HudConfig.opt(fk, "fov", "110")))) / (float) base;
+			} catch (NumberFormatException e) {
+				fovTarget = 1f;
+			}
+		}
 		long now = System.nanoTime();
 		float dt = lastFrame == 0 ? 0.016f : Math.min(0.1f, (now - lastFrame) / 1e9f);
 		lastFrame = now;
 		if (HudConfig.bool(z, "smooth", true)) zoomNow += (target - zoomNow) * Math.min(1f, dt * 14f);
 		else zoomNow = target;
 		if (Math.abs(zoomNow - target) < 0.001f) zoomNow = target;
-		return zoomNow;
+		fovNow += (fovTarget - fovNow) * Math.min(1f, dt * 14f);
+		if (Math.abs(fovNow - fovTarget) < 0.001f) fovNow = fovTarget;
+		return zoomNow * fovNow;
 	}
 
 	// --- freelook ---------------------------------------------------------------------------
@@ -155,6 +186,43 @@ public final class Features {
 		looking = false;
 		if (before != null) mc.options.setCameraType(before);
 		before = null;
+	}
+
+	// --- perspective ---------------------------------------------------------------------------
+	private static CameraType beforePeek;
+
+	private static void tickPerspective(Minecraft mc) {
+		JsonObject f = feature("perspective");
+		if (!HudConfig.bool(f, "enabled", false) || mc.player == null) {
+			if (beforePeek != null) {
+				mc.options.setCameraType(beforePeek);
+				beforePeek = null;
+			}
+			while (perspective.consumeClick()) {
+				// Nothing to do while switched off.
+			}
+			return;
+		}
+		boolean hold = "1".equals(HudConfig.opt(f, "hold", "1"));
+		if (hold) {
+			if (perspective.isDown() && beforePeek == null && Game.screen() == null) peek(mc, f);
+			else if (!perspective.isDown() && beforePeek != null) unpeek(mc);
+		} else {
+			while (perspective.consumeClick()) {
+				if (beforePeek == null) peek(mc, f);
+				else unpeek(mc);
+			}
+		}
+	}
+
+	private static void peek(Minecraft mc, JsonObject f) {
+		beforePeek = mc.options.getCameraType();
+		mc.options.setCameraType("front".equals(HudConfig.opt(f, "view", "back")) ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
+	}
+
+	private static void unpeek(Minecraft mc) {
+		mc.options.setCameraType(beforePeek);
+		beforePeek = null;
 	}
 
 	// --- fullbright -------------------------------------------------------------------------
@@ -258,6 +326,17 @@ public final class Features {
 		toggleOnKey(crosshair, "crosshair", false);
 		toggleOnKey(hurtCam, "hurtCam", false);
 		toggleOnKey(lightLevels, "lightLevels", false);
+		toggleOnKey(blockOutline, "blockOutline", false);
+		toggleOnKey(chat, "chat", false);
+		toggleOnKey(worldLook, "worldLook", false);
+		toggleOnKey(hitColor, "hitColor", false);
+		toggleOnKey(screens, "screens", false);
+		HitColor.tick();
+		while (waypointAdd.consumeClick()) {
+			Waypoints.Point w = Waypoints.addHere(Lang.tr("aerion.waypoint.default"));
+			if (w != null) Game.overlayMessage(Component.literal(w.name + " (" + w.x + ", " + w.y + ", " + w.z + ")"));
+		}
+		tickPerspective(mc);
 		if (mc.player == null) joined = 0;
 		else if (joined == 0) joined = System.currentTimeMillis();
 		for (var e : MODULE_KEYS.entrySet()) {

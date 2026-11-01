@@ -1,4 +1,4 @@
-64 6 384 448
+64 6 384 640
 fps
 coords
 direction
@@ -22,6 +22,14 @@ light
 crosshair
 hurtCam
 lightLevels
+blockOutline
+chat
+chatbox
+fovKey
+worldLook
+hitColor
+waypoints
+bossbar
 toggleSneak
 armor
 clock
@@ -41,3 +49,8 @@ play
 search
 items
 day
+perspective
+screens
+scoreboard
+packs
+armorWarn

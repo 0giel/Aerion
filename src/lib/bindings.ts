@@ -823,6 +823,14 @@ export type HudFeatures_Deserialize = {
 	crosshair?: FeatureOptions_Deserialize,
 	hurtCam?: FeatureOptions_Deserialize,
 	lightLevels?: FeatureOptions_Deserialize,
+	blockOutline?: FeatureOptions_Deserialize,
+	chat?: FeatureOptions_Deserialize,
+	perspective?: FeatureOptions_Deserialize,
+	fovKey?: FeatureOptions_Deserialize,
+	worldLook?: FeatureOptions_Deserialize,
+	hitColor?: FeatureOptions_Deserialize,
+	screens?: FeatureOptions_Deserialize,
+	waypoints?: FeatureOptions_Deserialize,
 };
 
 export type HudFeatures_Serialize = {
@@ -837,6 +845,14 @@ export type HudFeatures_Serialize = {
 	crosshair: FeatureOptions_Serialize,
 	hurtCam: FeatureOptions_Serialize,
 	lightLevels: FeatureOptions_Serialize,
+	blockOutline: FeatureOptions_Serialize,
+	chat: FeatureOptions_Serialize,
+	perspective: FeatureOptions_Serialize,
+	fovKey: FeatureOptions_Serialize,
+	worldLook: FeatureOptions_Serialize,
+	hitColor: FeatureOptions_Serialize,
+	screens: FeatureOptions_Serialize,
+	waypoints: FeatureOptions_Serialize,
 };
 
 export type HudModule = HudModule_Serialize | HudModule_Deserialize;

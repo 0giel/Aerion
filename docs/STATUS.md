@@ -41,6 +41,12 @@ Newest entries first.
   counts, speed, death, session, day, light, hurt cam at 200 and 0 %, tint, faint fire, crosshair
   chroma. On 1.21.11: all mixins apply, sound measured; features there not looked at one by one. Not
   checked: hiding the spyglass and totem animation, target colour, shapes other than the cross.
+- **Block outline, waypoints, chat, perspective, FOV key, time and weather, hit colour, armor warning,
+  resource pack module, moved game elements, screen background** (D38). 26.3 in a world: all of them,
+  incl. chat history across leaving and re-entering a world. 1.21.11 in a new world: mixins apply,
+  outline, chat times and repeats, scoreboard drag saved, boss bar, inventory without the veil,
+  weather, perspective, FOV. Not checked: waypoints and hit colour on 1.21.11, a real resource pack,
+  the armor warning's sound, hide options, multiplayer.
 - **World on start, light numbers, effect icons, menu search** (D37): auto-entry was left over from
   test `gameArgs`, removed; default start checked to reach the main menu, `@last` to enter the world.
   26.3 in a world: light numbers around a torch, light module at night, effect icons, hiding the

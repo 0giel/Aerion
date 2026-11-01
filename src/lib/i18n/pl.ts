@@ -1145,6 +1145,11 @@ const pl: Dict = {
     keysHint:
       "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, układ HUD Prawy Shift, pełna jasność bez klawisza) oraz klawisz włączania każdego modułu ustawisz w grze: prawy Shift → Mody → Klawisze.",
     modules: {
+      armorWarn: "Ostrzeżenie o zbroi",
+      packs: "Paczka zasobów",
+      bossbar: "Pasek bossa",
+      scoreboard: "Tablica wyników",
+      chatbox: "Pozycja czatu",
       speed: "Prędkość",
       totems: "Licznik totemów",
       items: "Licznik przedmiotów",
@@ -1166,6 +1171,11 @@ const pl: Dict = {
       toggles: "Przełączniki",
     },
     about: {
+      armorWarn: "Ostrzeżenie, gdy zbroja lub trzymany przedmiot zaraz się zniszczy.",
+      packs: "Aktywna paczka zasobów.",
+      bossbar: "Przesuń, przeskaluj lub ukryj pasek bossa.",
+      scoreboard: "Przesuń, przeskaluj lub ukryj tablicę wyników.",
+      chatbox: "Przesuń, przeskaluj lub ukryj czat.",
       speed: "Jak szybko się poruszasz, w blokach na sekundę.",
       totems: "Ile masz totemów nieśmiertelności.",
       items: "Strzały, perły, złote jabłka, rakiety i butelki, które masz przy sobie.",
@@ -1187,6 +1197,25 @@ const pl: Dict = {
       toggles: "Pokazuje włączony bieg, skradanie, pełną jasność i rozglądanie.",
     },
     options: {
+      armorWarn: {
+        threshold: "Ostrzegaj od (%)",
+        held: "Licz trzymany przedmiot",
+        sound: "Dźwięk",
+        blink: "Miganie",
+      },
+      packs: {
+        all: "Pokaż wszystkie paczki",
+        hideEmpty: "Ukryj, gdy brak",
+      },
+      bossbar: {
+        hide: "Ukryj całkowicie",
+      },
+      scoreboard: {
+        hide: "Ukryj całkowicie",
+      },
+      chatbox: {
+        hide: "Ukryj całkowicie",
+      },
       speed: {
         format: "Format ({speed})",
         decimals: "Po przecinku",
@@ -1327,6 +1356,22 @@ const pl: Dict = {
       },
     },
     features: {
+      blockOutline: "Obrys bloku",
+      blockOutlineHint: "Kolory, grubość i wypełnienie ustawisz w menu w grze.",
+      chat: "Czat",
+      chatHint: "Godziny wiadomości, zliczanie powtórzeń i historia po rozłączeniu.",
+      perspective: "Perspektywa",
+      perspectiveHint: "Trzymaj V, aby zobaczyć siebie; pozostałe opcje są w menu w grze.",
+      fovKey: "Klawisz FOV",
+      fovKeyHint: "Inne pole widzenia, gdy trzymasz klawisz.",
+      worldLook: "Pora i pogoda",
+      worldLookHint: "Widzisz je tylko Ty. Ustawisz w menu w grze.",
+      hitColor: "Kolor trafienia",
+      hitColorHint: "Zabarwienie stworzeń tuż po trafieniu.",
+      screens: "Tło ekranów",
+      screensHint: "Usuń kolor motywu za ekwipunkiem i menu.",
+      waypoints: "Punkty trasy",
+      waypointsHint: "Własne punkty z nazwą, kolorem i odległością. Dodasz je w menu w grze.",
       lightLevels: "Liczby światła",
       lightLevelsHint: "Liczby na podłodze wokół Ciebie; zasięg i kolory ustawisz w menu w grze.",
       crosshair: "Celownik",

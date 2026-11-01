@@ -47,10 +47,17 @@ public final class HudConfig {
 			  "items":{"enabled":false,"x":860,"y":560,"scale":100},
 			  "session":{"enabled":false,"x":500,"y":170,"scale":100},
 			  "day":{"enabled":false,"x":500,"y":250,"scale":100},
-			  "light":{"enabled":false,"x":500,"y":90,"scale":100}},
+			  "light":{"enabled":false,"x":500,"y":90,"scale":100},
+			  "armorWarn":{"enabled":false,"x":500,"y":330,"scale":100},
+			  "packs":{"enabled":false,"x":500,"y":410,"scale":100},
+			  "bossbar":{"enabled":false,"x":500,"y":55,"scale":100},
+			  "scoreboard":{"enabled":false,"x":1000,"y":500,"scale":100},
+			  "chatbox":{"enabled":false,"x":0,"y":733,"scale":100}},
 			 "features":{"zoom":{"enabled":true,"factor":4,"smooth":true},"freelook":{"enabled":false,"hold":true},
 			  "fullbright":{"enabled":false},"toggleSprint":{"enabled":false},"toggleSneak":{"enabled":false},
-			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false},"lightLevels":{"enabled":false}}}
+			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false},"lightLevels":{"enabled":false},
+			  "blockOutline":{"enabled":false},"chat":{"enabled":false},"perspective":{"enabled":false},"fovKey":{"enabled":false},
+			  "worldLook":{"enabled":false},"hitColor":{"enabled":false},"screens":{"enabled":false},"waypoints":{"enabled":false}}}
 			""";
 
 	public static HudConfig defaults() {

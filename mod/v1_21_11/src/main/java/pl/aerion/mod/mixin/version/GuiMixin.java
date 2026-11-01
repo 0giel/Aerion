@@ -1,6 +1,9 @@
 package pl.aerion.mod.mixin.version;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import org.spongepowered.asm.mixin.Mixin;
@@ -8,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.resources.Identifier;
+import pl.aerion.mod.features.ChatTweaks;
 import pl.aerion.mod.features.Crosshair;
 import pl.aerion.mod.features.Overlays;
 import pl.aerion.mod.platform.Gfx;
@@ -53,5 +57,41 @@ abstract class GuiMixin {
 	@Inject(method = "renderEffects", at = @At("HEAD"), cancellable = true)
 	private void aerion$effects(CallbackInfo ci) {
 		if (pl.aerion.mod.hud.Hud.hidesGameEffects()) ci.cancel();
+	}
+
+	@Inject(method = "renderBossOverlay", at = @At("HEAD"), cancellable = true)
+	private void aerion$bossBegin(GuiGraphics g, DeltaTracker delta, CallbackInfo ci) {
+		if (!pl.aerion.mod.hud.Hud.beginElement(new Gfx(g), "bossbar")) ci.cancel();
+	}
+
+	@Inject(method = "renderBossOverlay", at = @At("RETURN"))
+	private void aerion$bossEnd(GuiGraphics g, DeltaTracker delta, CallbackInfo ci) {
+		pl.aerion.mod.hud.Hud.endElement(new Gfx(g), "bossbar");
+	}
+
+	@Inject(method = "renderScoreboardSidebar", at = @At("HEAD"), cancellable = true)
+	private void aerion$scoreBegin(GuiGraphics g, DeltaTracker delta, CallbackInfo ci) {
+		if (!pl.aerion.mod.hud.Hud.beginElement(new Gfx(g), "scoreboard")) ci.cancel();
+	}
+
+	@Inject(method = "renderScoreboardSidebar", at = @At("RETURN"))
+	private void aerion$scoreEnd(GuiGraphics g, DeltaTracker delta, CallbackInfo ci) {
+		pl.aerion.mod.hud.Hud.endElement(new Gfx(g), "scoreboard");
+	}
+
+	@Inject(method = "renderChat", at = @At("HEAD"), cancellable = true)
+	private void aerion$chatBegin(GuiGraphics g, DeltaTracker delta, CallbackInfo ci) {
+		if (!pl.aerion.mod.hud.Hud.beginElement(new Gfx(g), "chatbox")) ci.cancel();
+	}
+
+	@Inject(method = "renderChat", at = @At("RETURN"))
+	private void aerion$chatEnd(GuiGraphics g, DeltaTracker delta, CallbackInfo ci) {
+		pl.aerion.mod.hud.Hud.endElement(new Gfx(g), "chatbox");
+	}
+
+	/** Chat can stay across disconnects. */
+	@WrapOperation(method = "onDisconnected", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;clearMessages(Z)V"))
+	private void aerion$keepChat(ChatComponent chat, boolean history, Operation<Void> original) {
+		if (!ChatTweaks.keepHistory()) original.call(chat, history);
 	}
 }

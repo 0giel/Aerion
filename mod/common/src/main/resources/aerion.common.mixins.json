@@ -12,7 +12,9 @@
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",
 		"OptionsMixin",
-		"SoundEngineMixin"
+		"OverlayTextureMixin",
+		"SoundEngineMixin",
+		"WeatherMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

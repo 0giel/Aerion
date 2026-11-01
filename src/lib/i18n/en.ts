@@ -1088,6 +1088,11 @@ const en = {
     keysHint:
       "Keys (default: zoom C, freelook left Alt, HUD layout Right Shift, fullbright unbound), and a key to switch each module on or off, are set in game: Right Shift → Mods → Key bindings.",
     modules: {
+      armorWarn: "Armor warning",
+      packs: "Resource pack",
+      bossbar: "Boss bar",
+      scoreboard: "Scoreboard",
+      chatbox: "Chat position",
       speed: "Speed",
       totems: "Totem counter",
       items: "Item counter",
@@ -1109,6 +1114,11 @@ const en = {
       toggles: "Toggles",
     },
     about: {
+      armorWarn: "A warning when armor or a held item is nearly broken.",
+      packs: "The active resource pack.",
+      bossbar: "Move, resize or hide the game's boss bar.",
+      scoreboard: "Move, resize or hide the game's scoreboard.",
+      chatbox: "Move, resize or hide the game's chat.",
       speed: "How fast you move, in blocks per second.",
       totems: "How many totems of undying you carry.",
       items: "Arrows, pearls, golden apples, rockets and bottles you carry.",
@@ -1130,6 +1140,25 @@ const en = {
       toggles: "Shows toggled sprint, sneak, fullbright and freelook.",
     },
     options: {
+      armorWarn: {
+        threshold: "Warn at (%)",
+        held: "Include held item",
+        sound: "Sound",
+        blink: "Blink",
+      },
+      packs: {
+        all: "Show all packs",
+        hideEmpty: "Hide when none",
+      },
+      bossbar: {
+        hide: "Hide completely",
+      },
+      scoreboard: {
+        hide: "Hide completely",
+      },
+      chatbox: {
+        hide: "Hide completely",
+      },
       speed: {
         format: "Format ({speed})",
         decimals: "Decimals",
@@ -1270,6 +1299,22 @@ const en = {
       },
     },
     features: {
+      blockOutline: "Block outline",
+      blockOutlineHint: "Colours, thickness and fill are set in the game's menu.",
+      chat: "Chat",
+      chatHint: "Message times, counted repeats and history after disconnecting.",
+      perspective: "Perspective",
+      perspectiveHint: "Hold V to see yourself; other options are in the game's menu.",
+      fovKey: "FOV key",
+      fovKeyHint: "A different field of view while a key is held.",
+      worldLook: "Time and weather",
+      worldLookHint: "Only you see them. Set in the game's menu.",
+      hitColor: "Hit colour",
+      hitColorHint: "The tint of entities that were just hit.",
+      screens: "Screen background",
+      screensHint: "Remove the theme's tint behind the inventory and menus.",
+      waypoints: "Waypoints",
+      waypointsHint: "Your own points with a name, colour and distance. Added in the game's menu.",
       lightLevels: "Light numbers",
       lightLevelsHint: "Numbers on the floor around you; range and colours are set in the game's menu.",
       crosshair: "Crosshair",

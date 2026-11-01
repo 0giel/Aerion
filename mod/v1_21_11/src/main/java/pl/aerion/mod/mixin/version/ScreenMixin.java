@@ -11,6 +11,7 @@ import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
 import pl.aerion.mod.Particles;
 import pl.aerion.mod.Theme;
+import pl.aerion.mod.features.Screens;
 import pl.aerion.mod.platform.Gfx;
 
 /** Menu backgrounds: the theme's gradient instead of the panorama and the dark menu texture. */
@@ -37,6 +38,10 @@ abstract class ScreenMixin {
 			at = @At("HEAD"),
 			cancellable = true)
 	private void aerion$menu(GuiGraphics g, int x, int y, int w, int h, CallbackInfo ci) {
+		if (Screens.drawPanel(new Gfx(g), x, y, w, h)) {
+			ci.cancel();
+			return;
+		}
 		Theme t = AerionClient.colors();
 		if (t == null) return;
 		g.fill(x, y, x + w, y + h, Colors.alpha(Draw.behindText(t, t.surface), 0x8C));
@@ -46,9 +51,18 @@ abstract class ScreenMixin {
 	/** Menus over a running world (pause, inventory-less screens): a tinted veil. */
 	@Inject(method = "renderTransparentBackground", at = @At("HEAD"), cancellable = true)
 	private void aerion$veil(GuiGraphics g, CallbackInfo ci) {
+		if (Screens.drawVeil(new Gfx(g))) {
+			ci.cancel();
+			return;
+		}
 		Theme t = AerionClient.colors();
 		if (t == null) return;
 		Draw.background(new Gfx(g), t, 0xA0);
 		ci.cancel();
+	}
+
+	@Inject(method = "renderBlurredBackground", at = @At("HEAD"), cancellable = true)
+	private void aerion$blur(CallbackInfo ci) {
+		if (Screens.noBlur()) ci.cancel();
 	}
 }

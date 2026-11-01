@@ -13,6 +13,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -30,6 +32,7 @@ import pl.aerion.mod.Theme;
 import pl.aerion.mod.Txt;
 import pl.aerion.mod.features.Features;
 import pl.aerion.mod.features.Overlays;
+import pl.aerion.mod.features.WorldLook;
 import pl.aerion.mod.platform.EditorScreen;
 import pl.aerion.mod.platform.Game;
 import pl.aerion.mod.platform.Gfx;
@@ -297,7 +300,7 @@ public final class Hud {
 		MODULES.put("day", new Lines() {
 			List<String> lines(Ctx c) {
 				if (c.mc().level == null) return List.of(Lang.tr("aerion.hud.day") + " 12");
-				long t = Game.dayTime(c.mc().level);
+				long t = WorldLook.actual(() -> Game.dayTime(c.mc().level));
 				String day = Lang.tr("aerion.hud.day") + " " + t / 24000;
 				if (!c.flag("time", true)) return List.of(day);
 				long ofDay = (t + 6000) % 24000;
@@ -325,6 +328,62 @@ public final class Hud {
 				return c.flag("colored", true) ? graded(l > 7, l > 0) : c.style().text();
 			}
 		});
+		MODULES.put("packs", new Lines() {
+			List<String> lines(Ctx c) {
+				List<String> out = new ArrayList<>();
+				for (var pack : c.mc().getResourcePackRepository().getSelectedPacks()) {
+					if (pack.isRequired()) continue;
+					out.add(pack.getTitle().getString());
+				}
+				if (out.isEmpty()) return c.flag("hideEmpty", true) && !c.preview() ? List.of() : List.of(Lang.tr("aerion.hud.noPacks"));
+				java.util.Collections.reverse(out);
+				return c.flag("all", false) ? out : List.of(out.get(0));
+			}
+		});
+		MODULES.put("armorWarn", new Lines() {
+			private boolean warned;
+
+			private int threshold(Ctx c) {
+				try {
+					return Integer.parseInt(c.opt("threshold", "15"));
+				} catch (NumberFormatException e) {
+					return 15;
+				}
+			}
+
+			List<String> lines(Ctx c) {
+				List<String> out = new ArrayList<>();
+				if (c.player() != null) {
+					List<ItemStack> items = new ArrayList<>();
+					for (EquipmentSlot slot : new EquipmentSlot[] {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+						items.add(c.player().getItemBySlot(slot));
+					}
+					if (c.flag("held", true)) items.add(c.player().getMainHandItem());
+					for (ItemStack i : items) {
+						if (i.isEmpty() || !i.isDamageableItem()) continue;
+						int percent = (i.getMaxDamage() - i.getDamageValue()) * 100 / i.getMaxDamage();
+						if (percent <= threshold(c)) out.add("! " + i.getHoverName().getString() + " " + percent + "%");
+					}
+				}
+				if (!c.preview()) {
+					if (!out.isEmpty() && !warned && c.flag("sound", true)) {
+						c.mc().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING, 1.2f));
+					}
+					warned = !out.isEmpty();
+				}
+				if (out.isEmpty() && c.preview()) out.add("! " + Lang.tr("aerion.module.armorWarn") + " 12%");
+				return out;
+			}
+
+			@Override
+			int color(Ctx c, int line) {
+				if (!c.flag("blink", true)) return 0xFFFF5555;
+				return Colors.alpha(0xFFFF5555, (int) (170 + 85 * Math.sin(System.currentTimeMillis() / 200.0)));
+			}
+		});
+		MODULES.put("bossbar", new GameElement("bossbar", 182, 20));
+		MODULES.put("scoreboard", new GameElement("scoreboard", 90, 100));
+		MODULES.put("chatbox", new GameElement("chatbox", 320, 90));
 		MODULES.put("totems", new Counter(false, new Counter.Row("totem", Items.TOTEM_OF_UNDYING)));
 		MODULES.put("items", new Counter(true,
 				new Counter.Row("arrow", Items.ARROW),
@@ -351,6 +410,61 @@ public final class Hud {
 	static String time(int ticks) {
 		int s = ticks / 20;
 		return s >= 3600 ? (s / 3600) + ":" + String.format("%02d:%02d", s / 60 % 60, s % 60) : (s / 60) + ":" + String.format("%02d", s % 60);
+	}
+
+	/** A part of the game's own HUD; only its place shows in the layout, the game draws the rest. */
+	static final class GameElement implements Module {
+		final String id;
+		final int w, h;
+
+		GameElement(String id, int w, int h) {
+			this.id = id;
+			this.w = w;
+			this.h = h;
+		}
+
+		@Override
+		public int[] size(Ctx c) {
+			return new int[] {w, h};
+		}
+
+		@Override
+		public void draw(Ctx c, Gfx g) {
+			Txt.center(g, Lang.tr("aerion.module." + id), w / 2f, h / 2f, 8f, 0xFFFFFFFF);
+		}
+	}
+
+	/** Where the game draws an element by itself, in GUI pixels: {x, y, w, h}. */
+	private static int[] gameBox(String id, int width, int height) {
+		return switch (id) {
+			case "bossbar" -> new int[] {(width - 182) / 2, 12, 182, 20};
+			case "scoreboard" -> new int[] {width - 90, (height - 100) / 2, 90, 100};
+			default -> new int[] {0, height - 130, 320, 90};
+		};
+	}
+
+	/** Before the game draws an element: moves it where the player put it; false hides it. */
+	public static boolean beginElement(Gfx g, String id) {
+		HudConfig cfg = AerionClient.hud();
+		if (cfg == null) return true;
+		JsonObject m = cfg.module(id);
+		if ("1".equals(HudConfig.opt(m, "hide", "0"))) return false;
+		if (!HudConfig.bool(m, "enabled", false)) return true;
+		float k = scaleOf(m);
+		int[] b = gameBox(id, g.width(), g.height());
+		float x = HudConfig.num(m, "x", 0) / 1000f * Math.max(0, g.width() - b[2] * k);
+		float y = HudConfig.num(m, "y", 0) / 1000f * Math.max(0, g.height() - b[3] * k);
+		g.push();
+		g.translate(x - b[0] * k, y - b[1] * k);
+		g.scale(k);
+		return true;
+	}
+
+	public static void endElement(Gfx g, String id) {
+		HudConfig cfg = AerionClient.hud();
+		if (cfg == null) return;
+		JsonObject m = cfg.module(id);
+		if (HudConfig.bool(m, "enabled", false) && !"1".equals(HudConfig.opt(m, "hide", "0"))) g.pop();
 	}
 
 	/** Active effects: the game's icon, name, level and time, each optional. */
@@ -690,6 +804,7 @@ public final class Hud {
 		for (var e : MODULES.entrySet()) {
 			JsonObject m = cfg.module(e.getKey());
 			if (!HudConfig.bool(m, "enabled", false)) continue;
+			if (!preview && e.getValue() instanceof GameElement) continue;
 			Ctx c = new Ctx(mc, mc.player, m, style(cfg, m, t), t, preview);
 			try {
 				int[] s = e.getValue().size(c);

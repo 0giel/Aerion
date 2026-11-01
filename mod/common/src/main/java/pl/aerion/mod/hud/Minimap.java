@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import pl.aerion.mod.Colors;
+import pl.aerion.mod.features.Waypoints;
 import pl.aerion.mod.platform.Gfx;
 
 /**
@@ -90,6 +91,17 @@ final class Minimap implements Hud.Module {
 					int col = colors[dz * n + dx];
 					if (col != 0) g.fill(p + dx * z, p + dz * z, p + dx * z + z, p + dz * z + z, col);
 				}
+			}
+		}
+		if (player != null && Waypoints.showOnMinimap()) {
+			String here = Waypoints.dimension(player);
+			for (Waypoints.Point w : Waypoints.all()) {
+				if (!w.enabled || !here.equals(w.dimension)) continue;
+				// Points beyond the map stay on its edge, in their direction.
+				int wx = Math.max(p + 1, Math.min(p + s - 2, p + s / 2 + (w.x - player.getBlockX()) * z));
+				int wy = Math.max(p + 1, Math.min(p + s - 2, p + s / 2 + (w.z - player.getBlockZ()) * z));
+				g.fill(wx - 2, wy - 2, wx + 2, wy + 2, 0xFF000000);
+				g.fill(wx - 1, wy - 1, wx + 1, wy + 1, Waypoints.color(w));
 			}
 		}
 		// The player: a dot with a tick towards where they look.

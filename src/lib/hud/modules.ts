@@ -29,6 +29,11 @@ export const MODULE_IDS = [
   "session",
   "day",
   "light",
+  "armorWarn",
+  "packs",
+  "bossbar",
+  "scoreboard",
+  "chatbox",
 ] as const;
 
 export const FIELDS: Record<string, Field[]> = {
@@ -119,6 +124,19 @@ export const FIELDS: Record<string, Field[]> = {
     { key: "colored", type: "toggle", def: "1" },
     { key: "sky", type: "toggle", def: "0" },
   ],
+  armorWarn: [
+    { key: "threshold", type: "number", def: "15", min: 1, max: 60 },
+    { key: "held", type: "toggle", def: "1" },
+    { key: "sound", type: "toggle", def: "1" },
+    { key: "blink", type: "toggle", def: "1" },
+  ],
+  packs: [
+    { key: "all", type: "toggle", def: "0" },
+    { key: "hideEmpty", type: "toggle", def: "1" },
+  ],
+  bossbar: [{ key: "hide", type: "toggle", def: "0" }],
+  scoreboard: [{ key: "hide", type: "toggle", def: "0" }],
+  chatbox: [{ key: "hide", type: "toggle", def: "0" }],
   toggles: [
     { key: "sprint", type: "toggle", def: "1" },
     { key: "sneak", type: "toggle", def: "1" },
@@ -179,6 +197,16 @@ export function sample(id: string, opt: (key: string, def: string) => string): s
       return ["1:24:05"];
     case "day":
       return [opt("time", "1") === "1" ? "12  14:30" : "12"];
+    case "armorWarn":
+      return ["! 12%"];
+    case "packs":
+      return ["Faithful 32x"];
+    case "bossbar":
+      return ["Boss"];
+    case "scoreboard":
+      return ["Scoreboard", "Steve 12", "Alex 8"];
+    case "chatbox":
+      return ["<Steve> Chat"];
     case "light":
       return [opt("sky", "0") === "1" ? "12  15" : "12"];
     default:

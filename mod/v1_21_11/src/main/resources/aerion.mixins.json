@@ -6,8 +6,11 @@
 		"AbstractButtonMixin",
 		"AbstractSliderButtonMixin",
 		"CameraMixin",
+		"ChatComponentMixin",
 		"GameRendererMixin",
 		"GuiMixin",
+		"LevelRendererMixin",
+		"LevelTimeMixin",
 		"LogoRendererMixin",
 		"ScreenEffectRendererMixin",
 		"ScreenMixin"

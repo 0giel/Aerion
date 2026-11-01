@@ -302,3 +302,15 @@ it now shows block light, with sky light optional. Light numbers use the game's 
 world-rendering code per game version. The effects module draws the game's own effect sprites and
 hides the corner icons by default, because they sit in the same corner.
 
+### D38 — More client features through existing seams (2026-11-01)
+Block outline and waypoint beams use the game's debug shapes like hitboxes, so one code path serves
+both versions. The boss bar, scoreboard and chat are moved by wrapping the game's own draw calls in a
+translate and scale, so their content stays the game's; the layout shows a fixed box for each,
+because their real size depends on the content, and chat clicks stay at the original place. Time and
+weather change only what the client reads (the client clock instance on 26.x, `getDayTime` on
+1.21.11; rain and thunder levels on both), so servers and the HUD's day module keep the real values.
+The hit colour rewrites the small overlay texture the game tints entities with, and only when the
+colour changes. The yellow glow behind screens was our own theme veil (the theme's gradient over the
+world), so the fix is a setting for that veil, plus the game's blur. Waypoints are per world or server
+in the game folder (`aerion-waypoints.json`), not hud.json, because they belong to that instance.
+

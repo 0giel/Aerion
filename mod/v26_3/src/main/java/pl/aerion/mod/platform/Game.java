@@ -32,4 +32,9 @@ public final class Game {
 	public static net.minecraft.resources.Identifier effectSprite(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect) {
 		return net.minecraft.client.gui.Hud.getMobEffectSprite(effect);
 	}
+
+	/** A short message above the hotbar. */
+	public static void overlayMessage(net.minecraft.network.chat.Component message) {
+		Minecraft.getInstance().gui.hud.setOverlayMessage(message, false);
+	}
 }

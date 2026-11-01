@@ -176,6 +176,14 @@ pub struct HudFeatures {
     pub crosshair: FeatureOptions,
     pub hurt_cam: FeatureOptions,
     pub light_levels: FeatureOptions,
+    pub block_outline: FeatureOptions,
+    pub chat: FeatureOptions,
+    pub perspective: FeatureOptions,
+    pub fov_key: FeatureOptions,
+    pub world_look: FeatureOptions,
+    pub hit_color: FeatureOptions,
+    pub screens: FeatureOptions,
+    pub waypoints: FeatureOptions,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -209,6 +217,11 @@ pub const MODULES: &[(&str, bool, u16, u16)] = &[
     ("session", false, 500, 170),
     ("day", false, 500, 250),
     ("light", false, 500, 90),
+    ("armorWarn", false, 500, 330),
+    ("packs", false, 500, 410),
+    ("bossbar", false, 500, 55),
+    ("scoreboard", false, 1000, 500),
+    ("chatbox", false, 0, 733),
 ];
 
 impl Default for HudConfig {
@@ -303,6 +316,14 @@ impl HudConfig {
                 &self.features.crosshair.options,
                 &self.features.hurt_cam.options,
                 &self.features.light_levels.options,
+                &self.features.block_outline.options,
+                &self.features.chat.options,
+                &self.features.perspective.options,
+                &self.features.fov_key.options,
+                &self.features.world_look.options,
+                &self.features.hit_color.options,
+                &self.features.screens.options,
+                &self.features.waypoints.options,
                 &self.features.sounds.options,
             ]
             .iter()
