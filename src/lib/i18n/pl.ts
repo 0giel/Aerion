@@ -1139,7 +1139,7 @@ const pl: Dict = {
     sharedStyle: "Wygląd wszystkich modułów",
     featuresTitle: "Funkcje",
     keysHint:
-      "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, menu Aeriona Prawy Shift, pełna jasność bez klawisza) zmienisz w grze: Opcje → Sterowanie → Aerion.",
+      "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, menu Aeriona Prawy Shift, pełna jasność bez klawisza) oraz klawisz włączania każdego modułu ustawisz w grze: menu Aeriona → Klawisze.",
     modules: {
       fps: "FPS",
       coords: "Koordynaty",
@@ -1171,6 +1171,7 @@ const pl: Dict = {
     options: {
       fps: {
         format: "Format ({fps})",
+        colored: "Kolor zależny od wartości",
       },
       cps: {
         format: "Format ({left}, {right})",
@@ -1179,38 +1180,56 @@ const pl: Dict = {
         direction: "Pokaż kierunek",
         decimals: "Miejsca po przecinku",
         nether: "Przelicz na Nether / Overworld",
+        lines: "Każda oś w osobnej linii",
+        biome: "Pokaż biom",
       },
       direction: {
         degrees: "Pokaż stopnie",
       },
       ping: {
         format: "Format ({ping})",
+        colored: "Kolor zależny od wartości",
       },
       clock: {
         h24: "Zegar 24-godzinny",
         seconds: "Sekundy",
+        date: "Pokaż datę",
       },
       memory: {
         format: "Format ({used}, {max}, {percent})",
+        colored: "Kolor zależny od wartości",
       },
       potions: {
         duration: "Pokaż czas",
         colors: "Kolor efektu",
+        level: "Pokaż poziom",
       },
       armor: {
         layout: "Układ",
         durability: "Wytrzymałość",
         hand: "Trzymany przedmiot",
+        colored: "Ostrzegaj o zużyciu",
+        offhand: "Przedmiot w drugiej ręce",
       },
       keystrokes: {
         mouse: "Przyciski myszy",
         space: "Spacja",
         cps: "CPS na przyciskach myszy",
+        wasd: "Klawisze ruchu",
+        keySize: "Rozmiar klawiszy",
+        pressed: "Kolor po wciśnięciu",
       },
       minimap: {
         size: "Rozmiar",
         zoom: "Pikseli na blok",
         coords: "Koordynaty pod mapą",
+        north: "Znacznik północy",
+      },
+      toggles: {
+        sprint: "Pokazuj bieg",
+        sneak: "Pokazuj skradanie",
+        fullbright: "Pokazuj pełną jasność",
+        freelook: "Pokazuj freelook",
       },
     },
     choices: {
@@ -1221,6 +1240,12 @@ const pl: Dict = {
       none: "Brak",
     },
     style: {
+      font: "Czcionka",
+      fonts: {
+        game: "Minecraft",
+        smooth: "Gładka",
+      },
+      borderWidth: "Grubość",
       text: "Kolor tekstu",
       background: "Tło",
       opacity: "Krycie tła",

@@ -13,7 +13,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     notes: {
       pl: [
         "Mod Aeriona z HUD-em i dodatkami w stylu klientów PvP: FPS, CPS, współrzędne, kierunek, ping, zegar, pamięć, zbroja, efekty mikstur, klawisze i minimapa.",
-        "Każdy moduł HUD-a ustawisz po swojemu: pozycja, rozmiar, kolory, tło, ramka, zaokrąglenie, własny format tekstu. Zmiany z launchera działają w uruchomionej grze w ciągu sekundy, a w grze prawy Shift albo przycisk Aerion w menu otwiera okno z kartami modułów: włączasz je i wyłączasz, ustawiasz wygląd każdego osobno albo wszystkich razem i układasz HUD myszą.",
+        "Każdy moduł HUD-a ustawisz po swojemu: pozycja, rozmiar, kolory, tło, ramka, zaokrąglenie, własny format tekstu. Zmiany z launchera działają w uruchomionej grze w ciągu sekundy, a w grze prawy Shift albo przycisk Aerion w menu otwiera menu z modułami: każdy ma własne opcje, wygląd (kolory, tło, czcionka, ramka) i klawisz włączania, a HUD układasz myszą.",
         "Nowe funkcje gry: zoom (domyślnie C), a do włączenia osobno freelook, pełna jasność, stały sprint i stałe skradanie. Niektóre serwery zabraniają takich dodatków — sprawdź regulamin, zanim ich użyjesz.",
         "Przyciski i suwaki w grze są teraz ostre w każdej skali, z gładkimi rogami i wyraźnym tekstem.",
         "Mod działa teraz na Fabric 26.3 i 1.21.11, bez Fabric API. Instancje z modem mają oznaczenie „Fabric + Aerion”.",
@@ -21,7 +21,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       ],
       en: [
         "The Aerion mod gains a HUD and PvP-client-style extras: FPS, CPS, coordinates, direction, ping, clock, memory, armor, potion effects, keystrokes and a minimap.",
-        "Every HUD module is yours to set up: position, size, colors, background, border, corners and custom text formats. Changes from the launcher reach a running game within a second, and in game Right Shift or the Aerion button in the menu opens a window of module cards: turn them on or off, set the look of each one or all of them, and arrange the HUD with the mouse.",
+        "Every HUD module is yours to set up: position, size, colors, background, border, corners and custom text formats. Changes from the launcher reach a running game within a second, and in game Right Shift or the Aerion button in the menu opens a menu of modules: each has its own options, look (colors, background, font, border) and on/off key, and you arrange the HUD with the mouse.",
         "New game features: zoom (C by default), plus freelook, fullbright, toggle sprint and toggle sneak to switch on separately. Some servers forbid such extras — check their rules before using them.",
         "Buttons and sliders in the game are now sharp at every scale, with smooth corners and clear text.",
         "The mod now runs on Fabric 26.3 and 1.21.11, without Fabric API. Instances with the mod are labelled “Fabric + Aerion”.",

@@ -67,7 +67,7 @@ ICONS = {
     "toggleSneak": '<path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/>',
 }
 # Shared with the launcher's own icon set.
-FROM_LAUNCHER = {"armor": "shield", "clock": "clock", "memory": "cpu", "zoom": "search", "freelook": "eye", "fullbright": "sun", "back": "arrowLeft", "close": "x"}
+FROM_LAUNCHER = {"armor": "shield", "clock": "clock", "memory": "cpu", "zoom": "search", "freelook": "eye", "fullbright": "sun", "back": "arrowLeft", "close": "x", "look": "palette", "undo": "undo", "keys": "key"}
 
 
 def launcher_icons():

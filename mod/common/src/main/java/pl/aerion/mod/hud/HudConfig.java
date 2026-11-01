@@ -27,7 +27,7 @@ public final class HudConfig {
 	/** Used when the launcher hasn't written a file yet (same defaults as the launcher). */
 	static final String DEFAULTS = """
 			{"enabled":true,
-			 "style":{"text":"theme","background":"theme","opacity":55,"border":"none","radius":0,"padding":3,"shadow":true,"align":"left"},
+			 "style":{"text":"theme","background":"theme","opacity":55,"border":"none","borderWidth":1,"radius":0,"padding":3,"shadow":true,"align":"left","font":"game"},
 			 "modules":{
 			  "fps":{"enabled":true,"x":8,"y":10,"scale":100},
 			  "coords":{"enabled":true,"x":8,"y":110,"scale":100},

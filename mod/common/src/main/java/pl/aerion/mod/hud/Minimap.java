@@ -104,10 +104,10 @@ final class Minimap implements Hud.Module {
 				g.fill(tx, ty, tx + 1, ty + 1, Colors.alpha(accent, 255));
 			}
 		}
-		g.text("N", p + s / 2 - 2, p + 1, 0xFFFFFFFF, true);
+		if (c.flag("north", true)) Hud.text(c, g, "N", p + s / 2 - 2, p + 1, 0xFFFFFFFF, true);
 		if (c.flag("coords", true) && player != null) {
 			String t = player.getBlockX() + ", " + player.getBlockY() + ", " + player.getBlockZ();
-			g.text(t, p + (s - Gfx.textWidth(t)) / 2, p + s + 2, c.style().text(), c.style().shadow());
+			Hud.text(c, g, t, p + (s - Hud.width(c, t)) / 2, p + s + 2, c.style().text(), c.style().shadow());
 		}
 	}
 }

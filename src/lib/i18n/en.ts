@@ -1081,7 +1081,7 @@ const en = {
     sharedStyle: "Look of all modules",
     featuresTitle: "Features",
     keysHint:
-      "Keys (default: zoom C, freelook left Alt, Aerion menu Right Shift, fullbright unbound) are changed in game: Options → Controls → Aerion.",
+      "Keys (default: zoom C, freelook left Alt, Aerion menu Right Shift, fullbright unbound), and a key to switch each module on or off, are set in game: Aerion menu → Key bindings.",
     modules: {
       fps: "FPS",
       coords: "Coordinates",
@@ -1113,6 +1113,7 @@ const en = {
     options: {
       fps: {
         format: "Format ({fps})",
+        colored: "Colour by value",
       },
       cps: {
         format: "Format ({left}, {right})",
@@ -1121,38 +1122,56 @@ const en = {
         direction: "Show direction",
         decimals: "Decimal places",
         nether: "Convert to Nether / Overworld",
+        lines: "Each axis on its own line",
+        biome: "Show biome",
       },
       direction: {
         degrees: "Show degrees",
       },
       ping: {
         format: "Format ({ping})",
+        colored: "Colour by value",
       },
       clock: {
         h24: "24-hour clock",
         seconds: "Seconds",
+        date: "Show date",
       },
       memory: {
         format: "Format ({used}, {max}, {percent})",
+        colored: "Colour by value",
       },
       potions: {
         duration: "Show time",
         colors: "Effect colour",
+        level: "Show level",
       },
       armor: {
         layout: "Layout",
         durability: "Durability",
         hand: "Held item",
+        colored: "Warn when nearly broken",
+        offhand: "Off-hand item",
       },
       keystrokes: {
         mouse: "Mouse buttons",
         space: "Space bar",
         cps: "CPS on mouse buttons",
+        wasd: "Movement keys",
+        keySize: "Key size",
+        pressed: "Pressed colour",
       },
       minimap: {
         size: "Size",
         zoom: "Pixels per block",
         coords: "Coordinates under the map",
+        north: "North marker",
+      },
+      toggles: {
+        sprint: "Show sprint",
+        sneak: "Show sneak",
+        fullbright: "Show fullbright",
+        freelook: "Show freelook",
       },
     },
     choices: {
@@ -1163,6 +1182,12 @@ const en = {
       none: "None",
     },
     style: {
+      font: "Font",
+      fonts: {
+        game: "Minecraft",
+        smooth: "Smooth",
+      },
+      borderWidth: "Thickness",
       text: "Text colour",
       background: "Background",
       opacity: "Background opacity",

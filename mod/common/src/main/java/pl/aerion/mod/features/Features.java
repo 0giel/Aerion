@@ -5,6 +5,10 @@ import com.mojang.blaze3d.platform.InputConstants;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -26,8 +30,14 @@ import pl.aerion.mod.platform.Game;
 public final class Features {
 	private Features() {}
 
+	/** Every HUD module; each can have a key that switches it on and off. */
+	public static final String[] MODULE_IDS = {
+		"fps", "coords", "direction", "cps", "keystrokes", "armor", "potions", "ping", "clock", "memory", "minimap", "toggles"
+	};
+
 	private static KeyMapping[] keys;
 	private static KeyMapping editor, zoom, freelook, fullbright;
+	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
 	public static KeyMapping[] keys() {
@@ -37,9 +47,34 @@ public final class Features {
 			zoom = new KeyMapping("key.aerion.zoom", InputConstants.KEY_C, cat);
 			freelook = new KeyMapping("key.aerion.freelook", InputConstants.KEY_LALT, cat);
 			fullbright = new KeyMapping("key.aerion.fullbright", InputConstants.UNKNOWN.getValue(), cat);
-			keys = new KeyMapping[] {editor, zoom, freelook, fullbright};
+			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright));
+			for (String id : MODULE_IDS) {
+				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
+				MODULE_KEYS.put(id, k);
+				all.add(k);
+			}
+			keys = all.toArray(new KeyMapping[0]);
 		}
 		return keys;
+	}
+
+	public static boolean isMenuKey(InputConstants.Key key) {
+		return !editor.isUnbound() && editor.saveString().equals(key.getName());
+	}
+
+	/** The key of a feature or module, for the menu; Minecraft's own for sprint and sneak. */
+	public static KeyMapping key(String id) {
+		Minecraft mc = Minecraft.getInstance();
+		keys();
+		return switch (id) {
+			case "menu" -> editor;
+			case "zoom" -> zoom;
+			case "freelook" -> freelook;
+			case "fullbright" -> fullbright;
+			case "toggleSprint" -> mc.options.keySprint;
+			case "toggleSneak" -> mc.options.keyShift;
+			default -> MODULE_KEYS.get(id);
+		};
 	}
 
 	private static JsonObject feature(String id) {
@@ -190,6 +225,15 @@ public final class Features {
 			if (Game.screen() == null) Game.setScreen(new EditorScreen(new AerionMenu(), null));
 		}
 		syncToggles(mc);
+		for (var e : MODULE_KEYS.entrySet()) {
+			while (e.getValue().consumeClick()) {
+				HudConfig cfg = AerionClient.hud();
+				if (cfg == null) continue;
+				JsonObject m = cfg.module(e.getKey());
+				m.addProperty("enabled", !HudConfig.bool(m, "enabled", false));
+				AerionClient.saveHud();
+			}
+		}
 		if (mc.player == null) {
 			if (looking) stopLooking(mc);
 			return;

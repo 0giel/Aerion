@@ -1,5 +1,6 @@
 package pl.aerion.mod.hud;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import pl.aerion.mod.platform.EditorScreen;
 import pl.aerion.mod.platform.Game;
 import pl.aerion.mod.platform.Gfx;
@@ -16,6 +17,11 @@ public interface Page {
 	void released();
 
 	void scrolled(double x, double y, double amount);
+
+	/** A key press; true when the page used it. */
+	default boolean keyPressed(InputConstants.Key key) {
+		return false;
+	}
 
 	/** Save what changed; called when the page is left. */
 	void close();

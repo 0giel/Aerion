@@ -57,11 +57,16 @@ public final class Draw {
 
 	/** A control: a thin border in `edge` around a body in `fill` (which stays see-through). */
 	public static void control(Gfx g, int x, int y, int w, int h, int r, int edge, int fill) {
+		control(g, x, y, w, h, r, edge, fill, 1);
+	}
+
+	/** The same with a border `width` times the thin one. */
+	public static void control(Gfx g, int x, int y, int w, int h, int r, int edge, int fill, int width) {
 		if (w <= 0 || h <= 0) return;
 		r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
 		int k = Gfx.guiScale();
 		int X = x * k, Y = y * k, W = w * k, H = h * k, R = r * k;
-		int line = Math.max(1, k / 3);
+		int line = Math.max(1, k / 3) * Math.max(1, width);
 		g.push();
 		g.scale(1f / k);
 		// Middle part, between the rounded corners.

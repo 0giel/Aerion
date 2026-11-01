@@ -1,14 +1,15 @@
 package pl.aerion.mod.hud;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.mojang.blaze3d.platform.InputConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
@@ -18,57 +19,83 @@ import pl.aerion.mod.Logo;
 import pl.aerion.mod.Particles;
 import pl.aerion.mod.Theme;
 import pl.aerion.mod.Txt;
+import pl.aerion.mod.features.Features;
 import pl.aerion.mod.platform.Gfx;
 
 /**
- * Aerion's in-game menu: a window with a card for every HUD module and game feature (switch and
- * options), a page of options per card and a tab with the look all modules share. Controls are
- * rebuilt every frame and leave their clickable areas in {@link #hits}; changes go straight into
- * hud.json's tree, which is saved when the menu closes.
+ * Aerion's in-game menu: a sidebar (modules, features, keys, shared look) and a calm list of tiles;
+ * a tile opens its settings on tabs, one thing at a time. A module's look is set field by field on
+ * top of the shared look. Controls are rebuilt every frame and leave their clickable areas in
+ * {@link #hits}; changes go straight into hud.json's tree, which is saved when the menu closes.
  */
 public final class AerionMenu implements Page {
 	private static final int[] SWATCHES = {
 		0xFFFFFFFF, 0xFF000000, 0xFFFF5555, 0xFFFFAA33, 0xFFFFE25A, 0xFF55DD77, 0xFF55AAFF, 0xFFB98CFF
 	};
-	private static final int GREEN = 0xFF23935A, RED = 0xFFB02C4C;
-	private static final float TEXT = 8f, SMALL = 7f;
-	private static final int ROW = 15, HEADER = 26, FOOTER = 24, GAP = 5;
-
-	private static final String[] MODULES = {
-		"fps", "coords", "direction", "cps", "keystrokes", "armor", "potions", "ping", "clock", "memory", "minimap", "toggles"
-	};
+	private static final float TEXT = 8f, SMALL = 7f, TITLE = 10f;
+	private static final int ROW = 16, SIDE = 92, GAP = 5;
 	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright"};
 
-	/** Options a card can change; text formats are edited in the launcher. */
-	private record Option(String key, String def, String[] choices, int min, int max) {
+	/** A module setting; `formats` lists {value, label} choices for a text format. */
+	private record Option(String key, String def, String[] choices, String[] labels, int min, int max, boolean color) {
 		static Option toggle(String key, boolean on) {
-			return new Option(key, on ? "1" : "0", null, 0, 0);
+			return new Option(key, on ? "1" : "0", null, null, 0, 0, false);
 		}
 
 		static Option select(String key, String def, String... choices) {
-			return new Option(key, def, choices, 0, 0);
+			return new Option(key, def, choices, null, 0, 0, false);
+		}
+
+		static Option format(String... pairs) {
+			String[] values = new String[pairs.length / 2], labels = new String[pairs.length / 2];
+			for (int i = 0; i < values.length; i++) {
+				values[i] = pairs[2 * i];
+				labels[i] = pairs[2 * i + 1];
+			}
+			return new Option("format", values[0], values, labels, 0, 0, false);
 		}
 
 		static Option number(String key, int def, int min, int max) {
-			return new Option(key, String.valueOf(def), null, min, max);
+			return new Option(key, String.valueOf(def), null, null, min, max, false);
+		}
+
+		static Option colour(String key, String def) {
+			return new Option(key, def, null, null, 0, 0, true);
 		}
 
 		boolean isToggle() {
-			return choices == null && max == 0;
+			return choices == null && max == 0 && !color;
 		}
 	}
 
-	private static final Map<String, List<Option>> OPTIONS = Map.of(
-			"coords", List.of(Option.toggle("direction", true), Option.toggle("decimals", false), Option.toggle("nether", false)),
-			"direction", List.of(Option.toggle("degrees", true)),
-			"clock", List.of(Option.toggle("h24", true), Option.toggle("seconds", false)),
-			"potions", List.of(Option.toggle("duration", true), Option.toggle("colors", true)),
-			"armor", List.of(
+	private static final Map<String, List<Option>> OPTIONS = Map.ofEntries(
+			Map.entry("fps", List.of(
+					Option.format("{fps} FPS", "144 FPS", "FPS: {fps}", "FPS: 144", "[{fps} FPS]", "[144 FPS]", "{fps}", "144"),
+					Option.toggle("colored", false))),
+			Map.entry("cps", List.of(Option.format("{left} | {right} CPS", "9 | 4 CPS", "{left} CPS", "9 CPS", "CPS: {left}", "CPS: 9"))),
+			Map.entry("coords", List.of(
+					Option.toggle("direction", true), Option.toggle("decimals", false), Option.toggle("lines", false),
+					Option.toggle("nether", false), Option.toggle("biome", false))),
+			Map.entry("direction", List.of(Option.toggle("degrees", true))),
+			Map.entry("ping", List.of(
+					Option.format("{ping} ms", "42 ms", "Ping: {ping}", "Ping: 42", "[{ping} ms]", "[42 ms]"),
+					Option.toggle("colored", false))),
+			Map.entry("clock", List.of(Option.toggle("h24", true), Option.toggle("seconds", false), Option.toggle("date", false))),
+			Map.entry("memory", List.of(
+					Option.format("{used}/{max} MB", "1840/6144 MB", "{percent}%", "30%", "RAM: {percent}%", "RAM: 30%"),
+					Option.toggle("colored", false))),
+			Map.entry("potions", List.of(Option.toggle("duration", true), Option.toggle("level", true), Option.toggle("colors", true))),
+			Map.entry("armor", List.of(
 					Option.select("layout", "vertical", "vertical", "horizontal"),
 					Option.select("durability", "percent", "percent", "value", "none"),
-					Option.toggle("hand", true)),
-			"keystrokes", List.of(Option.toggle("mouse", true), Option.toggle("space", true), Option.toggle("cps", true)),
-			"minimap", List.of(Option.number("size", 80, 48, 160), Option.number("zoom", 2, 1, 4), Option.toggle("coords", true)));
+					Option.toggle("colored", true), Option.toggle("hand", true), Option.toggle("offhand", false))),
+			Map.entry("keystrokes", List.of(
+					Option.toggle("wasd", true), Option.toggle("mouse", true), Option.toggle("space", true), Option.toggle("cps", true),
+					Option.number("keySize", 18, 12, 30), Option.colour("pressed", "accent"))),
+			Map.entry("minimap", List.of(
+					Option.number("size", 80, 48, 160), Option.number("zoom", 2, 1, 4), Option.toggle("coords", true), Option.toggle("north", true))),
+			Map.entry("toggles", List.of(
+					Option.toggle("sprint", true), Option.toggle("sneak", true), Option.toggle("fullbright", true), Option.toggle("freelook", true))));
 
 	private record Hit(int x, int y, int w, int h, DoubleConsumer action, boolean slider, boolean clipped) {
 		boolean contains(double px, double py) {
@@ -80,16 +107,21 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	private enum Tab { MODULES, LOOK }
+	private enum Section { HUD, FEATURES, KEYS, LOOK }
 
-	private enum Filter { ALL, HUD, FEATURES }
+	private enum Sub { GENERAL, LOOK, KEY }
 
 	// Kept between openings, so the menu reopens where it was left.
-	private static Tab tab = Tab.MODULES;
-	private static Filter filter = Filter.ALL;
+	private static Section section = Section.HUD;
 
-	/** The card whose options are shown, or null for the cards. */
+	/** The tile whose settings are shown, or null for the list. */
 	private String detail;
+
+	private Sub sub = Sub.GENERAL;
+	/** The colour row with its palette open. */
+	private String expanded;
+	/** The key waiting for its new binding. */
+	private KeyMapping capturing;
 
 	private final List<Hit> hits = new ArrayList<>();
 	private Hit sliding;
@@ -97,13 +129,13 @@ public final class AerionMenu implements Page {
 	private int scroll, contentHeight, viewTop, viewBottom;
 	private int x, y, colW, mouseX, mouseY;
 	private Gfx g;
-	private int text, muted, accent, accentText, surface, surface2, line, control;
+	private int text, muted, accent, accentText, surface, sidebar, tile, line, control;
 
 	public AerionMenu() {}
 
-	/** Opens directly on one module's options. */
+	/** Opens directly on one module's settings. */
 	public AerionMenu(String module) {
-		tab = Tab.MODULES;
+		section = Section.HUD;
 		detail = module;
 	}
 
@@ -126,6 +158,12 @@ public final class AerionMenu implements Page {
 	// --- input -------------------------------------------------------------------------------
 	@Override
 	public boolean pressed(double px, double py, int button) {
+		if (capturing != null) {
+			// Left click cancels, so the mouse can still leave this state; other buttons bind.
+			if (button != InputConstants.MOUSE_BUTTON_LEFT) bind(InputConstants.Type.MOUSE.getOrCreate(button));
+			capturing = null;
+			return false;
+		}
 		if (button != InputConstants.MOUSE_BUTTON_LEFT) return false;
 		for (Hit h : List.copyOf(hits)) {
 			if (h.clipped && (py < viewTop || py >= viewBottom)) continue;
@@ -136,6 +174,30 @@ public final class AerionMenu implements Page {
 			}
 		}
 		return closing;
+	}
+
+	@Override
+	public boolean keyPressed(InputConstants.Key key) {
+		boolean escape = key.getValue() == InputConstants.KEY_ESCAPE;
+		if (capturing != null) {
+			if (!escape) bind(key);
+			capturing = null;
+			return true;
+		}
+		// Esc steps back from settings to the list before it closes the menu.
+		if (escape && detail != null) {
+			detail = null;
+			expanded = null;
+			scroll = 0;
+			return true;
+		}
+		return false;
+	}
+
+	private void bind(InputConstants.Key key) {
+		capturing.setKey(key);
+		KeyMapping.resetMapping();
+		Minecraft.getInstance().options.save();
 	}
 
 	@Override
@@ -172,8 +234,9 @@ public final class AerionMenu implements Page {
 		accent = t != null ? t.accent : 0xFF7AA2FF;
 		accentText = t != null ? t.accentText : 0xFF111111;
 		surface = Colors.alpha(t != null ? t.surface : 0xFF1A1A1A, 0xFF);
-		surface2 = Colors.alpha(t != null ? t.surface2 : 0xFF2A2A2A, 0xFF);
-		line = Colors.mix(surface, text, 0.16f);
+		sidebar = Colors.mix(surface, 0xFF000000, t != null && t.light ? 0.04f : 0.18f);
+		tile = Colors.mix(surface, text, 0.05f);
+		line = Colors.mix(surface, text, 0.14f);
 		control = Colors.mix(surface, text, 0.1f);
 
 		if (Minecraft.getInstance().level == null && t != null) {
@@ -182,27 +245,34 @@ public final class AerionMenu implements Page {
 		} else {
 			g.fill(0, 0, g.width(), g.height(), 0x70000000);
 		}
-		int winW = Math.min(g.width() - 12, 440), winH = Math.min(g.height() - 12, 250);
+		int winW = Math.min(g.width() - 12, 470), winH = Math.min(g.height() - 12, 270);
 		int left = (g.width() - winW) / 2, top = (g.height() - winH) / 2;
-		Draw.control(g, left, top, winW, winH, 4, line, Colors.alpha(surface, 0xF2));
+		Draw.rounded(g, left, top, winW, winH, 4, surface);
+		sidebar(left, top, winH);
+		Draw.control(g, left, top, winW, winH, 4, line, 0);
 
-		// Body first: its hits must not win over the fixed parts drawn after it.
-		viewTop = top + HEADER + 1;
-		viewBottom = top + winH - FOOTER;
+		int mainX = left + SIDE + 10, mainW = winW - SIDE - 20;
+		iconButton(left + winW - 20, top + 6, 14, "close", () -> closing = true);
+		int head = detail != null ? pageHead(mainX, top + 6, mainW - 18) : listHead(mainX, top + 7);
+
+		viewTop = top + head;
+		viewBottom = top + winH - 4;
 		int maxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
 		scroll = Math.max(0, Math.min(maxScroll, scroll));
-		header(left, top, winW);
-		footer(left, top + winH - FOOTER, winW);
 		clipping = true;
-		g.scissor(left + 1, viewTop, left + winW - 1, viewBottom);
-		x = left + 8;
-		colW = winW - 16;
-		y = viewTop + 4 - scroll;
+		g.scissor(left + SIDE, viewTop, left + winW - 1, viewBottom);
+		x = mainX;
+		colW = mainW;
+		y = viewTop + 2 - scroll;
 		int start = y;
-		if (tab == Tab.LOOK) look();
-		else if (detail != null) detailPage(left + 8, winW - 16);
-		else cards(left + 8, winW - 16);
-		contentHeight = y - start + 8;
+		if (detail != null) detailBody();
+		else switch (section) {
+			case HUD -> tiles(mainX, mainW, List.of(Features.MODULE_IDS));
+			case FEATURES -> tiles(mainX, mainW, List.of(FEATURES));
+			case KEYS -> keysPage();
+			case LOOK -> lookPage();
+		}
+		contentHeight = y - start + 6;
 		g.endScissor();
 		clipping = false;
 		if (maxScroll > 0) {
@@ -213,163 +283,202 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	private void header(int left, int top, int w) {
-		Theme t = AerionClient.theme();
+	private void sidebar(int left, int top, int h) {
+		Draw.rounded(g, left, top, SIDE, h, 4, sidebar);
+		g.fill(left + SIDE - 2, top, left + SIDE, top + h, sidebar);
 		int logoH = 13;
-		Logo.draw(g, t, left + 8, top + (HEADER - logoH) / 2, logoH);
-		int bx = left + 14 + Logo.width(logoH);
-		bx = tabButton(bx, top + 6, Lang.tr("aerion.panel.modules"), Tab.MODULES);
-		tabButton(bx + 3, top + 6, Lang.tr("aerion.panel.look"), Tab.LOOK);
-		iconButton(left + w - 21, top + 6, 14, "close", () -> closing = true);
-		g.fill(left + 1, top + HEADER, left + w - 1, top + HEADER + 1, line);
+		Logo.draw(g, AerionClient.theme(), left + 8, top + 7, logoH);
+		int ny = top + 27;
+		ny = navItem(left + 4, ny, Section.HUD, "fps", "aerion.nav.hud");
+		ny = navItem(left + 4, ny, Section.FEATURES, "zoom", "aerion.nav.features");
+		ny = navItem(left + 4, ny, Section.KEYS, "keys", "aerion.nav.keys");
+		navItem(left + 4, ny, Section.LOOK, "look", "aerion.nav.look");
+		button(left + 4, top + h - 21, SIDE - 8, 16, Lang.tr("aerion.menu.editLayout"), true, () -> Page.go(new HudEditor()));
 	}
 
-	private int tabButton(int bx, int by, String label, Tab which) {
-		int w = Math.round(Txt.width(label, TEXT)) + 14;
-		boolean on = tab == which;
-		button(bx, by, w, 14, label, on, () -> {
-			tab = which;
+	private int navItem(int nx, int ny, Section which, String icon, String label) {
+		int w = SIDE - 8, h = 16;
+		boolean on = section == which, over = inside(nx, ny, w, h);
+		if (on) Draw.rounded(g, nx, ny, w, h, 3, Colors.mix(sidebar, accent, 0.28f));
+		else if (over) Draw.rounded(g, nx, ny, w, h, 3, control);
+		Icons.draw(g, icon, nx + 4, ny + 3, 10, on ? accent : muted);
+		Txt.draw(g, Lang.tr(label), nx + 18, ny + h / 2f, TEXT, on || over ? text : muted);
+		hit(nx, ny, w, h, f -> {
+			section = which;
 			detail = null;
+			expanded = null;
+			capturing = null;
+			scroll = 0;
+		}, false);
+		return ny + h + 2;
+	}
+
+	private int listHead(int mx, int my) {
+		String key = switch (section) {
+			case HUD -> "hud";
+			case FEATURES -> "features";
+			case KEYS -> "keys";
+			case LOOK -> "look";
+		};
+		Txt.draw(g, Lang.tr("aerion.nav." + key), mx, my + 6, TITLE, text);
+		Txt.draw(g, Lang.tr("aerion.hint." + key), mx, my + 18, SMALL, muted);
+		return 34;
+	}
+
+	private int pageHead(int mx, int my, int w) {
+		HudConfig cfg = AerionClient.hud();
+		String id = detail;
+		iconButton(mx, my, 14, "back", () -> {
+			detail = null;
+			expanded = null;
+			capturing = null;
 			scroll = 0;
 		});
-		return bx + w;
+		Icons.draw(g, id, mx + 19, my + 1, 12, text);
+		Txt.draw(g, name(id), mx + 35, my + 7, TITLE, text);
+		boolean on = enabled(cfg, id);
+		switchAt(mx + w - 22, my + 2, on);
+		hit(mx + w - 24, my, 24, 14, f -> {
+			item(cfg, id).addProperty("enabled", !on);
+			changed = true;
+		}, false);
+		int tx = mx;
+		tx = subTab(tx, my + 19, "aerion.tab.general", Sub.GENERAL);
+		if (!isFeature(id)) tx = subTab(tx, my + 19, "aerion.tab.look", Sub.LOOK);
+		subTab(tx, my + 19, "aerion.tab.key", Sub.KEY);
+		g.fill(mx, my + 33, mx + w + 18, my + 34, line);
+		return 42;
 	}
 
-	private void footer(int left, int top, int w) {
-		g.fill(left + 1, top, left + w - 1, top + 1, line);
-		String edit = Lang.tr("aerion.menu.editLayout");
-		int bw = Math.round(Txt.width(edit, TEXT)) + 16;
-		button(left + 8, top + 5, bw, 14, edit, true, () -> Page.go(new HudEditor()));
-		String warn = Lang.tr("aerion.panel.serverWarning");
-		float room = w - bw - 26;
-		if (Txt.width(warn, SMALL) <= room) Txt.draw(g, warn, left + w - 8 - Txt.width(warn, SMALL), top + 12, SMALL, muted);
+	private int subTab(int tx, int ty, String label, Sub which) {
+		String s = Lang.tr(label);
+		int w = Math.round(Txt.width(s, TEXT)) + 12;
+		boolean on = sub == which, over = inside(tx, ty, w, 14);
+		Txt.center(g, s, tx + w / 2f, ty + 6, TEXT, on || over ? text : muted);
+		if (on) g.fill(tx, ty + 13, tx + w, ty + 14, accent);
+		hit(tx, ty, w, 14, f -> {
+			sub = which;
+			expanded = null;
+			capturing = null;
+			scroll = 0;
+		}, false);
+		return tx + w + 2;
 	}
 
-	// --- cards -------------------------------------------------------------------------------
-	private void cards(int left, int w) {
-		String[][] groups = {{"aerion.menu.all", "ALL"}, {"aerion.menu.hud", "HUD"}, {"aerion.menu.features", "FEATURES"}};
-		int bx = left;
-		for (String[] f : groups) {
-			Filter which = Filter.valueOf(f[1]);
-			String label = Lang.tr(f[0]);
-			int bw = Math.round(Txt.width(label, SMALL)) + 12;
-			smallButton(bx, y, bw, 12, label, filter == which, () -> {
-				filter = which;
-				scroll = 0;
-			});
-			bx += bw + 3;
-		}
-		y += 16;
-		List<String> items = new ArrayList<>();
-		if (filter != Filter.FEATURES) items.addAll(List.of(MODULES));
-		if (filter != Filter.HUD) items.addAll(List.of(FEATURES));
-		int cols = Math.max(2, (w + GAP) / (92 + GAP));
-		int cw = (w - (cols - 1) * GAP) / cols, ch = 64;
+	// --- tiles -------------------------------------------------------------------------------
+	private void tiles(int left, int w, List<String> items) {
+		// Features have longer names, and there are few of them.
+		int cols = items.size() < 8 ? 2 : Math.max(2, (w + GAP) / (96 + GAP));
+		int cw = (w - (cols - 1) * GAP) / cols, ch = 26;
 		HudConfig cfg = AerionClient.hud();
 		for (int i = 0; i < items.size(); i++) {
-			card(cfg, items.get(i), left + (i % cols) * (cw + GAP), y + (i / cols) * (ch + GAP), cw, ch);
+			tileAt(cfg, items.get(i), left + (i % cols) * (cw + GAP), y + (i / cols) * (ch + GAP), cw, ch);
 		}
 		y += ((items.size() + cols - 1) / cols) * (ch + GAP);
 	}
 
-	private void card(HudConfig cfg, String id, int cx, int cy, int w, int h) {
-		boolean on = enabled(cfg, id);
-		boolean over = inside(cx, cy, w, h);
-		Draw.control(g, cx, cy, w, h, 3, over ? Colors.mix(surface, accent, 0.6f) : line, surface2);
+	private void tileAt(HudConfig cfg, String id, int cx, int cy, int w, int h) {
+		boolean on = enabled(cfg, id), over = inside(cx, cy, w, h);
+		Draw.control(g, cx, cy, w, h, 3, over ? Colors.mix(surface, accent, 0.6f) : line, over ? control : tile);
 		int ink = on ? text : muted;
-		Icons.draw(g, id, cx + w / 2f - 8, cy + 5, 16, ink);
-		Txt.center(g, name(id), cx + w / 2f, cy + 28, TEXT, ink);
-		smallButton(cx + 3, cy + 35, w - 6, 12, Lang.tr("aerion.menu.options"), false, () -> {
-			detail = id;
-			scroll = 0;
-		});
-		boolean barOver = inside(cx + 3, cy + 49, w - 6, 12);
-		int bar = on ? GREEN : RED;
-		Draw.rounded(g, cx + 3, cy + 49, w - 6, 12, 2, barOver ? Colors.mix(bar, 0xFFFFFFFF, 0.12f) : bar);
-		Txt.center(g, Lang.tr(on ? "aerion.menu.on" : "aerion.menu.off"), cx + w / 2f, cy + 55, SMALL, 0xFFFFFFFF);
-		hit(cx + 3, cy + 49, w - 6, 12, f -> {
-			item(cfg, id).add("enabled", new JsonPrimitive(!on));
+		Icons.draw(g, id, cx + 6, cy + (h - 13) / 2f, 13, ink);
+		Txt.draw(g, ellipsize(name(id), w - 53), cx + 23, cy + h / 2f, TEXT, ink);
+		int sx = cx + w - 26, sy = cy + (h - 9) / 2;
+		switchAt(sx, sy, on);
+		hit(sx - 3, cy, 26, h, f -> {
+			item(cfg, id).addProperty("enabled", !on);
 			changed = true;
+		}, false);
+		hit(cx, cy, w, h, f -> {
+			detail = id;
+			sub = Sub.GENERAL;
+			scroll = 0;
 		}, false);
 	}
 
-	// --- options of one card -----------------------------------------------------------------
-	private void detailPage(int left, int w) {
+	private static String ellipsize(String s, int width) {
+		if (Txt.width(s, TEXT) <= width) return s;
+		while (s.length() > 1 && Txt.width(s + "…", TEXT) > width) s = s.substring(0, s.length() - 1);
+		return s + "…";
+	}
+
+	// --- settings of one tile ----------------------------------------------------------------
+	private void detailBody() {
 		HudConfig cfg = AerionClient.hud();
-		iconButton(left, y, 14, "back", () -> {
-			detail = null;
-			scroll = 0;
-		});
-		Icons.draw(g, detail, left + 19, y + 1, 12, text);
-		Txt.draw(g, name(detail), left + 35, y + 7, 9f, text);
-		String reset = Lang.tr("aerion.menu.reset");
-		int rw = Math.round(Txt.width(reset, SMALL)) + 12;
-		smallButton(left + w - rw, y + 1, rw, 12, reset, false, () -> {
-			reset(cfg);
-			changed = true;
-		});
-		y += 19;
-		int top = y;
-		int col = isFeature(detail) ? w : (w - 8) / 2;
-		x = left;
-		colW = col;
-		toggle(Lang.tr("aerion.panel.enabled"), enabled(cfg, detail), v -> item(cfg, detail).add("enabled", new JsonPrimitive(v)));
-		if (isFeature(detail)) {
-			featureOptions(cfg);
-			return;
-		}
-		JsonObject m = cfg.module(detail);
-		slider(Lang.tr("aerion.panel.scale"), HudConfig.num(m, "scale", 100), 25, 400, 5, "%", v -> m.add("scale", new JsonPrimitive(v)));
-		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(m, o);
-		if (List.of("fps", "cps", "ping", "memory").contains(detail)) note(Lang.tr("aerion.panel.formatHint"));
-		int leftEnd = y;
-		// Right column: the module's own look.
-		y = top;
-		x = left + col + 8;
-		JsonObject own = m.get("style") instanceof JsonObject s && !s.isEmpty() ? s : null;
-		toggle(Lang.tr("aerion.panel.ownLook"), own != null, v -> {
-			if (v) m.add("style", cfg.style().deepCopy());
-			else m.remove("style");
-		});
-		if (own != null) styleFields(own);
-		else note(Lang.tr("aerion.panel.ownLookHint"));
-		y = Math.max(y, leftEnd);
-	}
-
-	private void reset(HudConfig cfg) {
-		JsonObject o = item(cfg, detail);
-		if (detail.equals("zoom")) {
-			o.addProperty("factor", 4);
-			o.addProperty("smooth", true);
-		} else if (detail.equals("freelook")) {
-			o.addProperty("hold", true);
-		} else if (!isFeature(detail)) {
-			o.remove("style");
-			o.remove("options");
-			o.addProperty("scale", 100);
+		if (sub == Sub.KEY) {
+			keyTab();
+		} else if (isFeature(detail)) {
+			featureGeneral(cfg);
+		} else if (sub == Sub.LOOK) {
+			moduleLook(cfg, cfg.module(detail));
+		} else {
+			moduleGeneral(cfg.module(detail));
 		}
 	}
 
-	private void featureOptions(HudConfig cfg) {
+	private void moduleGeneral(JsonObject m) {
+		List<Option> options = OPTIONS.getOrDefault(detail, List.of());
+		if (!options.isEmpty()) {
+			section(Lang.tr("aerion.sec.options"));
+			for (Option o : options) option(m, o);
+			if (options.stream().anyMatch(o -> o.key.equals("format"))) note(Lang.tr("aerion.panel.formatHint"));
+			y += 4;
+		}
+		section(Lang.tr("aerion.sec.place"));
+		slider(Lang.tr("aerion.panel.scale"), HudConfig.num(m, "scale", 100), 25, 400, 5, "%", v -> m.addProperty("scale", v));
+		grid(m);
+		slider(Lang.tr("aerion.place.x"), HudConfig.num(m, "x", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("x", v * 10));
+		slider(Lang.tr("aerion.place.y"), HudConfig.num(m, "y", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("y", v * 10));
+	}
+
+	/** Nine squares for the corners, edges and centre of the screen. */
+	private void grid(JsonObject m) {
+		Txt.draw(g, Lang.tr("aerion.place.corner"), x, y + 13, TEXT, text);
+		int cx = controlX(), size = 7;
+		int[] xs = {8, 500, 992}, ys = {10, 500, 990};
+		int mx = HudConfig.num(m, "x", 0), my = HudConfig.num(m, "y", 0);
+		for (int row = 0; row < 3; row++) {
+			for (int col = 0; col < 3; col++) {
+				int tx = cx + col * (size + 2), ty = y + 2 + row * (size + 2);
+				int vx = xs[col], vy = ys[row];
+				boolean on = Math.abs(mx - vx) < 15 && Math.abs(my - vy) < 15, over = inside(tx, ty, size, size);
+				Draw.rounded(g, tx, ty, size, size, 1, on ? accent : over ? Colors.mix(surface, text, 0.3f) : control);
+				hit(tx, ty, size, size, f -> {
+					m.addProperty("x", vx);
+					m.addProperty("y", vy);
+					changed = true;
+				}, false);
+			}
+		}
+		y += 3 * (size + 2) + 4;
+	}
+
+	private void featureGeneral(HudConfig cfg) {
 		JsonObject f = cfg.feature(detail);
 		if (detail.equals("zoom")) {
-			slider(Lang.tr("aerion.feature.zoomFactor"), HudConfig.num(f, "factor", 4), 2, 10, 1, "x", v -> f.add("factor", new JsonPrimitive(v)));
-			toggle(Lang.tr("aerion.feature.zoomSmooth"), HudConfig.bool(f, "smooth", true), v -> f.add("smooth", new JsonPrimitive(v)));
+			slider(Lang.tr("aerion.feature.zoomFactor"), HudConfig.num(f, "factor", 4), 2, 10, 1, "x", v -> f.addProperty("factor", v));
+			toggle(Lang.tr("aerion.feature.zoomSmooth"), HudConfig.bool(f, "smooth", true), v -> f.addProperty("smooth", v));
 		} else if (detail.equals("freelook")) {
-			toggle(Lang.tr("aerion.feature.freelookHold"), HudConfig.bool(f, "hold", true), v -> f.add("hold", new JsonPrimitive(v)));
+			toggle(Lang.tr("aerion.feature.freelookHold"), HudConfig.bool(f, "hold", true), v -> f.addProperty("hold", v));
 		}
-		note(Lang.tr("aerion.menu.keyHint"));
 		if (detail.equals("freelook") || detail.equals("fullbright")) note(Lang.tr("aerion.panel.serverWarning"));
 	}
 
 	private void option(JsonObject m, Option o) {
-		String label = Lang.tr("aerion.opt." + detail + "." + o.key);
+		String label = Lang.tr(o.key.equals("format") || o.key.equals("colored") && !detail.equals("armor")
+				? "aerion.opt." + o.key
+				: "aerion.opt." + detail + "." + o.key);
 		String value = HudConfig.opt(m, o.key, o.def);
 		if (o.isToggle()) {
 			toggle(label, "1".equals(value), v -> setOption(m, o.key, v ? "1" : "0"));
+		} else if (o.color) {
+			color(detail + "." + o.key, label, new String[] {"accent"}, new String[] {Lang.tr("aerion.style.accent")}, value, v -> setOption(m, o.key, v));
 		} else if (o.choices != null) {
-			String[] labels = new String[o.choices.length];
-			for (int i = 0; i < labels.length; i++) labels[i] = Lang.tr("aerion.choice." + o.choices[i]);
+			String[] labels = o.labels;
+			if (labels == null) {
+				labels = new String[o.choices.length];
+				for (int i = 0; i < labels.length; i++) labels[i] = Lang.tr("aerion.choice." + o.choices[i]);
+			}
 			choice(label, o.choices, labels, value, v -> setOption(m, o.key, v));
 		} else {
 			int n;
@@ -393,46 +502,190 @@ public final class AerionMenu implements Page {
 		options.addProperty(key, value);
 	}
 
-	// --- shared look -------------------------------------------------------------------------
-	private void look() {
+	// --- look --------------------------------------------------------------------------------
+	/** Reads and writes one look: the shared one, or a module's values on top of it. */
+	private final class Look {
+		final JsonObject shared, module;
+
+		Look(JsonObject shared, JsonObject module) {
+			this.shared = shared;
+			this.module = module;
+		}
+
+		JsonObject own() {
+			return module != null && module.get("style") instanceof JsonObject s ? s : null;
+		}
+
+		boolean overridden(String key) {
+			JsonObject o = own();
+			return o != null && o.has(key);
+		}
+
+		JsonObject read(String key) {
+			return overridden(key) ? own() : shared;
+		}
+
+		JsonObject write() {
+			if (module == null) return shared;
+			JsonObject o = own();
+			if (o == null) {
+				o = new JsonObject();
+				module.add("style", o);
+			}
+			return o;
+		}
+
+		void reset(String key) {
+			JsonObject o = own();
+			if (o == null) return;
+			o.remove(key);
+			if (o.isEmpty()) module.remove("style");
+			changed = true;
+		}
+
+		/** The arrow at the end of a row, when this module differs from the shared look. */
+		void mark(String key, int rowY) {
+			if (!overridden(key)) return;
+			int ix = x + colW - 11;
+			boolean over = inside(ix, rowY + 2, 11, 11);
+			Icons.draw(g, "undo", ix + 1, rowY + 3, 9, over ? text : muted);
+			hit(ix, rowY + 2, 11, 11, f -> reset(key), false);
+		}
+	}
+
+	private void lookPage() {
 		HudConfig cfg = AerionClient.hud();
-		int left = x, w = colW, col = (w - 8) / 2;
-		colW = col;
-		toggle(Lang.tr("aerion.panel.hud"), cfg.enabled(), v -> cfg.root.add("enabled", new JsonPrimitive(v)));
-		note(Lang.tr("aerion.panel.lookTitle"));
-		int top = y;
-		JsonObject s = cfg.style();
-		colorFields(s);
-		int end = y;
-		y = top;
-		x = left + col + 8;
-		shapeFields(s);
-		y = Math.max(y, end);
+		toggle(Lang.tr("aerion.panel.hud"), cfg.enabled(), v -> cfg.root.addProperty("enabled", v));
+		y += 4;
+		lookFields(new Look(cfg.style(), null));
 	}
 
-	private void styleFields(JsonObject s) {
-		colorFields(s);
-		shapeFields(s);
+	private void moduleLook(HudConfig cfg, JsonObject m) {
+		note(Lang.tr("aerion.look.ownHint"));
+		Look look = new Look(cfg.style(), m);
+		lookFields(look);
+		if (look.own() != null) {
+			y += 2;
+			String label = Lang.tr("aerion.look.useShared");
+			int w = Math.round(Txt.width(label, SMALL)) + 14;
+			smallButton(x, y, w, 13, label, false, () -> {
+				m.remove("style");
+				changed = true;
+			});
+			y += 16;
+		}
 	}
 
-	private void colorFields(JsonObject s) {
+	private void lookFields(Look l) {
 		String theme = Lang.tr("aerion.style.theme"), none = Lang.tr("aerion.style.none"), acc = Lang.tr("aerion.style.accent");
-		color(Lang.tr("aerion.style.text"), new String[] {"theme"}, new String[] {theme}, HudConfig.str(s, "text", "theme"), v -> s.addProperty("text", v));
-		color(Lang.tr("aerion.style.background"), new String[] {"theme", "none"}, new String[] {theme, none}, HudConfig.str(s, "background", "theme"), v -> s.addProperty("background", v));
-		slider(Lang.tr("aerion.style.opacity"), HudConfig.num(s, "opacity", 55), 0, 100, 5, "%", v -> s.addProperty("opacity", v));
-		color(Lang.tr("aerion.style.border"), new String[] {"none", "accent"}, new String[] {none, acc}, HudConfig.str(s, "border", "none"), v -> s.addProperty("border", v));
+		reserve = l.module != null ? 14 : 0;
+
+		section(Lang.tr("aerion.sec.text"));
+		int top = y;
+		color("text", Lang.tr("aerion.style.text"), new String[] {"theme"}, new String[] {theme}, HudConfig.str(l.read("text"), "text", "theme"), v -> l.write().addProperty("text", v));
+		l.mark("text", top);
+		top = y;
+		choiceRow(Lang.tr("aerion.style.font"), new String[] {"game", "smooth"}, new String[] {Lang.tr("aerion.style.game"), Lang.tr("aerion.style.smooth")}, HudConfig.str(l.read("font"), "font", "game"), v -> l.write().addProperty("font", v));
+		l.mark("font", top);
+		top = y;
+		toggle(Lang.tr("aerion.style.shadow"), HudConfig.bool(l.read("shadow"), "shadow", true), v -> l.write().addProperty("shadow", v));
+		l.mark("shadow", top);
+		top = y;
+		choiceRow(Lang.tr("aerion.style.align"), new String[] {"left", "center", "right"}, new String[] {Lang.tr("aerion.style.left"), Lang.tr("aerion.style.center"), Lang.tr("aerion.style.right")}, HudConfig.str(l.read("align"), "align", "left"), v -> l.write().addProperty("align", v));
+		l.mark("align", top);
+
+		y += 4;
+		section(Lang.tr("aerion.sec.background"));
+		top = y;
+		color("background", Lang.tr("aerion.style.background"), new String[] {"theme", "none"}, new String[] {theme, none}, HudConfig.str(l.read("background"), "background", "theme"), v -> l.write().addProperty("background", v));
+		l.mark("background", top);
+		top = y;
+		slider(Lang.tr("aerion.style.opacity"), HudConfig.num(l.read("opacity"), "opacity", 55), 0, 100, 5, "%", v -> l.write().addProperty("opacity", v));
+		l.mark("opacity", top);
+		top = y;
+		slider(Lang.tr("aerion.style.padding"), HudConfig.num(l.read("padding"), "padding", 3), 0, 10, 1, "", v -> l.write().addProperty("padding", v));
+		l.mark("padding", top);
+		top = y;
+		slider(Lang.tr("aerion.style.radius"), HudConfig.num(l.read("radius"), "radius", 0), 0, 8, 1, "", v -> l.write().addProperty("radius", v));
+		l.mark("radius", top);
+
+		y += 4;
+		section(Lang.tr("aerion.sec.border"));
+		top = y;
+		String border = HudConfig.str(l.read("border"), "border", "none");
+		color("border", Lang.tr("aerion.style.border"), new String[] {"none", "accent"}, new String[] {none, acc}, border, v -> l.write().addProperty("border", v));
+		l.mark("border", top);
+		if (!"none".equals(border)) {
+			top = y;
+			slider(Lang.tr("aerion.style.borderWidth"), HudConfig.num(l.read("borderWidth"), "borderWidth", 1), 1, 4, 1, "", v -> l.write().addProperty("borderWidth", v));
+			l.mark("borderWidth", top);
+		}
+		reserve = 0;
 	}
 
-	private void shapeFields(JsonObject s) {
-		slider(Lang.tr("aerion.style.radius"), HudConfig.num(s, "radius", 0), 0, 8, 1, "", v -> s.addProperty("radius", v));
-		slider(Lang.tr("aerion.style.padding"), HudConfig.num(s, "padding", 3), 0, 10, 1, "", v -> s.addProperty("padding", v));
-		toggle(Lang.tr("aerion.style.shadow"), HudConfig.bool(s, "shadow", true), v -> s.addProperty("shadow", v));
-		choice(Lang.tr("aerion.style.align"), new String[] {"left", "center", "right"},
-				new String[] {Lang.tr("aerion.style.left"), Lang.tr("aerion.style.center"), Lang.tr("aerion.style.right")},
-				HudConfig.str(s, "align", "left"), v -> s.addProperty("align", v));
+	// --- keys --------------------------------------------------------------------------------
+	private void keyTab() {
+		KeyMapping k = Features.key(detail);
+		String label = switch (detail) {
+			case "zoom", "freelook" -> Lang.tr("aerion.key.hold");
+			case "toggleSprint" -> Lang.tr("aerion.key.sprint");
+			case "toggleSneak" -> Lang.tr("aerion.key.sneak");
+			default -> Lang.tr("aerion.key.toggle");
+		};
+		keyRow(label, k);
+		note(Lang.tr("aerion.hint.keys"));
+	}
+
+	private void keysPage() {
+		keyRow(Lang.tr("aerion.key.menu"), Features.key("menu"));
+		y += 4;
+		section(Lang.tr("aerion.key.features"));
+		keyRow(Lang.tr("aerion.feature.zoom"), Features.key("zoom"));
+		keyRow(Lang.tr("aerion.feature.freelook"), Features.key("freelook"));
+		keyRow(Lang.tr("aerion.feature.fullbright"), Features.key("fullbright"));
+		keyRow(Lang.tr("aerion.key.sprint"), Features.key("toggleSprint"));
+		keyRow(Lang.tr("aerion.key.sneak"), Features.key("toggleSneak"));
+		y += 4;
+		section(Lang.tr("aerion.key.modules"));
+		for (String id : Features.MODULE_IDS) keyRow(Lang.tr("aerion.module." + id), Features.key(id));
+	}
+
+	private void keyRow(String label, KeyMapping k) {
+		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
+		int bx = controlX(), w = x + colW - bx - 15;
+		boolean listening = capturing == k;
+		String shown = listening ? Lang.tr("aerion.key.press") : k.isUnbound() ? Lang.tr("aerion.key.none") : k.getTranslatedKeyMessage().getString();
+		button(bx, y + 1, w, ROW - 3, shown, listening, () -> capturing = k);
+		iconButton(bx + w + 2, y + 1, ROW - 3, "close", () -> {
+			capturing = k;
+			bind(InputConstants.UNKNOWN);
+			capturing = null;
+		});
+		y += ROW;
+		if (!k.isUnbound()) {
+			for (KeyMapping other : Minecraft.getInstance().options.keyMappings) {
+				if (other != k && other.same(k)) {
+					String who = Component.translatable(other.getName()).getString();
+					Txt.draw(g, Lang.tr("aerion.key.taken").replace("{}", who), bx, y + 3, SMALL, 0xFFFFAA33);
+					y += 9;
+					break;
+				}
+			}
+		}
 	}
 
 	// --- controls ----------------------------------------------------------------------------
+	/** Room kept free at the end of rows for the arrow that restores a shared value. */
+	private int reserve;
+
+	private int controlX() {
+		return x + Math.min(112, colW * 45 / 100);
+	}
+
+	private int controlW() {
+		return x + colW - controlX() - reserve;
+	}
+
 	private void hit(int hx, int hy, int w, int h, DoubleConsumer action, boolean slider) {
 		hits.add(new Hit(hx, hy, w, h, action, slider, clipping));
 	}
@@ -465,9 +718,14 @@ public final class AerionMenu implements Page {
 		hit(bx, by, size, size, f -> action.run(), false);
 	}
 
-	private void heading(String s) {
-		Txt.draw(g, s, x, y + 5, SMALL, muted);
-		y += 11;
+	private void switchAt(int sx, int sy, boolean on) {
+		Draw.rounded(g, sx, sy, 20, 9, 4, on ? accent : Colors.mix(surface, text, 0.3f));
+		Draw.rounded(g, on ? sx + 12 : sx + 1, sy + 1, 7, 7, 3, on ? accentText : surface);
+	}
+
+	private void section(String s) {
+		Txt.draw(g, s, x, y + 5, SMALL, accent);
+		y += 12;
 	}
 
 	private void note(String s) {
@@ -495,12 +753,11 @@ public final class AerionMenu implements Page {
 	}
 
 	private void toggle(String label, boolean on, Consumer<Boolean> set) {
-		if (inside(x - 2, y, colW + 4, ROW)) Draw.rounded(g, x - 2, y, colW + 4, ROW, 2, control);
+		int w = colW - reserve;
+		if (inside(x - 2, y, w + 4, ROW)) Draw.rounded(g, x - 2, y, w + 4, ROW, 2, control);
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
-		int sx = x + colW - 20, sy = y + 3;
-		Draw.rounded(g, sx, sy, 20, 9, 4, on ? accent : Colors.mix(surface, text, 0.3f));
-		Draw.rounded(g, on ? sx + 12 : sx + 1, sy + 1, 7, 7, 3, on ? accentText : surface);
-		hit(x - 2, y, colW + 4, ROW, f -> {
+		switchAt(x + w - 20, y + 3, on);
+		hit(x - 2, y, w + 4, ROW, f -> {
 			set.accept(!on);
 			changed = true;
 		}, false);
@@ -509,13 +766,13 @@ public final class AerionMenu implements Page {
 
 	/** Value slider; the number sits on the bar. */
 	private void slider(String label, int value, int min, int max, int step, String unit, Consumer<Integer> set) {
-		int bx = x + Math.min(78, colW / 2), w = x + colW - bx;
+		int bx = controlX(), w = controlW();
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
-		Draw.rounded(g, bx, y + 1, w, ROW - 3, 2, control);
+		Draw.rounded(g, bx, y + 2, w, ROW - 4, 2, control);
 		float f = (float) (Math.max(min, Math.min(max, value)) - min) / Math.max(1, max - min);
 		int fill = Math.round(w * f);
-		if (fill > 0) Draw.rounded(g, bx, y + 1, fill, ROW - 3, 2, Colors.alpha(accent, 0xB0));
-		Txt.center(g, value + unit, bx + w / 2f, y + ROW / 2f - 0.5f, SMALL, text);
+		if (fill > 0) Draw.rounded(g, bx, y + 2, fill, ROW - 4, 2, Colors.alpha(accent, 0xB0));
+		Txt.center(g, value + unit, bx + w / 2f, y + ROW / 2f, SMALL, text);
 		hit(bx, y, w, ROW, fr -> {
 			int v = min + Math.round((float) (fr * (max - min)) / step) * step;
 			set.accept(Math.max(min, Math.min(max, v)));
@@ -524,46 +781,82 @@ public final class AerionMenu implements Page {
 		y += ROW;
 	}
 
-	/** A row of mutually exclusive buttons under its label. */
+	/** Mutually exclusive buttons on the label's row, or under it when they don't fit. */
 	private void choice(String label, String[] values, String[] labels, String current, Consumer<String> set) {
-		heading(label);
-		int w = colW / values.length;
+		float widest = 0;
+		for (String l : labels) widest = Math.max(widest, Txt.width(l, SMALL));
+		if (widest + 8 > (float) controlW() / values.length) {
+			Txt.draw(g, label, x, y + 6, TEXT, text);
+			y += 13;
+			segments(x, colW - reserve, values, labels, current, set);
+			y += 16;
+		} else {
+			choiceRow(label, values, labels, current, set);
+		}
+	}
+
+	private void choiceRow(String label, String[] values, String[] labels, String current, Consumer<String> set) {
+		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
+		y += 2;
+		segments(controlX(), controlW(), values, labels, current, set);
+		y += ROW - 2;
+	}
+
+	private void segments(int sx, int width, String[] values, String[] labels, String current, Consumer<String> set) {
+		int w = width / values.length;
 		for (int i = 0; i < values.length; i++) {
 			String v = values[i];
-			smallButton(x + i * w, y, w - 2, 13, labels[i], v.equals(current), () -> {
+			smallButton(sx + i * w, y, w - 1, ROW - 4, labels[i], v.equals(current), () -> {
 				set.accept(v);
 				changed = true;
 			});
 		}
-		y += 16;
 	}
 
-	/** Named choices ("theme", "none"…), swatches and, for a colour, exact R/G/B sliders. */
-	private void color(String label, String[] words, String[] wordLabels, String current, Consumer<String> set) {
-		heading(label);
-		int bx = x;
+	/** Named choices, plus a custom colour whose palette and R/G/B sliders open on demand. */
+	private void color(String id, String label, String[] words, String[] wordLabels, String current, Consumer<String> set) {
+		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
+		int bx = controlX(), by = y + 2, bh = ROW - 4;
 		for (int i = 0; i < words.length; i++) {
 			String v = words[i];
-			int w = Math.round(Txt.width(wordLabels[i], SMALL)) + 8;
-			smallButton(bx, y, w, 11, wordLabels[i], v.equals(current), () -> {
+			int w = Math.round(Txt.width(wordLabels[i], SMALL)) + 10;
+			smallButton(bx, by, w, bh, wordLabels[i], v.equals(current), () -> {
 				set.accept(v);
 				changed = true;
+				if (id.equals(expanded)) expanded = null;
 			});
 			bx += w + 2;
 		}
+		boolean custom = current != null && current.startsWith("#");
+		String word = Lang.tr("aerion.style.custom");
+		int w = Math.round(Txt.width(word, SMALL)) + 10 + (custom ? 11 : 0);
+		String swatchValue = custom ? current : "#ffffff";
+		smallButton(bx, by, w, bh, custom ? "" : word, custom, () -> {
+			if (!custom) {
+				set.accept(swatchValue);
+				changed = true;
+			}
+			expanded = id.equals(expanded) ? null : id;
+		});
+		if (custom) {
+			Txt.draw(g, word, bx + 5, by + bh / 2f, SMALL, accentText);
+			int c = Theme.color(current, 0xFFFFFFFF);
+			Draw.control(g, bx + w - 12, by + 2, 9, bh - 4, 1, 0xFF000000, c);
+		}
+		y += ROW;
+		if (!id.equals(expanded)) return;
+		int sx = controlX();
 		for (int c : SWATCHES) {
-			if (bx + 10 > x + colW) break;
 			String hex = hex(c);
-			boolean on = hex.equalsIgnoreCase(current);
-			Draw.control(g, bx, y, 10, 11, 2, on ? accent : line, c);
-			hit(bx, y, 10, 11, f -> {
+			Draw.control(g, sx, y, 11, 11, 2, hex.equalsIgnoreCase(current) ? accent : line, c);
+			hit(sx, y, 11, 11, f -> {
 				set.accept(hex);
 				changed = true;
 			}, false);
-			bx += 11;
+			sx += 13;
 		}
 		y += 14;
-		if (current != null && current.startsWith("#")) {
+		if (custom) {
 			int c = Theme.color(current, 0xFFFFFFFF);
 			slider("R", c >> 16 & 255, 0, 255, 1, "", v -> set.accept(hex(c & 0xFF00FFFF | v << 16)));
 			slider("G", c >> 8 & 255, 0, 255, 1, "", v -> set.accept(hex(c & 0xFFFF00FF | v << 8)));

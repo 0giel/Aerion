@@ -126,7 +126,8 @@
       `--kk:${kk}px`,
       `background:${bg}`,
       `color:${text}`,
-      `border:${kk}px solid ${border}`,
+      `border:${kk * (s.borderWidth ?? 1)}px solid ${border}`,
+      `font-family:${s.font === "smooth" ? "var(--font-ui, Inter, sans-serif)" : "monospace"}`,
       `--box-r:${(s.radius ?? 0) * kk}px`,
       `border-radius:var(--box-r)`,
       `padding:${(s.padding ?? 3) * kk}px`,
@@ -181,7 +182,7 @@
                 onclick={() => (selected = id)}
               >
                 {#if id === "keystrokes"}
-                  <span class="keys">
+                  <span class="keys" style:--key={Number(opt(m, "keySize", "18"))}>
                     <span></span><span class="key">W</span><span></span>
                     <span class="key">A</span><span class="key">S</span><span class="key">D</span>
                     {#if opt(m, "mouse", "1") === "1"}<span class="key wide">LMB</span><span class="key wide"
@@ -277,6 +278,33 @@
                         onclick={() => setOption(selected, f.key, ch)}>{t(`hudEditor.choices.${ch}`)}</button
                       >
                     {/each}
+                  </div>
+                </div>
+              {:else if f.type === "color"}
+                <div class="field">
+                  <span class="label">{t(`hudEditor.options.${selected}.${f.key}`)}</span>
+                  <div class="row wrap gap-2">
+                    <div class="segmented" role="group">
+                      <button
+                        aria-pressed={!opt(m, f.key, f.def).startsWith("#")}
+                        onclick={() => setOption(selected, f.key, "accent")}
+                        >{t("hudEditor.style.accent")}</button
+                      >
+                      <button
+                        aria-pressed={opt(m, f.key, f.def).startsWith("#")}
+                        onclick={() => setOption(selected, f.key, "#ffffff")}
+                        >{t("hudEditor.style.custom")}</button
+                      >
+                    </div>
+                    {#if opt(m, f.key, f.def).startsWith("#")}
+                      <input
+                        type="color"
+                        class="pick"
+                        aria-label={t(`hudEditor.options.${selected}.${f.key}`)}
+                        value={opt(m, f.key, f.def)}
+                        oninput={(e) => setOption(selected, f.key, (e.target as HTMLInputElement).value)}
+                      />
+                    {/if}
                   </div>
                 </div>
               {:else}
@@ -462,13 +490,13 @@
   }
   .keys {
     display: grid;
-    grid-template-columns: repeat(3, calc(var(--kk) * 18));
+    grid-template-columns: repeat(3, calc(var(--kk) * var(--key)));
     gap: calc(var(--kk) * 2);
   }
   .key {
     display: grid;
     place-items: center;
-    height: calc(var(--kk) * 18);
+    height: calc(var(--kk) * var(--key));
     background: rgb(0 0 0 / 0.4);
     border-radius: var(--box-r);
   }
@@ -480,7 +508,7 @@
   }
   .key.space {
     grid-column: 1 / -1;
-    height: calc(var(--kk) * 9);
+    height: calc(var(--kk) * var(--key) / 2);
   }
   .armor {
     display: flex;
@@ -544,6 +572,15 @@
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
+  }
+  .pick {
+    width: 2.4rem;
+    height: 1.9rem;
+    padding: 0;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-sm);
+    background: none;
+    cursor: pointer;
   }
   .warnbox {
     padding: var(--sp-3);

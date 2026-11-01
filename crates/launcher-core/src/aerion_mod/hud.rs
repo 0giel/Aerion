@@ -1,5 +1,6 @@
 //! `hud.json`: the Aerion mod's HUD modules and client features, edited by the launcher and by the
-//! in-game editor (text formats only in the launcher). Positions are per-mille of the
+//! in-game menu (free-form text formats only in the launcher). Key bindings live in the game's
+//! options.txt. Positions are per-mille of the
 //! free space (0 = left/top, 1000 = right/bottom), scale is a percentage. The defaults match the
 //! mod's (`mod/common/.../hud/HudConfig.java`).
 
@@ -29,6 +30,9 @@ pub struct HudStyle {
     /// `none`, `accent` or `#rrggbb`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub border: Option<String>,
+    /// Border thickness, 1–4.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub border_width: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub radius: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -38,6 +42,9 @@ pub struct HudStyle {
     /// `left`, `center` or `right`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub align: Option<String>,
+    /// `game` (Minecraft's pixel font) or `smooth`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font: Option<String>,
 }
 
 impl HudStyle {
@@ -164,10 +171,12 @@ impl Default for HudConfig {
                 background: Some("theme".into()),
                 opacity: Some(55),
                 border: Some("none".into()),
+                border_width: Some(1),
                 radius: Some(0),
                 padding: Some(3),
                 shadow: Some(true),
                 align: Some("left".into()),
+                font: Some("game".into()),
             },
             modules: MODULES
                 .iter()
@@ -207,6 +216,10 @@ fn style_ok(s: &HudStyle) -> bool {
         && s.align
             .as_deref()
             .is_none_or(|a| matches!(a, "left" | "center" | "right"))
+        && s.border_width.is_none_or(|w| (1..=4).contains(&w))
+        && s.font
+            .as_deref()
+            .is_none_or(|f| matches!(f, "game" | "smooth"))
 }
 
 impl HudConfig {
@@ -282,6 +295,23 @@ mod tests {
         let mut c = HudConfig::default();
         c.style.text = Some("red; drop".into());
         assert!(c.validate().is_err());
+        let mut c = HudConfig::default();
+        c.style.font = Some("comic".into());
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn keeps_a_module_look_set_in_the_game() {
+        // The in-game menu writes only the fields a module changes.
+        let m: HudModule = serde_json::from_str(
+            r##"{"style":{"font":"smooth","borderWidth":2,"text":"#ffe25a"}}"##,
+        )
+        .unwrap();
+        assert_eq!(m.style.font.as_deref(), Some("smooth"));
+        assert_eq!(m.style.border_width, Some(2));
+        let back = serde_json::to_value(&m).unwrap();
+        assert_eq!(back["style"]["borderWidth"], 2);
+        assert!(back["style"].get("align").is_none());
     }
 
     #[tokio::test]

@@ -1,6 +1,7 @@
 package pl.aerion.mod.hud;
 
 import com.google.gson.JsonObject;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
 import pl.aerion.mod.Lang;
 import pl.aerion.mod.Theme;
+import pl.aerion.mod.Txt;
 import pl.aerion.mod.features.Features;
 import pl.aerion.mod.platform.EditorScreen;
 import pl.aerion.mod.platform.Game;
@@ -33,7 +35,7 @@ public final class Hud {
 	private Hud() {}
 
 	/** Resolved look of one module. */
-	public record Style(int text, int background, int border, int radius, int padding, boolean shadow, String align) {}
+	public record Style(int text, int background, int border, int borderWidth, int radius, int padding, boolean shadow, String align, boolean smooth) {}
 
 	/** Everything a module needs while measuring and drawing. */
 	public record Ctx(Minecraft mc, LocalPlayer player, JsonObject cfg, Style style, Theme theme, boolean preview) {
@@ -54,6 +56,27 @@ public final class Hud {
 	}
 
 	static final int LINE = 10;
+	private static final float SMOOTH_SIZE = 8.5f;
+
+	/** Width of text in the module's font. */
+	static int width(Ctx c, String s) {
+		return c.style().smooth() ? (int) Math.ceil(Txt.width(s, SMOOTH_SIZE)) : Gfx.textWidth(s);
+	}
+
+	/** Text in the module's font: the game's, or smooth with its shadow drawn as a second layer. */
+	static void text(Ctx c, Gfx g, String s, int x, int y, int color, boolean shadow) {
+		if (!c.style().smooth()) {
+			g.text(s, x, y, color, shadow);
+			return;
+		}
+		if (shadow) Txt.draw(g, s, x + 0.6f, y + 4.6f, SMOOTH_SIZE, Colors.alpha(0xFF000000, 0x90));
+		Txt.draw(g, s, x, y + 4f, SMOOTH_SIZE, color);
+	}
+
+	/** Green, yellow or red by how good a value is, when the module asks for it. */
+	static int graded(boolean good, boolean fair) {
+		return good ? 0xFF55DD77 : fair ? 0xFFFFE25A : 0xFFFF5555;
+	}
 
 	/** Modules made of text lines. */
 	abstract static class Lines implements Module {
@@ -62,6 +85,11 @@ public final class Hud {
 		/** Optional colour swatch before a line (e.g. potion colour); 0 for none. */
 		int swatch(Ctx c, int line) {
 			return 0;
+		}
+
+		/** Colour of a line's text. */
+		int color(Ctx c, int line) {
+			return c.style().text();
 		}
 
 		private int swatchSpace(Ctx c, List<String> lines) {
@@ -74,7 +102,7 @@ public final class Hud {
 			List<String> l = lines(c);
 			if (l.isEmpty()) return new int[] {0, 0};
 			int w = 0;
-			for (String s : l) w = Math.max(w, Gfx.textWidth(s));
+			for (String s : l) w = Math.max(w, Hud.width(c, s));
 			int p = c.style().padding();
 			return new int[] {w + swatchSpace(c, l) + 2 * p, l.size() * LINE - 1 + 2 * p};
 		}
@@ -87,7 +115,7 @@ public final class Hud {
 			int sw = swatchSpace(c, l);
 			for (int i = 0; i < l.size(); i++) {
 				String text = l.get(i);
-				int tw = Gfx.textWidth(text);
+				int tw = Hud.width(c, text);
 				int inner = s[0] - 2 * p - sw;
 				int x = p + sw + switch (c.style().align()) {
 					case "center" -> (inner - tw) / 2;
@@ -97,7 +125,7 @@ public final class Hud {
 				int y = p + i * LINE;
 				int color = swatch(c, i);
 				if (color != 0) g.fill(p, y + 1, p + 5, y + 6, color);
-				g.text(text, x, y, c.style().text(), c.style().shadow());
+				Hud.text(c, g, text, x, y, color(c, i), c.style().shadow());
 			}
 		}
 	}
@@ -115,6 +143,12 @@ public final class Hud {
 			List<String> lines(Ctx c) {
 				return List.of(format(c.opt("format", "{fps} FPS"), "fps", c.mc().getFps()));
 			}
+
+			@Override
+			int color(Ctx c, int line) {
+				int fps = c.mc().getFps();
+				return c.flag("colored", false) ? graded(fps >= 60, fps >= 30) : c.style().text();
+			}
 		});
 		MODULES.put("cps", new Lines() {
 			List<String> lines(Ctx c) {
@@ -127,7 +161,16 @@ public final class Hud {
 				double x = p == null ? 128.5 : p.getX(), y = p == null ? 64 : p.getY(), z = p == null ? -32.5 : p.getZ();
 				String fmt = "1".equals(c.opt("decimals", "0")) ? "%.1f" : "%.0f";
 				List<String> out = new ArrayList<>();
-				out.add("XYZ " + String.format(fmt + " / " + fmt + " / " + fmt, x, y, z));
+				if (c.flag("lines", false)) {
+					out.add("X " + String.format(fmt, x));
+					out.add("Y " + String.format(fmt, y));
+					out.add("Z " + String.format(fmt, z));
+				} else {
+					out.add("XYZ " + String.format(fmt + " / " + fmt + " / " + fmt, x, y, z));
+				}
+				if (c.flag("biome", false) && p != null) {
+					p.level().getBiome(p.blockPosition()).unwrapKey().ifPresent(k -> out.add(k.identifier().getPath().replace('_', ' ')));
+				}
 				if (c.flag("direction", true)) out.add(Compass.label(p == null ? 0 : p.getYRot(), false));
 				if (c.flag("nether", false) && p != null) {
 					boolean inNether = p.level().dimension().equals(net.minecraft.world.level.Level.NETHER);
@@ -151,12 +194,26 @@ public final class Hud {
 				}
 				return List.of(format(c.opt("format", "{ping} ms"), "ping", ping));
 			}
+
+			private int latency(Ctx c) {
+				if (c.player() == null || c.mc().getConnection() == null) return 0;
+				PlayerInfo info = c.mc().getConnection().getPlayerInfo(c.player().getUUID());
+				return info == null ? 0 : info.getLatency();
+			}
+
+			@Override
+			int color(Ctx c, int line) {
+				int ms = latency(c);
+				return c.flag("colored", false) ? graded(ms < 80, ms < 150) : c.style().text();
+			}
 		});
 		MODULES.put("clock", new Lines() {
 			List<String> lines(Ctx c) {
 				String pattern = (c.flag("h24", true) ? "HH:mm" : "h:mm") + (c.flag("seconds", false) ? ":ss" : "")
 						+ (c.flag("h24", true) ? "" : " a");
-				return List.of(LocalTime.now().format(DateTimeFormatter.ofPattern(pattern)));
+				String time = LocalTime.now().format(DateTimeFormatter.ofPattern(pattern));
+				if (!c.flag("date", false)) return List.of(time);
+				return List.of(time, LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
 			}
 		});
 		MODULES.put("memory", new Lines() {
@@ -166,14 +223,21 @@ public final class Hud {
 				long max = r.maxMemory() >> 20;
 				return List.of(format(c.opt("format", "{used}/{max} MB"), "used", used, "max", max, "percent", used * 100 / Math.max(1, max)));
 			}
+
+			@Override
+			int color(Ctx c, int line) {
+				Runtime r = Runtime.getRuntime();
+				long percent = (r.totalMemory() - r.freeMemory()) * 100 / Math.max(1, r.maxMemory());
+				return c.flag("colored", false) ? graded(percent < 70, percent < 90) : c.style().text();
+			}
 		});
 		MODULES.put("toggles", new Lines() {
 			List<String> lines(Ctx c) {
 				List<String> out = new ArrayList<>();
-				if (Features.sprintToggled()) out.add(Lang.tr("aerion.toggle.sprint"));
-				if (Features.sneakToggled()) out.add(Lang.tr("aerion.toggle.sneak"));
-				if (Features.fullbrightOn()) out.add(Lang.tr("aerion.toggle.fullbright"));
-				if (Features.freelookActive()) out.add(Lang.tr("aerion.toggle.freelook"));
+				if (c.flag("sprint", true) && Features.sprintToggled()) out.add(Lang.tr("aerion.toggle.sprint"));
+				if (c.flag("sneak", true) && Features.sneakToggled()) out.add(Lang.tr("aerion.toggle.sneak"));
+				if (c.flag("fullbright", true) && Features.fullbrightOn()) out.add(Lang.tr("aerion.toggle.fullbright"));
+				if (c.flag("freelook", true) && Features.freelookActive()) out.add(Lang.tr("aerion.toggle.freelook"));
 				if (out.isEmpty() && c.preview()) out.add(Lang.tr("aerion.toggle.sprint"));
 				return out;
 			}
@@ -189,7 +253,7 @@ public final class Hud {
 				for (MobEffectInstance e : effects(c)) {
 					String name = e.getEffect().value().getDisplayName().getString();
 					int level = e.getAmplifier() + 1;
-					String text = name + (level > 1 ? " " + roman(level) : "");
+					String text = name + (level > 1 && c.flag("level", true) ? " " + roman(level) : "");
 					if (duration) text += "  " + (e.isInfiniteDuration() ? "∞" : time(e.getDuration()));
 					out.add(text);
 				}
@@ -236,6 +300,7 @@ public final class Hud {
 				if (!i.isEmpty()) out.add(i);
 			}
 			if (c.flag("hand", true) && !c.player().getMainHandItem().isEmpty()) out.add(c.player().getMainHandItem());
+			if (c.flag("offhand", false) && !c.player().getOffhandItem().isEmpty()) out.add(c.player().getOffhandItem());
 			return out;
 		}
 
@@ -257,8 +322,8 @@ public final class Hud {
 			if (n == 0) return new int[] {0, 0};
 			int p = c.style().padding();
 			int text = 0;
-			for (ItemStack i : list) text = Math.max(text, Gfx.textWidth(label(c, i)));
-			if (list.isEmpty()) text = Gfx.textWidth("100%");
+			for (ItemStack i : list) text = Math.max(text, Hud.width(c, label(c, i)));
+			if (list.isEmpty()) text = Hud.width(c, "100%");
 			return vertical(c)
 					? new int[] {16 + (text > 0 ? text + 3 : 0) + 2 * p, n * 17 - 1 + 2 * p}
 					: new int[] {n * Math.max(18, text + 2) + 2 * p, 16 + (text > 0 ? LINE : 0) + 2 * p};
@@ -269,13 +334,13 @@ public final class Hud {
 			List<ItemStack> list = items(c);
 			int p = c.style().padding();
 			int text = 0;
-			for (ItemStack i : list) text = Math.max(text, Gfx.textWidth(label(c, i)));
+			for (ItemStack i : list) text = Math.max(text, Hud.width(c, label(c, i)));
 			int step = Math.max(18, text + 2);
 			for (int k = 0; k < list.size(); k++) {
 				ItemStack i = list.get(k);
 				String l = label(c, i);
 				int color = c.style().text();
-				if (i.isDamageableItem()) {
+				if (i.isDamageableItem() && c.flag("colored", true)) {
 					float left = 1f - (float) i.getDamageValue() / i.getMaxDamage();
 					if (left < 0.15f) color = 0xFFFF5555;
 					else if (left < 0.35f) color = 0xFFFFAA33;
@@ -283,11 +348,11 @@ public final class Hud {
 				if (vertical(c)) {
 					int y = p + k * 17;
 					g.item(i, p, y);
-					g.text(l, p + 19, y + 4, color, c.style().shadow());
+					Hud.text(c, g, l, p + 19, y + 4, color, c.style().shadow());
 				} else {
 					int x = p + k * step;
 					g.item(i, x + (step - 16) / 2, p);
-					g.text(l, x + (step - Gfx.textWidth(l)) / 2, p + 17, color, c.style().shadow());
+					Hud.text(c, g, l, x + (step - Hud.width(c, l)) / 2, p + 17, color, c.style().shadow());
 				}
 			}
 			if (list.isEmpty() && c.preview()) {
@@ -298,47 +363,58 @@ public final class Hud {
 
 	/** Movement keys and mouse buttons, lit while held; CPS under the mouse buttons. */
 	static final class Keystrokes implements Module {
-		static final int KEY = 18;
 		static final int GAP = 2;
+
+		private static int keySize(Ctx c) {
+			try {
+				return Math.max(12, Math.min(30, Integer.parseInt(c.opt("keySize", "18"))));
+			} catch (NumberFormatException e) {
+				return 18;
+			}
+		}
 
 		@Override
 		public int[] size(Ctx c) {
-			int p = c.style().padding();
-			int rows = 2 + (c.flag("mouse", true) ? 1 : 0) + (c.flag("space", true) ? 1 : 0);
-			int h = rows * KEY + (rows - 1) * GAP - (c.flag("space", true) ? KEY / 2 : 0);
-			return new int[] {3 * KEY + 2 * GAP + 2 * p, h + 2 * p};
+			int p = c.style().padding(), k = keySize(c);
+			int full = (c.flag("wasd", true) ? 2 : 0) + (c.flag("mouse", true) ? 1 : 0);
+			int h = full * k + Math.max(0, full - 1) * GAP;
+			if (c.flag("space", true)) h += (full > 0 ? GAP : 0) + k / 2;
+			return new int[] {3 * k + 2 * GAP + 2 * p, Math.max(k / 2, h) + 2 * p};
 		}
 
 		private void key(Ctx c, Gfx g, int x, int y, int w, int h, String label, boolean down) {
 			Style s = c.style();
-			int accent = c.theme() != null ? c.theme().accent : 0xFF7AA2FF;
+			String pressed = c.opt("pressed", "accent");
+			int accent = pressed.startsWith("#") ? Theme.color(pressed, 0xFF7AA2FF) : c.theme() != null ? c.theme().accent : 0xFF7AA2FF;
 			int body = down ? Colors.alpha(accent, 0xCC) : (s.background() != 0 ? s.background() : 0x66000000);
 			Draw.rounded(g, x, y, w, h, s.radius(), body);
-			int tw = Gfx.textWidth(label);
 			int color = down ? 0xFF111111 : s.text();
-			g.text(label, x + (w - tw) / 2, y + (h - 8) / 2, color, s.shadow() && !down);
+			Hud.text(c, g, label, x + (w - Hud.width(c, label)) / 2, y + (h - 8) / 2, color, s.shadow() && !down);
 		}
 
 		@Override
 		public void draw(Ctx c, Gfx g) {
 			var o = c.mc().options;
-			int p = c.style().padding();
-			int col = KEY + GAP;
-			key(c, g, p + col, p, KEY, KEY, o.keyUp.getTranslatedKeyMessage().getString(), o.keyUp.isDown());
-			int y = p + col;
-			key(c, g, p, y, KEY, KEY, o.keyLeft.getTranslatedKeyMessage().getString(), o.keyLeft.isDown());
-			key(c, g, p + col, y, KEY, KEY, o.keyDown.getTranslatedKeyMessage().getString(), o.keyDown.isDown());
-			key(c, g, p + 2 * col, y, KEY, KEY, o.keyRight.getTranslatedKeyMessage().getString(), o.keyRight.isDown());
-			y += col;
+			int p = c.style().padding(), k = keySize(c);
+			int col = k + GAP;
+			int y = p;
+			if (c.flag("wasd", true)) {
+				key(c, g, p + col, y, k, k, o.keyUp.getTranslatedKeyMessage().getString(), o.keyUp.isDown());
+				y += col;
+				key(c, g, p, y, k, k, o.keyLeft.getTranslatedKeyMessage().getString(), o.keyLeft.isDown());
+				key(c, g, p + col, y, k, k, o.keyDown.getTranslatedKeyMessage().getString(), o.keyDown.isDown());
+				key(c, g, p + 2 * col, y, k, k, o.keyRight.getTranslatedKeyMessage().getString(), o.keyRight.isDown());
+				y += col;
+			}
 			if (c.flag("mouse", true)) {
-				int w = (3 * KEY + 2 * GAP - GAP) / 2;
+				int w = (3 * k + GAP) / 2;
 				boolean cps = c.flag("cps", true);
-				key(c, g, p, y, w, KEY, cps ? Cps.left() + " CPS" : "LMB", o.keyAttack.isDown());
-				key(c, g, p + w + GAP, y, w, KEY, cps ? Cps.right() + " CPS" : "RMB", o.keyUse.isDown());
+				key(c, g, p, y, w, k, cps ? Cps.left() + " CPS" : "LMB", o.keyAttack.isDown());
+				key(c, g, p + w + GAP, y, w, k, cps ? Cps.right() + " CPS" : "RMB", o.keyUse.isDown());
 				y += col;
 			}
 			if (c.flag("space", true)) {
-				key(c, g, p, y, 3 * KEY + 2 * GAP, KEY / 2, "", o.keyJump.isDown());
+				key(c, g, p, y, 3 * k + 2 * GAP, k / 2, "", o.keyJump.isDown());
 			}
 		}
 	}
@@ -373,7 +449,9 @@ public final class Hud {
 		int padding = HudConfig.num(own.has("padding") ? own : base, "padding", 3);
 		boolean shadow = HudConfig.bool(own.has("shadow") ? own : base, "shadow", true);
 		String align = pick(own, base, "align", "left");
-		return new Style(text, background, borderColor, Math.max(0, Math.min(8, radius)), Math.max(0, Math.min(10, padding)), shadow, align);
+		int borderWidth = HudConfig.num(own.has("borderWidth") ? own : base, "borderWidth", 1);
+		boolean smooth = pick(own, base, "font", "game").equals("smooth");
+		return new Style(text, background, borderColor, Math.max(1, Math.min(4, borderWidth)), Math.max(0, Math.min(8, radius)), Math.max(0, Math.min(10, padding)), shadow, align, smooth);
 	}
 
 	private static String pick(JsonObject own, JsonObject base, String key, String fallback) {
@@ -410,7 +488,7 @@ public final class Hud {
 				g.translate(x, y);
 				g.scale(k);
 				Style st = c.style();
-				if (st.border() != 0) Draw.control(g, 0, 0, s[0], s[1], st.radius(), st.border(), st.background());
+				if (st.border() != 0) Draw.control(g, 0, 0, s[0], s[1], st.radius(), st.border(), st.background(), st.borderWidth());
 				else if (st.background() != 0) Draw.rounded(g, 0, 0, s[0], s[1], st.radius(), st.background());
 				e.getValue().draw(c, g);
 				g.pop();

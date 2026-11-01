@@ -36,6 +36,17 @@
   </div>
 
   <div class="field">
+    <span class="label">{t("hudEditor.style.font")}</span>
+    <div class="segmented" role="group" aria-label={t("hudEditor.style.font")}>
+      {#each ["game", "smooth"] as f (f)}
+        <button aria-pressed={(style.font ?? "game") === f} onclick={() => set({ font: f })}
+          >{t(`hudEditor.style.fonts.${f}`)}</button
+        >
+      {/each}
+    </div>
+  </div>
+
+  <div class="field">
     <span class="label">{t("hudEditor.style.background")}</span>
     <div class="row wrap gap-2">
       <div class="segmented" role="group" aria-label={t("hudEditor.style.background")}>
@@ -100,6 +111,18 @@
         />
       {/if}
     </div>
+    {#if style.border && style.border !== "none"}
+      <label class="range"
+        ><span class="small muted">{t("hudEditor.style.borderWidth")}: {style.borderWidth ?? 1}</span>
+        <input
+          type="range"
+          min="1"
+          max="4"
+          value={style.borderWidth ?? 1}
+          oninput={(e) => set({ borderWidth: Number((e.target as HTMLInputElement).value) })}
+        /></label
+      >
+    {/if}
   </div>
 
   <div class="grid2">

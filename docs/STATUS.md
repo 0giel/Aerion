@@ -19,10 +19,12 @@ Newest entries first.
   with the feature off → ownership marker (`aerion-toggles`); default positions overlapped;
   editor hint unreadable over modules → backing plate.
 - **In-game menu** (owner's requests after testing): square HUD corners by default; Right Shift or
-  an Aerion button on the title and pause screens opens a window of cards (switch + options per
-  module and feature), a shared look tab with exact R/G/B colours, and the layout editor. Checked
-  on 26.3: card switch saved, options page, look tab, editor, Esc back to the pause or title screen.
-  On 1.21.11: menu, options opening and themed pause menu.
+  an Aerion button on the title and pause screens opens a sidebar menu: quiet tiles with a switch,
+  settings per module on tabs (options, look field by field, key), all keys on one page, shared
+  look, layout editor. New options: font per module, border thickness, colour by value for FPS, ping
+  and memory, biome, date, off-hand item, key size and pressed colour, north marker and more.
+  Checked on 1.21.11: tile switch, tabs, custom colour and smooth font on one module only, binding a
+  key (saved in options.txt) and toggling the module with it in the world.
 - **Sharper game UI** (D34): shapes in screen pixels, smooth Inter labels on buttons and sliders;
   checked on title, pause and options screens at GUI scale 3. Other GUI scales not looked at.
 - **Launcher**: the instance page's "more" menu was painted under the next card (cards are stacking

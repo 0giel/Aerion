@@ -1,9 +1,12 @@
 package pl.aerion.mod.platform;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import pl.aerion.mod.features.Features;
 import pl.aerion.mod.hud.Page;
 
 /** Aerion's in-game screen, for Minecraft 26.x; what it shows lives in a {@link Page}. */
@@ -51,6 +54,17 @@ public final class EditorScreen extends Screen {
 	public boolean mouseScrolled(double x, double y, double h, double v) {
 		page.scrolled(x, y, v);
 		return true;
+	}
+
+	@Override
+	public boolean keyPressed(KeyEvent e) {
+		InputConstants.Key key = InputConstants.getKey(e);
+		if (page.keyPressed(key)) return true;
+		if (Features.isMenuKey(key)) {
+			onClose();
+			return true;
+		}
+		return super.keyPressed(e);
 	}
 
 	@Override

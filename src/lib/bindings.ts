@@ -844,11 +844,15 @@ export type HudStyle_Deserialize = {
 	opacity?: number | null,
 	/**  `none`, `accent` or `#rrggbb`. */
 	border?: string | null,
+	/**  Border thickness, 1–4. */
+	borderWidth?: number | null,
 	radius?: number | null,
 	padding?: number | null,
 	shadow?: boolean | null,
 	/**  `left`, `center` or `right`. */
 	align?: string | null,
+	/**  `game` (Minecraft's pixel font) or `smooth`. */
+	font?: string | null,
 };
 
 /**
@@ -864,11 +868,15 @@ export type HudStyle_Serialize = {
 	opacity?: number,
 	/**  `none`, `accent` or `#rrggbb`. */
 	border?: string,
+	/**  Border thickness, 1–4. */
+	borderWidth?: number,
 	radius?: number,
 	padding?: number,
 	shadow?: boolean,
 	/**  `left`, `center` or `right`. */
 	align?: string,
+	/**  `game` (Minecraft's pixel font) or `smooth`. */
+	font?: string,
 };
 
 export type InstallPlan = InstallPlan_Serialize | InstallPlan_Deserialize;
