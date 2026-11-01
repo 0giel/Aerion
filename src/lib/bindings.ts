@@ -154,6 +154,8 @@ export const commands = {
 	/**  Show a cape (`None` hides it). */
 	setCape: (accountId: string, capeId: string | null) => __TAURI_INVOKE<Account_Serialize>("set_cape", { accountId, capeId }),
 	listUserThemes: () => __TAURI_INVOKE<ThemeFile_Serialize[]>("list_user_themes"),
+	/**  Save the active theme's colours for running and future games with the Aerion mod. */
+	setGameTheme: (theme: GameTheme) => __TAURI_INVOKE<null>("set_game_theme", { theme }),
 	saveUserTheme: (theme: ThemeFile_Deserialize) => __TAURI_INVOKE<null>("save_user_theme", { theme }),
 	deleteUserTheme: (id: string) => __TAURI_INVOKE<null>("delete_user_theme", { id }),
 	/**  Copy an image/video into the themes asset folder; returns the asset name. */
@@ -589,6 +591,25 @@ export type GameStateEvent_Serialize = {
 	playSecs: number | null,
 };
 
+/**  Colours the mod uses, resolved by the launcher from the active theme (the mod parses no CSS). */
+export type GameTheme = {
+	name: string,
+	/**  `dark` or `light`. */
+	base: string,
+	bg: string,
+	surface: string,
+	surface2: string,
+	border: string,
+	text: string,
+	textMuted: string,
+	accent: string,
+	accentText: string,
+	/**  Background gradient stops (`#rrggbb`), top to bottom; empty = `bg`. */
+	gradient: string[],
+	/**  Corner radius of medium controls in CSS pixels. */
+	radius: number,
+};
+
 export type GameVersion = {
 	id: string,
 	/**  `release`, `snapshot`, `old_beta`, `old_alpha`. */
@@ -697,6 +718,8 @@ export type Instance_Deserialize = {
 	/**  Number of game sessions (for statistics). */
 	launches?: number,
 	modpack?: ModpackInfo_Deserialize | null,
+	/**  Load the Aerion mod (launcher theme in the game's menus) where it supports the version. */
+	aerionMod?: boolean,
 };
 
 export type Instance_Serialize = {
@@ -740,6 +763,8 @@ export type Instance_Serialize = {
 	/**  Number of game sessions (for statistics). */
 	launches: number,
 	modpack: ModpackInfo_Serialize | null,
+	/**  Load the Aerion mod (launcher theme in the game's menus) where it supports the version. */
+	aerionMod: boolean,
 };
 
 export type JavaInstall = JavaInstall_Serialize | JavaInstall_Deserialize;

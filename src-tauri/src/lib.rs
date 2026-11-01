@@ -110,6 +110,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             commands::skins::account_capes,
             commands::skins::set_cape,
             commands::themes::list_user_themes,
+            commands::themes::set_game_theme,
             commands::themes::save_user_theme,
             commands::themes::delete_user_theme,
             commands::themes::add_theme_asset,

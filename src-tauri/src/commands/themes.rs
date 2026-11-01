@@ -326,3 +326,13 @@ pub async fn install_gallery_theme(state: State<'_, AppState>, id: String) -> Cm
     .await?;
     Ok(id)
 }
+
+/// Save the active theme's colours for running and future games with the Aerion mod.
+#[tauri::command]
+#[specta::specta]
+pub async fn set_game_theme(
+    state: State<'_, AppState>,
+    theme: launcher_core::aerion_mod::GameTheme,
+) -> CmdResult<()> {
+    Ok(launcher_core::aerion_mod::write_theme(&state.paths, &theme).await?)
+}

@@ -15,6 +15,7 @@ export type AccountsView = B.AccountsView_Serialize;
 export type TaskInfo = B.TaskInfo_Serialize;
 export type LogLine = B.LogLine_Serialize;
 export type CrashInfo = B.CrashInfo_Serialize;
+export type GameTheme = B.GameTheme;
 export type GameState = B.GameState;
 export type RunningGame = B.RunningGame;
 export type JavaInstall = B.JavaInstall_Serialize;

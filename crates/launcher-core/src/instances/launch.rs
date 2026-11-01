@@ -142,10 +142,11 @@ pub async fn plan(
     let prepared = prepare(&engine.meta, &engine.env, &version_id, mode, ctx).await?;
     ctx.stage("stage.java", None);
     let java = pick_java(engine, settings, &inst, &prepared.java, ctx).await?;
-    let jvm_args = merge_args(&settings.jvm_args, &inst.jvm_args);
+    let mut jvm_args = merge_args(&settings.jvm_args, &inst.jvm_args);
     if !jvm_args.is_empty() {
         probe_args(&java.path, &jvm_args).await?;
     }
+    jvm_args.extend(crate::aerion_mod::jvm_args(&engine.paths, &inst));
     let mut game_args = merge_args(&settings.game_args, &inst.game_args);
     if inst.fullscreen.unwrap_or(settings.fullscreen)
         && !game_args.iter().any(|a| a == "--fullscreen")

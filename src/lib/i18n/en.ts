@@ -328,6 +328,10 @@ const en = {
       advancedHint: "JVM and game arguments, resolution, wrapper command, environment variables",
       memoryAdvancedHint: "Initial memory, JVM preset, custom Java",
       memoryAndJava: "Memory & Java",
+      aerionMod: "Aerion mod: launcher theme in the game (preview)",
+      aerionModHint:
+        "The game's menus, buttons and sliders in your theme's colours; changing the theme in the launcher applies at once, even while playing. It is not added to the mods folder.",
+      aerionModUnsupported: "For now only Minecraft {versions} with Fabric.",
       jvmArgs: "Extra JVM arguments",
       jvmArgsHint: "One per line, e.g. -XX:+UseLargePages. Checked against the selected Java before launch.",
       testArgs: "Test with Java",

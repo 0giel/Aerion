@@ -122,6 +122,8 @@ pub struct Instance {
     /// Number of game sessions (for statistics).
     pub launches: u32,
     pub modpack: Option<ModpackInfo>,
+    /// Load the Aerion mod (launcher theme in the game's menus) where it supports the version.
+    pub aerion_mod: bool,
 }
 
 impl Default for Instance {
@@ -156,6 +158,7 @@ impl Default for Instance {
             play_time_secs: 0,
             launches: 0,
             modpack: None,
+            aerion_mod: false,
         }
     }
 }

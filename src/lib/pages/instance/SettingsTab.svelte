@@ -2,6 +2,7 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { untrack } from "svelte";
   import Advanced from "../../components/Advanced.svelte";
+  import Switch from "../../components/Switch.svelte";
   import Icon from "../../components/Icon.svelte";
   import MemorySlider from "../../components/MemorySlider.svelte";
   import { app } from "../../stores/app.svelte";
@@ -25,6 +26,7 @@
 
   // Editable draft; arrays/maps are edited as text.
   const initial = untrack(() => $state.snapshot(instance)) as Instance;
+  const AERION_MOD_VERSIONS = ["26.3"];
   let draft = $state<Instance>(structuredClone(initial));
   let jvmText = $state(initial.jvmArgs.join("\n"));
   let gameText = $state(initial.gameArgs.join("\n"));
@@ -439,6 +441,17 @@
         </select>
       </div>
     </div>
+    {#if draft.loader === "fabric"}
+      <!-- The bundled jar is built for these versions only (crates/launcher-core/src/aerion_mod.rs). -->
+      <Switch
+        label={t("instance.settings.aerionMod")}
+        hint={AERION_MOD_VERSIONS.includes(draft.gameVersion)
+          ? t("instance.settings.aerionModHint")
+          : t("instance.settings.aerionModUnsupported", { versions: AERION_MOD_VERSIONS.join(", ") })}
+        disabled={!AERION_MOD_VERSIONS.includes(draft.gameVersion)}
+        bind:checked={draft.aerionMod}
+      />
+    {/if}
   </section>
 
   <section class="card col gap-3">

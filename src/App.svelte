@@ -23,6 +23,8 @@
   import { commands, errorMessage } from "./lib/api";
   import { t } from "./lib/i18n/index.svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
+  import { themes } from "./lib/theme/engine.svelte";
+  import { toGameTheme } from "./lib/theme/gameTheme";
 
   // Everything except Home is code-split and loaded on first visit.
   const pages: Partial<Record<Page, () => Promise<{ default: Component<Record<string, never>> }>>> = {
@@ -72,6 +74,15 @@
       }
     }
   }
+
+  // Running games with the Aerion mod follow the launcher theme (they re-read the file).
+  let gameThemeTimer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => {
+    if (!app.ready) return;
+    const theme = toGameTheme(themes.active);
+    clearTimeout(gameThemeTimer);
+    gameThemeTimer = setTimeout(() => void commands.setGameTheme(theme).catch(() => {}), 300);
+  });
 
   // Ctrl+1…9 follow the sidebar as the user arranged it.
   const order = $derived(layout.nav.filter((i) => i.visible).map((i) => i.page));

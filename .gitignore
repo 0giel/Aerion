@@ -28,3 +28,8 @@ portable
 
 # Built release artefacts (scripts/release.sh)
 /release/
+
+# Aerion mod (Gradle)
+mod/.gradle/
+mod/build/
+mod/run/

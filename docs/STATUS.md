@@ -5,6 +5,26 @@ Newest entries first.
 
 ## 2026-10-31
 
+### 0.1.9: What's new, crash help, Aerion mod preview (D28, D29)
+- **What's new**: notes per version embedded in `src/lib/changelog.ts` (pl/en), shown once after
+  an update; `settings.lastSeenVersion` remembers it, fresh installs see nothing. Checked live:
+  the dialog appeared for test data without the field and was not shown again.
+- **Crash help**: `mods::meta` reads mod ids/names/mixin configs from jars; crash analysis maps
+  the suspected mod to its file. The crash card offers "Disable this mod and relaunch" and
+  "Share log" (mclo.gs after confirmation, tokens and home-folder names removed). Checked end to
+  end with a deliberately broken Fabric mod in a 26.3 instance: Fabric's own error window, then
+  the card named "Broken Test · broken-test-1.0.jar"; the button renamed it to `.disabled` and
+  the game started. Live upload to mclo.gs not done (it publishes the log); covered by unit tests.
+- **Aerion mod (preview)**: `mod/` builds `aerion-ui.jar` (21 KB) for Fabric 26.3; instance
+  setting "Aerion mod" (Fabric 26.3 only, off by default). Checked in game: loads next to Fabric
+  without Fabric API, all mixins applied, title screen shows the theme gradient and themed
+  buttons; switching Emerald → Rose in the launcher restyled the running game within a second;
+  Light is dimmed in game so Minecraft's white text stays readable.
+- Dev-only gotcha: after many dev-server restarts WebKit's HTTP cache of the test profile served
+  stale modules and vite-plugin-svelte logged "failed to load virtual css module" (unstyled
+  sidebar/home). Clearing `~/.local/share/pl.aerion.devtest/WebKitCache` fixed it; release builds
+  are not affected (assets are bundled).
+
 ### 0.1.8: bug pass and calmer settings (D27)
 - Player model leaned when turned: the view pitch was applied in the model's frame before the
   yaw, so from the side or back the camera tilt became a sideways lean. The camera now turns the

@@ -5,6 +5,7 @@
 //! modpacks. The Tauri crate (`src-tauri`) is a thin IPC layer on top of this.
 
 pub mod accounts;
+pub mod aerion_mod;
 pub mod auth;
 pub mod engine;
 pub mod error;

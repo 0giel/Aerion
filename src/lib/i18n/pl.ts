@@ -367,6 +367,10 @@ const pl: Dict = {
       advancedHint: "Argumenty JVM i gry, rozdzielczość, polecenie opakowujące, zmienne środowiskowe",
       memoryAdvancedHint: "Pamięć początkowa, preset JVM, własna Java",
       memoryAndJava: "Pamięć i Java",
+      aerionMod: "Mod Aeriona: motyw launchera w grze (wersja próbna)",
+      aerionModHint:
+        "Menu, przyciski i suwaki gry w kolorach Twojego motywu; zmiana motywu w launcherze działa od razu, także w trakcie gry. Nie trafia do folderu mods.",
+      aerionModUnsupported: "Na razie tylko dla Minecrafta {versions} z Fabric.",
       jvmArgs: "Dodatkowe argumenty JVM",
       jvmArgsHint:
         "Po jednym w linii, np. -XX:+UseLargePages. Sprawdzane z wybraną Javą przed uruchomieniem.",

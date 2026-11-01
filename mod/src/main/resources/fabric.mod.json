@@ -1,0 +1,23 @@
+{
+	"schemaVersion": 1,
+	"id": "aerion",
+	"version": "${version}",
+	"name": "Aerion UI",
+	"description": "Draws the game's menus in the theme chosen in the Aerion launcher, live.",
+	"authors": ["Aerion"],
+	"contact": {
+		"homepage": "https://github.com/0giel/Aerion"
+	},
+	"license": "All-Rights-Reserved",
+	"icon": "assets/aerion/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["pl.aerion.mod.AerionClient"]
+	},
+	"mixins": ["aerion.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25"
+	}
+}

@@ -181,3 +181,24 @@ option. Options most players never change are grouped in collapsed "Advanced" di
 and searchable by eye; a disclosure opens by itself when it holds a non-default value (e.g. an
 instance with its own Java). No global "expert mode" switch: it would hide options without a
 trace and split support answers into two versions of each screen.
+
+### D28 — Crash help: disable the culprit, share through mclo.gs (2026-10-31)
+Crash analysis traces the suspected mod to its jar by reading every jar's own metadata
+(`mods::meta`: Fabric/Quilt JSON, Forge/NeoForge TOML, mixin config names) — content.json does
+not know mod ids, and files added by hand must work too. Only crashes a mod can cause offer
+"Disable and relaunch" (never memory, Java or driver problems), and Fabric API / loader ids are
+never blamed. Disabling is the usual `.disabled` rename, so it is undone from the Content tab.
+Logs are shared on mclo.gs (the paste service the Minecraft community uses, keeps 90 days) only
+after a confirmation each time; before upload the launcher strips JWT-like tokens,
+`--accessToken` values and home-folder user names, and keeps the last 25 000 lines.
+
+### D29 — The Aerion mod: launcher theme in the game (2026-10-31)
+A client-only Fabric mod in `mod/` (no Fabric API, so it works next to any mod list) restyles
+buttons, sliders and menu backgrounds with the launcher theme's colours. The launcher resolves the
+theme into plain colours (`aerion_mod::GameTheme`, gradient stops extracted from the CSS) and
+writes `<root>/aerion-mod/theme.json`; the mod re-reads it once a second, so theme changes apply
+to a running game. The jar is embedded in the launcher and loaded with `-Dfabric.addMods`, never
+copied into the player's mods folder. Built only for 26.3 for now: Minecraft's GUI code changes
+between versions (26.x renamed rendering to `GuiGraphicsExtractor`/`extract*`), so each further
+version is a separate build. Labels stay white (vanilla draws them so), therefore button bodies
+are darkened until white text reads well, also with light themes. Off by default per instance.
