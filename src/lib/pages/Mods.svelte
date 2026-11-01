@@ -29,8 +29,9 @@
   let targetId = $state<string>(router.params.instance ?? app.lastInstance?.id ?? "");
   let kind = $state<ContentKind>((router.params.kind as ContentKind) ?? "mod");
   let source = $state<ModSource>(app.settings?.modSource ?? "modrinth");
-  let query = $state("");
-  let debounced = $state("");
+  // A search can be preset by other pages (e.g. a missing dependency's id).
+  let query = $state(router.params.q ?? "");
+  let debounced = $state(router.params.q ?? "");
   let sort = $state<SortOrder>("relevance");
   let categories = $state<string[]>([]);
   let categoryList = $state.raw<Category[]>([]);

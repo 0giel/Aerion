@@ -3,8 +3,16 @@
   // mods, then upgrade in place or as a copy. Worlds are backed up first either way.
   import Modal from "../../components/Modal.svelte";
   import Icon from "../../components/Icon.svelte";
+  import ReplacementsModal from "./ReplacementsModal.svelte";
   import { toasts } from "../../stores/toasts.svelte";
-  import { commands, errorMessage, loaderLabel, type GameVersions, type Instance } from "../../api";
+  import {
+    commands,
+    errorMessage,
+    loaderLabel,
+    type ContentKind,
+    type GameVersions,
+    type Instance,
+  } from "../../api";
   import type { UpgradeCheck_Serialize as UpgradeCheck } from "../../bindings";
   import { t } from "../../i18n/index.svelte";
 
@@ -70,6 +78,8 @@
       busy = false;
     }
   }
+  let replacing = $state.raw<{ title: string; kind: ContentKind } | null>(null);
+  let replacingOpen = $state(false);
 </script>
 
 <Modal bind:open title={t("instance.upgrade.title")} width="34rem">
@@ -111,9 +121,19 @@
         <div class="alert warning col gap-2">
           <span class="small"
             ><strong>{t("instance.upgrade.unavailable", { n: p.unavailable.length, version: target })}</strong
-            >
-            {p.unavailable.map((u) => u.title).join(", ")}</span
+            ></span
           >
+          <div class="row wrap gap-2">
+            {#each p.unavailable as u (u.fileName)}
+              <button
+                class="chip"
+                title={t("modHealth.replacements")}
+                onclick={() => ((replacing = { title: u.title, kind: u.kind }), (replacingOpen = true))}
+                >{u.title}<Icon name="search" size={12} /></button
+              >
+            {/each}
+          </div>
+          <span class="tiny muted">{t("replacements.pickHint")}</span>
           <label class="row small check"
             ><input type="checkbox" bind:checked={disableUnavailable} />{t(
               "instance.upgrade.disableUnavailable",
@@ -146,6 +166,16 @@
     >
   {/snippet}
 </Modal>
+
+{#if replacing}
+  <ReplacementsModal
+    bind:open={replacingOpen}
+    {instance}
+    kind={replacing.kind}
+    title={replacing.title}
+    gameVersion={target}
+  />
+{/if}
 
 <style>
   .plan {

@@ -27,7 +27,9 @@
       {/if}
     </form>
     {#snippet footer()}
-      <button class="btn ghost" onclick={() => dialogs.close(null)}>{t("common.cancel")}</button>
+      <button class="btn ghost" onclick={() => dialogs.close(d.cancelLabel ? false : null)}
+        >{d.cancelLabel ?? t("common.cancel")}</button
+      >
       <button
         class="btn primary"
         class:danger={d.danger}

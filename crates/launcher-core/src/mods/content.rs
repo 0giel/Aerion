@@ -44,6 +44,9 @@ pub struct ContentEntry {
     pub installed_at: i64,
     /// Installed automatically as a dependency.
     pub dependency: bool,
+    /// Kept at this version: update checks skip it (e.g. after choosing an older version).
+    #[serde(default)]
+    pub pinned: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -235,6 +238,7 @@ impl ContentManager {
                                 modified,
                                 installed_at: now_secs(),
                                 dependency: false,
+                                pinned: false,
                             },
                         }
                     }
@@ -288,6 +292,18 @@ impl ContentManager {
             .filter(|e| e.kind == kind && e.file_name == file_name)
         {
             e.enabled = enabled;
+        }
+        self.save(&m).await
+    }
+
+    pub async fn set_pinned(&self, kind: ContentKind, file_name: &str, pinned: bool) -> Result<()> {
+        let mut m = self.load().await;
+        for e in m
+            .entries
+            .iter_mut()
+            .filter(|e| e.kind == kind && e.file_name == file_name)
+        {
+            e.pinned = pinned;
         }
         self.save(&m).await
     }
@@ -356,6 +372,7 @@ impl ContentManager {
                 modified: 0,
                 installed_at: now_secs(),
                 dependency: planned.required_by.is_some(),
+                pinned: false,
             });
         }
         ctx.stage("stage.installContent", None);
@@ -471,7 +488,10 @@ impl ContentManager {
             let mr: Vec<&ContentEntry> = entries
                 .iter()
                 .filter(|e| {
-                    e.kind == kind && e.provider == Some(Provider::Modrinth) && !e.sha1.is_empty()
+                    e.kind == kind
+                        && e.provider == Some(Provider::Modrinth)
+                        && !e.sha1.is_empty()
+                        && !e.pinned
                 })
                 .collect();
             if !mr.is_empty() {
@@ -515,10 +535,9 @@ impl ContentManager {
                 }
             }
             if let Some(cf) = curseforge.filter(|c| c.has_key()) {
-                for e in entries
-                    .iter()
-                    .filter(|e| e.kind == kind && e.provider == Some(Provider::Curseforge))
-                {
+                for e in entries.iter().filter(|e| {
+                    e.kind == kind && e.provider == Some(Provider::Curseforge) && !e.pinned
+                }) {
                     let Some(pid) = &e.project_id else { continue };
                     let versions = cf.versions(pid, Some(game_version), &loaders).await?;
                     let current: u64 = e
@@ -868,6 +887,7 @@ mod tests {
             modified: 0,
             installed_at: 0,
             dependency: false,
+            pinned: false,
         };
         let dir = tempfile::tempdir().unwrap();
         let m = ContentManager::new(dir.path().to_path_buf());
@@ -957,6 +977,7 @@ mod tests {
             modified: 0,
             installed_at: 0,
             dependency: false,
+            pinned: false,
         };
         let dir = tempfile::tempdir().unwrap();
         let m = ContentManager::new(dir.path().to_path_buf());

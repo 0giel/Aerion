@@ -1,6 +1,7 @@
 //! Aerion desktop app: Tauri shell around `launcher_core`.
 
 mod commands;
+mod content_watch;
 mod games;
 pub mod platform;
 mod protocols;
@@ -74,6 +75,11 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             mods::remove_content,
             mods::identify_content,
             mods::check_content_updates,
+            mods::check_mod_health,
+            mods::set_content_pinned,
+            mods::find_replacements,
+            mods::content_update_counts,
+            mods::pending_content_updates,
             mods::apply_content_updates,
             mods::undo_content_update,
             mods::instance_upgrade_plan,
@@ -129,6 +135,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             crate::games::GameStateEvent,
             crate::games::GameLogEvent,
             crate::themes::ThemesChangedEvent,
+            crate::content_watch::ContentUpdatesEvent,
         ])
         .error_handling(ErrorHandlingMode::Throw)
         .dangerously_cast_bigints_to_number()
@@ -318,6 +325,7 @@ pub fn run(platform_notes: Vec<String>) {
             themes::install_schema(&themes_dir);
             themes::watch(app.handle().clone(), themes_dir);
             tauri::async_runtime::spawn(protocols::trim_image_cache(cache));
+            tauri::async_runtime::spawn(content_watch::run(app.handle().clone()));
             if let Err(e) = setup_tray(app) {
                 tracing::warn!(error = %e, "system tray unavailable");
             }

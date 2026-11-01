@@ -41,6 +41,10 @@ pub struct AppState {
     pub cf_key_from_env: bool,
     pub login: Mutex<Option<CancellationToken>>,
     pub device_code: tokio::sync::Mutex<Option<DeviceCode>>,
+    /// Mod updates found per instance (background check or the Content tab).
+    pub content_updates: tokio::sync::RwLock<
+        std::collections::HashMap<String, Vec<launcher_core::mods::content::UpdateInfo>>,
+    >,
     /// Found by `check_app_update`, installed by `install_app_update`.
     pub pending_update: tokio::sync::Mutex<Option<tauri_plugin_updater::Update>>,
 }
@@ -94,6 +98,7 @@ impl AppState {
             cf_key_from_env,
             login: Mutex::new(None),
             device_code: tokio::sync::Mutex::new(None),
+            content_updates: Default::default(),
             pending_update: tokio::sync::Mutex::new(None),
             paths,
         })

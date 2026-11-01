@@ -2,9 +2,12 @@
 
 pub mod content;
 pub mod curseforge;
+pub mod health;
 pub mod meta;
 pub mod model;
 pub mod modrinth;
+pub mod ranges;
+pub mod replace;
 pub mod resolve;
 pub mod select;
 

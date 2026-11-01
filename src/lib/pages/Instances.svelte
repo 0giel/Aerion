@@ -139,6 +139,11 @@
             <span><Icon name="clock" size={13} />{formatRelative(inst.lastPlayed)}</span>
             {#if inst.playTimeSecs}<span>{formatPlayTime(inst.playTimeSecs)}</span>{/if}
             {#if inst.group}<span class="badge">{inst.group}</span>{/if}
+            {#if app.contentUpdates[inst.id]}<span
+                class="badge success"
+                title={t("instances.modUpdates", { n: app.contentUpdates[inst.id] })}
+                ><Icon name="arrowUp" size={11} />{app.contentUpdates[inst.id]}</span
+              >{/if}
           </div>
           <button
             class="btn play"

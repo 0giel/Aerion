@@ -3,6 +3,9 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import Icon from "../../components/Icon.svelte";
+  import VersionsModal from "./VersionsModal.svelte";
+  import ReplacementsModal from "./ReplacementsModal.svelte";
+  import ProjectView from "../mods/ProjectView.svelte";
   import { router } from "../../stores/router.svelte";
   import { ui } from "../../stores/ui.svelte";
   import { app } from "../../stores/app.svelte";
@@ -15,6 +18,9 @@
     type ContentEntry,
     type ContentKind,
     type Instance,
+    type ModIssue,
+    type ProjectSummary,
+    type Provider,
     type UpdateInfo,
   } from "../../api";
   import { formatBytes, t } from "../../i18n/index.svelte";
@@ -33,10 +39,27 @@
   let loading = $state(true);
   let updates = $state.raw<UpdateInfo[] | null>(null);
   let checking = $state(false);
+  /** Problems found in the mods folder (wrong loader, duplicates, missing dependencies…). */
+  let issues = $state.raw<ModIssue[]>([]);
+  let versionsFor = $state.raw<ContentEntry | null>(null);
+  let versionsOpen = $state(false);
+  let replacing = $state.raw<{
+    title: string;
+    provider: Provider | null;
+    projectId: string | null;
+  } | null>(null);
+  let replacingOpen = $state(false);
+  let depProject = $state.raw<ProjectSummary | null>(null);
 
   async function load() {
     try {
       entries = await commands.listContent(instance.id);
+      if (instance.loader !== "vanilla") issues = await commands.checkModHealth(instance.id);
+      // Updates found in the background are shown without another check.
+      if (updates === null) {
+        const pending = await commands.pendingContentUpdates(instance.id);
+        if (pending.length) updates = pending;
+      }
     } catch (e) {
       toasts.error(errorMessage(e));
     } finally {
@@ -142,11 +165,54 @@
   async function updateAll() {
     if (!updates?.length) return;
     try {
-      await commands.applyContentUpdates(instance.id, updates);
+      await commands.applyContentUpdates(instance.id, updates, false);
       updates = null;
     } catch (e) {
       toasts.error(errorMessage(e));
     }
+  }
+
+  async function updateOne(u: UpdateInfo) {
+    try {
+      await commands.applyContentUpdates(instance.id, [u], false);
+      updates = updates?.filter((x) => x !== u) ?? null;
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
+  const entryFor = (file: string) => entries.find((e) => e.kind === "mod" && e.fileName === file);
+
+  function issueText(i: ModIssue) {
+    return t(`modHealth.kinds.${i.kind}`, {
+      name: i.name,
+      other: i.other ?? "",
+      required: i.required ? ` (${i.required})` : "",
+    });
+  }
+
+  async function disableFile(file: string) {
+    try {
+      await commands.setContentEnabled(instance.id, "mod", file, false);
+      await load();
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
+  /** A missing dependency is usually a Modrinth project with the same id; else search for it. */
+  async function installDependency(id: string) {
+    try {
+      depProject = (await commands.getProject("modrinth", id)).summary;
+    } catch {
+      router.go("mods", { instance: instance.id, kind: "mod", q: id });
+    }
+  }
+
+  function findReplacement(i: ModIssue) {
+    const e = entryFor(i.file);
+    replacing = { title: e?.title ?? i.name, provider: e?.provider ?? null, projectId: e?.projectId ?? null };
+    replacingOpen = true;
   }
 
   async function undo() {
@@ -235,6 +301,40 @@
   </div>
   {#if kind === "dataPack"}<p class="hint">{t("instance.content.dataPacksHint")}</p>{/if}
 
+  {#if issues.length}
+    <section class="issues card" aria-live="polite">
+      <div class="row">
+        <Icon name="alert" size={17} />
+        <strong class="grow">{t("modHealth.title", { n: issues.length })}</strong>
+      </div>
+      <ul>
+        {#each issues as i (i.kind + i.file + (i.other ?? ""))}
+          <li>
+            <span class="small grow">{issueText(i)}</span>
+            {#if i.kind === "missingDependency" && i.other}
+              <button class="btn sm primary" onclick={() => installDependency(i.other ?? "")}
+                ><Icon name="download" size={14} />{t("modHealth.install", { name: i.other })}</button
+              >
+            {:else if i.kind === "dependencyVersion"}
+              <button class="btn sm" onclick={checkUpdates}
+                ><Icon name="refresh" size={14} />{t("instance.content.checkUpdates")}</button
+              >
+            {:else if i.kind === "wrongGameVersion" || i.kind === "wrongLoader"}
+              <button class="btn sm" onclick={() => findReplacement(i)}
+                ><Icon name="search" size={14} />{t("modHealth.replacements")}</button
+              >
+            {/if}
+            {#if i.kind !== "missingDependency" && i.kind !== "dependencyVersion"}
+              <button class="btn sm ghost" onclick={() => disableFile(i.file)}
+                >{t("instance.content.disable")}</button
+              >
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
+
   {#if loading}
     {#each [1, 2, 3] as n (n)}<div class="skeleton" style="height: 3.4rem"></div>{/each}
   {:else if !visible.length}
@@ -259,7 +359,14 @@
             <div class="row" style="gap:0.4rem">
               <strong class="truncate">{e.title}</strong>
               {#if e.dependency}<span class="badge">{t("instance.content.dependency")}</span>{/if}
-              {#if upd}<span class="badge success">↑ {upd.version.versionNumber}</span>{/if}
+              {#if e.pinned}<span class="badge" title={t("modVersions.pinHint")}
+                  ><Icon name="pin" size={11} />{t("modVersions.pinned")}</span
+                >{/if}
+              {#if upd}<button
+                  class="badge success upd"
+                  title={t("modVersions.updateTo", { version: upd.version.versionNumber })}
+                  onclick={() => updateOne(upd)}>↑ {upd.version.versionNumber}</button
+                >{/if}
             </div>
             <span class="tiny faint truncate mono"
               >{e.versionNumber ?? e.fileName} · {formatBytes(e.size)}</span
@@ -272,6 +379,15 @@
                 ? "CurseForge"
                 : t("instance.content.local")}</span
           >
+          {#if e.provider && e.projectId}
+            <button
+              class="icon-btn sm"
+              title={t("modVersions.open")}
+              aria-label={t("modVersions.open")}
+              onclick={() => ((versionsFor = e), (versionsOpen = true))}
+              ><Icon name="list" size={15} /></button
+            >
+          {/if}
           {#if e.pageUrl}
             <button class="icon-btn sm" aria-label={t("common.open")} onclick={() => openUrl(e.pageUrl ?? "")}
               ><Icon name="external" size={15} /></button
@@ -293,7 +409,62 @@
   {/if}
 </div>
 
+{#if versionsFor}
+  <VersionsModal bind:open={versionsOpen} {instance} entry={versionsFor} onchanged={load} />
+{/if}
+{#if replacing}
+  <ReplacementsModal
+    bind:open={replacingOpen}
+    {instance}
+    kind="mod"
+    title={replacing.title}
+    provider={replacing.provider}
+    projectId={replacing.projectId}
+    oninstalled={load}
+  />
+{/if}
+{#if depProject}
+  <ProjectView
+    summary={depProject}
+    target={instance}
+    kind="mod"
+    installed={false}
+    onclose={() => (depProject = null)}
+    oninstalled={() => {
+      depProject = null;
+      void load();
+    }}
+  />
+{/if}
+
 <style>
+  .issues {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    border-color: color-mix(in srgb, var(--c-warning) 45%, var(--c-border));
+  }
+  .issues > .row :global(.icon) {
+    color: var(--c-warning);
+  }
+  .issues ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .issues li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+  .upd {
+    border: 0;
+    cursor: pointer;
+  }
   .filter {
     width: min(18rem, 100%);
   }

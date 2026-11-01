@@ -516,6 +516,12 @@
 
       <section id="set-mods" class="card col gap-3">
         <h2>{t("settings.sections.mods")}</h2>
+        <Switch
+          label={t("settings.checkModUpdates")}
+          hint={t("settings.checkModUpdatesHint")}
+          checked={s.checkModUpdates}
+          onchange={(v) => save({ checkModUpdates: v })}
+        />
         <div class="field">
           <span class="label">{t("settings.modSource")}</span>
           <div class="segmented" role="group">

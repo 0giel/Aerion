@@ -136,6 +136,8 @@ pub struct Settings {
     pub last_instance: Option<String>,
     pub selected_account: Option<String>,
     pub check_updates: bool,
+    /// Look for mod updates of every instance in the background (at start, then every 6 h).
+    pub check_mod_updates: bool,
     /// The player model on the home screen turns its head towards the cursor.
     pub follow_cursor: bool,
     pub layout: LayoutPrefs,
@@ -176,6 +178,7 @@ impl Default for Settings {
             last_instance: None,
             selected_account: None,
             check_updates: true,
+            check_mod_updates: true,
             follow_cursor: true,
             layout: LayoutPrefs::default(),
             last_seen_version: None,

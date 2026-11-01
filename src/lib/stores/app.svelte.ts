@@ -16,6 +16,7 @@ import { i18n, t } from "../i18n/index.svelte";
 import { themes } from "../theme/engine.svelte";
 import { router } from "./router.svelte";
 import { ui } from "./ui.svelte";
+import { dialogs } from "./dialogs.svelte";
 import { toasts } from "./toasts.svelte";
 
 const MAX_LOG_LINES = 20_000;
@@ -45,6 +46,8 @@ class AppStore {
   exitCodes = $state.raw<Record<string, number | null>>({});
   logVersion = $state(0);
   manualDownloads = $state.raw<ImportResult["manualDownloads"]>([]);
+  /** Instance id → mod updates found (background check or the Content tab). */
+  contentUpdates = $state.raw<Record<string, number>>({});
   private logs = new Map<string, LogLine[]>();
 
   get selectedAccount() {
@@ -105,6 +108,11 @@ class AppStore {
         }
       }
     });
+    void events.contentUpdatesEvent.listen(({ payload }) => (this.contentUpdates = payload.counts));
+    void commands
+      .contentUpdateCounts()
+      .then((c) => (this.contentUpdates = c))
+      .catch(() => {});
     void events.gameLogEvent.listen(({ payload: p }) => {
       const list = this.logs.get(p.instanceId) ?? [];
       list.push(...p.lines);
@@ -252,6 +260,21 @@ class AppStore {
     if (!this.selectedAccount) {
       ui.accountHelp = "auth.noAccount";
       return;
+    }
+    // Problems the game would only report after a long start: ask first.
+    const issues = await commands.checkModHealth(id).catch(() => []);
+    if (issues.length) {
+      const names = [...new Set(issues.map((i) => i.name))];
+      const choice = await dialogs.choose({
+        title: t("modHealth.beforeLaunch", { n: issues.length }),
+        text: t("modHealth.beforeLaunchText", {
+          mods: names.slice(0, 4).join(", ") + (names.length > 4 ? "…" : ""),
+        }),
+        confirmLabel: t("modHealth.launchAnyway"),
+        cancelLabel: t("modHealth.showProblems"),
+      });
+      if (choice === "cancel") router.go("instance", { id, tab: "content" });
+      if (choice !== "confirm") return;
     }
     try {
       await commands.launchInstance(id, null);

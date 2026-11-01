@@ -95,7 +95,19 @@ export const commands = {
 	/**  Recognise manually added files by hash (Modrinth) or fingerprint (CurseForge). */
 	identifyContent: (instanceId: string) => __TAURI_INVOKE<number>("identify_content", { instanceId }),
 	checkContentUpdates: (instanceId: string) => __TAURI_INVOKE<UpdateInfo_Serialize[]>("check_content_updates", { instanceId }),
-	applyContentUpdates: (instanceId: string, updates: UpdateInfo_Deserialize[]) => __TAURI_INVOKE<string>("apply_content_updates", { instanceId, updates }),
+	/**
+	 *  Problems in the instance's mods folder (wrong loader, duplicates, missing dependencies,
+	 *  conflicts, other game versions), read from the jars themselves.
+	 */
+	checkModHealth: (instanceId: string) => __TAURI_INVOKE<ModIssue_Serialize[]>("check_mod_health", { instanceId }),
+	setContentPinned: (instanceId: string, kind: ContentKind, fileName: string, pinned: boolean) => __TAURI_INVOKE<null>("set_content_pinned", { instanceId, kind, fileName, pinned }),
+	/**  Known successors and similar Modrinth projects for content the instance can't use. */
+	findReplacements: (instanceId: string, kind: ContentKind, title: string, provider: Provider | null, projectId: string | null, gameVersion: string | null) => __TAURI_INVOKE<Replacement_Serialize[]>("find_replacements", { instanceId, kind, title, provider, projectId, gameVersion }),
+	/**  Instance id → mod updates found so far (background check or the Content tab). */
+	contentUpdateCounts: () => __TAURI_INVOKE<{ [key in string]: number }>("content_update_counts"),
+	/**  Updates found for one instance by the last check (no network). */
+	pendingContentUpdates: (instanceId: string) => __TAURI_INVOKE<UpdateInfo_Serialize[]>("pending_content_updates", { instanceId }),
+	applyContentUpdates: (instanceId: string, updates: UpdateInfo_Deserialize[], pin: boolean) => __TAURI_INVOKE<string>("apply_content_updates", { instanceId, updates, pin }),
 	undoContentUpdate: (instanceId: string) => __TAURI_INVOKE<boolean>("undo_content_update", { instanceId }),
 	/**  What moving an instance to `target` would do to its mods. */
 	instanceUpgradePlan: (instanceId: string, target: string) => __TAURI_INVOKE<UpgradeCheck_Serialize>("instance_upgrade_plan", { instanceId, target }),
@@ -177,6 +189,7 @@ export const commands = {
 
 /** Events */
 export const events = {
+	contentUpdatesEvent: makeEvent<ContentUpdatesEvent, ContentUpdatesEvent>("content-updates-event"),
 	gameLogEvent: makeEvent<GameLogEvent_Serialize, GameLogEvent_Deserialize>("game-log-event"),
 	gameStateEvent: makeEvent<GameStateEvent_Serialize, GameStateEvent_Deserialize>("game-state-event"),
 	taskEvent: makeEvent<TaskEvent_Serialize, TaskEvent_Deserialize>("task-event"),
@@ -357,6 +370,8 @@ export type ContentEntry_Deserialize = {
 	installedAt: number,
 	/**  Installed automatically as a dependency. */
 	dependency: boolean,
+	/**  Kept at this version: update checks skip it (e.g. after choosing an older version). */
+	pinned?: boolean,
 };
 
 export type ContentEntry_Serialize = {
@@ -382,6 +397,8 @@ export type ContentEntry_Serialize = {
 	installedAt: number,
 	/**  Installed automatically as a dependency. */
 	dependency: boolean,
+	/**  Kept at this version: update checks skip it (e.g. after choosing an older version). */
+	pinned: boolean,
 };
 
 export type ContentKind = "mod" | "modpack" | "resourcePack" | "shader" | "dataPack";
@@ -390,6 +407,11 @@ export type ContentRef = {
 	fileName: string,
 	kind: ContentKind,
 	title: string,
+};
+
+/**  Instance id → number of available updates. */
+export type ContentUpdatesEvent = {
+	counts: { [key in string]: number },
 };
 
 export type CrashInfo = CrashInfo_Serialize | CrashInfo_Deserialize;
@@ -801,6 +823,20 @@ export type Instance_Serialize = {
 	aerionMod: boolean,
 };
 
+export type IssueKind = 
+/**  Made for another loader (e.g. a Forge mod in a Fabric instance). */
+"wrongLoader" | 
+/**  Another enabled jar provides the same mod. */
+"duplicate" | 
+/**  A required mod is not installed. */
+"missingDependency" | 
+/**  A required mod is installed in a version the mod doesn't accept. */
+"dependencyVersion" | 
+/**  The mod declares it doesn't work with another installed mod. */
+"conflict" | 
+/**  Made for other Minecraft versions. */
+"wrongGameVersion";
+
 export type JavaInstall = JavaInstall_Serialize | JavaInstall_Deserialize;
 
 export type JavaInstall_Deserialize = {
@@ -920,6 +956,34 @@ export type LogLine_Serialize = {
 	thread: string | null,
 	logger: string | null,
 	text: string,
+};
+
+export type ModIssue = ModIssue_Serialize | ModIssue_Deserialize;
+
+export type ModIssue_Deserialize = {
+	kind: IssueKind,
+	/**  The jar with the problem (in `mods/`). */
+	file: string,
+	name: string,
+	/**  The other mod involved: the missing dependency's id, the conflicting or duplicate mod. */
+	other?: string | null,
+	/**  The other mod's jar, when it is installed. */
+	otherFile?: string | null,
+	/**  What the mod asks for (a version range), as written by its author. */
+	required?: string | null,
+};
+
+export type ModIssue_Serialize = {
+	kind: IssueKind,
+	/**  The jar with the problem (in `mods/`). */
+	file: string,
+	name: string,
+	/**  The other mod involved: the missing dependency's id, the conflicting or duplicate mod. */
+	other: string | null,
+	/**  The other mod's jar, when it is installed. */
+	otherFile: string | null,
+	/**  What the mod asks for (a version range), as written by its author. */
+	required: string | null,
 };
 
 export type ModSource = "modrinth" | "curseforge" | "both";
@@ -1200,6 +1264,20 @@ export type Provider = "modrinth" | "curseforge";
 
 export type ReleaseKind = "release" | "beta" | "alpha";
 
+export type Replacement = Replacement_Serialize | Replacement_Deserialize;
+
+export type Replacement_Deserialize = {
+	project: ProjectSummary_Deserialize,
+	/**  From the curated list of known successors (rather than a similarity search). */
+	known: boolean,
+};
+
+export type Replacement_Serialize = {
+	project: ProjectSummary_Serialize,
+	/**  From the curated list of known successors (rather than a similarity search). */
+	known: boolean,
+};
+
 export type Resolution = {
 	width: number,
 	height: number,
@@ -1346,6 +1424,8 @@ export type Settings_Deserialize = {
 	lastInstance?: string | null,
 	selectedAccount?: string | null,
 	checkUpdates?: boolean,
+	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */
+	checkModUpdates?: boolean,
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor?: boolean,
 	layout?: LayoutPrefs_Deserialize,
@@ -1393,6 +1473,8 @@ export type Settings_Serialize = {
 	lastInstance: string | null,
 	selectedAccount: string | null,
 	checkUpdates: boolean,
+	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */
+	checkModUpdates: boolean,
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor: boolean,
 	layout: LayoutPrefs_Serialize,

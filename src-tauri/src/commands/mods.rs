@@ -296,6 +296,7 @@ pub async fn identify_content(state: State<'_, AppState>, instance_id: String) -
 #[tauri::command]
 #[specta::specta]
 pub async fn check_content_updates(
+    app: AppHandle,
     state: State<'_, AppState>,
     instance_id: String,
 ) -> CmdResult<Vec<UpdateInfo>> {
@@ -303,14 +304,111 @@ pub async fn check_content_updates(
     let content = state.instances.content(&instance_id)?;
     content.scan().await?;
     let cf = state.curseforge().await;
-    Ok(content
+    let updates = content
         .check_updates(
             &state.modrinth().await,
             Some(&cf),
             &inst.game_version,
             inst.loader,
         )
+        .await?;
+    crate::content_watch::store(&app, &instance_id, updates.clone()).await;
+    Ok(updates)
+}
+
+/// Problems in the instance's mods folder (wrong loader, duplicates, missing dependencies,
+/// conflicts, other game versions), read from the jars themselves.
+#[tauri::command]
+#[specta::specta]
+pub async fn check_mod_health(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CmdResult<Vec<launcher_core::mods::health::ModIssue>> {
+    let inst = state.instances.get(&instance_id).await?;
+    let mods = state.instances.game_dir(&instance_id)?.join("mods");
+    Ok(tokio::task::spawn_blocking(move || {
+        launcher_core::mods::health::check(&mods, &inst.game_version, inst.loader)
+    })
+    .await
+    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))?)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn set_content_pinned(
+    state: State<'_, AppState>,
+    instance_id: String,
+    kind: ContentKind,
+    file_name: String,
+    pinned: bool,
+) -> CmdResult<()> {
+    Ok(state
+        .instances
+        .content(&instance_id)?
+        .set_pinned(kind, &file_name, pinned)
         .await?)
+}
+
+/// Known successors and similar Modrinth projects for content the instance can't use.
+#[tauri::command]
+#[specta::specta]
+pub async fn find_replacements(
+    state: State<'_, AppState>,
+    instance_id: String,
+    kind: ContentKind,
+    title: String,
+    provider: Option<Provider>,
+    project_id: Option<String>,
+    // Another version than the instance's (moving the instance to it).
+    game_version: Option<String>,
+) -> CmdResult<Vec<launcher_core::mods::replace::Replacement>> {
+    let inst = state.instances.get(&instance_id).await?;
+    let game_version = game_version.unwrap_or(inst.game_version);
+    let modrinth = state.modrinth().await;
+    // Modrinth projects tell their slug and categories, which sharpen the search.
+    let (slug, categories) = match (provider, project_id.as_deref()) {
+        (Some(Provider::Modrinth), Some(id)) => match modrinth.project(id).await {
+            Ok(p) => (Some(p.summary.slug), p.summary.categories),
+            Err(_) => (None, Vec::new()),
+        },
+        _ => (None, Vec::new()),
+    };
+    Ok(launcher_core::mods::replace::find(
+        &modrinth,
+        kind,
+        &title,
+        slug.as_deref(),
+        project_id.as_deref(),
+        categories,
+        &game_version,
+        inst.loader,
+    )
+    .await?)
+}
+
+/// Updates found for one instance by the last check (no network).
+#[tauri::command]
+#[specta::specta]
+pub async fn pending_content_updates(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CmdResult<Vec<UpdateInfo>> {
+    Ok(state
+        .content_updates
+        .read()
+        .await
+        .get(&instance_id)
+        .cloned()
+        .unwrap_or_default())
+}
+
+/// Instance id → mod updates found so far (background check or the Content tab).
+#[tauri::command]
+#[specta::specta]
+pub async fn content_update_counts(
+    state: State<'_, AppState>,
+) -> CmdResult<std::collections::HashMap<String, u32>> {
+    Ok(crate::content_watch::counts(&state).await)
 }
 
 #[tauri::command]
@@ -320,6 +418,7 @@ pub async fn apply_content_updates(
     state: State<'_, AppState>,
     instance_id: String,
     updates: Vec<UpdateInfo>,
+    pin: bool,
 ) -> CmdResult<String> {
     let inst = state.instances.get(&instance_id).await?;
     let app2 = app.clone();
@@ -347,6 +446,28 @@ pub async fn apply_content_updates(
             let backup: BackupInfo = content
                 .apply_updates(&engine.downloader, &updates, &ctx)
                 .await?;
+            // A version chosen by hand stays: later update checks leave it alone.
+            if pin {
+                for u in &updates {
+                    if let Some(f) = u.version.primary_file() {
+                        content.set_pinned(u.kind, &f.filename, true).await?;
+                    }
+                }
+            }
+            // Applied updates are no longer pending.
+            let left: Vec<UpdateInfo> = state
+                .content_updates
+                .read()
+                .await
+                .get(&instance_id)
+                .map(|all| {
+                    all.iter()
+                        .filter(|a| !updates.iter().any(|u| u.file_name == a.file_name))
+                        .cloned()
+                        .collect()
+                })
+                .unwrap_or_default();
+            crate::content_watch::store(&app2, &instance_id, left).await;
             Ok(serde_json::to_string(&backup).ok())
         },
     ))
