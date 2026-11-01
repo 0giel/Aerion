@@ -6,7 +6,7 @@ particles and icons — all live, without restarting — and take your theme **i
 the Aerion mod. Under the hood it stays light: it opens in under half a second and uses about
 180 MB of RAM.
 
-**Highlights:** theme editor with live preview · your launcher theme inside Minecraft's menus ·
+**Highlights:** no data collection · theme editor with live preview · your launcher theme inside Minecraft's menus ·
 arrange the sidebar and home screen your way · Minecraft-texture instance icons · Fabric, Quilt,
 Forge, NeoForge · Modrinth mods and modpacks · one-click crash fixes · skins and capes ·
 automatic updates.
@@ -89,6 +89,12 @@ restarting:
 
 ## Accounts, privacy and security
 
+- **Aerion collects no information about you.** No telemetry, no analytics, no tracking, no
+  Aerion account. Your statistics, settings and libraries stay on your computer. The launcher
+  only talks to the services needed for what you do: Microsoft and Mojang (sign-in, game files),
+  Fabric/Quilt/Forge/NeoForge (loaders), Modrinth or CurseForge (when you browse mods), Adoptium
+  (Java when Mojang has none for your system), GitHub (update check, theme gallery) and mclo.gs
+  (only when you share a log). Minecraft itself has its own telemetry, which Mojang controls.
 - Sign-in uses Microsoft's official OAuth flow (scopes `XboxLive.signin offline_access`) and the
   official Minecraft services. Aerion verifies game ownership and **does not offer any way to
   bypass licensing**; offline play is only available after a licensed account was added.
