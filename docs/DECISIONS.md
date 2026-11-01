@@ -203,6 +203,8 @@ between versions (26.x renamed rendering to `GuiGraphicsExtractor`/`extract*`), 
 version is a separate build. Labels stay white (vanilla draws them so), therefore button bodies
 are darkened until white text reads well, also with light themes. Off by default per instance.
 Follow-up: particles and an Aerion logo; each of colours, particles and logo can be switched
-off globally (`settings.gameUi`), the per-instance switch turns the whole mod off. The logo is
-drawn from fills and the game font rather than a texture, because mod assets are not loaded
-without Fabric API's resource loader and a pixel-built logo matches Minecraft's style.
+off globally (`settings.gameUi`), the per-instance switch turns the whole mod off. The logo
+first was built from fills and the game font; the owner found it jagged, so it is now two white
+640×144 images (cube + "Aerion" in Inter, and the sparkle) rendered from the launcher's glyph,
+read from the mod jar by hand (mod assets are not game resources without Fabric API), sampled
+linearly instead of Minecraft's nearest filter and tinted with the theme.

@@ -20,7 +20,6 @@ abstract class LogoRendererMixin {
 	private void aerion$logo(GuiGraphicsExtractor g, int width, float alpha, int top, CallbackInfo ci) {
 		Theme t = AerionClient.theme();
 		if (t == null || !t.logo) return;
-		Logo.draw(g, t, width, top, alpha);
-		ci.cancel();
+		if (Logo.draw(g, t, width, top, alpha)) ci.cancel();
 	}
 }

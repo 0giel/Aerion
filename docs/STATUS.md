@@ -26,6 +26,9 @@ Newest entries first.
   switches for colours / particles / logo in Settings → Appearance → In game (`settings.gameUi`,
   passed in theme.json). Checked in game: logo and sparkles on Nocturne; turning the logo off in
   the launcher brought the Minecraft logo back in the running game within a second.
+- Owner: the logo looked jagged. Replaced the pixel-built logo with smooth textures (rendered
+  from the launcher glyph + Inter in headless Brave, linear sampling). Checked in game at GUI
+  scale 2: clean edges, soft shadow, accent sparkle.
 - Dev-only gotcha: after many dev-server restarts WebKit's HTTP cache of the test profile served
   stale modules and vite-plugin-svelte logged "failed to load virtual css module" (unstyled
   sidebar/home). Clearing `~/.local/share/pl.aerion.devtest/WebKitCache` fixed it; release builds
