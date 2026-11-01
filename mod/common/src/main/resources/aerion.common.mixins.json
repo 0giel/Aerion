@@ -6,6 +6,7 @@
 		"ClientLanguageMixin",
 		"DebugRendererMixin",
 		"EntityMixin",
+		"HurtCamMixin",
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",

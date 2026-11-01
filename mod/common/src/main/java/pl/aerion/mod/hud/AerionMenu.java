@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import pl.aerion.mod.AerionClient;
+import pl.aerion.mod.Chroma;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
 import pl.aerion.mod.Icons;
@@ -25,6 +26,7 @@ import pl.aerion.mod.Logo;
 import pl.aerion.mod.Particles;
 import pl.aerion.mod.Theme;
 import pl.aerion.mod.Txt;
+import pl.aerion.mod.features.Crosshair;
 import pl.aerion.mod.features.Features;
 import pl.aerion.mod.features.Sounds;
 import pl.aerion.mod.platform.Gfx;
@@ -41,7 +43,7 @@ public final class AerionMenu implements Page {
 	};
 	private static final float TEXT = 8f, SMALL = 7f, TITLE = 10f;
 	private static final int ROW = 16, SIDE = 92, GAP = 5;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 440, WIN_H = 250;
 
@@ -103,13 +105,35 @@ public final class AerionMenu implements Page {
 					Option.number("keySize", 18, 12, 30), Option.colour("pressed", "accent"))),
 			Map.entry("minimap", List.of(
 					Option.number("size", 80, 48, 160), Option.number("zoom", 2, 1, 4), Option.toggle("coords", true), Option.toggle("north", true))),
+			Map.entry("speed", List.of(
+					Option.format("{speed} m/s", "4.32 m/s", "{speed} b/s", "4.32 b/s", "{speed}", "4.32"),
+					Option.toggle("decimals", true), Option.toggle("vertical", false))),
+			Map.entry("totems", List.of(
+					Option.format("{count}", "2", "x{count}", "x2", "{count}x", "2x"),
+					Option.toggle("icon", true), Option.toggle("hideZero", false), Option.toggle("warn", true))),
+			Map.entry("items", List.of(
+					Option.format("{count}", "2", "x{count}", "x2", "{count}x", "2x"),
+					Option.toggle("arrow", true), Option.toggle("pearl", true), Option.toggle("gapple", true), Option.toggle("rocket", true), Option.toggle("xp", true),
+					Option.toggle("icon", true), Option.toggle("hideZero", true), Option.toggle("warn", true))),
+			Map.entry("death", List.of(Option.toggle("distance", true))),
+			Map.entry("session", List.of(Option.toggle("label", true))),
+			Map.entry("day", List.of(Option.toggle("time", true))),
+			Map.entry("light", List.of(Option.toggle("colored", true))),
+			Map.entry("crosshair", List.of(
+					Option.select("shape", "cross", "cross", "dot", "circle", "x"),
+					Option.number("size", 8, 1, 30), Option.number("gap", 3, 0, 20), Option.number("thickness", 2, 1, 8),
+					Option.colour("color", "#ffffff"), Option.toggle("outline", true), Option.toggle("dot", false),
+					Option.toggle("target", false), Option.colour("targetColor", "#ff5555"), Option.toggle("attack", true))),
+			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
 			Map.entry("hitboxes", List.of(
 					Option.colour("color", "#ffffff"), Option.toggle("reach", true), Option.colour("reachColor", "#ff5555"),
 					Option.number("width", 2, 1, 6), Option.number("fill", 0, 0, 100), Option.number("range", 48, 8, 128),
 					Option.toggle("players", true), Option.toggle("mobs", true), Option.toggle("others", false), Option.toggle("look", false))),
 			Map.entry("overlays", List.of(
-					Option.number("fireDrop", 0, 0, 100), Option.toggle("pumpkin", false), Option.toggle("snow", false), Option.toggle("water", false),
-					Option.toggle("block", false), Option.toggle("vignette", false), Option.toggle("portal", false), Option.toggle("nausea", false))),
+					Option.number("fireDrop", 0, 0, 100), Option.number("fireOpacity", 90, 0, 100), Option.toggle("pumpkin", false), Option.toggle("snow", false),
+					Option.toggle("water", false), Option.toggle("block", false), Option.toggle("vignette", false), Option.toggle("portal", false),
+					Option.toggle("nausea", false), Option.toggle("spyglass", false), Option.toggle("totem", false),
+					Option.colour("tint", "#ff0000"), Option.number("tintOpacity", 0, 0, 80), Option.toggle("lowHealth", false), Option.number("lowHealthAt", 6, 1, 19))),
 			Map.entry("toggles", List.of(
 					Option.toggle("sprint", true), Option.toggle("sneak", true), Option.toggle("fullbright", true), Option.toggle("freelook", true))));
 
@@ -146,6 +170,12 @@ public final class AerionMenu implements Page {
 	private float toUnits = 1f;
 	private int unitsW, unitsH;
 	private String soundGroup = "all", query = "";
+	/** Vertical position within the control being used, 0 at its top. */
+	private double hitY;
+	/** Picker state per colour row, so the hue survives black and white. */
+	private final Map<String, float[]> pickers = new HashMap<>();
+	private String hexRow, hexText = "";
+	private Consumer<String> hexSet;
 	private static List<String> allSounds;
 	private int scroll, contentHeight, viewTop, viewBottom;
 	private int x, y, colW, mouseX, mouseY;
@@ -198,10 +228,12 @@ public final class AerionMenu implements Page {
 			return false;
 		}
 		if (button != InputConstants.MOUSE_BUTTON_LEFT) return false;
+		hexRow = null;
 		for (Hit h : List.copyOf(hits)) {
 			if (h.clipped && (py < viewTop || py >= viewBottom)) continue;
 			if (h.contains(px, py)) {
 				if (h.slider) sliding = h;
+				hitY = Math.max(0, Math.min(1, (py - h.y) / Math.max(1, h.h - 1)));
 				h.fire(px);
 				break;
 			}
@@ -215,6 +247,11 @@ public final class AerionMenu implements Page {
 		if (capturing != null) {
 			if (!escape) bind(key);
 			capturing = null;
+			return true;
+		}
+		if (hexRow != null) {
+			if (key.getValue() == InputConstants.KEY_BACKSPACE && !hexText.isEmpty()) hexText = hexText.substring(0, hexText.length() - 1);
+			else if (escape || key.getValue() == InputConstants.KEY_RETURN) hexRow = null;
 			return true;
 		}
 		if (section == Section.SOUNDS && detail == null && !query.isEmpty()) {
@@ -245,6 +282,17 @@ public final class AerionMenu implements Page {
 
 	@Override
 	public boolean charTyped(int codepoint) {
+		if (hexRow != null) {
+			if (Character.digit(codepoint, 16) >= 0 && hexText.length() < 6) {
+				hexText += Character.toLowerCase((char) codepoint);
+				if (hexText.length() == 6) {
+					hexSet.accept("#" + hexText);
+					changed = true;
+					hexRow = null;
+				}
+			}
+			return true;
+		}
 		if (section != Section.SOUNDS || detail != null || capturing != null) return false;
 		if (query.length() < 40 && Character.isValidCodePoint(codepoint) && !Character.isISOControl(codepoint)) {
 			query += new String(Character.toChars(codepoint));
@@ -261,7 +309,10 @@ public final class AerionMenu implements Page {
 
 	@Override
 	public void dragged(double px, double py, int screenW, int screenH) {
-		if (sliding != null) sliding.fire(px * toUnits);
+		if (sliding != null) {
+			hitY = Math.max(0, Math.min(1, (py * toUnits - sliding.y) / Math.max(1, sliding.h - 1)));
+			sliding.fire(px * toUnits);
+		}
 	}
 
 	@Override
@@ -546,6 +597,7 @@ public final class AerionMenu implements Page {
 
 	private void featureGeneral(HudConfig cfg) {
 		JsonObject f = cfg.feature(detail);
+		if (detail.equals("crosshair")) crosshairPreview(f);
 		beginCard(null);
 		if (detail.equals("zoom")) {
 			slider(Lang.tr("aerion.feature.zoomFactor"), HudConfig.num(f, "factor", 4), 2, 10, 1, "x", v -> f.addProperty("factor", v));
@@ -554,9 +606,22 @@ public final class AerionMenu implements Page {
 			toggle(Lang.tr("aerion.feature.freelookHold"), HudConfig.bool(f, "hold", true), v -> f.addProperty("hold", v));
 		}
 		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(f, o);
+		if (detail.equals("hurtCam")) note(Lang.tr("aerion.hint.hurtCam"));
 		if (y == cardTop + 5) note(Lang.tr("aerion.hint.noOptions"));
 		endCard();
 		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) note(Lang.tr("aerion.panel.serverWarning"));
+	}
+
+	/** The crosshair on a sample of sky and ground. */
+	private void crosshairPreview(JsonObject f) {
+		int h = 34, k = Gfx.guiScale();
+		g.gradient(x, y, x + colW, y + h / 2, 0xFF6F9BE8, 0xFFA8C8FF);
+		g.gradient(x, y + h / 2, x + colW, y + h, 0xFF6A9A45, 0xFF4B7D2E);
+		g.push();
+		g.scale(1f / k);
+		Crosshair.paint(g, f, (x + colW / 2) * k, (y + h / 2) * k, 0xFF000000 | Chroma.parse(HudConfig.opt(f, "color", "#ffffff"), 0xFFFFFFFF));
+		g.pop();
+		y += h + 5;
 	}
 
 	private void option(JsonObject m, Option o) {
@@ -672,6 +737,13 @@ public final class AerionMenu implements Page {
 		}
 	}
 
+	private static boolean usesChroma(Look l) {
+		for (String key : new String[] {"text", "background", "border"}) {
+			if (Chroma.VALUE.equals(HudConfig.str(l.read(key), key, ""))) return true;
+		}
+		return false;
+	}
+
 	private void lookFields(Look l) {
 		String theme = Lang.tr("aerion.style.theme"), none = Lang.tr("aerion.style.none"), acc = Lang.tr("aerion.style.accent");
 		reserve = l.module != null ? 14 : 0;
@@ -680,6 +752,11 @@ public final class AerionMenu implements Page {
 		int top = y;
 		color("text", Lang.tr("aerion.style.text"), new String[] {"theme"}, new String[] {theme}, HudConfig.str(l.read("text"), "text", "theme"), v -> l.write().addProperty("text", v));
 		l.mark("text", top);
+		if (Chroma.VALUE.equals(HudConfig.str(l.read("text"), "text", "theme"))) {
+			top = y;
+			toggle(Lang.tr("aerion.style.chromaWave"), HudConfig.bool(l.read("chromaWave"), "chromaWave", false), v -> l.write().addProperty("chromaWave", v));
+			l.mark("chromaWave", top);
+		}
 		top = y;
 		choiceRow(Lang.tr("aerion.style.font"), new String[] {"game", "smooth"}, new String[] {Lang.tr("aerion.style.game"), Lang.tr("aerion.style.smooth")}, HudConfig.str(l.read("font"), "font", "smooth"), v -> l.write().addProperty("font", v));
 		l.mark("font", top);
@@ -695,6 +772,11 @@ public final class AerionMenu implements Page {
 		top = y;
 		color("background", Lang.tr("aerion.style.background"), new String[] {"theme", "none"}, new String[] {theme, none}, HudConfig.str(l.read("background"), "background", "theme"), v -> l.write().addProperty("background", v));
 		l.mark("background", top);
+		if (usesChroma(l)) {
+			top = y;
+			slider(Lang.tr("aerion.style.chromaSpeed"), HudConfig.num(l.read("chromaSpeed"), "chromaSpeed", Chroma.DEFAULT_SPEED), 1, 10, 1, "", v -> l.write().addProperty("chromaSpeed", v));
+			l.mark("chromaSpeed", top);
+		}
 		top = y;
 		slider(Lang.tr("aerion.style.opacity"), HudConfig.num(l.read("opacity"), "opacity", 55), 0, 100, 5, "%", v -> l.write().addProperty("opacity", v));
 		l.mark("opacity", top);
@@ -869,6 +951,8 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.hitboxes"), Features.key("hitboxes"));
 		keyRow(Lang.tr("aerion.feature.overlays"), Features.key("overlays"));
 		keyRow(Lang.tr("aerion.nav.sounds"), Features.key("sounds"));
+		keyRow(Lang.tr("aerion.feature.crosshair"), Features.key("crosshair"));
+		keyRow(Lang.tr("aerion.feature.hurtCam"), Features.key("hurtCam"));
 		keyRow(Lang.tr("aerion.key.sprint"), Features.key("toggleSprint"));
 		keyRow(Lang.tr("aerion.key.sneak"), Features.key("toggleSneak"));
 		endCard();
@@ -1077,7 +1161,7 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	/** Named choices, plus a custom colour whose palette and R/G/B sliders open on demand. */
+	/** Named choices, chroma, and a custom colour whose picker opens on demand. */
 	private void color(String id, String label, String[] words, String[] wordLabels, String current, Consumer<String> set) {
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
 		int bx = controlX(), by = y + 2, bh = ROW - 4;
@@ -1091,41 +1175,100 @@ public final class AerionMenu implements Page {
 			});
 			bx += w + 2;
 		}
+		boolean chroma = Chroma.VALUE.equals(current);
+		String chromaLabel = Lang.tr("aerion.style.chroma");
+		int cw = Math.round(Txt.width(chromaLabel, SMALL)) + 10;
+		smallButton(bx, by, cw, bh, "", chroma, () -> {
+			set.accept(Chroma.VALUE);
+			changed = true;
+			if (id.equals(expanded)) expanded = null;
+		});
+		// The word itself shows what chroma does.
+		float pen = bx + 5;
+		for (int cp : chromaLabel.codePoints().toArray()) {
+			String ch = new String(Character.toChars(cp));
+			Txt.draw(g, ch, pen, by + bh / 2f, SMALL, Chroma.color(-pen / 60f + 8f, Chroma.DEFAULT_SPEED));
+			pen += Txt.width(ch, SMALL);
+		}
+		bx += cw + 2;
 		boolean custom = current != null && current.startsWith("#");
 		String word = Lang.tr("aerion.style.custom");
-		int w = Math.round(Txt.width(word, SMALL)) + 10 + (custom ? 11 : 0);
+		int w = Math.round(Txt.width(word, SMALL)) + 10 + 11;
 		String swatchValue = custom ? current : "#ffffff";
-		smallButton(bx, by, w, bh, custom ? "" : word, custom, () -> {
+		smallButton(bx, by, w, bh, "", custom, () -> {
 			if (!custom) {
 				set.accept(swatchValue);
 				changed = true;
+				expanded = id;
+			} else {
+				expanded = id.equals(expanded) ? null : id;
 			}
-			expanded = id.equals(expanded) ? null : id;
 		});
-		if (custom) {
-			Txt.draw(g, word, bx + 5, by + bh / 2f, SMALL, text);
-			int c = Theme.color(current, 0xFFFFFFFF);
-			Draw.control(g, bx + w - 12, by + 2, 9, bh - 4, 1, 0xFF000000, c);
-		}
+		Txt.draw(g, word, bx + 5, by + bh / 2f, SMALL, custom ? text : muted);
+		Draw.control(g, bx + w - 12, by + 2, 9, bh - 4, 1, 0x80000000, custom ? Theme.color(current, 0xFFFFFFFF) : 0xFFFFFFFF);
 		y += ROW;
-		if (!id.equals(expanded)) return;
-		int sx = controlX();
+		if (id.equals(expanded) && custom) picker(id, current, set);
+	}
+
+	/** Saturation and brightness square, hue bar, preview, colour code and ready colours. */
+	private void picker(String id, String current, Consumer<String> set) {
+		int color = Theme.color(current, 0xFFFFFFFF);
+		float[] kept = pickers.get(id);
+		if (kept == null || (Colors.hsv(kept[0], kept[1], kept[2]) & 0xFFFFFF) != (color & 0xFFFFFF)) {
+			kept = Colors.toHsv(color);
+			pickers.put(id, kept);
+		}
+		float[] hsv = kept;
+		Runnable apply = () -> {
+			set.accept(hex(Colors.hsv(hsv[0], hsv[1], hsv[2])));
+			changed = true;
+		};
+		int sx = controlX(), total = x + colW - sx - reserve, side = 54, w = total - side - 5, h = 56;
+		for (int i = 0; i < w; i++) {
+			g.gradient(sx + i, y, sx + i + 1, y + h, Colors.hsv(hsv[0], (float) i / Math.max(1, w - 1), 1f), 0xFF000000);
+		}
+		int mx = sx + Math.round(hsv[1] * (w - 1)), my = y + Math.round((1 - hsv[2]) * (h - 1));
+		Draw.outline(g, mx - 1, my - 1, 3, 3, 0xFF000000);
+		Draw.rounded(g, mx - 1, my - 1, 3, 3, 1, 0xFFFFFFFF);
+		hit(sx, y, w, h, f -> {
+			hsv[1] = (float) f;
+			hsv[2] = 1f - (float) hitY;
+			apply.run();
+		}, true);
+		// Preview and code on the right.
+		int rx = sx + w + 5;
+		Draw.rounded(g, rx, y, side, 26, 3, 0xFF000000 | color);
+		boolean editing = id.equals(hexRow);
+		Draw.control(g, rx, y + 30, side, 14, 2, editing ? accent : line, control);
+		String shown = editing ? "#" + hexText + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : "") : current;
+		Txt.center(g, shown, rx + side / 2f, y + 37, SMALL, text);
+		hit(rx, y + 30, side, 14, f -> {
+			hexRow = id;
+			hexText = "";
+			hexSet = set;
+		}, false);
+		y += h + 3;
+		// Hue.
+		for (int i = 0; i < total; i++) g.fill(sx + i, y, sx + i + 1, y + 6, Colors.hsv((float) i / total, 1f, 1f));
+		int hx = sx + Math.round(hsv[0] * (total - 1));
+		Draw.outline(g, hx - 1, y, 2, 6, 0xFF000000);
+		g.fill(hx - 1, y, hx + 1, y + 6, 0xFFFFFFFF);
+		hit(sx, y - 1, total, 8, f -> {
+			hsv[0] = Math.min(0.999f, (float) f);
+			apply.run();
+		}, true);
+		y += 9;
+		int cx = sx;
 		for (int c : SWATCHES) {
-			String hex = hex(c);
-			Draw.control(g, sx, y, 11, 11, 2, hex.equalsIgnoreCase(current) ? accent : line, c);
-			hit(sx, y, 11, 11, f -> {
-				set.accept(hex);
+			String code = hex(c);
+			Draw.control(g, cx, y, 11, 11, 2, code.equalsIgnoreCase(current) ? accent : line, c);
+			hit(cx, y, 11, 11, f -> {
+				set.accept(code);
 				changed = true;
 			}, false);
-			sx += 13;
+			cx += 13;
 		}
-		y += 14;
-		if (custom) {
-			int c = Theme.color(current, 0xFFFFFFFF);
-			slider("R", c >> 16 & 255, 0, 255, 1, "", v -> set.accept(hex(c & 0xFF00FFFF | v << 16)));
-			slider("G", c >> 8 & 255, 0, 255, 1, "", v -> set.accept(hex(c & 0xFFFF00FF | v << 8)));
-			slider("B", c & 255, 0, 255, 1, "", v -> set.accept(hex(c & 0xFFFFFF00 | v)));
-		}
+		y += 15;
 	}
 
 	private static String hex(int argb) {

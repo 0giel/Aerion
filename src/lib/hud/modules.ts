@@ -22,6 +22,13 @@ export const MODULE_IDS = [
   "memory",
   "minimap",
   "toggles",
+  "speed",
+  "totems",
+  "items",
+  "death",
+  "session",
+  "day",
+  "light",
 ] as const;
 
 export const FIELDS: Record<string, Field[]> = {
@@ -77,6 +84,32 @@ export const FIELDS: Record<string, Field[]> = {
     { key: "coords", type: "toggle", def: "1" },
     { key: "north", type: "toggle", def: "1" },
   ],
+  speed: [
+    { key: "format", type: "text", def: "{speed} m/s" },
+    { key: "decimals", type: "toggle", def: "1" },
+    { key: "vertical", type: "toggle", def: "0" },
+  ],
+  totems: [
+    { key: "format", type: "text", def: "{count}" },
+    { key: "icon", type: "toggle", def: "1" },
+    { key: "hideZero", type: "toggle", def: "0" },
+    { key: "warn", type: "toggle", def: "1" },
+  ],
+  items: [
+    { key: "format", type: "text", def: "{count}" },
+    { key: "arrow", type: "toggle", def: "1" },
+    { key: "pearl", type: "toggle", def: "1" },
+    { key: "gapple", type: "toggle", def: "1" },
+    { key: "rocket", type: "toggle", def: "1" },
+    { key: "xp", type: "toggle", def: "1" },
+    { key: "icon", type: "toggle", def: "1" },
+    { key: "hideZero", type: "toggle", def: "1" },
+    { key: "warn", type: "toggle", def: "1" },
+  ],
+  death: [{ key: "distance", type: "toggle", def: "1" }],
+  session: [{ key: "label", type: "toggle", def: "1" }],
+  day: [{ key: "time", type: "toggle", def: "1" }],
+  light: [{ key: "colored", type: "toggle", def: "1" }],
   toggles: [
     { key: "sprint", type: "toggle", def: "1" },
     { key: "sneak", type: "toggle", def: "1" },
@@ -125,6 +158,20 @@ export function sample(id: string, opt: (key: string, def: string) => string): s
       ];
     case "toggles":
       return ["Sprinting (toggled)"];
+    case "speed":
+      return [fill(opt("format", "{speed} m/s"), { speed: opt("decimals", "1") === "1" ? "4.32" : "4" })];
+    case "totems":
+      return [fill(opt("format", "{count}"), { count: 2 })];
+    case "items":
+      return [fill(opt("format", "{count}"), { count: 16 }), fill(opt("format", "{count}"), { count: 4 })];
+    case "death":
+      return [`128 / 64 / -32${opt("distance", "1") === "1" ? "  58 m" : ""}`];
+    case "session":
+      return ["1:24:05"];
+    case "day":
+      return [opt("time", "1") === "1" ? "12  14:30" : "12"];
+    case "light":
+      return ["14"];
     default:
       return [];
   }

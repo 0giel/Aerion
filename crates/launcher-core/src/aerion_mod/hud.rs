@@ -18,16 +18,16 @@ use crate::paths::Paths;
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase", default)]
 pub struct HudStyle {
-    /// `theme` or `#rrggbb`.
+    /// `theme`, `chroma` or `#rrggbb`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text: Option<String>,
-    /// `theme`, `none` or `#rrggbb`.
+    /// `theme`, `none`, `chroma` or `#rrggbb`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub background: Option<String>,
     /// Background opacity, 0–100.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub opacity: Option<u8>,
-    /// `none`, `accent` or `#rrggbb`.
+    /// `none`, `accent`, `chroma` or `#rrggbb`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub border: Option<String>,
     /// Border thickness, 1–4.
@@ -45,6 +45,12 @@ pub struct HudStyle {
     /// `game` (Minecraft's pixel font) or `smooth`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub font: Option<String>,
+    /// How fast `chroma` colours move, 1–10.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chroma_speed: Option<u8>,
+    /// Chroma text as a wave across the letters.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chroma_wave: Option<bool>,
 }
 
 impl HudStyle {
@@ -167,6 +173,8 @@ pub struct HudFeatures {
     pub hitboxes: FeatureOptions,
     pub overlays: FeatureOptions,
     pub sounds: SoundOptions,
+    pub crosshair: FeatureOptions,
+    pub hurt_cam: FeatureOptions,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -193,6 +201,13 @@ pub const MODULES: &[(&str, bool, u16, u16)] = &[
     ("clock", false, 992, 500),
     ("minimap", false, 992, 120),
     ("memory", false, 8, 490),
+    ("speed", false, 8, 590),
+    ("death", false, 8, 680),
+    ("totems", false, 860, 900),
+    ("items", false, 860, 560),
+    ("session", false, 500, 170),
+    ("day", false, 500, 250),
+    ("light", false, 500, 90),
 ];
 
 impl Default for HudConfig {
@@ -210,6 +225,8 @@ impl Default for HudConfig {
                 shadow: Some(true),
                 align: Some("left".into()),
                 font: Some("smooth".into()),
+                chroma_speed: Some(5),
+                chroma_wave: Some(false),
             },
             modules: MODULES
                 .iter()
@@ -236,13 +253,15 @@ fn color_ok(c: &str, words: &[&str]) -> bool {
 }
 
 fn style_ok(s: &HudStyle) -> bool {
-    s.text.as_deref().is_none_or(|c| color_ok(c, &["theme"]))
+    s.text
+        .as_deref()
+        .is_none_or(|c| color_ok(c, &["theme", "chroma"]))
         && s.background
             .as_deref()
-            .is_none_or(|c| color_ok(c, &["theme", "none"]))
+            .is_none_or(|c| color_ok(c, &["theme", "none", "chroma"]))
         && s.border
             .as_deref()
-            .is_none_or(|c| color_ok(c, &["none", "accent"]))
+            .is_none_or(|c| color_ok(c, &["none", "accent", "chroma"]))
         && s.opacity.is_none_or(|o| o <= 100)
         && s.radius.is_none_or(|r| r <= 8)
         && s.padding.is_none_or(|p| p <= 10)
@@ -250,6 +269,7 @@ fn style_ok(s: &HudStyle) -> bool {
             .as_deref()
             .is_none_or(|a| matches!(a, "left" | "center" | "right"))
         && s.border_width.is_none_or(|w| (1..=4).contains(&w))
+        && s.chroma_speed.is_none_or(|v| (1..=10).contains(&v))
         && s.font
             .as_deref()
             .is_none_or(|f| matches!(f, "game" | "smooth"))
@@ -279,6 +299,8 @@ impl HudConfig {
             && [
                 &self.features.hitboxes.options,
                 &self.features.overlays.options,
+                &self.features.crosshair.options,
+                &self.features.hurt_cam.options,
                 &self.features.sounds.options,
             ]
             .iter()
@@ -355,6 +377,24 @@ mod tests {
         let back = serde_json::to_value(&m).unwrap();
         assert_eq!(back["style"]["borderWidth"], 2);
         assert!(back["style"].get("align").is_none());
+    }
+
+    #[test]
+    fn accepts_chroma_and_keeps_new_features() {
+        let mut c: HudConfig = serde_json::from_str(
+            r##"{"features":{"hurtCam":{"enabled":true,"options":{"strength":"25"}},
+                "crosshair":{"enabled":true,"options":{"color":"chroma"}}}}"##,
+        )
+        .unwrap();
+        c.style.text = Some("chroma".into());
+        c.style.border = Some("chroma".into());
+        c.style.chroma_speed = Some(10);
+        c.validate().unwrap();
+        let back = serde_json::to_value(&c).unwrap();
+        assert_eq!(back["features"]["hurtCam"]["options"]["strength"], "25");
+        assert_eq!(back["features"]["crosshair"]["options"]["color"], "chroma");
+        c.style.chroma_speed = Some(11);
+        assert!(c.validate().is_err());
     }
 
     #[test]

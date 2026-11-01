@@ -17,8 +17,11 @@
     <span class="label">{t("hudEditor.style.text")}</span>
     <div class="row wrap gap-2">
       <div class="segmented" role="group" aria-label={t("hudEditor.style.text")}>
-        <button aria-pressed={!isHex(style.text)} onclick={() => set({ text: "theme" })}
+        <button aria-pressed={style.text === "theme" || !style.text} onclick={() => set({ text: "theme" })}
           >{t("hudEditor.style.theme")}</button
+        >
+        <button aria-pressed={style.text === "chroma"} onclick={() => set({ text: "chroma" })}
+          >{t("hudEditor.style.chroma")}</button
         >
         <button aria-pressed={isHex(style.text)} onclick={() => set({ text: hexOr(style.text, "#ffffff") })}
           >{t("hudEditor.style.custom")}</button
@@ -55,6 +58,9 @@
         >
         <button aria-pressed={style.background === "none"} onclick={() => set({ background: "none" })}
           >{t("hudEditor.style.none")}</button
+        >
+        <button aria-pressed={style.background === "chroma"} onclick={() => set({ background: "chroma" })}
+          >{t("hudEditor.style.chroma")}</button
         >
         <button
           aria-pressed={isHex(style.background)}
@@ -96,6 +102,9 @@
         <button aria-pressed={style.border === "accent"} onclick={() => set({ border: "accent" })}
           >{t("hudEditor.style.accent")}</button
         >
+        <button aria-pressed={style.border === "chroma"} onclick={() => set({ border: "chroma" })}
+          >{t("hudEditor.style.chroma")}</button
+        >
         <button
           aria-pressed={isHex(style.border)}
           onclick={() => set({ border: hexOr(style.border, "#ffffff") })}
@@ -124,6 +133,26 @@
       >
     {/if}
   </div>
+
+  {#if style.text === "chroma" || style.background === "chroma" || style.border === "chroma"}
+    <label class="range"
+      ><span class="small muted">{t("hudEditor.style.chromaSpeed")}: {style.chromaSpeed ?? 5}</span>
+      <input
+        type="range"
+        min="1"
+        max="10"
+        value={style.chromaSpeed ?? 5}
+        oninput={(e) => set({ chromaSpeed: Number((e.target as HTMLInputElement).value) })}
+      /></label
+    >
+    {#if style.text === "chroma"}
+      <Switch
+        label={t("hudEditor.style.chromaWave")}
+        checked={style.chromaWave ?? false}
+        onchange={(v) => set({ chromaWave: v })}
+      />
+    {/if}
+  {/if}
 
   <div class="grid2">
     <label class="range"

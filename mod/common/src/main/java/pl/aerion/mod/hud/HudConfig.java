@@ -27,7 +27,7 @@ public final class HudConfig {
 	/** Used when the launcher hasn't written a file yet (same defaults as the launcher). */
 	static final String DEFAULTS = """
 			{"enabled":true,
-			 "style":{"text":"theme","background":"theme","opacity":55,"border":"none","borderWidth":1,"radius":0,"padding":3,"shadow":true,"align":"left","font":"smooth"},
+			 "style":{"text":"theme","background":"theme","opacity":55,"border":"none","borderWidth":1,"radius":0,"padding":3,"shadow":true,"align":"left","font":"smooth","chromaSpeed":5,"chromaWave":false},
 			 "modules":{
 			  "fps":{"enabled":true,"x":8,"y":10,"scale":100},
 			  "coords":{"enabled":true,"x":8,"y":110,"scale":100},
@@ -40,10 +40,17 @@ public final class HudConfig {
 			  "ping":{"enabled":false,"x":8,"y":390,"scale":100},
 			  "clock":{"enabled":false,"x":992,"y":500,"scale":100},
 			  "minimap":{"enabled":false,"x":992,"y":120,"scale":100},
-			  "memory":{"enabled":false,"x":8,"y":490,"scale":100}},
+			  "memory":{"enabled":false,"x":8,"y":490,"scale":100},
+			  "speed":{"enabled":false,"x":8,"y":590,"scale":100},
+			  "death":{"enabled":false,"x":8,"y":680,"scale":100},
+			  "totems":{"enabled":false,"x":860,"y":900,"scale":100},
+			  "items":{"enabled":false,"x":860,"y":560,"scale":100},
+			  "session":{"enabled":false,"x":500,"y":170,"scale":100},
+			  "day":{"enabled":false,"x":500,"y":250,"scale":100},
+			  "light":{"enabled":false,"x":500,"y":90,"scale":100}},
 			 "features":{"zoom":{"enabled":true,"factor":4,"smooth":true},"freelook":{"enabled":false,"hold":true},
 			  "fullbright":{"enabled":false},"toggleSprint":{"enabled":false},"toggleSneak":{"enabled":false},
-			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true}}}
+			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false}}}
 			""";
 
 	public static HudConfig defaults() {

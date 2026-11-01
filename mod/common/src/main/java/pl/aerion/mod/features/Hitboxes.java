@@ -10,8 +10,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import pl.aerion.mod.AerionClient;
+import pl.aerion.mod.Chroma;
 import pl.aerion.mod.Colors;
-import pl.aerion.mod.Theme;
 import pl.aerion.mod.hud.HudConfig;
 
 /**
@@ -20,14 +20,6 @@ import pl.aerion.mod.hud.HudConfig;
  */
 public final class Hitboxes {
 	private Hitboxes() {}
-
-	private static int color(String value, int fallback) {
-		if ("accent".equals(value)) {
-			Theme t = AerionClient.theme();
-			return t != null ? t.accent : fallback;
-		}
-		return Theme.color(value, fallback);
-	}
 
 	private static int number(JsonObject f, String key, int fallback) {
 		try {
@@ -48,8 +40,8 @@ public final class Hitboxes {
 		if (cfg == null || mc.level == null || mc.player == null) return;
 		JsonObject f = cfg.feature("hitboxes");
 		if (!HudConfig.bool(f, "enabled", false)) return;
-		int normal = color(HudConfig.opt(f, "color", "#ffffff"), 0xFFFFFFFF);
-		int inReach = color(HudConfig.opt(f, "reachColor", "#ff5555"), 0xFFFF5555);
+		int normal = Chroma.parse(HudConfig.opt(f, "color", "#ffffff"), 0xFFFFFFFF);
+		int inReach = Chroma.parse(HudConfig.opt(f, "reachColor", "#ff5555"), 0xFFFF5555);
 		boolean reach = flag(f, "reach", true);
 		boolean players = flag(f, "players", true), mobs = flag(f, "mobs", true), others = flag(f, "others", false);
 		boolean look = flag(f, "look", false);

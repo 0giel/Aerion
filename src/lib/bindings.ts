@@ -820,6 +820,8 @@ export type HudFeatures_Deserialize = {
 	hitboxes?: FeatureOptions_Deserialize,
 	overlays?: FeatureOptions_Deserialize,
 	sounds?: SoundOptions_Deserialize,
+	crosshair?: FeatureOptions_Deserialize,
+	hurtCam?: FeatureOptions_Deserialize,
 };
 
 export type HudFeatures_Serialize = {
@@ -831,6 +833,8 @@ export type HudFeatures_Serialize = {
 	hitboxes: FeatureOptions_Serialize,
 	overlays: FeatureOptions_Serialize,
 	sounds: SoundOptions_Serialize,
+	crosshair: FeatureOptions_Serialize,
+	hurtCam: FeatureOptions_Serialize,
 };
 
 export type HudModule = HudModule_Serialize | HudModule_Deserialize;
@@ -866,13 +870,13 @@ export type HudStyle = HudStyle_Serialize | HudStyle_Deserialize;
  *  only what it sets.
  */
 export type HudStyle_Deserialize = {
-	/**  `theme` or `#rrggbb`. */
+	/**  `theme`, `chroma` or `#rrggbb`. */
 	text?: string | null,
-	/**  `theme`, `none` or `#rrggbb`. */
+	/**  `theme`, `none`, `chroma` or `#rrggbb`. */
 	background?: string | null,
 	/**  Background opacity, 0–100. */
 	opacity?: number | null,
-	/**  `none`, `accent` or `#rrggbb`. */
+	/**  `none`, `accent`, `chroma` or `#rrggbb`. */
 	border?: string | null,
 	/**  Border thickness, 1–4. */
 	borderWidth?: number | null,
@@ -883,6 +887,10 @@ export type HudStyle_Deserialize = {
 	align?: string | null,
 	/**  `game` (Minecraft's pixel font) or `smooth`. */
 	font?: string | null,
+	/**  How fast `chroma` colours move, 1–10. */
+	chromaSpeed?: number | null,
+	/**  Chroma text as a wave across the letters. */
+	chromaWave?: boolean | null,
 };
 
 /**
@@ -890,13 +898,13 @@ export type HudStyle_Deserialize = {
  *  only what it sets.
  */
 export type HudStyle_Serialize = {
-	/**  `theme` or `#rrggbb`. */
+	/**  `theme`, `chroma` or `#rrggbb`. */
 	text?: string,
-	/**  `theme`, `none` or `#rrggbb`. */
+	/**  `theme`, `none`, `chroma` or `#rrggbb`. */
 	background?: string,
 	/**  Background opacity, 0–100. */
 	opacity?: number,
-	/**  `none`, `accent` or `#rrggbb`. */
+	/**  `none`, `accent`, `chroma` or `#rrggbb`. */
 	border?: string,
 	/**  Border thickness, 1–4. */
 	borderWidth?: number,
@@ -907,6 +915,10 @@ export type HudStyle_Serialize = {
 	align?: string,
 	/**  `game` (Minecraft's pixel font) or `smooth`. */
 	font?: string,
+	/**  How fast `chroma` colours move, 1–10. */
+	chromaSpeed?: number,
+	/**  Chroma text as a wave across the letters. */
+	chromaWave?: boolean,
 };
 
 export type InstallPlan = InstallPlan_Serialize | InstallPlan_Deserialize;

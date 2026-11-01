@@ -1141,6 +1141,13 @@ const pl: Dict = {
     keysHint:
       "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, układ HUD Prawy Shift, pełna jasność bez klawisza) oraz klawisz włączania każdego modułu ustawisz w grze: prawy Shift → Mody → Klawisze.",
     modules: {
+      speed: "Prędkość",
+      totems: "Licznik totemów",
+      items: "Licznik przedmiotów",
+      death: "Pozycja śmierci",
+      session: "Czas sesji",
+      day: "Dzień świata",
+      light: "Poziom światła",
       fps: "FPS",
       coords: "Koordynaty",
       direction: "Kierunek",
@@ -1155,6 +1162,13 @@ const pl: Dict = {
       toggles: "Przełączniki",
     },
     about: {
+      speed: "Jak szybko się poruszasz, w blokach na sekundę.",
+      totems: "Ile masz totemów nieśmiertelności.",
+      items: "Strzały, perły, złote jabłka, rakiety i butelki, które masz przy sobie.",
+      death: "Gdzie ostatnio zginąłeś i jak to daleko.",
+      session: "Jak długo jesteś w tym świecie lub na serwerze.",
+      day: "Licznik dni i godzina w świecie.",
+      light: "Poziom światła pod nogami.",
       fps: "Klatki na sekundę.",
       coords: "Pozycja, kierunek i opcjonalnie przeliczenie na Nether.",
       direction: "Kierunek patrzenia z kompasu.",
@@ -1169,6 +1183,40 @@ const pl: Dict = {
       toggles: "Pokazuje włączony bieg, skradanie, pełną jasność i rozglądanie.",
     },
     options: {
+      speed: {
+        format: "Format ({speed})",
+        decimals: "Po przecinku",
+        vertical: "Licz też spadanie i skoki",
+      },
+      totems: {
+        format: "Format ({count})",
+        icon: "Pokaż ikonę",
+        hideZero: "Ukryj, gdy brak",
+        warn: "Czerwony, gdy brak",
+      },
+      items: {
+        format: "Format ({count})",
+        arrow: "Strzały",
+        pearl: "Perły Endu",
+        gapple: "Złote jabłka",
+        rocket: "Rakiety",
+        xp: "Butelki z doświadczeniem",
+        icon: "Pokaż ikony",
+        hideZero: "Ukryj, gdy brak",
+        warn: "Czerwony, gdy brak",
+      },
+      death: {
+        distance: "Pokaż odległość",
+      },
+      session: {
+        label: "Pokaż podpis",
+      },
+      day: {
+        time: "Pokaż godzinę w świecie",
+      },
+      light: {
+        colored: "Kolor zależny od poziomu",
+      },
       fps: {
         format: "Format ({fps})",
         colored: "Kolor zależny od wartości",
@@ -1240,6 +1288,9 @@ const pl: Dict = {
       none: "Brak",
     },
     style: {
+      chroma: "Chroma",
+      chromaSpeed: "Szybkość chromy",
+      chromaWave: "Fala przez litery",
       font: "Czcionka",
       fonts: {
         game: "Minecraft",
@@ -1265,6 +1316,10 @@ const pl: Dict = {
       },
     },
     features: {
+      crosshair: "Celownik",
+      crosshairHint: "Kształt, rozmiar i kolory ustawisz w menu w grze.",
+      hurtCam: "Hurt cam",
+      hurtCamHint: "Siłę przechylenia widoku po trafieniu ustawisz w menu w grze.",
       zoom: "Przybliżenie (zoom)",
       zoomHint: "Przytrzymaj klawisz, aby przybliżyć widok.",
       zoomFactor: "Siła przybliżenia",

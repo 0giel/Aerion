@@ -23,4 +23,9 @@ public final class Game {
 	public static void clearToasts() {
 		Minecraft.getInstance().getToastManager().clear();
 	}
+
+	/** Ticks since the world began, by its clock. */
+	public static long dayTime(net.minecraft.client.multiplayer.ClientLevel level) {
+		return level.getDayTime();
+	}
 }

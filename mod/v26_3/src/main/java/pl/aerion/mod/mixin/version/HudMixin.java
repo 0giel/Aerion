@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.resources.Identifier;
+import pl.aerion.mod.features.Crosshair;
 import pl.aerion.mod.features.Overlays;
 import pl.aerion.mod.platform.Gfx;
 
@@ -37,5 +38,15 @@ abstract class HudMixin {
 	@Inject(method = "extractConfusionOverlay", at = @At("HEAD"), cancellable = true)
 	private void aerion$nausea(CallbackInfo ci) {
 		if (Overlays.hidden("nausea")) ci.cancel();
+	}
+
+	@Inject(method = "extractSpyglassOverlay", at = @At("HEAD"), cancellable = true)
+	private void aerion$spyglass(CallbackInfo ci) {
+		if (Overlays.hidden("spyglass")) ci.cancel();
+	}
+
+	@Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
+	private void aerion$crosshair(GuiGraphicsExtractor g, DeltaTracker delta, CallbackInfo ci) {
+		if (Crosshair.draw(new Gfx(g))) ci.cancel();
 	}
 }

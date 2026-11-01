@@ -1,4 +1,4 @@
-64 6 384 384
+64 6 384 448
 fps
 coords
 direction
@@ -14,6 +14,13 @@ hitboxes
 overlays
 sounds
 layout
+speed
+totems
+death
+session
+light
+crosshair
+hurtCam
 toggleSneak
 armor
 clock
@@ -31,3 +38,5 @@ settings
 hide
 play
 search
+items
+day

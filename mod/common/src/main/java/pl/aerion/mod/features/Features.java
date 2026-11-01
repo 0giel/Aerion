@@ -32,11 +32,11 @@ public final class Features {
 
 	/** Every HUD module; each can have a key that switches it on and off. */
 	public static final String[] MODULE_IDS = {
-		"fps", "coords", "direction", "cps", "keystrokes", "armor", "potions", "ping", "clock", "memory", "minimap", "toggles"
+		"fps", "coords", "direction", "speed", "cps", "keystrokes", "armor", "totems", "items", "potions", "death", "ping", "clock", "session", "day", "light", "memory", "minimap", "toggles"
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds;
+	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -50,7 +50,9 @@ public final class Features {
 			hitboxes = new KeyMapping("key.aerion.hitboxes", InputConstants.UNKNOWN.getValue(), cat);
 			overlays = new KeyMapping("key.aerion.overlays", InputConstants.UNKNOWN.getValue(), cat);
 			sounds = new KeyMapping("key.aerion.sounds", InputConstants.UNKNOWN.getValue(), cat);
-			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds));
+			crosshair = new KeyMapping("key.aerion.crosshair", InputConstants.UNKNOWN.getValue(), cat);
+			hurtCam = new KeyMapping("key.aerion.hurtCam", InputConstants.UNKNOWN.getValue(), cat);
+			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -77,6 +79,8 @@ public final class Features {
 			case "hitboxes" -> hitboxes;
 			case "overlays" -> overlays;
 			case "sounds" -> sounds;
+			case "crosshair" -> crosshair;
+			case "hurtCam" -> hurtCam;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -224,6 +228,13 @@ public final class Features {
 		}
 	}
 
+	private static long joined;
+
+	/** Milliseconds since joining the current world or server. */
+	public static long sessionMillis() {
+		return joined == 0 ? 0 : System.currentTimeMillis() - joined;
+	}
+
 	private static void toggleOnKey(KeyMapping key, String id, boolean fallback) {
 		while (key.consumeClick()) {
 			JsonObject f = feature(id);
@@ -242,6 +253,10 @@ public final class Features {
 		toggleOnKey(hitboxes, "hitboxes", false);
 		toggleOnKey(overlays, "overlays", false);
 		toggleOnKey(sounds, "sounds", true);
+		toggleOnKey(crosshair, "crosshair", false);
+		toggleOnKey(hurtCam, "hurtCam", false);
+		if (mc.player == null) joined = 0;
+		else if (joined == 0) joined = System.currentTimeMillis();
 		for (var e : MODULE_KEYS.entrySet()) {
 			while (e.getValue().consumeClick()) {
 				HudConfig cfg = AerionClient.hud();

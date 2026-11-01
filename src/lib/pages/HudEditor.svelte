@@ -109,16 +109,32 @@
     const s = effective(m);
     const kk = k * (m.scale / 100);
     const alpha = (s.opacity ?? 55) / 100;
+    // A sample colour stands in for chroma, which only moves in the game.
+    const chroma = "hsl(290 90% 70%)";
     const bg =
       s.background === "none"
         ? "transparent"
-        : s.background === "theme"
-          ? `color-mix(in srgb, var(--c-surface) ${alpha * 100}%, transparent)`
-          : `color-mix(in srgb, ${s.background} ${alpha * 100}%, transparent)`;
+        : s.background === "chroma"
+          ? `color-mix(in srgb, ${chroma} ${alpha * 100}%, transparent)`
+          : s.background === "theme"
+            ? `color-mix(in srgb, var(--c-surface) ${alpha * 100}%, transparent)`
+            : `color-mix(in srgb, ${s.background} ${alpha * 100}%, transparent)`;
     const text =
-      s.text && s.text.startsWith("#") ? s.text : s.background === "none" ? "#ffffff" : "var(--c-text)";
+      s.text === "chroma"
+        ? chroma
+        : s.text && s.text.startsWith("#")
+          ? s.text
+          : s.background === "none"
+            ? "#ffffff"
+            : "var(--c-text)";
     const border =
-      !s.border || s.border === "none" ? "transparent" : s.border === "accent" ? "var(--c-accent)" : s.border;
+      !s.border || s.border === "none"
+        ? "transparent"
+        : s.border === "accent"
+          ? "var(--c-accent)"
+          : s.border === "chroma"
+            ? chroma
+            : s.border;
     return [
       `left:${m.x / 10}%`,
       `top:${m.y / 10}%`,
@@ -420,6 +436,18 @@
               onchange={(v) => cfg && ((cfg.features.overlays.enabled = v), changed())}
             />
           </div>
+          <Switch
+            label={t("hudEditor.features.crosshair")}
+            hint={t("hudEditor.features.crosshairHint")}
+            checked={cfg.features.crosshair.enabled}
+            onchange={(v) => cfg && ((cfg.features.crosshair.enabled = v), changed())}
+          />
+          <Switch
+            label={t("hudEditor.features.hurtCam")}
+            hint={t("hudEditor.features.hurtCamHint")}
+            checked={cfg.features.hurtCam.enabled}
+            onchange={(v) => cfg && ((cfg.features.hurtCam.enabled = v), changed())}
+          />
           <Switch
             label={t("hudEditor.features.sounds")}
             hint={t("hudEditor.features.soundsHint")}

@@ -14,14 +14,18 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import pl.aerion.mod.AerionClient;
+import pl.aerion.mod.Chroma;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
 import pl.aerion.mod.Lang;
 import pl.aerion.mod.Theme;
 import pl.aerion.mod.Txt;
 import pl.aerion.mod.features.Features;
+import pl.aerion.mod.features.Overlays;
 import pl.aerion.mod.platform.EditorScreen;
 import pl.aerion.mod.platform.Game;
 import pl.aerion.mod.platform.Gfx;
@@ -35,7 +39,7 @@ public final class Hud {
 	private Hud() {}
 
 	/** Resolved look of one module. */
-	public record Style(int text, int background, int border, int borderWidth, int radius, int padding, boolean shadow, String align, boolean smooth) {}
+	public record Style(int text, int background, int border, int borderWidth, int radius, int padding, boolean shadow, String align, boolean smooth, boolean wave, int chromaSpeed) {}
 
 	/** Everything a module needs while measuring and drawing. */
 	public record Ctx(Minecraft mc, LocalPlayer player, JsonObject cfg, Style style, Theme theme, boolean preview) {
@@ -65,6 +69,20 @@ public final class Hud {
 
 	/** Text in the module's font: the game's, or smooth with its shadow drawn as a second layer. */
 	static void text(Ctx c, Gfx g, String s, int x, int y, int color, boolean shadow) {
+		// Chroma as a wave: every letter a little further along the hue circle.
+		if (c.style().wave() && color == c.style().text()) {
+			int pen = x;
+			for (int cp : s.codePoints().toArray()) {
+				String ch = new String(Character.toChars(cp));
+				plain(c, g, ch, pen, y, Chroma.color(-pen / 150f + 1f, c.style().chromaSpeed()), shadow);
+				pen += width(c, ch);
+			}
+			return;
+		}
+		plain(c, g, s, x, y, color, shadow);
+	}
+
+	private static void plain(Ctx c, Gfx g, String s, int x, int y, int color, boolean shadow) {
 		if (!c.style().smooth()) {
 			g.text(s, x, y, color, shadow);
 			return;
@@ -269,6 +287,67 @@ public final class Hud {
 				return 0xFF000000 | list.get(line).getEffect().value().getColor();
 			}
 		});
+		MODULES.put("speed", new Lines() {
+			List<String> lines(Ctx c) {
+				LocalPlayer p = c.player();
+				double dx = p == null ? 0.2 : p.getX() - p.xo, dy = p == null ? 0 : p.getY() - p.yo, dz = p == null ? 0.1 : p.getZ() - p.zo;
+				double sq = dx * dx + dz * dz + (c.flag("vertical", false) ? dy * dy : 0);
+				String value = String.format(c.flag("decimals", true) ? "%.2f" : "%.0f", Math.sqrt(sq) * 20);
+				return List.of(format(c.opt("format", "{speed} m/s"), "speed", value));
+			}
+		});
+		MODULES.put("death", new Lines() {
+			List<String> lines(Ctx c) {
+				LocalPlayer p = c.player();
+				var last = p == null ? java.util.Optional.<net.minecraft.core.GlobalPos>empty() : p.getLastDeathLocation();
+				if (last.isEmpty()) return c.preview() ? List.of(Lang.tr("aerion.hud.death") + " 128 / 64 / -32") : List.of();
+				var pos = last.get().pos();
+				String line = Lang.tr("aerion.hud.death") + " " + pos.getX() + " / " + pos.getY() + " / " + pos.getZ();
+				if (c.flag("distance", true) && last.get().dimension().equals(p.level().dimension())) {
+					line += String.format("  %.0f m", Math.sqrt(p.distanceToSqr(pos.getX(), pos.getY(), pos.getZ())));
+				}
+				return List.of(line);
+			}
+		});
+		MODULES.put("session", new Lines() {
+			List<String> lines(Ctx c) {
+				long s = Features.sessionMillis() / 1000;
+				String time = s / 3600 + ":" + String.format("%02d:%02d", s / 60 % 60, s % 60);
+				return List.of(c.flag("label", true) ? Lang.tr("aerion.hud.session") + " " + time : time);
+			}
+		});
+		MODULES.put("day", new Lines() {
+			List<String> lines(Ctx c) {
+				if (c.mc().level == null) return List.of(Lang.tr("aerion.hud.day") + " 12");
+				long t = Game.dayTime(c.mc().level);
+				String day = Lang.tr("aerion.hud.day") + " " + t / 24000;
+				if (!c.flag("time", true)) return List.of(day);
+				long ofDay = (t + 6000) % 24000;
+				return List.of(day + "  " + String.format("%02d:%02d", ofDay / 1000, ofDay % 1000 * 60 / 1000));
+			}
+		});
+		MODULES.put("light", new Lines() {
+			private int level(Ctx c) {
+				return c.player() == null || c.mc().level == null ? 14 : c.mc().level.getRawBrightness(c.player().blockPosition(), 0);
+			}
+
+			List<String> lines(Ctx c) {
+				return List.of(Lang.tr("aerion.hud.light") + " " + level(c));
+			}
+
+			@Override
+			int color(Ctx c, int line) {
+				int l = level(c);
+				return c.flag("colored", true) ? graded(l > 7, l > 0) : c.style().text();
+			}
+		});
+		MODULES.put("totems", new Counter(false, new Counter.Row("totem", Items.TOTEM_OF_UNDYING)));
+		MODULES.put("items", new Counter(true,
+				new Counter.Row("arrow", Items.ARROW),
+				new Counter.Row("pearl", Items.ENDER_PEARL),
+				new Counter.Row("gapple", Items.GOLDEN_APPLE),
+				new Counter.Row("rocket", Items.FIREWORK_ROCKET),
+				new Counter.Row("xp", Items.EXPERIENCE_BOTTLE)));
 		MODULES.put("armor", new Armor());
 		MODULES.put("keystrokes", new Keystrokes());
 		MODULES.put("minimap", new Minimap());
@@ -288,6 +367,67 @@ public final class Hud {
 	static String time(int ticks) {
 		int s = ticks / 20;
 		return s >= 3600 ? (s / 3600) + ":" + String.format("%02d:%02d", s / 60 % 60, s % 60) : (s / 60) + ":" + String.format("%02d", s % 60);
+	}
+
+	/** How many of some items the player carries, each with its icon or name. */
+	static final class Counter implements Module {
+		record Row(String key, Item item) {}
+
+		private final boolean hideZero;
+		private final List<Row> rows;
+
+		Counter(boolean hideZero, Row... rows) {
+			this.hideZero = hideZero;
+			this.rows = List.of(rows);
+		}
+
+		private static int count(Ctx c, Item item) {
+			if (c.player() == null) return 0;
+			var inv = c.player().getInventory();
+			int n = 0;
+			for (int i = 0; i < inv.getContainerSize(); i++) {
+				ItemStack s = inv.getItem(i);
+				if (s.is(item)) n += s.getCount();
+			}
+			return n;
+		}
+
+		private List<Row> shown(Ctx c) {
+			List<Row> out = new ArrayList<>();
+			for (Row r : rows) {
+				if (rows.size() > 1 && !c.flag(r.key, true)) continue;
+				if (!c.preview() && c.flag("hideZero", hideZero) && count(c, r.item) == 0) continue;
+				out.add(r);
+			}
+			return out;
+		}
+
+		private String label(Ctx c, Row r) {
+			String n = format(c.opt("format", "{count}"), "count", count(c, r.item));
+			return c.flag("icon", true) ? n : new ItemStack(r.item).getHoverName().getString() + ": " + n;
+		}
+
+		@Override
+		public int[] size(Ctx c) {
+			List<Row> list = shown(c);
+			if (list.isEmpty()) return new int[] {0, 0};
+			int p = c.style().padding(), w = 0;
+			for (Row r : list) w = Math.max(w, Hud.width(c, label(c, r)));
+			boolean icon = c.flag("icon", true);
+			return new int[] {(icon ? 19 : 0) + w + 2 * p, list.size() * (icon ? 17 : LINE) - 1 + 2 * p};
+		}
+
+		@Override
+		public void draw(Ctx c, Gfx g) {
+			int p = c.style().padding(), y = p;
+			boolean icon = c.flag("icon", true);
+			for (Row r : shown(c)) {
+				int color = c.flag("warn", true) && count(c, r.item) == 0 ? 0xFFFF5555 : c.style().text();
+				if (icon) g.item(new ItemStack(r.item), p, y);
+				Hud.text(c, g, label(c, r), p + (icon ? 19 : 0), icon ? y + 4 : y, color, c.style().shadow());
+				y += icon ? 17 : LINE;
+			}
+		}
 	}
 
 	/** Armour pieces (and optionally the held item) with their durability. */
@@ -385,7 +525,7 @@ public final class Hud {
 		private void key(Ctx c, Gfx g, int x, int y, int w, int h, String label, boolean down) {
 			Style s = c.style();
 			String pressed = c.opt("pressed", "accent");
-			int accent = pressed.startsWith("#") ? Theme.color(pressed, 0xFF7AA2FF) : c.theme() != null ? c.theme().accent : 0xFF7AA2FF;
+			int accent = Chroma.parse(pressed, 0xFF7AA2FF);
 			int body = down ? Colors.alpha(accent, 0xCC) : (s.background() != 0 ? s.background() : 0x66000000);
 			Draw.rounded(g, x, y, w, h, s.radius(), body);
 			int color = down ? 0xFF111111 : s.text();
@@ -430,19 +570,23 @@ public final class Hud {
 		String border = pick(own, base, "border", "none");
 		int opacity = Math.max(0, Math.min(100, HudConfig.num(own.has("opacity") ? own : base, "opacity", 55)));
 		int surface = t != null ? t.surface : 0xFF000000;
+		int speed = HudConfig.num(own.has("chromaSpeed") ? own : base, "chromaSpeed", Chroma.DEFAULT_SPEED);
 		int background = switch (bg) {
 			case "none" -> 0;
 			case "theme" -> Colors.alpha(surface, opacity * 255 / 100);
+			case Chroma.VALUE -> Colors.alpha(Chroma.color(0, speed), opacity * 255 / 100);
 			default -> Colors.alpha(Theme.color(bg, surface), opacity * 255 / 100);
 		};
 		// Theme text on the theme surface; plain white over the world without a background.
 		int text = switch (txt) {
 			case "theme" -> background != 0 && t != null ? t.text : 0xFFFFFFFF;
+			case Chroma.VALUE -> Chroma.color(0, speed);
 			default -> Theme.color(txt, 0xFFFFFFFF);
 		};
 		int borderColor = switch (border) {
 			case "none" -> 0;
 			case "accent" -> t != null ? t.accent : 0xFF7AA2FF;
+			case Chroma.VALUE -> Chroma.color(0.5f, speed);
 			default -> Theme.color(border, 0);
 		};
 		int radius = HudConfig.num(own.has("radius") ? own : base, "radius", 0);
@@ -451,7 +595,8 @@ public final class Hud {
 		String align = pick(own, base, "align", "left");
 		int borderWidth = HudConfig.num(own.has("borderWidth") ? own : base, "borderWidth", 1);
 		boolean smooth = pick(own, base, "font", "smooth").equals("smooth");
-		return new Style(text, background, borderColor, Math.max(1, Math.min(4, borderWidth)), Math.max(0, Math.min(8, radius)), Math.max(0, Math.min(10, padding)), shadow, align, smooth);
+		return new Style(text, background, borderColor, Math.max(1, Math.min(4, borderWidth)), Math.max(0, Math.min(8, radius)), Math.max(0, Math.min(10, padding)), shadow, align, smooth,
+				txt.equals(Chroma.VALUE) && HudConfig.bool(own.has("chromaWave") ? own : base, "chromaWave", false), speed);
 	}
 
 	private static String pick(JsonObject own, JsonObject base, String key, String fallback) {
@@ -468,6 +613,7 @@ public final class Hud {
 		Minecraft mc = Minecraft.getInstance();
 		HudConfig cfg = AerionClient.hud();
 		if (cfg == null) return;
+		if (!preview && !Game.hudHidden() && mc.player != null) Overlays.draw(g);
 		// The editor draws the modules itself, also while the whole HUD is switched off.
 		if (!preview && (!cfg.enabled() || Game.hudHidden() || mc.player == null || Game.screen() instanceof EditorScreen)) return;
 		Theme t = AerionClient.theme();

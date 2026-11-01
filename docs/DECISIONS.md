@@ -278,3 +278,16 @@ Hitboxes use the game's debug shapes (`Gizmos`) and the player's real interactio
 computes a sound's final volume, stored per sound id only when different from 100 %. Overlay and
 hitbox colours can give an edge on some servers, so they are off by default and carry a warning.
 
+### D36 — Chroma, more features, and sound tested by measurement (2026-11-01)
+The first sound editor multiplied the volume only in `calculateVolume(SoundInstance)`, which the game
+uses while a sound runs; a new sound takes `calculateVolume(float, SoundSource)` inside `play`, so
+the sliders did nothing audible and "Just heard" stayed empty. Both paths are now covered. Audio is
+tested without speakers: OpenAL Soft's wave backend (`ALSOFT_DRIVERS=wave`, `ALSOFT_CONF`) writes the
+mix to a file, and peaks are compared (26.3 pig death 0.4197 / 0.1049 / 0 at 100 / 25 / 0 %, 1.21.11
+button click 0.2409 / 0.0602 / 0).
+`chroma` is one more colour value next to `theme` and `#rrggbb`, resolved per frame, so anything
+coloured can use it; text can also run as a wave across letters. The picker keeps its hue state per
+row, so black and white don't lose the hue. Hurt cam scales the game's tilt constant (present in both
+versions) rather than overwriting the player's accessibility option. The custom crosshair replaces
+the game's, so it draws its own attack cooldown bar. Hide-the-effect overlays stay off by default.
+

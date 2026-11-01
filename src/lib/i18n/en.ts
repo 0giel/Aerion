@@ -1083,6 +1083,13 @@ const en = {
     keysHint:
       "Keys (default: zoom C, freelook left Alt, HUD layout Right Shift, fullbright unbound), and a key to switch each module on or off, are set in game: Right Shift → Mods → Key bindings.",
     modules: {
+      speed: "Speed",
+      totems: "Totem counter",
+      items: "Item counter",
+      death: "Death position",
+      session: "Session time",
+      day: "World day",
+      light: "Light level",
       fps: "FPS",
       coords: "Coordinates",
       direction: "Direction",
@@ -1097,6 +1104,13 @@ const en = {
       toggles: "Toggles",
     },
     about: {
+      speed: "How fast you move, in blocks per second.",
+      totems: "How many totems of undying you carry.",
+      items: "Arrows, pearls, golden apples, rockets and bottles you carry.",
+      death: "Where you last died, and how far that is.",
+      session: "How long you have been in this world or server.",
+      day: "The day counter and time in the world.",
+      light: "Light level at your feet.",
       fps: "Frames per second.",
       coords: "Position, facing and optionally the Nether equivalent.",
       direction: "Where you look, as a compass.",
@@ -1111,6 +1125,40 @@ const en = {
       toggles: "Shows toggled sprint, sneak, fullbright and freelook.",
     },
     options: {
+      speed: {
+        format: "Format ({speed})",
+        decimals: "Decimals",
+        vertical: "Include falling and jumping",
+      },
+      totems: {
+        format: "Format ({count})",
+        icon: "Show icon",
+        hideZero: "Hide when none",
+        warn: "Red when none",
+      },
+      items: {
+        format: "Format ({count})",
+        arrow: "Arrows",
+        pearl: "Ender pearls",
+        gapple: "Golden apples",
+        rocket: "Firework rockets",
+        xp: "Bottles of enchanting",
+        icon: "Show icons",
+        hideZero: "Hide when none",
+        warn: "Red when none",
+      },
+      death: {
+        distance: "Show distance",
+      },
+      session: {
+        label: "Show label",
+      },
+      day: {
+        time: "Show time of day",
+      },
+      light: {
+        colored: "Colour by level",
+      },
       fps: {
         format: "Format ({fps})",
         colored: "Colour by value",
@@ -1182,6 +1230,9 @@ const en = {
       none: "None",
     },
     style: {
+      chroma: "Chroma",
+      chromaSpeed: "Chroma speed",
+      chromaWave: "Wave across letters",
       font: "Font",
       fonts: {
         game: "Minecraft",
@@ -1207,6 +1258,10 @@ const en = {
       },
     },
     features: {
+      crosshair: "Crosshair",
+      crosshairHint: "Shape, size and colours are set in the game's menu.",
+      hurtCam: "Hurt cam",
+      hurtCamHint: "How much the view tilts when you take damage is set in the game's menu.",
       zoom: "Zoom",
       zoomHint: "Hold the key to zoom in.",
       zoomFactor: "Zoom strength",

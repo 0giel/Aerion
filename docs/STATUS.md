@@ -35,6 +35,12 @@ Newest entries first.
   tools moved under the Mods button; menu with cards, thin sliders, segmented choices, eased switches
   and a window shadow; smooth HUD font by default. Checked on 26.3 in a world, by day and night; on
   1.21.11 from the title screen (layout, menu, key page). Light themes not looked at.
+- **Sound editor fixed** (D36): sliders had no audible effect on new sounds; measured through a wave
+  file on both versions, "Just heard" fills. **New**: chroma and a colour picker (square, hue, code),
+  crosshair, hurt cam, more overlays, 7 modules. Checked on 26.3: picker, chroma, totem and item
+  counts, speed, death, session, day, light, hurt cam at 200 and 0 %, tint, faint fire, crosshair
+  chroma. On 1.21.11: all mixins apply, sound measured; features there not looked at one by one. Not
+  checked: hiding the spyglass and totem animation, target colour, shapes other than the cross.
 - **Sharper game UI** (D34): shapes in screen pixels, smooth Inter labels on buttons and sliders;
   checked on title, pause and options screens at GUI scale 3. Other GUI scales not looked at.
 - **Launcher**: the instance page's "more" menu was painted under the next card (cards are stacking

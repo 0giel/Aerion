@@ -4,7 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.aerion.mod.features.Overlays;
 
@@ -35,5 +37,15 @@ abstract class ScreenEffectRendererMixin {
 	@Inject(method = "submitBlockSprite", at = @At("HEAD"), cancellable = true)
 	private static void aerion$block(CallbackInfo ci) {
 		if (Overlays.hidden("block")) ci.cancel();
+	}
+
+	@ModifyConstant(method = "buildFireQuad", constant = @Constant(intValue = 0xE5FFFFFF))
+	private static int aerion$fireOpacity(int color) {
+		return Overlays.fireOpacity() * 255 / 100 << 24 | 0xFFFFFF;
+	}
+
+	@Inject(method = "renderItemActivationAnimation", at = @At("HEAD"), cancellable = true)
+	private void aerion$totem(CallbackInfo ci) {
+		if (Overlays.hidden("totem")) ci.cancel();
 	}
 }
