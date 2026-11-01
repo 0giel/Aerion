@@ -21,7 +21,7 @@ export const CHANGELOG: ChangelogEntry[] = [
         'A "What\'s new" window — like this one — shows the changes after every update.',
         "Crash help: Aerion points at the mod that most likely caused a crash and can disable it before relaunching, in one click.",
         '"Share log" uploads the crash report to mclo.gs and copies a link to paste e.g. on Discord (tokens and your computer\'s user name are removed).',
-        "Preview of the Aerion mod for Fabric 26.3: the game's menus in your launcher theme, with its particles and the Aerion logo, updated live. Pick \"Fabric + Aerion\" when creating an instance or turn it on in its settings; switch each part off in Settings → Appearance → In game.",
+        'Preview of the Aerion mod for Fabric 26.3: the game\'s menus in your launcher theme, with its particles and the Aerion logo, updated live. Pick "Fabric + Aerion" when creating an instance or turn it on in its settings; switch each part off in Settings → Appearance → In game.',
       ],
     },
   },
