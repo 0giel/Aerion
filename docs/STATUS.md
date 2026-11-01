@@ -34,6 +34,8 @@ Newest entries first.
   `AppInfo.aerionModVersions`) creates a Fabric instance with the mod on; suggested name
   "Aerion <version>". Loaders are a 3×2 grid so six choices fit. Unit test: the flag only sticks
   for Fabric.
+- New GitHub screenshots (English UI, Nocturne) showed a ~150 px gap above the in-game switches:
+  `.layout-text` had `flex: 1 1 14rem`, which in a column became a height. Now only beside buttons.
 - Dev-only gotcha: after many dev-server restarts WebKit's HTTP cache of the test profile served
   stale modules and vite-plugin-svelte logged "failed to load virtual css module" (unstyled
   sidebar/home). Clearing `~/.local/share/pl.aerion.devtest/WebKitCache` fixed it; release builds

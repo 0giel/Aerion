@@ -701,6 +701,9 @@
   }
   .layout-text {
     gap: 0.15rem;
+  }
+  /* Beside buttons it takes the free width; in a column a flex-basis would become a height. */
+  .row > .layout-text {
     flex: 1 1 14rem;
   }
   .themes {
