@@ -2,6 +2,8 @@
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import Icon from "../components/Icon.svelte";
+  import { dashboards } from "../stores/dashboards.svelte";
+  import { dialogs } from "../stores/dialogs.svelte";
   import Advanced from "../components/Advanced.svelte";
   import Switch from "../components/Switch.svelte";
   import Logo from "../components/Logo.svelte";
@@ -120,6 +122,13 @@
 
   // Sections scroll in below the sticky chip row, which wraps to two lines on narrow windows.
   let tocHeight = $state(0);
+
+  async function newPage() {
+    const name = await dialogs.prompt({ title: t("widgets.newPage"), placeholder: t("widgets.pageName") });
+    if (!name?.trim()) return;
+    const id = await dashboards.create(name.trim());
+    router.go("dashboard", { id });
+  }
 
   function scrollTo(id: string) {
     document.getElementById(`set-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -307,6 +316,31 @@
             onchange={(v) => save({ gameUi: { ...s.gameUi, [key]: v } })}
           />
         {/each}
+        <hr class="sep" />
+        <div class="col layout-text">
+          <span class="label"
+            >{t("widgets.settingsTitle")} <span class="badge warn">{t("widgets.experimental")}</span></span
+          >
+          <span class="small muted">{t("widgets.settingsHint")}</span>
+        </div>
+        <Switch
+          label={t("widgets.enable")}
+          checked={s.experimentalWidgets}
+          onchange={(v) => save({ experimentalWidgets: v })}
+        />
+        {#if s.experimentalWidgets}
+          <Switch
+            label={t("widgets.homeDashboard")}
+            hint={t("widgets.homeDashboardHint")}
+            checked={s.homeDashboard}
+            onchange={(v) => save({ homeDashboard: v })}
+          />
+          <div class="row wrap gap-2">
+            <button class="btn sm" onclick={newPage}
+              ><Icon name="plus" size={15} />{t("widgets.newPage")}</button
+            >
+          </div>
+        {/if}
       </section>
 
       <section id="set-java" class="card col gap-3">

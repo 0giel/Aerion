@@ -69,6 +69,33 @@ impl Default for LayoutPrefs {
     }
 }
 
+/// One widget on a dashboard: a 12-column grid, `x`/`w` in columns, `y`/`h` in rows.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct WidgetItem {
+    pub id: String,
+    pub kind: String,
+    pub x: u8,
+    pub y: u16,
+    pub w: u8,
+    pub h: u8,
+    /// Widget-specific options (e.g. a server address, note text).
+    #[serde(default)]
+    pub config: BTreeMap<String, String>,
+}
+
+/// A page made of widgets: `home` replaces the home screen, others appear in the sidebar.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct Dashboard {
+    pub id: String,
+    pub name: String,
+    pub icon: String,
+    pub widgets: Vec<WidgetItem>,
+}
+
 /// What the Aerion mod changes in the game (Settings → Appearance → In game).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
@@ -144,6 +171,11 @@ pub struct Settings {
     /// Version whose "What's new" notes the user has seen; `None` before 0.1.9.
     pub last_seen_version: Option<String>,
     pub game_ui: GameUiPrefs,
+    /// Experimental: widget dashboards and user-made pages.
+    pub experimental_widgets: bool,
+    /// With experimental widgets: the home screen is the `home` dashboard.
+    pub home_dashboard: bool,
+    pub dashboards: Vec<Dashboard>,
 }
 
 impl Default for Settings {
@@ -183,6 +215,9 @@ impl Default for Settings {
             layout: LayoutPrefs::default(),
             last_seen_version: None,
             game_ui: GameUiPrefs::default(),
+            experimental_widgets: false,
+            home_dashboard: false,
+            dashboards: Vec::new(),
         }
     }
 }
@@ -231,6 +266,33 @@ impl Settings {
                     "memory must be between 256 MB and 256 GB".into(),
                 ));
             }
+        }
+        let id_ok = |id: &str| {
+            !id.is_empty()
+                && id.len() <= 40
+                && id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        };
+        if self.dashboards.len() > 16
+            || self.dashboards.iter().any(|d| {
+                !id_ok(&d.id)
+                    || d.name.chars().count() > 40
+                    || !id_ok(&d.icon)
+                    || d.widgets.len() > 40
+                    || d.widgets.iter().any(|w| {
+                        !id_ok(&w.id)
+                            || !id_ok(&w.kind)
+                            || !(1..=12).contains(&w.w)
+                            || !(1..=12).contains(&w.h)
+                            || u16::from(w.x) + u16::from(w.w) > 12
+                            || w.y > 200
+                            || w.config.len() > 12
+                            || w.config.iter().any(|(k, v)| k.len() > 32 || v.len() > 4000)
+                    })
+            })
+        {
+            return Err(crate::Error::Invalid("invalid dashboard".into()));
         }
         let l = &self.layout;
         if l.nav.len() > 64

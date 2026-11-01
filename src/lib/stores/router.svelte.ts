@@ -4,6 +4,7 @@ export type Page =
   | "instance"
   | "mods"
   | "performance"
+  | "dashboard"
   | "accounts"
   | "skins"
   | "stats"

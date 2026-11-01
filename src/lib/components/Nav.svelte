@@ -5,6 +5,7 @@
   import Logo from "./Logo.svelte";
   import InstanceIcon from "./InstanceIcon.svelte";
   import { layout } from "../stores/layout.svelte";
+  import { dashboards } from "../stores/dashboards.svelte";
   import { ui } from "../stores/ui.svelte";
   import { router, type Page } from "../stores/router.svelte";
   import { app } from "../stores/app.svelte";
@@ -57,6 +58,17 @@
         <span class="label">{t(item.key)}</span>
         {#if item.page === "console" && runningCount > 0}<span class="dot" aria-label={t("console.running")}
           ></span>{/if}
+      </button>
+    {/each}
+    {#each dashboards.pages as d (d.id)}
+      <button
+        class="item"
+        aria-current={router.page === "dashboard" && router.params.id === d.id ? "page" : undefined}
+        title={collapsed ? d.name : undefined}
+        onclick={() => router.go("dashboard", { id: d.id })}
+      >
+        <Icon name={d.icon} size={19} />
+        <span class="label">{d.name}</span>
       </button>
     {/each}
   </div>

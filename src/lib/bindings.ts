@@ -467,6 +467,25 @@ export type CurseForgeStatus = {
 	fromEnv: boolean,
 };
 
+/**  A page made of widgets: `home` replaces the home screen, others appear in the sidebar. */
+export type Dashboard = Dashboard_Serialize | Dashboard_Deserialize;
+
+/**  A page made of widgets: `home` replaces the home screen, others appear in the sidebar. */
+export type Dashboard_Deserialize = {
+	id: string,
+	name: string,
+	icon: string,
+	widgets: WidgetItem_Deserialize[],
+};
+
+/**  A page made of widgets: `home` replaces the home screen, others appear in the sidebar. */
+export type Dashboard_Serialize = {
+	id: string,
+	name: string,
+	icon: string,
+	widgets: WidgetItem_Serialize[],
+};
+
 export type Dependency = Dependency_Serialize | Dependency_Deserialize;
 
 export type DependencyKind = "required" | "optional" | "incompatible" | "embedded";
@@ -1516,6 +1535,11 @@ export type Settings_Deserialize = {
 	/**  Version whose "What's new" notes the user has seen; `None` before 0.1.9. */
 	lastSeenVersion?: string | null,
 	gameUi?: GameUiPrefs_Deserialize,
+	/**  Experimental: widget dashboards and user-made pages. */
+	experimentalWidgets?: boolean,
+	/**  With experimental widgets: the home screen is the `home` dashboard. */
+	homeDashboard?: boolean,
+	dashboards?: Dashboard_Deserialize[],
 };
 
 export type Settings_Serialize = {
@@ -1565,6 +1589,11 @@ export type Settings_Serialize = {
 	/**  Version whose "What's new" notes the user has seen; `None` before 0.1.9. */
 	lastSeenVersion: string | null,
 	gameUi: GameUiPrefs_Serialize,
+	/**  Experimental: widget dashboards and user-made pages. */
+	experimentalWidgets: boolean,
+	/**  With experimental widgets: the home screen is the `home` dashboard. */
+	homeDashboard: boolean,
+	dashboards: Dashboard_Serialize[],
 };
 
 export type Skin = Skin_Serialize | Skin_Deserialize;
@@ -1774,6 +1803,33 @@ export type VersionFile_Serialize = {
 	sha1: string | null,
 	sha512: string | null,
 	primary: boolean,
+};
+
+/**  One widget on a dashboard: a 12-column grid, `x`/`w` in columns, `y`/`h` in rows. */
+export type WidgetItem = WidgetItem_Serialize | WidgetItem_Deserialize;
+
+/**  One widget on a dashboard: a 12-column grid, `x`/`w` in columns, `y`/`h` in rows. */
+export type WidgetItem_Deserialize = {
+	id: string,
+	kind: string,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	/**  Widget-specific options (e.g. a server address, note text). */
+	config?: { [key in string]: string },
+};
+
+/**  One widget on a dashboard: a 12-column grid, `x`/`w` in columns, `y`/`h` in rows. */
+export type WidgetItem_Serialize = {
+	id: string,
+	kind: string,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	/**  Widget-specific options (e.g. a server address, note text). */
+	config: { [key in string]: string },
 };
 
 export type WorldBackup = {

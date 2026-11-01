@@ -12,6 +12,7 @@
   import CustomizeModal from "./lib/components/CustomizeModal.svelte";
   import WhatsNew from "./lib/components/WhatsNew.svelte";
   import { layout } from "./lib/stores/layout.svelte";
+  import { dashboards } from "./lib/stores/dashboards.svelte";
   import CommandPalette from "./lib/components/CommandPalette.svelte";
   import Modal from "./lib/components/Modal.svelte";
   import Icon from "./lib/components/Icon.svelte";
@@ -35,6 +36,7 @@
     skins: () => import("./lib/pages/Skins.svelte"),
     stats: () => import("./lib/pages/Stats.svelte"),
     performance: () => import("./lib/pages/Performance.svelte"),
+    dashboard: () => import("./lib/pages/Dashboard.svelte"),
     console: () => import("./lib/pages/Console.svelte"),
     settings: () => import("./lib/pages/Settings.svelte"),
     themeEditor: () => import("./lib/pages/ThemeEditor.svelte"),
@@ -122,8 +124,12 @@
       </div>
     {:else if !app.ready}
       <div class="center splash"><span class="spinner" aria-label={t("common.loading")}></span></div>
-    {:else if router.page === "home"}
+    {:else if router.page === "home" && !dashboards.homeActive}
       <Home />
+    {:else if router.page === "home"}
+      {#await pages.dashboard?.() then mod}
+        {#if mod}<mod.default />{/if}
+      {/await}
     {:else}
       {#key router.page + JSON.stringify(router.params)}
         {#await pages[router.page]?.() then mod}
