@@ -353,6 +353,7 @@ pub async fn import_external(
                     group: None,
                     game_dir: link.then(|| ext.game_dir.clone()),
                     link_existing: link,
+                    aerion_mod: false,
                 })
                 .await?;
             if !link {

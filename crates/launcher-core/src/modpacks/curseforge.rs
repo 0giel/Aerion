@@ -108,6 +108,7 @@ pub async fn import(
             group: None,
             game_dir: None,
             link_existing: false,
+            aerion_mod: false,
         })
         .await?;
     let id = inst.id.clone();

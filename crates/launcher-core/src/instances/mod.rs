@@ -180,6 +180,9 @@ pub struct NewInstance {
     /// and is therefore never deleted with the instance.
     #[serde(default)]
     pub link_existing: bool,
+    /// "Fabric + Aerion": start with the Aerion mod switched on (Fabric only).
+    #[serde(default)]
+    pub aerion_mod: bool,
 }
 
 pub struct InstanceManager {
@@ -370,6 +373,7 @@ impl InstanceManager {
             icon: spec.icon.filter(|i| !i.starts_with("file:")),
             game_dir,
             group: spec.group.filter(|g| !g.trim().is_empty()),
+            aerion_mod: spec.aerion_mod && spec.loader == LoaderKind::Fabric,
             created_at: now_secs(),
             ..Instance::default()
         };
@@ -626,7 +630,32 @@ mod tests {
             group: Some("Survival".into()),
             game_dir: None,
             link_existing: false,
+            aerion_mod: false,
         }
+    }
+
+    #[tokio::test]
+    async fn fabric_plus_aerion() {
+        let dir = tempfile::tempdir().unwrap();
+        let m = InstanceManager::new(dir.path().join("instances"));
+        let a = m
+            .create(NewInstance {
+                aerion_mod: true,
+                ..spec("A")
+            })
+            .await
+            .unwrap();
+        assert!(a.aerion_mod);
+        // Only Fabric can load the mod.
+        let v = m
+            .create(NewInstance {
+                aerion_mod: true,
+                loader: LoaderKind::Vanilla,
+                ..spec("V")
+            })
+            .await
+            .unwrap();
+        assert!(!v.aerion_mod);
     }
 
     #[tokio::test]

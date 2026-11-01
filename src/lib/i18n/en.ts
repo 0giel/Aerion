@@ -151,6 +151,9 @@ const en = {
     modpack: "Modpack: {name}",
   },
   newInstance: {
+    fabricAerion: "Fabric + Aerion",
+    aerionHint:
+      "Fabric with the Aerion mod: the game's menus in your launcher theme, with particles and the Aerion logo. Turn it off in the instance settings.",
     title: "New instance",
     name: "Name",
     namePlaceholder: "My world",

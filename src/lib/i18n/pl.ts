@@ -161,6 +161,9 @@ const pl: Dict = {
     modpack: "Modpack: {name}",
   },
   newInstance: {
+    fabricAerion: "Fabric + Aerion",
+    aerionHint:
+      "Fabric z modem Aeriona: menu gry w kolorach motywu launchera, z cząsteczkami i logo Aeriona. Wyłączysz go w ustawieniach instancji.",
     title: "Nowa instancja",
     name: "Nazwa",
     namePlaceholder: "Mój świat",

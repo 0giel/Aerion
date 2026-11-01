@@ -27,6 +27,10 @@
   let snapshots = $state(false);
   let gameVersion = $state("");
   let loader = $state<LoaderKind>("vanilla");
+  /** "Fabric + Aerion": Fabric with the Aerion mod switched on. */
+  let withAerion = $state(false);
+  const aerionVersions = $derived(app.info?.aerionModVersions ?? []);
+  const aerionSupported = $derived(aerionVersions.includes(gameVersion));
   let loaderVersions = $state.raw<LoaderVersion[] | null>(null);
   let loaderVersion = $state("");
   let group = $state("");
@@ -71,9 +75,20 @@
       .catch(() => (loaderVersions = []));
   });
 
+  // The mod exists only for some versions: picking another one falls back to plain Fabric.
+  $effect(() => {
+    if (withAerion && !aerionSupported) withAerion = false;
+  });
+
   // Suggest a name until the user types one.
   $effect(() => {
-    if (!nameTouched) name = loader === "vanilla" ? gameVersion : `${loaderLabel(loader)} ${gameVersion}`;
+    if (!nameTouched)
+      name =
+        loader === "vanilla"
+          ? gameVersion
+          : withAerion
+            ? `Aerion ${gameVersion}`
+            : `${loaderLabel(loader)} ${gameVersion}`;
   });
 
   const defaultLoader = $derived(loaderVersions?.find((v) => v.stable) ?? loaderVersions?.[0]);
@@ -92,6 +107,7 @@
         icon,
         group: group.trim() || null,
         gameDir,
+        aerionMod: loader === "fabric" && withAerion,
       });
       if (iconFile) {
         // The instance exists either way; a bad image only costs the custom icon.
@@ -158,11 +174,27 @@
       <span class="label">{t("newInstance.loader")}</span>
       <div class="segmented loaders" role="group" aria-label={t("newInstance.loader")}>
         {#each LOADERS as l (l)}
-          <button type="button" aria-pressed={loader === l} onclick={() => (loader = l)}
-            >{loaderLabel(l)}</button
+          <button
+            type="button"
+            aria-pressed={loader === l && !withAerion}
+            onclick={() => ((loader = l), (withAerion = false))}>{loaderLabel(l)}</button
           >
+          {#if l === "fabric"}
+            <button
+              type="button"
+              class="aerion"
+              aria-pressed={loader === "fabric" && withAerion}
+              disabled={!aerionSupported}
+              title={aerionSupported
+                ? t("newInstance.aerionHint")
+                : t("instance.settings.aerionModUnsupported", { versions: aerionVersions.join(", ") })}
+              onclick={() => ((loader = "fabric"), (withAerion = true))}
+              ><Icon name="sparkles" size={14} />{t("newInstance.fabricAerion")}</button
+            >
+          {/if}
         {/each}
       </div>
+      {#if withAerion}<span class="hint">{t("newInstance.aerionHint")}</span>{/if}
     </div>
     {#if loader !== "vanilla"}
       <div class="field">
@@ -244,9 +276,23 @@
     gap: 0.4rem;
     cursor: pointer;
   }
+  /* Six choices in two even rows (Fabric + Aerion sits next to Fabric). */
   .loaders {
-    align-self: flex-start;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .loaders button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+  .loaders .aerion :global(.icon) {
+    color: var(--c-accent);
+  }
+  .loaders .aerion:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
   .warn {
     display: inline-flex;

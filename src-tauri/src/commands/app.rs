@@ -28,6 +28,8 @@ pub struct AppInfo {
     pub keyring_error: Option<String>,
     pub dev_offline: bool,
     pub user_agent: String,
+    /// Game versions the bundled Aerion mod supports (with Fabric).
+    pub aerion_mod_versions: Vec<String>,
 }
 
 #[tauri::command]
@@ -51,6 +53,10 @@ pub async fn app_info(state: State<'_, AppState>) -> CmdResult<AppInfo> {
         keyring_error: keyring.err().map(|e| e.to_string()),
         dev_offline: dev_offline_override(),
         user_agent: launcher_core::net::client::user_agent(),
+        aerion_mod_versions: launcher_core::aerion_mod::GAME_VERSIONS
+            .iter()
+            .map(|v| (*v).to_owned())
+            .collect(),
     })
 }
 

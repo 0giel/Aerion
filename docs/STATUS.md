@@ -29,6 +29,11 @@ Newest entries first.
 - Owner: the logo looked jagged. Replaced the pixel-built logo with smooth textures (rendered
   from the launcher glyph + Inter in headless Brave, linear sampling). Checked in game at GUI
   scale 2: clean edges, soft shadow, accent sparkle.
+- Owner: offer the mod when creating an instance. New instance → loader "Fabric + Aerion"
+  (next to Fabric, enabled only for versions in `aerion_mod::GAME_VERSIONS`, now sent in
+  `AppInfo.aerionModVersions`) creates a Fabric instance with the mod on; suggested name
+  "Aerion <version>". Loaders are a 3×2 grid so six choices fit. Unit test: the flag only sticks
+  for Fabric.
 - Dev-only gotcha: after many dev-server restarts WebKit's HTTP cache of the test profile served
   stale modules and vite-plugin-svelte logged "failed to load virtual css module" (unstyled
   sidebar/home). Clearing `~/.local/share/pl.aerion.devtest/WebKitCache` fixed it; release builds

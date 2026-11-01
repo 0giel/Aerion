@@ -194,6 +194,7 @@ mod tests {
                     group: None,
                     game_dir: None,
                     link_existing: false,
+                    aerion_mod: false,
                 })
                 .await
                 .unwrap();

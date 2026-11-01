@@ -26,7 +26,7 @@
 
   // Editable draft; arrays/maps are edited as text.
   const initial = untrack(() => $state.snapshot(instance)) as Instance;
-  const AERION_MOD_VERSIONS = ["26.3"];
+  const AERION_MOD_VERSIONS = $derived(app.info?.aerionModVersions ?? []);
   let draft = $state<Instance>(structuredClone(initial));
   let jvmText = $state(initial.jvmArgs.join("\n"));
   let gameText = $state(initial.gameArgs.join("\n"));
@@ -442,7 +442,7 @@
       </div>
     </div>
     {#if draft.loader === "fabric"}
-      <!-- The bundled jar is built for these versions only (crates/launcher-core/src/aerion_mod.rs). -->
+      <!-- The bundled jar is built for these versions only (aerion_mod::GAME_VERSIONS). -->
       <Switch
         label={t("instance.settings.aerionMod")}
         hint={AERION_MOD_VERSIONS.includes(draft.gameVersion)

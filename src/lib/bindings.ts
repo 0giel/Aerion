@@ -264,6 +264,8 @@ export type AppInfo_Deserialize = {
 	keyringError?: string | null,
 	devOffline: boolean,
 	userAgent: string,
+	/**  Game versions the bundled Aerion mod supports (with Fabric). */
+	aerionModVersions: string[],
 };
 
 export type AppInfo_Serialize = {
@@ -280,6 +282,8 @@ export type AppInfo_Serialize = {
 	keyringError: string | null,
 	devOffline: boolean,
 	userAgent: string,
+	/**  Game versions the bundled Aerion mod supports (with Fabric). */
+	aerionModVersions: string[],
 };
 
 export type AppUpdate = AppUpdate_Serialize | AppUpdate_Deserialize;
@@ -978,6 +982,8 @@ export type NewInstance_Deserialize = {
 	 *  and is therefore never deleted with the instance.
 	 */
 	linkExisting?: boolean,
+	/**  "Fabric + Aerion": start with the Aerion mod switched on (Fabric only). */
+	aerionMod?: boolean,
 };
 
 export type NewInstance_Serialize = {
@@ -994,6 +1000,8 @@ export type NewInstance_Serialize = {
 	 *  and is therefore never deleted with the instance.
 	 */
 	linkExisting: boolean,
+	/**  "Fabric + Aerion": start with the Aerion mod switched on (Fabric only). */
+	aerionMod: boolean,
 };
 
 export type OptionsTemplate = {
