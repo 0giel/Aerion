@@ -15,6 +15,12 @@ TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY")"
 export TAURI_SIGNING_PRIVATE_KEY
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${AERION_SIGNING_PASSWORD:-}"
 source scripts/env.sh
+# Without a client ID nobody but people who type one in settings can sign in. It is an identifier,
+# not a secret, but it stays out of the repository: $LAUNCHER_MSA_CLIENT_ID or a file next to the key.
+ID_FILE="$(dirname "$KEY")/msa-client-id"
+if [ -z "${LAUNCHER_MSA_CLIENT_ID:-}" ] && [ -f "$ID_FILE" ]; then LAUNCHER_MSA_CLIENT_ID="$(cat "$ID_FILE")"; fi
+[ -n "${LAUNCHER_MSA_CLIENT_ID:-}" ] || { echo "no Azure client ID: set LAUNCHER_MSA_CLIENT_ID or create $ID_FILE" >&2; exit 1; }
+export LAUNCHER_MSA_CLIENT_ID
 # Rootless dev machines (see CONTRIBUTING.md) bundle through pkg-config overrides.
 OVERRIDE="$HOME/.cache/luncher-devroot/pc-override"
 if [ -d "$OVERRIDE" ]; then

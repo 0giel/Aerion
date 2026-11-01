@@ -314,3 +314,12 @@ colour changes. The yellow glow behind screens was our own theme veil (the theme
 world), so the fix is a setting for that veil, plus the game's blur. Waypoints are per world or server
 in the game folder (`aerion-waypoints.json`), not hud.json, because they belong to that instance.
 
+### D39 — Release builds carry the client ID; developer builds stay private (2026-11-02)
+Found while writing the review guide: `release.sh` built without `LAUNCHER_MSA_CLIENT_ID`, so released
+installers (0.2.0 included) had no client ID and only people who typed one into settings could ever
+sign in. The script now reads it from the environment or `~/.config/aerion-signing/msa-client-id`
+and refuses to build without it; it stays out of the repository, as the owner asked. Testing needs a
+build that works before Mojang's approval, so `scripts/export-dev.sh` makes portable debug-profile
+binaries; `LAUNCHER_DEV_OFFLINE` only exists in that profile, so these are for the owner's own tests
+and are never published or handed out.
+

@@ -5,6 +5,14 @@ Newest entries first.
 
 ## 2026-11-01
 
+### Before publishing 0.3.0 (2026-11-02)
+- **HUD page presets were broken** (`structuredClone` on a reactive proxy, `DataCloneError`): first
+  real click on that page; fixed, all four checked to save. Default positions of potions, minimap and
+  clock no longer overlap.
+- **Installers had no Azure client ID** (D39): fixed in `release.sh`, checked in the built binary.
+- 1.21.11 in a world: FOV key and waypoint with its label and beam checked.
+- New: `docs/FILES.md`, `docs/MOJANG_REVIEW.md`, `scripts/export-dev.sh`.
+
 ### 0.3.0: roadmap stages 2 (experimental) and 3 — widgets, HUD, game features (D32, D33)
 - **Test rig**: games run on a private Xvfb (no window manager) so real keyboard, mouse and focus
   work without touching the owner's desktop; weston's XWM blocked focus and held button presses.

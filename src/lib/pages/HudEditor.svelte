@@ -154,7 +154,8 @@
 
   function applyPreset(name: string) {
     if (!cfg) return;
-    cfg = PRESETS[name](cfg);
+    // The presets clone what they get, which a reactive proxy doesn't allow.
+    cfg = PRESETS[name]($state.snapshot(cfg) as HudConfig);
     changed();
     toasts.success(t("hudEditor.presetApplied", { name: t(`hudEditor.presets.${name}`) }));
   }
