@@ -36,7 +36,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam;
+	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -52,7 +52,8 @@ public final class Features {
 			sounds = new KeyMapping("key.aerion.sounds", InputConstants.UNKNOWN.getValue(), cat);
 			crosshair = new KeyMapping("key.aerion.crosshair", InputConstants.UNKNOWN.getValue(), cat);
 			hurtCam = new KeyMapping("key.aerion.hurtCam", InputConstants.UNKNOWN.getValue(), cat);
-			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam));
+			lightLevels = new KeyMapping("key.aerion.lightLevels", InputConstants.UNKNOWN.getValue(), cat);
+			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -81,6 +82,7 @@ public final class Features {
 			case "sounds" -> sounds;
 			case "crosshair" -> crosshair;
 			case "hurtCam" -> hurtCam;
+			case "lightLevels" -> lightLevels;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -255,6 +257,7 @@ public final class Features {
 		toggleOnKey(sounds, "sounds", true);
 		toggleOnKey(crosshair, "crosshair", false);
 		toggleOnKey(hurtCam, "hurtCam", false);
+		toggleOnKey(lightLevels, "lightLevels", false);
 		if (mc.player == null) joined = 0;
 		else if (joined == 0) joined = System.currentTimeMillis();
 		for (var e : MODULE_KEYS.entrySet()) {

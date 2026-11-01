@@ -345,6 +345,11 @@ const en = {
       resolution: "Window size",
       width: "Width",
       height: "Height",
+      joinWorld: "Enter a world on start",
+      joinWorldOff: "No, open the main menu",
+      joinWorldLast: "The last played world",
+      joinWorldHint:
+        "The game goes straight into this world. Works on versions with Quick Play (1.20 and newer).",
       joinServer: "Join server on start",
       joinServerPlaceholder: "play.example.net:25565",
       wrapper: "Wrapper command",
@@ -1157,6 +1162,7 @@ const en = {
         time: "Show time of day",
       },
       light: {
+        sky: "Also show sky light",
         colored: "Colour by level",
       },
       fps: {
@@ -1190,6 +1196,12 @@ const en = {
         colored: "Colour by value",
       },
       potions: {
+        icon: "Show icon",
+        iconSize: "Icon size",
+        name: "Show name",
+        tintText: "Text in effect colour",
+        blink: "Blink when ending",
+        hideVanilla: "Hide the game's icons",
         duration: "Show time",
         colors: "Effect colour",
         level: "Show level",
@@ -1258,6 +1270,8 @@ const en = {
       },
     },
     features: {
+      lightLevels: "Light numbers",
+      lightLevelsHint: "Numbers on the floor around you; range and colours are set in the game's menu.",
       crosshair: "Crosshair",
       crosshairHint: "Shape, size and colours are set in the game's menu.",
       hurtCam: "Hurt cam",

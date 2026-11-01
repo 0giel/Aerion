@@ -41,6 +41,11 @@ Newest entries first.
   counts, speed, death, session, day, light, hurt cam at 200 and 0 %, tint, faint fire, crosshair
   chroma. On 1.21.11: all mixins apply, sound measured; features there not looked at one by one. Not
   checked: hiding the spyglass and totem animation, target colour, shapes other than the cross.
+- **World on start, light numbers, effect icons, menu search** (D37): auto-entry was left over from
+  test `gameArgs`, removed; default start checked to reach the main menu, `@last` to enter the world.
+  26.3 in a world: light numbers around a torch, light module at night, effect icons, hiding the
+  game's icons, search. 1.21.11 in a new world: mixins apply, light module, numbers, search; effect
+  icons not seen there (no commands). The world choice in the launcher's settings wasn't clicked.
 - **Sharper game UI** (D34): shapes in screen pixels, smooth Inter labels on buttons and sliders;
   checked on title, pause and options screens at GUI scale 3. Other GUI scales not looked at.
 - **Launcher**: the instance page's "more" menu was painted under the next card (cards are stacking

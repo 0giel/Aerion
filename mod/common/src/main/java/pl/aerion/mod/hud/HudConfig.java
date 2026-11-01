@@ -50,7 +50,7 @@ public final class HudConfig {
 			  "light":{"enabled":false,"x":500,"y":90,"scale":100}},
 			 "features":{"zoom":{"enabled":true,"factor":4,"smooth":true},"freelook":{"enabled":false,"hold":true},
 			  "fullbright":{"enabled":false},"toggleSprint":{"enabled":false},"toggleSneak":{"enabled":false},
-			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false}}}
+			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false},"lightLevels":{"enabled":false}}}
 			""";
 
 	public static HudConfig defaults() {

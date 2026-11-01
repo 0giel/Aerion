@@ -71,6 +71,22 @@ fn backups_dir(instance_dir: &Path) -> PathBuf {
     instance_dir.join(".backups").join("worlds")
 }
 
+/// The world an instance's `join_world` setting points at, if it still exists.
+pub fn resolve_join_world(game_dir: &Path, join_world: Option<&str>) -> Option<String> {
+    let wanted = join_world?.trim();
+    let worlds = list_worlds(game_dir);
+    if wanted == "@last" {
+        return worlds
+            .into_iter()
+            .max_by_key(|w| w.last_played)
+            .map(|w| w.folder);
+    }
+    worlds
+        .into_iter()
+        .find(|w| w.folder == wanted)
+        .map(|w| w.folder)
+}
+
 pub fn list_worlds(game_dir: &Path) -> Vec<WorldInfo> {
     let mut out: Vec<WorldInfo> = std::fs::read_dir(game_dir.join("saves"))
         .into_iter()
@@ -223,6 +239,23 @@ pub fn delete_backup(instance_dir: &Path, file: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn join_world_setting_finds_existing_worlds_only() {
+        let dir = tempfile::tempdir().unwrap();
+        for name in ["Old", "New"] {
+            let world = dir.path().join("saves").join(name);
+            std::fs::create_dir_all(&world).unwrap();
+            std::fs::write(world.join("level.dat"), b"x").unwrap();
+        }
+        assert_eq!(resolve_join_world(dir.path(), None), None);
+        assert_eq!(
+            resolve_join_world(dir.path(), Some("Old")).as_deref(),
+            Some("Old")
+        );
+        assert_eq!(resolve_join_world(dir.path(), Some("Gone")), None);
+        assert!(resolve_join_world(dir.path(), Some("@last")).is_some());
+    }
     use std::io::Write;
 
     fn level_dat(name: &str) -> Vec<u8> {

@@ -20,6 +20,7 @@
     type JvmPreset,
     type LoaderVersion,
   } from "../../api";
+  import type { WorldInfo } from "../../bindings";
   import { t } from "../../i18n/index.svelte";
 
   let { instance, onremove }: { instance: Instance; onremove: () => void } = $props();
@@ -79,6 +80,14 @@
       .split("\n")
       .map((x) => x.trim())
       .filter(Boolean);
+  let worlds = $state<WorldInfo[]>([]);
+  $effect(() => {
+    commands
+      .listWorlds(instance.id)
+      .then((w) => (worlds = w))
+      .catch(() => (worlds = []));
+  });
+
   function build(): Instance {
     const env: Record<string, string> = {};
     for (const line of lines(envText)) {
@@ -561,6 +570,18 @@
               }}
             />
           </div>
+        </div>
+        <div class="field">
+          <label for="s-world">{t("instance.settings.joinWorld")}</label><select
+            id="s-world"
+            class="select"
+            bind:value={draft.joinWorld}
+          >
+            <option value={null}>{t("instance.settings.joinWorldOff")}</option>
+            <option value="@last">{t("instance.settings.joinWorldLast")}</option>
+            {#each worlds as w (w.folder)}<option value={w.folder}>{w.name}</option>{/each}
+          </select>
+          <span class="hint">{t("instance.settings.joinWorldHint")}</span>
         </div>
         <div class="field">
           <label for="s-join">{t("instance.settings.joinServer")}</label><input

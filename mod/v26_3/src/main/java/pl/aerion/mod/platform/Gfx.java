@@ -94,4 +94,8 @@ public final class Gfx {
 	public static void pixels(int p) {
 		pixels = p;
 	}
+
+	public void sprite(Identifier id, int x, int y, int w, int h) {
+		g.blitSprite(RenderPipelines.GUI_TEXTURED, id, x, y, w, h);
+	}
 }

@@ -59,9 +59,15 @@ export const FIELDS: Record<string, Field[]> = {
     { key: "colored", type: "toggle", def: "0" },
   ],
   potions: [
-    { key: "duration", type: "toggle", def: "1" },
+    { key: "icon", type: "toggle", def: "1" },
+    { key: "iconSize", type: "number", def: "12", min: 9, max: 18 },
+    { key: "name", type: "toggle", def: "1" },
     { key: "level", type: "toggle", def: "1" },
+    { key: "duration", type: "toggle", def: "1" },
     { key: "colors", type: "toggle", def: "1" },
+    { key: "tintText", type: "toggle", def: "0" },
+    { key: "blink", type: "toggle", def: "0" },
+    { key: "hideVanilla", type: "toggle", def: "1" },
   ],
   armor: [
     { key: "layout", type: "select", def: "vertical", choices: ["vertical", "horizontal"] },
@@ -109,7 +115,10 @@ export const FIELDS: Record<string, Field[]> = {
   death: [{ key: "distance", type: "toggle", def: "1" }],
   session: [{ key: "label", type: "toggle", def: "1" }],
   day: [{ key: "time", type: "toggle", def: "1" }],
-  light: [{ key: "colored", type: "toggle", def: "1" }],
+  light: [
+    { key: "colored", type: "toggle", def: "1" },
+    { key: "sky", type: "toggle", def: "0" },
+  ],
   toggles: [
     { key: "sprint", type: "toggle", def: "1" },
     { key: "sneak", type: "toggle", def: "1" },
@@ -153,8 +162,8 @@ export function sample(id: string, opt: (key: string, def: string) => string): s
       return [fill(opt("format", "{used}/{max} MB"), { used: 1840, max: 6144, percent: 30 })];
     case "potions":
       return [
-        `Speed${opt("level", "1") === "1" ? " II" : ""}${opt("duration", "1") === "1" ? "  1:30" : ""}`,
-        `Night Vision${opt("duration", "1") === "1" ? "  6:12" : ""}`,
+        `${opt("name", "1") === "1" ? "Speed" : ""}${opt("level", "1") === "1" ? " II" : ""}${opt("duration", "1") === "1" ? "  1:30" : ""}`,
+        `${opt("name", "1") === "1" ? "Night Vision" : ""}${opt("duration", "1") === "1" ? "  6:12" : ""}`,
       ];
     case "toggles":
       return ["Sprinting (toggled)"];
@@ -171,7 +180,7 @@ export function sample(id: string, opt: (key: string, def: string) => string): s
     case "day":
       return [opt("time", "1") === "1" ? "12  14:30" : "12"];
     case "light":
-      return ["14"];
+      return [opt("sky", "0") === "1" ? "12  15" : "12"];
     default:
       return [];
   }

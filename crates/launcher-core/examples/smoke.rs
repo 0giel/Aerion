@@ -85,6 +85,7 @@ async fn main() {
         extra_game_args: vec![],
         resolution: Some((854, 480)),
         quick_play_server: None,
+        quick_play_world: None,
         env: vec![],
         wrapper: vec![],
         auth: AuthInfo {

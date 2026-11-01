@@ -43,7 +43,7 @@ public final class AerionMenu implements Page {
 	};
 	private static final float TEXT = 8f, SMALL = 7f, TITLE = 10f;
 	private static final int ROW = 16, SIDE = 92, GAP = 5;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 440, WIN_H = 250;
 
@@ -95,7 +95,10 @@ public final class AerionMenu implements Page {
 			Map.entry("memory", List.of(
 					Option.format("{used}/{max} MB", "1840/6144 MB", "{percent}%", "30%", "RAM: {percent}%", "RAM: 30%"),
 					Option.toggle("colored", false))),
-			Map.entry("potions", List.of(Option.toggle("duration", true), Option.toggle("level", true), Option.toggle("colors", true))),
+			Map.entry("potions", List.of(
+					Option.toggle("icon", true), Option.number("iconSize", 12, 9, 18), Option.toggle("name", true), Option.toggle("level", true),
+					Option.toggle("duration", true), Option.toggle("colors", true), Option.toggle("tintText", false), Option.toggle("blink", false),
+					Option.toggle("hideVanilla", true))),
 			Map.entry("armor", List.of(
 					Option.select("layout", "vertical", "vertical", "horizontal"),
 					Option.select("durability", "percent", "percent", "value", "none"),
@@ -118,7 +121,10 @@ public final class AerionMenu implements Page {
 			Map.entry("death", List.of(Option.toggle("distance", true))),
 			Map.entry("session", List.of(Option.toggle("label", true))),
 			Map.entry("day", List.of(Option.toggle("time", true))),
-			Map.entry("light", List.of(Option.toggle("colored", true))),
+			Map.entry("light", List.of(Option.toggle("colored", true), Option.toggle("sky", false))),
+			Map.entry("lightLevels", List.of(
+					Option.select("mode", "block", "block", "combined"), Option.number("radius", 8, 2, 16), Option.number("maxLevel", 15, 0, 15),
+					Option.number("scale", 100, 40, 300), Option.colour("lowColor", "#ff5555"), Option.colour("midColor", "#ffe25a"), Option.colour("highColor", "#55dd77"))),
 			Map.entry("crosshair", List.of(
 					Option.select("shape", "cross", "cross", "dot", "circle", "x"),
 					Option.number("size", 8, 1, 30), Option.number("gap", 3, 0, 20), Option.number("thickness", 2, 1, 8),
@@ -254,7 +260,7 @@ public final class AerionMenu implements Page {
 			else if (escape || key.getValue() == InputConstants.KEY_RETURN) hexRow = null;
 			return true;
 		}
-		if (section == Section.SOUNDS && detail == null && !query.isEmpty()) {
+		if (searchable() && !query.isEmpty()) {
 			if (escape) {
 				query = "";
 				scroll = 0;
@@ -293,7 +299,7 @@ public final class AerionMenu implements Page {
 			}
 			return true;
 		}
-		if (section != Section.SOUNDS || detail != null || capturing != null) return false;
+		if (!searchable()) return false;
 		if (query.length() < 40 && Character.isValidCodePoint(codepoint) && !Character.isISOControl(codepoint)) {
 			query += new String(Character.toChars(codepoint));
 			scroll = 0;
@@ -388,6 +394,7 @@ public final class AerionMenu implements Page {
 		int mainX = left + SIDE + 10, mainW = winW - SIDE - 20;
 		iconButton(left + winW - 20, top + 6, 14, "close", this::toLayout);
 		int head = detail != null ? pageHead(mainX, top + 6, mainW - 18) : listHead(mainX, top + 7);
+		if (detail == null && (section == Section.HUD || section == Section.FEATURES)) searchBox(left + winW - 134, top + 6, 110);
 
 		viewTop = top + head;
 		viewBottom = top + winH - 4;
@@ -401,8 +408,8 @@ public final class AerionMenu implements Page {
 		int start = y;
 		if (detail != null) detailBody();
 		else switch (section) {
-			case HUD -> tiles(mainX, mainW, List.of(Features.MODULE_IDS));
-			case FEATURES -> tiles(mainX, mainW, List.of(FEATURES));
+			case HUD -> tiles(mainX, mainW, found(List.of(Features.MODULE_IDS)));
+			case FEATURES -> tiles(mainX, mainW, found(List.of(FEATURES)));
 			case SOUNDS -> soundsPage();
 			case KEYS -> keysPage();
 			case LOOK -> lookPage();
@@ -448,6 +455,7 @@ public final class AerionMenu implements Page {
 			detail = null;
 			expanded = null;
 			capturing = null;
+			query = "";
 			scroll = 0;
 		}, false);
 		return ny + h + 2;
@@ -507,8 +515,37 @@ public final class AerionMenu implements Page {
 	}
 
 	// --- tiles -------------------------------------------------------------------------------
+	/** The section's tiles; a search looks through modules and features together. */
+	private List<String> found(List<String> section) {
+		if (query.isEmpty()) return section;
+		String q = query.toLowerCase(Locale.ROOT);
+		List<String> out = new ArrayList<>();
+		List<String> all = new ArrayList<>(List.of(Features.MODULE_IDS));
+		all.addAll(List.of(FEATURES));
+		for (String id : all) {
+			if (id.toLowerCase(Locale.ROOT).contains(q) || name(id).toLowerCase(Locale.ROOT).contains(q)) out.add(id);
+		}
+		return out;
+	}
+
+	private boolean searchable() {
+		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK;
+	}
+
+	/** Typing goes straight here, so there is nothing to click first. */
+	private void searchBox(int bx, int by, int w) {
+		Draw.rounded(g, bx, by, w, 14, 3, tile);
+		Icons.draw(g, "search", bx + 4, by + 3, 8, muted);
+		if (query.isEmpty()) Txt.draw(g, Lang.tr("aerion.search"), bx + 15, by + 7, SMALL, muted);
+		else Txt.draw(g, query + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : ""), bx + 15, by + 7, SMALL, text);
+	}
+
 	private void tiles(int left, int w, List<String> items) {
 		// Features have longer names, and there are few of them.
+		if (items.isEmpty()) {
+			note(Lang.tr("aerion.sound.empty"));
+			return;
+		}
 		int cols = items.size() < 8 ? 2 : Math.max(2, (w + GAP) / (96 + GAP));
 		int cw = (w - (cols - 1) * GAP) / cols, ch = 26;
 		HudConfig cfg = AerionClient.hud();
@@ -953,6 +990,7 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.nav.sounds"), Features.key("sounds"));
 		keyRow(Lang.tr("aerion.feature.crosshair"), Features.key("crosshair"));
 		keyRow(Lang.tr("aerion.feature.hurtCam"), Features.key("hurtCam"));
+		keyRow(Lang.tr("aerion.feature.lightLevels"), Features.key("lightLevels"));
 		keyRow(Lang.tr("aerion.key.sprint"), Features.key("toggleSprint"));
 		keyRow(Lang.tr("aerion.key.sneak"), Features.key("toggleSneak"));
 		endCard();

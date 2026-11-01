@@ -10,13 +10,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.Holder;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.LightLayer;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.Chroma;
 import pl.aerion.mod.Colors;
@@ -260,33 +264,7 @@ public final class Hud {
 				return out;
 			}
 		});
-		MODULES.put("potions", new Lines() {
-			private List<MobEffectInstance> effects(Ctx c) {
-				return c.player() == null ? List.of() : new ArrayList<>(c.player().getActiveEffects());
-			}
-
-			List<String> lines(Ctx c) {
-				List<String> out = new ArrayList<>();
-				boolean duration = c.flag("duration", true);
-				for (MobEffectInstance e : effects(c)) {
-					String name = e.getEffect().value().getDisplayName().getString();
-					int level = e.getAmplifier() + 1;
-					String text = name + (level > 1 && c.flag("level", true) ? " " + roman(level) : "");
-					if (duration) text += "  " + (e.isInfiniteDuration() ? "∞" : time(e.getDuration()));
-					out.add(text);
-				}
-				if (out.isEmpty() && c.preview()) out.add("Speed II  1:30");
-				return out;
-			}
-
-			@Override
-			int swatch(Ctx c, int line) {
-				if (!c.flag("colors", true)) return 0;
-				List<MobEffectInstance> list = effects(c);
-				if (line >= list.size()) return c.preview() ? 0xFF7CAFC6 : 0;
-				return 0xFF000000 | list.get(line).getEffect().value().getColor();
-			}
-		});
+		MODULES.put("potions", new Effects());
 		MODULES.put("speed", new Lines() {
 			List<String> lines(Ctx c) {
 				LocalPlayer p = c.player();
@@ -327,17 +305,23 @@ public final class Hud {
 			}
 		});
 		MODULES.put("light", new Lines() {
-			private int level(Ctx c) {
-				return c.player() == null || c.mc().level == null ? 14 : c.mc().level.getRawBrightness(c.player().blockPosition(), 0);
+			private int block(Ctx c) {
+				return c.player() == null || c.mc().level == null ? 12 : c.mc().level.getBrightness(LightLayer.BLOCK, c.player().blockPosition());
+			}
+
+			private int sky(Ctx c) {
+				if (c.player() == null || c.mc().level == null) return 15;
+				return Math.max(0, c.mc().level.getBrightness(LightLayer.SKY, c.player().blockPosition()) - c.mc().level.getSkyDarken());
 			}
 
 			List<String> lines(Ctx c) {
-				return List.of(Lang.tr("aerion.hud.light") + " " + level(c));
+				String line = Lang.tr("aerion.hud.light") + " " + block(c);
+				return List.of(c.flag("sky", false) ? line + "  " + Lang.tr("aerion.hud.sky") + " " + sky(c) : line);
 			}
 
 			@Override
 			int color(Ctx c, int line) {
-				int l = level(c);
+				int l = block(c);
 				return c.flag("colored", true) ? graded(l > 7, l > 0) : c.style().text();
 			}
 		});
@@ -367,6 +351,91 @@ public final class Hud {
 	static String time(int ticks) {
 		int s = ticks / 20;
 		return s >= 3600 ? (s / 3600) + ":" + String.format("%02d:%02d", s / 60 % 60, s % 60) : (s / 60) + ":" + String.format("%02d", s % 60);
+	}
+
+	/** Active effects: the game's icon, name, level and time, each optional. */
+	static final class Effects implements Module {
+		private record Row(Holder<MobEffect> effect, String text, int ticks) {}
+
+		private static int iconSize(Ctx c) {
+			try {
+				return Math.max(9, Math.min(18, Integer.parseInt(c.opt("iconSize", "12"))));
+			} catch (NumberFormatException e) {
+				return 12;
+			}
+		}
+
+		private static String text(Ctx c, String name, int level, String time) {
+			StringBuilder out = new StringBuilder();
+			if (c.flag("name", true)) out.append(name);
+			if (level > 1 && c.flag("level", true)) out.append(out.isEmpty() ? "" : " ").append(roman(level));
+			if (c.flag("duration", true)) out.append(out.isEmpty() ? "" : "  ").append(time);
+			return out.toString();
+		}
+
+		private static List<Row> rows(Ctx c) {
+			List<Row> out = new ArrayList<>();
+			if (c.player() != null) {
+				for (MobEffectInstance e : c.player().getActiveEffects()) {
+					String time = e.isInfiniteDuration() ? "∞" : time(e.getDuration());
+					out.add(new Row(e.getEffect(), text(c, e.getEffect().value().getDisplayName().getString(), e.getAmplifier() + 1, time),
+							e.isInfiniteDuration() ? Integer.MAX_VALUE : e.getDuration()));
+				}
+			}
+			if (out.isEmpty() && c.preview()) {
+				out.add(new Row(MobEffects.SPEED, text(c, MobEffects.SPEED.value().getDisplayName().getString(), 2, "1:30"), 1800));
+			}
+			return out;
+		}
+
+		/** Room before the text: the icon, or a colour swatch without one. */
+		private static int lead(Ctx c) {
+			return c.flag("icon", true) ? iconSize(c) + 3 : c.flag("colors", true) ? 7 : 0;
+		}
+
+		private static int rowHeight(Ctx c) {
+			return c.flag("icon", true) ? Math.max(LINE, iconSize(c) + 1) : LINE;
+		}
+
+		@Override
+		public int[] size(Ctx c) {
+			List<Row> list = rows(c);
+			if (list.isEmpty()) return new int[] {0, 0};
+			int w = 0;
+			for (Row r : list) w = Math.max(w, Hud.width(c, r.text));
+			int p = c.style().padding();
+			return new int[] {lead(c) + w + 2 * p, list.size() * rowHeight(c) - 1 + 2 * p};
+		}
+
+		@Override
+		public void draw(Ctx c, Gfx g) {
+			int p = c.style().padding(), h = rowHeight(c), y = p, lead = lead(c);
+			boolean icon = c.flag("icon", true);
+			for (Row r : rows(c)) {
+				int tint = 0xFF000000 | r.effect.value().getColor();
+				if (icon) {
+					int size = iconSize(c);
+					g.sprite(Game.effectSprite(r.effect), p, y, size, size);
+				} else if (c.flag("colors", true)) {
+					g.fill(p, y + (h - 5) / 2, p + 5, y + (h - 5) / 2 + 5, tint);
+				}
+				int color = c.flag("tintText", false) ? tint : c.style().text();
+				// Fading in and out in the last ten seconds.
+				if (c.flag("blink", false) && r.ticks < 200) {
+					color = Colors.alpha(color, (int) (130 + 125 * Math.sin(System.currentTimeMillis() / 150.0)));
+				}
+				Hud.text(c, g, r.text, p + lead, y + (h - 9) / 2, color, c.style().shadow());
+				y += h;
+			}
+		}
+	}
+
+	/** Whether the module replaces the icons the game draws in the corner. */
+	public static boolean hidesGameEffects() {
+		HudConfig cfg = AerionClient.hud();
+		if (cfg == null || !cfg.enabled()) return false;
+		JsonObject m = cfg.module("potions");
+		return HudConfig.bool(m, "enabled", false) && "1".equals(HudConfig.opt(m, "hideVanilla", "1"));
 	}
 
 	/** How many of some items the player carries, each with its icon or name. */

@@ -21,6 +21,7 @@ session
 light
 crosshair
 hurtCam
+lightLevels
 toggleSneak
 armor
 clock

@@ -49,4 +49,9 @@ abstract class HudMixin {
 	private void aerion$crosshair(GuiGraphicsExtractor g, DeltaTracker delta, CallbackInfo ci) {
 		if (Crosshair.draw(new Gfx(g))) ci.cancel();
 	}
+
+	@Inject(method = "extractEffects", at = @At("HEAD"), cancellable = true)
+	private void aerion$effects(CallbackInfo ci) {
+		if (pl.aerion.mod.hud.Hud.hidesGameEffects()) ci.cancel();
+	}
 }

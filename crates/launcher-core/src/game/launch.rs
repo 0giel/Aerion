@@ -41,6 +41,8 @@ pub struct LaunchOptions {
     pub resolution: Option<(u32, u32)>,
     /// `host[:port]` to join right after start.
     pub quick_play_server: Option<String>,
+    /// Folder in `saves/` to enter right after start (needs a version with Quick Play).
+    pub quick_play_world: Option<String>,
     pub env: Vec<(String, String)>,
     /// Command prefix such as `gamemoderun` or `prime-run`.
     pub wrapper: Vec<String>,
@@ -107,6 +109,8 @@ pub fn build_command(
     let version = &prepared.version;
     let quick_play_modern = opts.quick_play_server.is_some() && supports_quick_play(version);
     env.features.is_quick_play_multiplayer = quick_play_modern;
+    env.features.is_quick_play_singleplayer =
+        opts.quick_play_world.is_some() && supports_quick_play(version);
 
     let sep = if base_env.os == Os::Windows { ";" } else { ":" };
     let classpath = prepared
@@ -152,6 +156,9 @@ pub fn build_command(
     }
     if let Some(server) = &opts.quick_play_server {
         set("quickPlayMultiplayer", server.clone());
+    }
+    if let Some(world) = &opts.quick_play_world {
+        set("quickPlaySingleplayer", world.clone());
     }
 
     let mut args: Vec<String> = Vec::new();
@@ -375,6 +382,7 @@ mod tests {
             extra_game_args: vec![],
             resolution: Some((1280, 720)),
             quick_play_server: None,
+            quick_play_world: None,
             env: vec![],
             wrapper: vec![],
             auth: AuthInfo {

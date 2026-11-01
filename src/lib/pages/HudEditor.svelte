@@ -449,6 +449,12 @@
             onchange={(v) => cfg && ((cfg.features.hurtCam.enabled = v), changed())}
           />
           <Switch
+            label={t("hudEditor.features.lightLevels")}
+            hint={t("hudEditor.features.lightLevelsHint")}
+            checked={cfg.features.lightLevels.enabled}
+            onchange={(v) => cfg && ((cfg.features.lightLevels.enabled = v), changed())}
+          />
+          <Switch
             label={t("hudEditor.features.sounds")}
             hint={t("hudEditor.features.soundsHint")}
             checked={cfg.features.sounds.enabled}

@@ -822,6 +822,7 @@ export type HudFeatures_Deserialize = {
 	sounds?: SoundOptions_Deserialize,
 	crosshair?: FeatureOptions_Deserialize,
 	hurtCam?: FeatureOptions_Deserialize,
+	lightLevels?: FeatureOptions_Deserialize,
 };
 
 export type HudFeatures_Serialize = {
@@ -835,6 +836,7 @@ export type HudFeatures_Serialize = {
 	sounds: SoundOptions_Serialize,
 	crosshair: FeatureOptions_Serialize,
 	hurtCam: FeatureOptions_Serialize,
+	lightLevels: FeatureOptions_Serialize,
 };
 
 export type HudModule = HudModule_Serialize | HudModule_Deserialize;
@@ -993,6 +995,11 @@ export type Instance_Deserialize = {
 	afterLaunch?: AfterLaunch | null,
 	joinServer?: string | null,
 	/**
+	 *  World to enter right after start: a folder in `saves/`, or `@last` for the last played one.
+	 *  `None` = stay in the main menu.
+	 */
+	joinWorld?: string | null,
+	/**
 	 *  Game folder (worlds, mods, screenshots) outside the launcher's data, e.g. on another drive.
 	 *  `None` = `instances/<id>/minecraft`.
 	 */
@@ -1037,6 +1044,11 @@ export type Instance_Serialize = {
 	/**  `None` = the launcher-wide setting. */
 	afterLaunch: AfterLaunch | null,
 	joinServer: string | null,
+	/**
+	 *  World to enter right after start: a folder in `saves/`, or `@last` for the last played one.
+	 *  `None` = stay in the main menu.
+	 */
+	joinWorld: string | null,
 	/**
 	 *  Game folder (worlds, mods, screenshots) outside the launcher's data, e.g. on another drive.
 	 *  `None` = `instances/<id>/minecraft`.

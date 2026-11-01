@@ -160,6 +160,11 @@ pub async fn plan(
         .unwrap_or_else(|| default_max_memory_mb(total_memory_mb(), modded));
     let game_dir = instances.game_dir(&inst.id)?;
     prepare_game_dir(&prepared, &game_dir).await?;
+    let quick_world = if join_server.is_some() {
+        None
+    } else {
+        super::worlds::resolve_join_world(&game_dir, inst.join_world.as_deref())
+    };
     let opts = LaunchOptions {
         game_dir: game_dir.clone(),
         java: java.path.clone(),
@@ -173,8 +178,15 @@ pub async fn plan(
             .resolution
             .or(settings.resolution)
             .map(|r| (r.width, r.height)),
+        // A server asked for right now wins; otherwise the instance's world, then its server.
+        quick_play_world: quick_world.clone(),
         quick_play_server: join_server
-            .or_else(|| inst.join_server.clone())
+            .or_else(|| {
+                quick_world
+                    .is_none()
+                    .then(|| inst.join_server.clone())
+                    .flatten()
+            })
             .filter(|s| !s.trim().is_empty()),
         env: merge_env(
             merge_env(default_env(engine.env.os), &settings.env_vars),

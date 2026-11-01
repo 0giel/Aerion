@@ -175,6 +175,7 @@ pub struct HudFeatures {
     pub sounds: SoundOptions,
     pub crosshair: FeatureOptions,
     pub hurt_cam: FeatureOptions,
+    pub light_levels: FeatureOptions,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -301,6 +302,7 @@ impl HudConfig {
                 &self.features.overlays.options,
                 &self.features.crosshair.options,
                 &self.features.hurt_cam.options,
+                &self.features.light_levels.options,
                 &self.features.sounds.options,
             ]
             .iter()

@@ -106,6 +106,9 @@ pub struct Instance {
     /// `None` = the launcher-wide setting.
     pub after_launch: Option<crate::settings::AfterLaunch>,
     pub join_server: Option<String>,
+    /// World to enter right after start: a folder in `saves/`, or `@last` for the last played one.
+    /// `None` = stay in the main menu.
+    pub join_world: Option<String>,
     /// Game folder (worlds, mods, screenshots) outside the launcher's data, e.g. on another drive.
     /// `None` = `instances/<id>/minecraft`.
     pub game_dir: Option<PathBuf>,
@@ -147,6 +150,7 @@ impl Default for Instance {
             fullscreen: None,
             after_launch: None,
             join_server: None,
+            join_world: None,
             game_dir: None,
             icon: None,
             favorite: false,

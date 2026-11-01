@@ -28,4 +28,8 @@ public final class Game {
 	public static long dayTime(net.minecraft.client.multiplayer.ClientLevel level) {
 		return level.getDayTime();
 	}
+
+	public static net.minecraft.resources.Identifier effectSprite(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect) {
+		return net.minecraft.client.gui.Gui.getMobEffectSprite(effect);
+	}
 }

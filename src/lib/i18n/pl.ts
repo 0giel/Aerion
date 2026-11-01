@@ -385,6 +385,10 @@ const pl: Dict = {
       resolution: "Rozmiar okna",
       width: "Szerokość",
       height: "Wysokość",
+      joinWorld: "Wejdź do świata po starcie",
+      joinWorldOff: "Nie, otwórz menu główne",
+      joinWorldLast: "Ostatnio grany świat",
+      joinWorldHint: "Gra od razu wejdzie do tego świata. Działa w wersjach z Quick Play (1.20 i nowszych).",
       joinServer: "Połącz z serwerem po starcie",
       joinServerPlaceholder: "play.example.net:25565",
       wrapper: "Polecenie opakowujące",
@@ -1215,6 +1219,7 @@ const pl: Dict = {
         time: "Pokaż godzinę w świecie",
       },
       light: {
+        sky: "Pokaż też światło nieba",
         colored: "Kolor zależny od poziomu",
       },
       fps: {
@@ -1248,6 +1253,12 @@ const pl: Dict = {
         colored: "Kolor zależny od wartości",
       },
       potions: {
+        icon: "Pokaż ikonę",
+        iconSize: "Rozmiar ikony",
+        name: "Pokaż nazwę",
+        tintText: "Tekst w kolorze efektu",
+        blink: "Miganie przed końcem",
+        hideVanilla: "Ukryj ikony gry",
         duration: "Pokaż czas",
         colors: "Kolor efektu",
         level: "Pokaż poziom",
@@ -1316,6 +1327,8 @@ const pl: Dict = {
       },
     },
     features: {
+      lightLevels: "Liczby światła",
+      lightLevelsHint: "Liczby na podłodze wokół Ciebie; zasięg i kolory ustawisz w menu w grze.",
       crosshair: "Celownik",
       crosshairHint: "Kształt, rozmiar i kolory ustawisz w menu w grze.",
       hurtCam: "Hurt cam",

@@ -291,3 +291,14 @@ row, so black and white don't lose the hue. Hurt cam scales the game's tilt cons
 versions) rather than overwriting the player's accessibility option. The custom crosshair replaces
 the game's, so it draws its own attack cooldown bar. Hide-the-effect overlays stay off by default.
 
+### D37 — Entering a world on start is a choice, light numbers as gizmos (2026-11-01)
+`joinWorld` on an instance holds a folder in `saves/` or `@last`; nothing by default, so the game
+opens the main menu. It uses the version's Quick Play argument, so versions without it just open the
+menu, and a world that no longer exists is ignored. A server asked for right now (Servers tab) wins
+over the world, and the world over the instance's `joinServer`. The light module first showed
+`getRawBrightness`, which includes sky light unaffected by time, so it read 15 outdoors at any hour;
+it now shows block light, with sky light optional. Light numbers use the game's billboard text gizmo
+(they face the camera just above the floor instead of lying flat); flat text would need separate
+world-rendering code per game version. The effects module draws the game's own effect sprites and
+hides the corner icons by default, because they sit in the same corner.
+
