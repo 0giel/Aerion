@@ -14,7 +14,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       pl: [
         "Mod Aeriona z HUD-em i dodatkami w stylu klientów PvP: FPS, CPS, współrzędne, kierunek, ping, zegar, pamięć, zbroja, efekty mikstur, klawisze i minimapa.",
         "Każdy moduł HUD-a ustawisz po swojemu: pozycja, rozmiar, kolory, tło, ramka, zaokrąglenie, własny format tekstu. Zmiany z launchera działają w uruchomionej grze w ciągu sekundy, a w grze prawy Shift otwiera edytor z przeciąganiem i skalowaniem.",
-        "Nowe funkcje gry: zoom (domyślnie C), a do włączenia osobno freelook, jasne noce, stały sprint i stałe skradanie. Niektóre serwery zabraniają takich dodatków — sprawdź regulamin, zanim ich użyjesz.",
+        "Nowe funkcje gry: zoom (domyślnie C), a do włączenia osobno freelook, pełna jasność, stały sprint i stałe skradanie. Niektóre serwery zabraniają takich dodatków — sprawdź regulamin, zanim ich użyjesz.",
         "Mod działa teraz na Fabric 26.3 i 1.21.11, bez Fabric API.",
         "Eksperymentalnie: ekran główny i własne strony złożone z widgetów, które przeciągasz i skalujesz (Ustawienia → Wygląd → Widgety i własne strony).",
       ],
@@ -23,7 +23,7 @@ export const CHANGELOG: ChangelogEntry[] = [
         "Every HUD module is yours to set up: position, size, colors, background, border, corners and custom text formats. Changes from the launcher reach a running game within a second, and in game Right Shift opens an editor to drag and resize.",
         "New game features: zoom (C by default), plus freelook, fullbright, toggle sprint and toggle sneak to switch on separately. Some servers forbid such extras — check their rules before using them.",
         "The mod now runs on Fabric 26.3 and 1.21.11, without Fabric API.",
-        "Experimental: a home screen and your own pages made of widgets you drag and resize (Settings → Appearance → Widgets and custom pages).",
+        "Experimental: a home screen and your own pages made of widgets you drag and resize (Settings → Appearance → Widgets and your own pages).",
       ],
     },
   },

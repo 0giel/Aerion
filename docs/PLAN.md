@@ -225,6 +225,9 @@ has been *verified* against its acceptance criterion. Details and the running lo
 9. Owner: publish release v0.1.4 on GitHub and upload `themes/` → verify self-update and gallery.
 10. ~~Windows build~~ ✅ (cross-compiled installer, engine tests + 26.3 smoke under Wine) →
    run `Aerion_0.1.0_x64-setup.exe` on a real Windows 10/11 machine; macOS still untested.
+11. ~~Roadmap stage 1: performance page, mod manager~~ ✅ (0.2.0) · ~~stage 2: widgets (experimental), stage 3:
+   HUD modules, in-game editor, game features, Fabric 1.21.11~~ ✅ (0.3.0)
+12. Stage 4: experimental click-to-edit of any launcher component. Stage 5: Aerion Studio and profiles.
 
 ## 5. Risks and mitigations
 
