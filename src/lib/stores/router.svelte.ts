@@ -3,6 +3,7 @@ export type Page =
   | "instances"
   | "instance"
   | "mods"
+  | "performance"
   | "accounts"
   | "skins"
   | "stats"

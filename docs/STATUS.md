@@ -5,6 +5,28 @@ Newest entries first.
 
 ## 2026-10-31
 
+### 0.2.0: roadmap stage 1 — performance page and mod manager (D30, D31)
+- **Mod health** (`mods::meta`, `mods::ranges`, `mods::health`): wrong loader, duplicates,
+  missing/outdated dependencies, conflicts, other game versions. Real packs probed with a
+  temporary tool: Fabulously Optimized (49 mods) clean; the same mods judged for 26.3 flagged
+  correctly; SKlauncher's NeoForge Create pack first showed false duplicates (dependency tables
+  read as the mod's own ids, `[[mods]] #comment` headers not recognised) — both fixed, now clean.
+  Checked live: the Content tab lists "Broken Test needs definitely_missing_mod" with an install
+  button; Play shows "Mod problems found: 1" with "Show problems" / "Launch anyway".
+- **Updates**: background check 30 s after start and every 6 h (setting), tile badges, results
+  reused by the Content tab, single-mod update. **Versions…** lists every version for the
+  instance; installing one pins it (checked: Sodium 0.9.2 → 0.9.3-alpha.1, `pinned: true`, update
+  check then empty). **Replacements**: OptiFine → Sodium + Iris (curated), similar projects by
+  Modrinth search; also offered for unavailable mods when moving to a new game version.
+- **Performance page** (nav "Performance"): CPU/RAM/GPU tiles with one-minute sparklines,
+  Aerion's own use, running games with FPS (Aerion mod 0.2.0 reports it), memory vs. -Xmx,
+  busiest programs, short tips. Checked live: RTX 3060 Ti usage/VRAM/temperature from
+  nvidia-smi; Aerion (dev build) ~400 MB in 3 processes after excluding threads (first version
+  summed threads: 9.4 GB); game 59 FPS, 1.3 GB of 6 GB. The 90 % CPU it showed was real (top
+  agreed): nine spinning WebKitWebProcess processes of another app and SKlauncher.
+- `run()` now reports the game's pid; `AppInfo`, settings (`checkModUpdates`) and new commands
+  regenerated in the bindings.
+
 ### 0.1.9: What's new, crash help, Aerion mod preview (D28, D29)
 - **What's new**: notes per version embedded in `src/lib/changelog.ts` (pl/en), shown once after
   an update; `settings.lastSeenVersion` remembers it, fresh installs see nothing. Checked live:

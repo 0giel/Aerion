@@ -14,6 +14,7 @@ const pl: Dict = {
     accounts: "Konta",
     skins: "Skiny",
     stats: "Statystyki",
+    performance: "Wydajność",
     console: "Konsola",
     settings: "Ustawienia",
     collapse: "Zwiń pasek boczny",
@@ -1010,6 +1011,54 @@ const pl: Dict = {
     none: "Nie znaleziono podobnych modów dla tej wersji.",
     known: "znany zamiennik",
     pickHint: "Kliknij mod, aby poszukać zamienników dla nowej wersji.",
+  },
+  perf: {
+    title: "Wydajność",
+    subtitle: "Na żywo, odświeżane co sekundę. Tylko pomiary z tego komputera.",
+    now: "teraz",
+    secondsAgo: "{n} s temu",
+    cpu: "Procesor",
+    threads: "wątki: {n}",
+    cpuHistory: "Użycie procesora, ostatnia minuta",
+    memory: "Pamięć RAM",
+    memoryHistory: "Zajęta pamięć, ostatnia minuta",
+    gpu: "Karta graficzna",
+    gpuHistory: "Użycie karty graficznej, ostatnia minuta",
+    gpuUnavailable:
+      "Sterownik nie podaje obciążenia tej karty (dostępne dla NVIDIA, a na Linuksie także AMD).",
+    vram: "Pamięć karty graficznej",
+    vramOf: "Pamięć karty: {used} z {total}",
+    aerion: "Aerion",
+    aerionDetail: "Procesor {cpu}% · procesy: {n} (okno i launcher)",
+    aerionHistory: "Pamięć Aeriona, ostatnia minuta",
+    games: "Uruchomione gry",
+    noGame: "Uruchom grę, aby zobaczyć jej FPS, procesor i pamięć.",
+    gameDetail: "Procesor {cpu}% · procesy: {n}",
+    fps: "FPS",
+    fpsHistory: "FPS, ostatnia minuta",
+    fpsEnableMod: "Włącz mod Aeriona w ustawieniach instancji, aby widzieć FPS.",
+    fpsWaiting: "Czekam na pierwszy pomiar z gry…",
+    fpsUnsupported: "FPS jest dostępny z modem Aeriona (na razie Fabric 26.3).",
+    fpsUnknown: "Brak danych o FPS.",
+    gameMemory: "Pamięć gry",
+    gameMemoryHint:
+      "Cały proces Javy; przydział (-Xmx) dotyczy samej sterty, więc proces może zająć nieco więcej.",
+    topTitle: "Co obciąża komputer",
+    topHint:
+      "Programy, które teraz najbardziej zajmują procesor (procent całego komputera). Te dane nie opuszczają komputera.",
+    tipsTitle: "Wskazówki",
+    tips: {
+      lowMemory:
+        "Komputerowi kończy się pamięć RAM — zamknij inne programy (np. przeglądarkę) albo zmniejsz przydział pamięci gry.",
+      cpuBusy:
+        "Procesor pracuje prawie na 100%. Zmniejsz zasięg symulacji w grze albo zamknij programy w tle.",
+      cpuBusyIdle:
+        "Procesor pracuje prawie na 100% — zobacz poniżej, co go obciąża, i zamknij niepotrzebne programy.",
+      gpuBusy: "Karta graficzna pracuje na 100% — zmniejsz zasięg renderowania, shadery albo rozdzielczość.",
+      lowFps: "{name}: tylko {fps} FPS. Pomogą mody wydajnościowe (np. Sodium) i niższe ustawienia grafiki.",
+      hideLauncher:
+        "Aerion zajmuje {size} podczas gry. Możesz go chować po uruchomieniu gry (Ustawienia → Po uruchomieniu gry).",
+    },
   },
   whatsNew: {
     title: "Co nowego w Aerionie {version}",

@@ -19,6 +19,7 @@ pub mod mods;
 pub mod mojang;
 pub mod net;
 pub mod paths;
+pub mod perf;
 pub mod progress;
 pub mod settings;
 pub mod skins;

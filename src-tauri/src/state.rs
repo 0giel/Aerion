@@ -45,6 +45,8 @@ pub struct AppState {
     pub content_updates: tokio::sync::RwLock<
         std::collections::HashMap<String, Vec<launcher_core::mods::content::UpdateInfo>>,
     >,
+    /// Resource sampler of the performance page (created on first use).
+    pub perf: tokio::sync::Mutex<Option<launcher_core::perf::Monitor>>,
     /// Found by `check_app_update`, installed by `install_app_update`.
     pub pending_update: tokio::sync::Mutex<Option<tauri_plugin_updater::Update>>,
 }
@@ -99,6 +101,7 @@ impl AppState {
             login: Mutex::new(None),
             device_code: tokio::sync::Mutex::new(None),
             content_updates: Default::default(),
+            perf: tokio::sync::Mutex::new(None),
             pending_update: tokio::sync::Mutex::new(None),
             paths,
         })

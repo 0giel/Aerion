@@ -55,6 +55,9 @@ pub struct RunningGame {
 
 struct Session {
     info: RunningGame,
+    /// Process id once started, and the memory it may use (for the performance page).
+    pid: Option<u32>,
+    max_memory_mb: u32,
     stop: CancellationToken,
     logs: VecDeque<LogLine>,
 }
@@ -77,6 +80,14 @@ impl GameRegistry {
 
     pub fn running(&self) -> Vec<RunningGame> {
         self.lock().values().map(|s| s.info.clone()).collect()
+    }
+
+    /// Running games with a known process: `(instance id, pid, max memory MB)`.
+    pub fn processes(&self) -> Vec<(String, u32, u32)> {
+        self.lock()
+            .iter()
+            .filter_map(|(id, s)| s.pid.map(|p| (id.clone(), p, s.max_memory_mb)))
+            .collect()
     }
 
     pub fn stop(&self, id: &str) -> bool {
@@ -147,6 +158,8 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
         id.clone(),
         Session {
             info,
+            pid: None,
+            max_memory_mb: plan.max_memory_mb,
             stop: stop.clone(),
             logs: header.clone().into(),
         },
@@ -218,11 +231,18 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
     });
 
     let quit_after = after_launch == AfterLaunch::Close;
+    let pid_registry = state.games.clone();
     tauri::async_runtime::spawn(async move {
         let started = SystemTime::now();
         let game_dir = plan.game_dir.clone();
         let max_mb = plan.max_memory_mb;
-        let result = run(plan.spec, tx, stop).await;
+        let pid_id = id.clone();
+        let result = run(plan.spec, tx, stop, move |pid| {
+            if let Some(s) = pid_registry.lock().get_mut(&pid_id) {
+                s.pid = pid;
+            }
+        })
+        .await;
         let _ = pump.await;
         let state = app.state::<AppState>();
         let session = state.games.lock().remove(&id);

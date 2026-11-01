@@ -208,3 +208,21 @@ first was built from fills and the game font; the owner found it jagged, so it i
 640×144 images (cube + "Aerion" in Inter, and the sparkle) rendered from the launcher's glyph,
 read from the mod jar by hand (mod assets are not game resources without Fabric API), sampled
 linearly instead of Minecraft's nearest filter and tinted with the theme.
+
+### D30 — Mod health from the jars themselves (2026-11-01)
+Problems are read from each jar's metadata (dependencies, `breaks`/`incompatible`, provided and
+bundled ids, versions), not from Modrinth data, so files added by hand are covered and nothing
+needs the network. Fabric predicates and maven ranges are compared only for plain release
+numbers; snapshots and unusual formats count as unknown and are never reported, because a false
+"your mods are broken" is worse than a missed one (checked against a 49-mod Fabric pack and a
+NeoForge Create pack: no false alarms). The launch dialog offers "Launch anyway". Versions
+chosen by hand are pinned so update checks don't undo the choice. Replacement suggestions are a
+short curated list plus a Modrinth search, always labelled as suggestions.
+
+### D31 — Performance page shows measurements only (2026-11-01)
+Owner wanted users to see why Aerion is light. The page shows what is measured on the user's
+computer (sysinfo; NVIDIA via nvidia-smi, AMD via sysfs on Linux; threads skipped so memory is
+not counted once per thread) and never invented numbers about other launchers. Game FPS comes
+from the Aerion mod (`-Daerion.status`, written once a second). Sampling runs only while the page
+is open and the window visible. The busiest programs are listed by name locally; nothing leaves
+the computer.

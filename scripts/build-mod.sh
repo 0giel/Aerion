@@ -24,6 +24,8 @@ fi
 export JAVA_HOME="${JAVA_HOME:-$BASE/jdk25}"
 export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$BASE/gradle-home}"
 GRADLE="$BASE/gradle/gradle-$GRADLE_VERSION/bin/gradle"
+# Old version numbers would otherwise leave several jars to choose from.
+rm -f mod/build/libs/*.jar
 (cd mod && "$GRADLE" --no-daemon -q build)
 mkdir -p src-tauri/resources
 cp mod/build/libs/aerion-ui-*[0-9].jar src-tauri/resources/aerion-ui.jar

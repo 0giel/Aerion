@@ -77,7 +77,39 @@ pub fn jvm_args(paths: &Paths, inst: &Instance) -> Vec<String> {
     vec![
         format!("-Dfabric.addMods={}", display(&jar)),
         format!("-Daerion.theme={}", display(&dir.join("theme.json"))),
+        format!("-Daerion.status={}", display(&status_file(paths, &inst.id))),
     ]
+}
+
+/// Where the mod reports the game's FPS for an instance (ids may hold any characters).
+pub fn status_file(paths: &Paths, instance_id: &str) -> PathBuf {
+    let safe: String = instance_id
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+        .take(40)
+        .collect();
+    // FNV-1a keeps ids that differ only in replaced characters apart.
+    let hash = instance_id.bytes().fold(0x811c_9dc5_u32, |h, b| {
+        (h ^ u32::from(b)).wrapping_mul(0x0100_0193)
+    });
+    dir(paths)
+        .join("status")
+        .join(format!("{safe}-{hash:08x}.json"))
+}
+
+#[derive(Deserialize)]
+struct Status {
+    fps: u32,
+    /// Milliseconds since the epoch when the mod wrote the file.
+    time: i64,
+}
+
+/// The FPS the mod reported in the last few seconds, if any.
+pub fn read_fps(paths: &Paths, instance_id: &str) -> Option<u32> {
+    let s: Status =
+        serde_json::from_slice(&std::fs::read(status_file(paths, instance_id)).ok()?).ok()?;
+    let age = crate::util::now_millis().saturating_sub(s.time);
+    (age < 3_000).then_some(s.fps)
 }
 
 fn display(p: &Path) -> String {
@@ -100,12 +132,31 @@ mod tests {
             ..Default::default()
         };
         let args = jvm_args(&paths, &inst);
-        assert_eq!(args.len(), 2);
+        assert_eq!(args.len(), 3);
         assert!(args[0].starts_with("-Dfabric.addMods=") && args[0].ends_with(JAR_NAME));
         inst.game_version = "1.21.11".into();
         assert!(jvm_args(&paths, &inst).is_empty());
         inst.game_version = "26.3".into();
         inst.loader = LoaderKind::Neoforge;
         assert!(jvm_args(&paths, &inst).is_empty());
+    }
+
+    #[test]
+    fn reads_fresh_status_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::at(dir.path().to_path_buf(), false);
+        let f = status_file(&paths, "Mój świat");
+        assert!(
+            f.file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("M_j__wiat-")
+        );
+        std::fs::create_dir_all(f.parent().unwrap()).unwrap();
+        let now = crate::util::now_millis();
+        std::fs::write(&f, format!(r#"{{"fps":144,"time":{now}}}"#)).unwrap();
+        assert_eq!(read_fps(&paths, "Mój świat"), Some(144));
+        std::fs::write(&f, format!(r#"{{"fps":144,"time":{}}}"#, now - 10_000)).unwrap();
+        assert_eq!(read_fps(&paths, "Mój świat"), None);
     }
 }

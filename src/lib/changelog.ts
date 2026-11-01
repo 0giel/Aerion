@@ -9,6 +9,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.2.0",
+    notes: {
+      pl: [
+        "Nowa strona Wydajność: procesor, pamięć i karta graficzna na żywo, ile zużywa sam Aerion i gra, FPS z modem Aeriona oraz lista programów, które najbardziej obciążają komputer.",
+        "Kontrola modów przed uruchomieniem: Aerion wykrywa duplikaty, brakujące lub za stare zależności, konflikty, mody do innego loadera i innej wersji gry — i podpowiada, jak to naprawić.",
+        "Aktualizacje modów sprawdzane w tle; liczba aktualizacji widoczna na kafelkach instancji, a pojedynczy mod zaktualizujesz jednym kliknięciem.",
+        "Dowolna wersja moda (także starsza) z listy „Wersje…”; wybrana wersja zostaje przypięta i nie jest aktualizowana.",
+        "Zamienniki dla modów bez wersji dla Twojej gry, np. OptiFine → Sodium i Iris.",
+      ],
+      en: [
+        "New Performance page: live processor, memory and graphics card use, what Aerion and the game use, FPS with the Aerion mod, and the programs using the computer the most.",
+        "Mod check before launch: Aerion finds duplicates, missing or outdated dependencies, conflicts, mods for another loader or game version — and suggests how to fix them.",
+        "Mod updates are checked in the background; the count shows on instance tiles, and a single mod updates in one click.",
+        "Any version of a mod (older ones too) from the “Versions…” list; the chosen version is pinned and not updated.",
+        "Replacements for mods without a version for your game, e.g. OptiFine → Sodium and Iris.",
+      ],
+    },
+  },
+  {
     version: "0.1.9",
     notes: {
       pl: [

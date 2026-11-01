@@ -36,6 +36,7 @@ chrono = { version = "0.4", default-features = false, features = ["std", "clock"
 regex = { version = "1", default-features = false, features = ["std", "perf"] }
 directories = "6"
 keyring = "4.2"
+sysinfo = { version = "0.40.1", default-features = false, features = ["system"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_System_SystemInformation"] }

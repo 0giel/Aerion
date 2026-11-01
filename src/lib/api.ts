@@ -19,6 +19,7 @@ export type GameTheme = B.GameTheme;
 export type ModIssue = B.ModIssue_Serialize;
 export type IssueKind = B.IssueKind;
 export type Replacement = B.Replacement_Serialize;
+export type PerfSnapshot = B.PerfSnapshot_Serialize;
 export type GameUiPrefs = B.GameUiPrefs_Serialize;
 export type GameState = B.GameState;
 export type RunningGame = B.RunningGame;

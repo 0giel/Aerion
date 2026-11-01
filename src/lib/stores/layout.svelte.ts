@@ -20,6 +20,7 @@ export const NAV: NavDef[] = [
   { id: "mods", page: "mods", icon: "package", key: "nav.mods", visible: true },
   { id: "skins", page: "skins", icon: "shirt", key: "nav.skins", visible: true },
   { id: "stats", page: "stats", icon: "chart", key: "nav.stats", visible: true },
+  { id: "performance", page: "performance", icon: "cpu", key: "nav.performance", visible: true },
   // The account button at the bottom of the sidebar opens Accounts too.
   { id: "accounts", page: "accounts", icon: "user", key: "nav.accounts", visible: false },
   { id: "console", page: "console", icon: "terminal", key: "nav.console", visible: true },

@@ -34,6 +34,7 @@
     accounts: () => import("./lib/pages/Accounts.svelte"),
     skins: () => import("./lib/pages/Skins.svelte"),
     stats: () => import("./lib/pages/Stats.svelte"),
+    performance: () => import("./lib/pages/Performance.svelte"),
     console: () => import("./lib/pages/Console.svelte"),
     settings: () => import("./lib/pages/Settings.svelte"),
     themeEditor: () => import("./lib/pages/ThemeEditor.svelte"),

@@ -221,10 +221,12 @@ pub struct GameExit {
 }
 
 /// Run the game until it exits (or `stop` is cancelled), streaming parsed log lines.
+/// `on_spawn` receives the game's process id once it is running (for resource monitoring).
 pub async fn run(
     spec: CommandSpec,
     lines: mpsc::UnboundedSender<LogLine>,
     stop: CancellationToken,
+    on_spawn: impl FnOnce(Option<u32>) + Send,
 ) -> Result<GameExit> {
     tokio::fs::create_dir_all(&spec.cwd).await.at(&spec.cwd)?;
     let mut cmd = tokio::process::Command::new(&spec.program);
@@ -245,6 +247,7 @@ pub async fn run(
         reason: e.to_string(),
     })?;
     tracing::info!(pid = child.id(), cmd = %spec.redacted(), "game started");
+    on_spawn(child.id());
 
     let mut readers = Vec::new();
     if let Some(out) = child.stdout.take() {

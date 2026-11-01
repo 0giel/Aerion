@@ -19,6 +19,8 @@ export const commands = {
 	frontendLog: (level: string, message: string) => __TAURI_INVOKE<null>("frontend_log", { level, message }),
 	/**  Play statistics for the Stats page. */
 	playStats: () => __TAURI_INVOKE<Stats_Serialize>("play_stats"),
+	/**  Live resource use of the computer, Aerion and running games (performance page). */
+	perfSnapshot: () => __TAURI_INVOKE<PerfSnapshot_Serialize>("perf_snapshot"),
 	listGameVersions: () => __TAURI_INVOKE<GameVersions>("list_game_versions"),
 	listLoaderVersions: (loader: LoaderKind, gameVersion: string) => __TAURI_INVOKE<LoaderVersion[]>("list_loader_versions", { loader, gameVersion }),
 	/**  System Java installations plus runtimes managed by Aerion. */
@@ -414,6 +416,13 @@ export type ContentUpdatesEvent = {
 	counts: { [key in string]: number },
 };
 
+export type CpuInfo = {
+	name: string,
+	cores: number,
+	/**  Whole machine, 0–100. */
+	usage: number | null,
+};
+
 export type CrashInfo = CrashInfo_Serialize | CrashInfo_Deserialize;
 
 export type CrashInfo_Deserialize = {
@@ -666,6 +675,26 @@ export type GameUiPrefs_Serialize = {
 	logo: boolean,
 };
 
+export type GameUse = GameUse_Serialize | GameUse_Deserialize;
+
+export type GameUse_Deserialize = {
+	instanceId: string,
+	usage: ProcessUse,
+	/**  The heap limit given to the game (`-Xmx`). */
+	maxMemoryMb: number,
+	/**  Frames per second, reported by the Aerion mod. */
+	fps?: number | null,
+};
+
+export type GameUse_Serialize = {
+	instanceId: string,
+	usage: ProcessUse,
+	/**  The heap limit given to the game (`-Xmx`). */
+	maxMemoryMb: number,
+	/**  Frames per second, reported by the Aerion mod. */
+	fps: number | null,
+};
+
 export type GameVersion = {
 	id: string,
 	/**  `release`, `snapshot`, `old_beta`, `old_alpha`. */
@@ -677,6 +706,24 @@ export type GameVersions = {
 	latestRelease: string,
 	latestSnapshot: string,
 	versions: GameVersion[],
+};
+
+export type GpuInfo = GpuInfo_Serialize | GpuInfo_Deserialize;
+
+export type GpuInfo_Deserialize = {
+	name: string,
+	usage?: number | null,
+	vramUsedMb?: number | null,
+	vramTotalMb?: number | null,
+	temperatureC?: number | null,
+};
+
+export type GpuInfo_Serialize = {
+	name: string,
+	usage: number | null,
+	vramUsedMb: number | null,
+	vramTotalMb: number | null,
+	temperatureC: number | null,
 };
 
 export type GroupStat = {
@@ -1079,6 +1126,30 @@ export type Os = "windows" | "macos" | "linux";
 
 export type PackFormat = "mrpack" | "curseforge" | "aerion";
 
+export type PerfSnapshot = PerfSnapshot_Serialize | PerfSnapshot_Deserialize;
+
+export type PerfSnapshot_Deserialize = {
+	cpu: CpuInfo,
+	memoryTotalMb: number,
+	memoryUsedMb: number,
+	gpu?: GpuInfo_Deserialize | null,
+	launcher: ProcessUse,
+	games: GameUse_Deserialize[],
+	/**  The programs using the most processor time right now (shown only on this computer). */
+	top: ProgramUse[],
+};
+
+export type PerfSnapshot_Serialize = {
+	cpu: CpuInfo,
+	memoryTotalMb: number,
+	memoryUsedMb: number,
+	gpu: GpuInfo_Serialize | null,
+	launcher: ProcessUse,
+	games: GameUse_Serialize[],
+	/**  The programs using the most processor time right now (shown only on this computer). */
+	top: ProgramUse[],
+};
+
 export type PlannedFile = PlannedFile_Serialize | PlannedFile_Deserialize;
 
 export type PlannedFile_Deserialize = {
@@ -1099,6 +1170,19 @@ export type PlannedFile_Serialize = {
 	version: ProjectVersion_Serialize,
 	/**  Title of the project that required this one (`None` = requested by the user). */
 	requiredBy: string | null,
+};
+
+export type ProcessUse = {
+	/**  Share of the whole machine, 0–100 (a process using two of eight cores is 25). */
+	cpu: number | null,
+	memoryMb: number,
+	processes: number,
+};
+
+/**  A program on the computer (its processes summed), for "what is using the computer". */
+export type ProgramUse = {
+	name: string,
+	usage: ProcessUse,
 };
 
 export type ProgressSnapshot = ProgressSnapshot_Serialize | ProgressSnapshot_Deserialize;

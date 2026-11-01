@@ -199,3 +199,30 @@ pub async fn frontend_log(level: String, message: String) -> CmdResult<()> {
 pub async fn play_stats(state: State<'_, AppState>) -> CmdResult<launcher_core::stats::Stats> {
     Ok(launcher_core::stats::compute(&state.instances).await)
 }
+
+/// Live resource use of the computer, Aerion and running games (performance page).
+#[tauri::command]
+#[specta::specta]
+pub async fn perf_snapshot(
+    state: State<'_, AppState>,
+) -> CmdResult<launcher_core::perf::PerfSnapshot> {
+    let games: Vec<launcher_core::perf::GameProcess> = state
+        .games
+        .processes()
+        .into_iter()
+        .map(|(id, pid, max)| launcher_core::perf::GameProcess {
+            fps: launcher_core::aerion_mod::read_fps(&state.paths, &id),
+            instance_id: id,
+            pid,
+            max_memory_mb: max,
+        })
+        .collect();
+    let mut guard = state.perf.lock().await;
+    if guard.is_none() {
+        *guard = launcher_core::perf::Monitor::new();
+    }
+    let Some(monitor) = guard.as_mut() else {
+        return Err(ErrorInfo::msg("generic", "system information unavailable"));
+    };
+    Ok(monitor.sample(&games).await)
+}

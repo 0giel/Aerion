@@ -102,7 +102,7 @@ async fn main() {
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
     let stop = CancellationToken::new();
     let stop2 = stop.clone();
-    let game = tokio::spawn(run(spec, tx, stop.clone()));
+    let game = tokio::spawn(run(spec, tx, stop.clone(), |_| {}));
     let started = Instant::now();
     let mut ready = false;
     let deadline = Duration::from_secs(240);

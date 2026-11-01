@@ -5,6 +5,8 @@ import com.google.gson.JsonParser;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import net.minecraft.client.Minecraft;
 import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +20,15 @@ public final class AerionClient implements ClientModInitializer {
 	public static final Logger LOG = LoggerFactory.getLogger("Aerion");
 	private static volatile Theme theme;
 	private static Path file;
+	/** Where the launcher reads the game's FPS for its performance page. */
+	private static Path status;
 	private static long modified = Long.MIN_VALUE;
 	private static int ticks;
 
 	@Override
 	public void onInitializeClient() {
+		String st = System.getProperty("aerion.status");
+		if (st != null && !st.isBlank()) status = Path.of(st);
 		String p = System.getProperty("aerion.theme");
 		if (p == null || p.isBlank()) {
 			LOG.info("Aerion UI: no theme file given, keeping the default look");
@@ -45,7 +51,24 @@ public final class AerionClient implements ClientModInitializer {
 
 	/** Called every client tick (20 per second, also in menus); checks the file once a second. */
 	public static void tick() {
-		if (file != null && ++ticks % 20 == 0) reload();
+		if (++ticks % 20 != 0) return;
+		if (file != null) reload();
+		if (status != null) writeStatus();
+	}
+
+	private static boolean statusFailed;
+
+	private static void writeStatus() {
+		try {
+			Files.createDirectories(status.getParent());
+			Path tmp = status.resolveSibling(status.getFileName() + ".tmp");
+			String json = "{\"fps\":" + Minecraft.getInstance().getFps() + ",\"time\":" + System.currentTimeMillis() + "}";
+			Files.writeString(tmp, json, StandardCharsets.UTF_8);
+			Files.move(tmp, status, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+		} catch (Exception e) {
+			if (!statusFailed) LOG.warn("Aerion UI: can't write {}: {}", status, e.toString());
+			statusFailed = true;
+		}
 	}
 
 	private static void reload() {

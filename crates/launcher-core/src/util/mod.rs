@@ -11,3 +11,8 @@ pub mod sys;
 pub fn now_secs() -> i64 {
     chrono::Utc::now().timestamp()
 }
+
+/// Current UNIX time in milliseconds.
+pub fn now_millis() -> i64 {
+    chrono::Utc::now().timestamp_millis()
+}
