@@ -104,12 +104,12 @@
 
   <div class="grid2">
     <label class="range"
-      ><span class="small muted">{t("hudEditor.style.radius")}: {style.radius ?? 3}</span>
+      ><span class="small muted">{t("hudEditor.style.radius")}: {style.radius ?? 0}</span>
       <input
         type="range"
         min="0"
         max="8"
-        value={style.radius ?? 3}
+        value={style.radius ?? 0}
         oninput={(e) => set({ radius: Number((e.target as HTMLInputElement).value) })}
       /></label
     >

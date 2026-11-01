@@ -12,8 +12,7 @@ import java.nio.file.StandardCopyOption;
 import pl.aerion.mod.AerionClient;
 
 /**
- * hud.json, shared with the launcher (which edits every option) and the in-game editor (which
- * moves and scales modules). The JSON tree is kept as read, so options this version doesn't know
+ * hud.json, shared with the launcher and the in-game editor, which both edit it. The JSON tree is kept as read, so options this version doesn't know
  * survive a save. Positions are per-mille of the free space (0 = left/top edge, 1000 = right or
  * bottom edge), so a layout fits every window size; scale is a percentage.
  */
@@ -28,7 +27,7 @@ public final class HudConfig {
 	/** Used when the launcher hasn't written a file yet (same defaults as the launcher). */
 	static final String DEFAULTS = """
 			{"enabled":true,
-			 "style":{"text":"theme","background":"theme","opacity":55,"border":"none","radius":3,"padding":3,"shadow":true,"align":"left"},
+			 "style":{"text":"theme","background":"theme","opacity":55,"border":"none","radius":0,"padding":3,"shadow":true,"align":"left"},
 			 "modules":{
 			  "fps":{"enabled":true,"x":8,"y":10,"scale":100},
 			  "coords":{"enabled":true,"x":8,"y":110,"scale":100},
@@ -93,8 +92,11 @@ public final class HudConfig {
 	}
 
 	public JsonObject feature(String id) {
-		JsonElement f = root.getAsJsonObject("features").get(id);
-		return f instanceof JsonObject o ? o : new JsonObject();
+		JsonObject features = root.getAsJsonObject("features");
+		if (features.get(id) instanceof JsonObject o) return o;
+		JsonObject created = new JsonObject();
+		features.add(id, created);
+		return created;
 	}
 
 	// Lenient readers: a wrong type falls back to the default instead of failing the frame.

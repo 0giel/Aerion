@@ -20,6 +20,7 @@ import pl.aerion.mod.Draw;
 import pl.aerion.mod.Lang;
 import pl.aerion.mod.Theme;
 import pl.aerion.mod.features.Features;
+import pl.aerion.mod.platform.EditorScreen;
 import pl.aerion.mod.platform.Game;
 import pl.aerion.mod.platform.Gfx;
 
@@ -368,7 +369,7 @@ public final class Hud {
 			case "accent" -> t != null ? t.accent : 0xFF7AA2FF;
 			default -> Theme.color(border, 0);
 		};
-		int radius = HudConfig.num(own.has("radius") ? own : base, "radius", 3);
+		int radius = HudConfig.num(own.has("radius") ? own : base, "radius", 0);
 		int padding = HudConfig.num(own.has("padding") ? own : base, "padding", 3);
 		boolean shadow = HudConfig.bool(own.has("shadow") ? own : base, "shadow", true);
 		String align = pick(own, base, "align", "left");
@@ -388,8 +389,9 @@ public final class Hud {
 	public static void render(Gfx g, boolean preview) {
 		Minecraft mc = Minecraft.getInstance();
 		HudConfig cfg = AerionClient.hud();
-		if (cfg == null || !cfg.enabled()) return;
-		if (!preview && (Game.hudHidden() || mc.player == null)) return;
+		if (cfg == null) return;
+		// The editor draws the modules itself, also while the whole HUD is switched off.
+		if (!preview && (!cfg.enabled() || Game.hudHidden() || mc.player == null || Game.screen() instanceof EditorScreen)) return;
 		Theme t = AerionClient.theme();
 		BOUNDS.clear();
 		for (var e : MODULES.entrySet()) {

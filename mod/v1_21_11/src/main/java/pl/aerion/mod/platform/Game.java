@@ -19,4 +19,8 @@ public final class Game {
 	public static boolean hudHidden() {
 		return Minecraft.getInstance().options.hideGui;
 	}
+
+	public static void clearToasts() {
+		Minecraft.getInstance().getToastManager().clear();
+	}
 }

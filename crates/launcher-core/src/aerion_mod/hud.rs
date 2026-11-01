@@ -1,5 +1,5 @@
-//! `hud.json`: the Aerion mod's HUD modules and client features. The launcher edits every option;
-//! the in-game editor moves and scales modules in the same file. Positions are per-mille of the
+//! `hud.json`: the Aerion mod's HUD modules and client features, edited by the launcher and by the
+//! in-game editor (text formats only in the launcher). Positions are per-mille of the
 //! free space (0 = left/top, 1000 = right/bottom), scale is a percentage. The defaults match the
 //! mod's (`mod/common/.../hud/HudConfig.java`).
 
@@ -164,7 +164,7 @@ impl Default for HudConfig {
                 background: Some("theme".into()),
                 opacity: Some(55),
                 border: Some("none".into()),
-                radius: Some(3),
+                radius: Some(0),
                 padding: Some(3),
                 shadow: Some(true),
                 align: Some("left".into()),

@@ -238,9 +238,11 @@ commands, so a broken widget can't affect the rest of the launcher.
 `mod/common` holds everything that doesn't touch rendering names; `v26_3` and `v1_21_11` hold the
 thin part that differs (`platform/*`, version mixins). 26.x is unobfuscated, 1.21.11 is remapped
 by Loom. Fabric API proved unnecessary, and leaving it out means nothing extra to download or
-break. Settings live in `aerion-mod/hud.json`: the launcher edits everything, the in-game editor
-moves and scales, a running game reloads the file within a second, and the launcher reloads it
-when its window regains focus. The minimap draws terrain only: showing other players would be a
+break. Settings live in `aerion-mod/hud.json`: the launcher edits everything, and the in-game editor
+moves and scales modules and, in its side panel, switches modules and features on and off and sets
+each module's look and the shared one (only text formats need the launcher, there is no text field
+in the game). A running game reloads the file within a second, and the launcher reloads it when
+its window regains focus. Corners are square by default (owner's request); the corner setting stays. The minimap draws terrain only: showing other players would be a
 radar, which servers treat as cheating. Freelook and fullbright are off by default and the
 launcher warns that servers may forbid them. Toggle sprint/sneak use Minecraft's own options;
 `aerion-toggles` in the game directory records what Aerion turned on, so switching the feature

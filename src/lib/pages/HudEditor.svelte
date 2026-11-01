@@ -127,7 +127,8 @@
       `background:${bg}`,
       `color:${text}`,
       `border:${kk}px solid ${border}`,
-      `border-radius:${(s.radius ?? 3) * kk}px`,
+      `--box-r:${(s.radius ?? 0) * kk}px`,
+      `border-radius:var(--box-r)`,
       `padding:${(s.padding ?? 3) * kk}px`,
       `text-align:${s.align ?? "left"}`,
       `text-shadow:${s.shadow === false ? "none" : `${kk}px ${kk}px 0 rgb(0 0 0 / 0.55)`}`,
@@ -243,7 +244,7 @@
               <input
                 type="range"
                 min="25"
-                max="300"
+                max="400"
                 step="5"
                 value={m.scale}
                 oninput={(e) => ((m.scale = Number((e.target as HTMLInputElement).value)), changed())}
@@ -469,7 +470,7 @@
     place-items: center;
     height: calc(var(--kk) * 18);
     background: rgb(0 0 0 / 0.4);
-    border-radius: calc(var(--kk) * 2);
+    border-radius: var(--box-r);
   }
   .key.wide {
     grid-column: span 1;
@@ -497,7 +498,7 @@
   .item {
     width: calc(var(--kk) * 16);
     height: calc(var(--kk) * 16);
-    border-radius: calc(var(--kk) * 2);
+    border-radius: var(--box-r);
     background: linear-gradient(135deg, #9ad7ff, #4a7fae);
   }
   .map {
