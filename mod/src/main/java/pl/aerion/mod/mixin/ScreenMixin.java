@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
+import pl.aerion.mod.Particles;
 import pl.aerion.mod.Theme;
 
 /** Menu backgrounds: the theme's gradient instead of the panorama and the dark menu texture. */
@@ -16,10 +17,18 @@ import pl.aerion.mod.Theme;
 abstract class ScreenMixin {
 	@Inject(method = "extractPanorama", at = @At("HEAD"), cancellable = true)
 	private void aerion$panorama(GuiGraphicsExtractor g, float delta, CallbackInfo ci) {
-		Theme t = AerionClient.theme();
+		Theme t = AerionClient.colors();
 		if (t == null) return;
 		Draw.background(g, t, 0xFF);
+		Particles.draw(g, t);
 		ci.cancel();
+	}
+
+	/** Particles over the game's own panorama when theme colours are off. */
+	@Inject(method = "extractPanorama", at = @At("TAIL"))
+	private void aerion$panoramaParticles(GuiGraphicsExtractor g, float delta, CallbackInfo ci) {
+		Theme t = AerionClient.theme();
+		if (t != null && !t.colors) Particles.draw(g, t);
 	}
 
 	@Inject(
@@ -27,7 +36,7 @@ abstract class ScreenMixin {
 			at = @At("HEAD"),
 			cancellable = true)
 	private void aerion$menu(GuiGraphicsExtractor g, int x, int y, int w, int h, CallbackInfo ci) {
-		Theme t = AerionClient.theme();
+		Theme t = AerionClient.colors();
 		if (t == null) return;
 		g.fill(x, y, x + w, y + h, Colors.alpha(Draw.behindText(t, t.surface), 0x8C));
 		ci.cancel();
@@ -36,7 +45,7 @@ abstract class ScreenMixin {
 	/** Menus over a running world (pause, inventory-less screens): a tinted veil. */
 	@Inject(method = "extractTransparentBackground", at = @At("HEAD"), cancellable = true)
 	private void aerion$veil(GuiGraphicsExtractor g, CallbackInfo ci) {
-		Theme t = AerionClient.theme();
+		Theme t = AerionClient.colors();
 		if (t == null) return;
 		Draw.background(g, t, 0xA0);
 		ci.cancel();

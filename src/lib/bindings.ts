@@ -608,6 +608,36 @@ export type GameTheme = {
 	gradient: string[],
 	/**  Corner radius of medium controls in CSS pixels. */
 	radius: number,
+	/**
+	 *  The player's choices ([`crate::settings::GameUiPrefs`]); particles carry the theme's kind
+	 *  (`sparkles`, `dust`, `snow`) or `none`.
+	 */
+	colors: boolean,
+	particles: string,
+	logo: boolean,
+};
+
+/**  What the Aerion mod changes in the game (Settings → Appearance → In game). */
+export type GameUiPrefs = GameUiPrefs_Serialize | GameUiPrefs_Deserialize;
+
+/**  What the Aerion mod changes in the game (Settings → Appearance → In game). */
+export type GameUiPrefs_Deserialize = {
+	/**  Buttons, sliders and menu backgrounds in the launcher theme's colours. */
+	colors?: boolean,
+	/**  The theme's background particles in the game's menus. */
+	particles?: boolean,
+	/**  The Aerion logo instead of the Minecraft logo on the title screen. */
+	logo?: boolean,
+};
+
+/**  What the Aerion mod changes in the game (Settings → Appearance → In game). */
+export type GameUiPrefs_Serialize = {
+	/**  Buttons, sliders and menu backgrounds in the launcher theme's colours. */
+	colors: boolean,
+	/**  The theme's background particles in the game's menus. */
+	particles: boolean,
+	/**  The Aerion logo instead of the Minecraft logo on the title screen. */
+	logo: boolean,
 };
 
 export type GameVersion = {
@@ -1313,6 +1343,7 @@ export type Settings_Deserialize = {
 	layout?: LayoutPrefs_Deserialize,
 	/**  Version whose "What's new" notes the user has seen; `None` before 0.1.9. */
 	lastSeenVersion?: string | null,
+	gameUi?: GameUiPrefs_Deserialize,
 };
 
 export type Settings_Serialize = {
@@ -1359,6 +1390,7 @@ export type Settings_Serialize = {
 	layout: LayoutPrefs_Serialize,
 	/**  Version whose "What's new" notes the user has seen; `None` before 0.1.9. */
 	lastSeenVersion: string | null,
+	gameUi: GameUiPrefs_Serialize,
 };
 
 export type Skin = Skin_Serialize | Skin_Deserialize;

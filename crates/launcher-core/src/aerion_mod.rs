@@ -34,6 +34,11 @@ pub struct GameTheme {
     pub gradient: Vec<String>,
     /// Corner radius of medium controls in CSS pixels.
     pub radius: u32,
+    /// The player's choices ([`crate::settings::GameUiPrefs`]); particles carry the theme's kind
+    /// (`sparkles`, `dust`, `snow`) or `none`.
+    pub colors: bool,
+    pub particles: String,
+    pub logo: bool,
 }
 
 pub fn dir(paths: &Paths) -> PathBuf {

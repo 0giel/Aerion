@@ -202,3 +202,7 @@ copied into the player's mods folder. Built only for 26.3 for now: Minecraft's G
 between versions (26.x renamed rendering to `GuiGraphicsExtractor`/`extract*`), so each further
 version is a separate build. Labels stay white (vanilla draws them so), therefore button bodies
 are darkened until white text reads well, also with light themes. Off by default per instance.
+Follow-up: particles and an Aerion logo; each of colours, particles and logo can be switched
+off globally (`settings.gameUi`), the per-instance switch turns the whole mod off. The logo is
+drawn from fills and the game font rather than a texture, because mod assets are not loaded
+without Fabric API's resource loader and a pixel-built logo matches Minecraft's style.

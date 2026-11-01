@@ -20,6 +20,12 @@ Newest entries first.
   without Fabric API, all mixins applied, title screen shows the theme gradient and themed
   buttons; switching Emerald → Rose in the launcher restyled the running game within a second;
   Light is dimmed in game so Minecraft's white text stays readable.
+- Owner's follow-up: menu particles like the launcher (theme's sparkles/dust/snow), the Aerion logo
+  instead of the Minecraft logo (glyph rasterised into GUI pixels + "Aerion" in the game font,
+  so it is sharp at every GUI scale and needs no texture loading without Fabric API), and
+  switches for colours / particles / logo in Settings → Appearance → In game (`settings.gameUi`,
+  passed in theme.json). Checked in game: logo and sparkles on Nocturne; turning the logo off in
+  the launcher brought the Minecraft logo back in the running game within a second.
 - Dev-only gotcha: after many dev-server restarts WebKit's HTTP cache of the test profile served
   stale modules and vite-plugin-svelte logged "failed to load virtual css module" (unstyled
   sidebar/home). Clearing `~/.local/share/pl.aerion.devtest/WebKitCache` fixed it; release builds

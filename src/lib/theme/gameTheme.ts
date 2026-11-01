@@ -1,11 +1,11 @@
 // The part of a launcher theme the Aerion mod draws in the game, with the CSS resolved here so
 // the mod only reads colours.
-import type { GameTheme } from "../api";
+import type { GameTheme, GameUiPrefs } from "../api";
 import type { Theme } from "./schema";
 
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b/gi;
 
-export function toGameTheme(t: Theme): GameTheme {
+export function toGameTheme(t: Theme, prefs: GameUiPrefs): GameTheme {
   const c = t.colors;
   const b = t.background;
   const gradient =
@@ -25,5 +25,8 @@ export function toGameTheme(t: Theme): GameTheme {
     accentText: c.accentText,
     gradient: gradient.length ? gradient : [c.bg],
     radius: Math.round(t.radius.md),
+    colors: prefs.colors,
+    particles: prefs.particles ? b.particles : "none",
+    logo: prefs.logo,
   };
 }

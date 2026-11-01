@@ -69,6 +69,29 @@ impl Default for LayoutPrefs {
     }
 }
 
+/// What the Aerion mod changes in the game (Settings → Appearance → In game).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase", default)]
+pub struct GameUiPrefs {
+    /// Buttons, sliders and menu backgrounds in the launcher theme's colours.
+    pub colors: bool,
+    /// The theme's background particles in the game's menus.
+    pub particles: bool,
+    /// The Aerion logo instead of the Minecraft logo on the title screen.
+    pub logo: bool,
+}
+
+impl Default for GameUiPrefs {
+    fn default() -> Self {
+        Self {
+            colors: true,
+            particles: true,
+            logo: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase", default)]
@@ -118,6 +141,7 @@ pub struct Settings {
     pub layout: LayoutPrefs,
     /// Version whose "What's new" notes the user has seen; `None` before 0.1.9.
     pub last_seen_version: Option<String>,
+    pub game_ui: GameUiPrefs,
 }
 
 impl Default for Settings {
@@ -155,6 +179,7 @@ impl Default for Settings {
             follow_cursor: true,
             layout: LayoutPrefs::default(),
             last_seen_version: None,
+            game_ui: GameUiPrefs::default(),
         }
     }
 }

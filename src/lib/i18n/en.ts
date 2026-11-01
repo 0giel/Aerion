@@ -543,6 +543,14 @@ const en = {
     advancedHint: "For experienced users: network, Microsoft sign-in and other rarely changed options.",
     javaAdvancedHint: "JVM preset, automatic Java, Java per version",
     gameAdvancedHint: "Initial memory, JVM and game arguments, wrapper command, environment variables",
+    inGame: "In game (Aerion mod)",
+    inGameHint:
+      "Applies to instances with the Aerion mod turned on (instance settings → Launching; Fabric 26.3 for now). Changes show at once, even in a running game.",
+    inGameOptions: {
+      colors: "Buttons, sliders and menu backgrounds in the theme colours",
+      particles: "Particles in the menus (like the launcher background)",
+      logo: "The Aerion logo instead of the Minecraft logo",
+    },
     customizeMenu: "Customize menu",
     customizeHome: "Customize home screen",
     gameHint: "Used by every instance unless the instance sets its own value (instance → Settings).",

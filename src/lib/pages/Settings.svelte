@@ -295,6 +295,18 @@
           checked={s.followCursor}
           onchange={(v) => save({ followCursor: v })}
         />
+        <hr class="sep" />
+        <div class="col layout-text">
+          <span class="label">{t("settings.inGame")}</span>
+          <span class="small muted">{t("settings.inGameHint")}</span>
+        </div>
+        {#each ["colors", "particles", "logo"] as const as key (key)}
+          <Switch
+            label={t(`settings.inGameOptions.${key}`)}
+            checked={s.gameUi[key]}
+            onchange={(v) => save({ gameUi: { ...s.gameUi, [key]: v } })}
+          />
+        {/each}
       </section>
 
       <section id="set-java" class="card col gap-3">

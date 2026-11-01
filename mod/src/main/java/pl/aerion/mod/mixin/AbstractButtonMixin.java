@@ -16,7 +16,7 @@ import pl.aerion.mod.Theme;
 abstract class AbstractButtonMixin {
 	@Inject(method = "extractDefaultSprite", at = @At("HEAD"), cancellable = true)
 	private void aerion$button(GuiGraphicsExtractor g, CallbackInfo ci) {
-		Theme t = AerionClient.theme();
+		Theme t = AerionClient.colors();
 		if (t == null) return;
 		AbstractButton b = (AbstractButton) (Object) this;
 		int a = Math.round(b.getAlpha() * 255);

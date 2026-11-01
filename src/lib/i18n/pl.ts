@@ -587,6 +587,14 @@ const pl: Dict = {
     advancedHint: "Dla doświadczonych: sieć, logowanie Microsoft i inne rzadko zmieniane opcje.",
     javaAdvancedHint: "Preset JVM, automatyczna Java, własna Java dla wersji",
     gameAdvancedHint: "Pamięć początkowa, argumenty JVM i gry, polecenie opakowujące, zmienne środowiskowe",
+    inGame: "W grze (mod Aeriona)",
+    inGameHint:
+      "Działa w instancjach z włączonym modem Aeriona (ustawienia instancji → Uruchamianie; na razie Fabric 26.3). Zmiany widać od razu, także w uruchomionej grze.",
+    inGameOptions: {
+      colors: "Przyciski, suwaki i tła menu w kolorach motywu",
+      particles: "Cząsteczki w menu (jak w tle launchera)",
+      logo: "Logo Aeriona zamiast logo Minecrafta",
+    },
     customizeMenu: "Dostosuj menu",
     customizeHome: "Dostosuj ekran główny",
     gameHint: "Używane przez każdą instancję, chyba że instancja ma własną wartość (instancja → Ustawienia).",

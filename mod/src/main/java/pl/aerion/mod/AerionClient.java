@@ -37,6 +37,12 @@ public final class AerionClient implements ClientModInitializer {
 		return theme;
 	}
 
+	/** The theme when its colours should replace the game's (buttons, backgrounds). */
+	public static Theme colors() {
+		Theme t = theme;
+		return t != null && t.colors ? t : null;
+	}
+
 	/** Called every client tick (20 per second, also in menus); checks the file once a second. */
 	public static void tick() {
 		if (file != null && ++ticks % 20 == 0) reload();

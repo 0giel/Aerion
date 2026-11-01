@@ -78,8 +78,8 @@
   // Running games with the Aerion mod follow the launcher theme (they re-read the file).
   let gameThemeTimer: ReturnType<typeof setTimeout> | undefined;
   $effect(() => {
-    if (!app.ready) return;
-    const theme = toGameTheme(themes.active);
+    if (!app.ready || !app.settings) return;
+    const theme = toGameTheme(themes.active, app.settings.gameUi);
     clearTimeout(gameThemeTimer);
     gameThemeTimer = setTimeout(() => void commands.setGameTheme(theme).catch(() => {}), 300);
   });

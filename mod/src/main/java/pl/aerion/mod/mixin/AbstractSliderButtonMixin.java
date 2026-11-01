@@ -22,7 +22,7 @@ abstract class AbstractSliderButtonMixin {
 	@WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = BLIT, ordinal = 0))
 	private void aerion$track(
 			GuiGraphicsExtractor g, RenderPipeline p, Identifier s, int x, int y, int w, int h, int c, Operation<Void> original) {
-		Theme t = AerionClient.theme();
+		Theme t = AerionClient.colors();
 		if (t == null) {
 			original.call(g, p, s, x, y, w, h, c);
 			return;
@@ -36,7 +36,7 @@ abstract class AbstractSliderButtonMixin {
 	@WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = BLIT, ordinal = 1))
 	private void aerion$handle(
 			GuiGraphicsExtractor g, RenderPipeline p, Identifier s, int x, int y, int w, int h, int c, Operation<Void> original) {
-		Theme t = AerionClient.theme();
+		Theme t = AerionClient.colors();
 		if (t == null) {
 			original.call(g, p, s, x, y, w, h, c);
 			return;

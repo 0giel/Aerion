@@ -5,6 +5,7 @@
 	"client": [
 		"AbstractButtonMixin",
 		"AbstractSliderButtonMixin",
+		"LogoRendererMixin",
 		"MinecraftMixin",
 		"ScreenMixin"
 	],
