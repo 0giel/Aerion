@@ -9,7 +9,11 @@ import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
@@ -20,10 +24,11 @@ import pl.aerion.mod.Particles;
 import pl.aerion.mod.Theme;
 import pl.aerion.mod.Txt;
 import pl.aerion.mod.features.Features;
+import pl.aerion.mod.features.Sounds;
 import pl.aerion.mod.platform.Gfx;
 
 /**
- * Aerion's in-game menu: a sidebar (modules, features, keys, shared look) and a calm list of tiles;
+ * Aerion's in-game menu: a sidebar (modules, features, sounds, keys, shared look) and calm tiles;
  * a tile opens its settings on tabs, one thing at a time. A module's look is set field by field on
  * top of the shared look. Controls are rebuilt every frame and leave their clickable areas in
  * {@link #hits}; changes go straight into hud.json's tree, which is saved when the menu closes.
@@ -34,7 +39,9 @@ public final class AerionMenu implements Page {
 	};
 	private static final float TEXT = 8f, SMALL = 7f, TITLE = 10f;
 	private static final int ROW = 16, SIDE = 92, GAP = 5;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays"};
+	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
+	private static final int WIN_W = 440, WIN_H = 250;
 
 	/** A module setting; `formats` lists {value, label} choices for a text format. */
 	private record Option(String key, String def, String[] choices, String[] labels, int min, int max, boolean color) {
@@ -94,6 +101,13 @@ public final class AerionMenu implements Page {
 					Option.number("keySize", 18, 12, 30), Option.colour("pressed", "accent"))),
 			Map.entry("minimap", List.of(
 					Option.number("size", 80, 48, 160), Option.number("zoom", 2, 1, 4), Option.toggle("coords", true), Option.toggle("north", true))),
+			Map.entry("hitboxes", List.of(
+					Option.colour("color", "#ffffff"), Option.toggle("reach", true), Option.colour("reachColor", "#ff5555"),
+					Option.number("width", 2, 1, 6), Option.number("fill", 0, 0, 100), Option.number("range", 48, 8, 128),
+					Option.toggle("players", true), Option.toggle("mobs", true), Option.toggle("others", false), Option.toggle("look", false))),
+			Map.entry("overlays", List.of(
+					Option.number("fireDrop", 0, 0, 100), Option.toggle("pumpkin", false), Option.toggle("snow", false), Option.toggle("water", false),
+					Option.toggle("block", false), Option.toggle("vignette", false), Option.toggle("portal", false), Option.toggle("nausea", false))),
 			Map.entry("toggles", List.of(
 					Option.toggle("sprint", true), Option.toggle("sneak", true), Option.toggle("fullbright", true), Option.toggle("freelook", true))));
 
@@ -107,7 +121,7 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	private enum Section { HUD, FEATURES, KEYS, LOOK }
+	private enum Section { HUD, FEATURES, SOUNDS, KEYS, LOOK }
 
 	private enum Sub { GENERAL, LOOK, KEY }
 
@@ -125,7 +139,12 @@ public final class AerionMenu implements Page {
 
 	private final List<Hit> hits = new ArrayList<>();
 	private Hit sliding;
-	private boolean changed, closing, clipping;
+	private boolean changed, clipping;
+	/** Drawing units per GUI pixel: the menu has its own size, whatever the game's GUI scale. */
+	private float toUnits = 1f;
+	private int unitsW, unitsH;
+	private String soundGroup = "all", query = "";
+	private static List<String> allSounds;
 	private int scroll, contentHeight, viewTop, viewBottom;
 	private int x, y, colW, mouseX, mouseY;
 	private Gfx g;
@@ -151,13 +170,18 @@ public final class AerionMenu implements Page {
 		return HudConfig.bool(item(cfg, id), "enabled", id.equals("zoom"));
 	}
 
+	private void toLayout() {
+		Page.go(new HudEditor());
+	}
+
 	private static String name(String id) {
 		return Lang.tr((isFeature(id) ? "aerion.feature." : "aerion.module.") + id);
 	}
 
 	// --- input -------------------------------------------------------------------------------
 	@Override
-	public boolean pressed(double px, double py, int button) {
+	public boolean pressed(double gx, double gy, int button) {
+		double px = gx * toUnits, py = gy * toUnits;
 		if (capturing != null) {
 			// Left click cancels, so the mouse can still leave this state; other buttons bind.
 			if (button != InputConstants.MOUSE_BUTTON_LEFT) bind(InputConstants.Type.MOUSE.getOrCreate(button));
@@ -173,7 +197,7 @@ public final class AerionMenu implements Page {
 				break;
 			}
 		}
-		return closing;
+		return false;
 	}
 
 	@Override
@@ -184,14 +208,40 @@ public final class AerionMenu implements Page {
 			capturing = null;
 			return true;
 		}
-		// Esc steps back from settings to the list before it closes the menu.
-		if (escape && detail != null) {
-			detail = null;
-			expanded = null;
-			scroll = 0;
+		if (section == Section.SOUNDS && detail == null && !query.isEmpty()) {
+			if (escape) {
+				query = "";
+				scroll = 0;
+				return true;
+			}
+			if (key.getValue() == InputConstants.KEY_BACKSPACE) {
+				query = query.substring(0, query.length() - 1);
+				scroll = 0;
+				return true;
+			}
+		}
+		// Esc steps back: settings to the list, the list to the HUD layout.
+		if (escape) {
+			if (detail != null) {
+				detail = null;
+				expanded = null;
+				scroll = 0;
+			} else {
+				toLayout();
+			}
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean charTyped(int codepoint) {
+		if (section != Section.SOUNDS || detail != null || capturing != null) return false;
+		if (query.length() < 40 && Character.isValidCodePoint(codepoint) && !Character.isISOControl(codepoint)) {
+			query += new String(Character.toChars(codepoint));
+			scroll = 0;
+		}
+		return true;
 	}
 
 	private void bind(InputConstants.Key key) {
@@ -202,7 +252,7 @@ public final class AerionMenu implements Page {
 
 	@Override
 	public void dragged(double px, double py, int screenW, int screenH) {
-		if (sliding != null) sliding.fire(px);
+		if (sliding != null) sliding.fire(px * toUnits);
 	}
 
 	@Override
@@ -226,8 +276,6 @@ public final class AerionMenu implements Page {
 	public void render(Gfx gfx, int mx, int my) {
 		hits.clear();
 		g = gfx;
-		mouseX = mx;
-		mouseY = my;
 		Theme t = AerionClient.theme();
 		text = t != null ? t.text : 0xFFFFFFFF;
 		muted = t != null ? t.textMuted : 0xFFAAAAAA;
@@ -245,14 +293,35 @@ public final class AerionMenu implements Page {
 		} else {
 			g.fill(0, 0, g.width(), g.height(), 0x70000000);
 		}
-		int winW = Math.min(g.width() - 12, 470), winH = Math.min(g.height() - 12, 270);
-		int left = (g.width() - winW) / 2, top = (g.height() - winH) / 2;
+		// A whole number of screen pixels per unit keeps text and lines sharp; about 60% of the
+		// window's height, so a large window with a high GUI scale doesn't get a huge menu.
+		int k = Gfx.realGuiScale(), realH = g.height() * k, realW = g.width() * k;
+		int p = Math.max(2, (int) (realH * 0.62f / WIN_H));
+		toUnits = (float) k / p;
+		unitsW = realW / p;
+		unitsH = realH / p;
+		mouseX = (int) (mx * toUnits);
+		mouseY = (int) (my * toUnits);
+		g.push();
+		g.scale(1f / toUnits);
+		Gfx.pixels(p);
+		try {
+			window();
+		} finally {
+			Gfx.pixels(0);
+			g.pop();
+		}
+	}
+
+	private void window() {
+		int winW = Math.min(unitsW - 12, WIN_W), winH = Math.min(unitsH - 12, WIN_H);
+		int left = (unitsW - winW) / 2, top = (unitsH - winH) / 2;
 		Draw.rounded(g, left, top, winW, winH, 4, surface);
 		sidebar(left, top, winH);
 		Draw.control(g, left, top, winW, winH, 4, line, 0);
 
 		int mainX = left + SIDE + 10, mainW = winW - SIDE - 20;
-		iconButton(left + winW - 20, top + 6, 14, "close", () -> closing = true);
+		iconButton(left + winW - 20, top + 6, 14, "close", this::toLayout);
 		int head = detail != null ? pageHead(mainX, top + 6, mainW - 18) : listHead(mainX, top + 7);
 
 		viewTop = top + head;
@@ -269,6 +338,7 @@ public final class AerionMenu implements Page {
 		else switch (section) {
 			case HUD -> tiles(mainX, mainW, List.of(Features.MODULE_IDS));
 			case FEATURES -> tiles(mainX, mainW, List.of(FEATURES));
+			case SOUNDS -> soundsPage();
 			case KEYS -> keysPage();
 			case LOOK -> lookPage();
 		}
@@ -291,9 +361,10 @@ public final class AerionMenu implements Page {
 		int ny = top + 27;
 		ny = navItem(left + 4, ny, Section.HUD, "fps", "aerion.nav.hud");
 		ny = navItem(left + 4, ny, Section.FEATURES, "zoom", "aerion.nav.features");
+		ny = navItem(left + 4, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
 		ny = navItem(left + 4, ny, Section.KEYS, "keys", "aerion.nav.keys");
 		navItem(left + 4, ny, Section.LOOK, "look", "aerion.nav.look");
-		button(left + 4, top + h - 21, SIDE - 8, 16, Lang.tr("aerion.menu.editLayout"), true, () -> Page.go(new HudEditor()));
+		button(left + 4, top + h - 21, SIDE - 8, 16, Lang.tr("aerion.nav.layout"), true, this::toLayout);
 	}
 
 	private int navItem(int nx, int ny, Section which, String icon, String label) {
@@ -317,6 +388,7 @@ public final class AerionMenu implements Page {
 		String key = switch (section) {
 			case HUD -> "hud";
 			case FEATURES -> "features";
+			case SOUNDS -> "sounds";
 			case KEYS -> "keys";
 			case LOOK -> "look";
 		};
@@ -461,7 +533,11 @@ public final class AerionMenu implements Page {
 		} else if (detail.equals("freelook")) {
 			toggle(Lang.tr("aerion.feature.freelookHold"), HudConfig.bool(f, "hold", true), v -> f.addProperty("hold", v));
 		}
-		if (detail.equals("freelook") || detail.equals("fullbright")) note(Lang.tr("aerion.panel.serverWarning"));
+		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(f, o);
+		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) {
+			y += 2;
+			note(Lang.tr("aerion.panel.serverWarning"));
+		}
 	}
 
 	private void option(JsonObject m, Option o) {
@@ -623,6 +699,126 @@ public final class AerionMenu implements Page {
 		reserve = 0;
 	}
 
+	// --- sounds ------------------------------------------------------------------------------
+	private static List<String> allSounds() {
+		if (allSounds == null) {
+			List<String> ids = new ArrayList<>();
+			for (Identifier id : BuiltInRegistries.SOUND_EVENT.keySet()) ids.add(id.toString());
+			java.util.Collections.sort(ids);
+			allSounds = ids;
+		}
+		return allSounds;
+	}
+
+	private static String groupOf(String id) {
+		String path = id.substring(id.indexOf(':') + 1);
+		int dot = path.indexOf('.');
+		String first = dot < 0 ? path : path.substring(0, dot);
+		return switch (first) {
+			case "block", "entity", "item" -> first;
+			case "ambient", "weather" -> "ambient";
+			case "music", "music_disc" -> "music";
+			default -> "other";
+		};
+	}
+
+	private List<String> shownSounds() {
+		List<String> source = soundGroup.equals("recent") ? Sounds.recent() : allSounds();
+		String q = query.toLowerCase(java.util.Locale.ROOT);
+		List<String> out = new ArrayList<>();
+		for (String id : source) {
+			boolean group = soundGroup.equals("all") || soundGroup.equals("recent") || groupOf(id).equals(soundGroup);
+			if (group && (q.isEmpty() || id.contains(q))) out.add(id);
+		}
+		return out;
+	}
+
+	private void soundsPage() {
+		HudConfig cfg = AerionClient.hud();
+		JsonObject f = cfg.feature("sounds");
+		toggle(Lang.tr("aerion.sound.enable"), HudConfig.bool(f, "enabled", true), v -> f.addProperty("enabled", v));
+		// Groups, wrapping to a second row when the labels don't fit.
+		int bx = x;
+		for (String group : SOUND_GROUPS) {
+			String label = Lang.tr("aerion.sound." + group);
+			int w = Math.round(Txt.width(label, SMALL)) + 10;
+			if (bx + w > x + colW) {
+				bx = x;
+				y += 14;
+			}
+			smallButton(bx, y, w, 12, label, group.equals(soundGroup), () -> {
+				soundGroup = group;
+				scroll = 0;
+			});
+			bx += w + 2;
+		}
+		y += 16;
+		// Typing goes straight into the search box.
+		String reset = Lang.tr("aerion.sound.resetAll");
+		int resetW = Math.round(Txt.width(reset, SMALL)) + 10, boxW = colW - resetW - 4;
+		Draw.control(g, x, y, boxW, 13, 2, line, tile);
+		Icons.draw(g, "search", x + 3, y + 2.5f, 8, muted);
+		boolean blink = System.currentTimeMillis() / 500 % 2 == 0;
+		if (query.isEmpty()) Txt.draw(g, Lang.tr("aerion.sound.search"), x + 14, y + 6.5f, SMALL, muted);
+		else Txt.draw(g, query + (blink ? "|" : ""), x + 14, y + 6.5f, SMALL, text);
+		smallButton(x + boxW + 4, y, resetW, 13, reset, false, () -> {
+			f.remove("options");
+			changed = true;
+		});
+		y += 17;
+		List<String> list = shownSounds();
+		if (list.isEmpty()) {
+			note(Lang.tr(soundGroup.equals("recent") && query.isEmpty() ? "aerion.sound.recentEmpty" : "aerion.sound.empty"));
+			return;
+		}
+		// There are well over a thousand sounds: only the rows on screen are drawn.
+		for (String id : list) {
+			if (y + 14 > viewTop && y < viewBottom) soundRow(f, id);
+			y += 14;
+		}
+	}
+
+	private void soundRow(JsonObject f, String id) {
+		String shown = id.startsWith("minecraft:") ? id.substring(10) : id;
+		int value;
+		try {
+			value = Integer.parseInt(HudConfig.opt(f, id, "100"));
+		} catch (NumberFormatException e) {
+			value = 100;
+		}
+		int bx = x + colW - 110, w = 92;
+		float room = bx - x - 4;
+		String label = shown;
+		if (Txt.width(label, SMALL) > room) {
+			while (label.length() > 1 && Txt.width("…" + label, SMALL) > room) label = label.substring(1);
+			label = "…" + label;
+		}
+		Txt.draw(g, label, x, y + 7, SMALL, value == 100 ? muted : text);
+		Draw.rounded(g, bx, y + 1, w, 12, 2, control);
+		int fill = Math.round(w * value / 100f);
+		if (fill > 0) Draw.rounded(g, bx, y + 1, fill, 12, 2, Colors.alpha(value == 100 ? line : accent, 0xC0));
+		Txt.center(g, value + "%", bx + w / 2f, y + 7, SMALL, text);
+		hit(bx, y, w, 14, fr -> {
+			int v = (int) Math.round(fr * 20) * 5;
+			if (v == 100) {
+				if (f.get("options") instanceof JsonObject o) o.remove(id);
+			} else {
+				setOption(f, id, String.valueOf(v));
+			}
+			changed = true;
+		}, true);
+		int px = bx + w + 2;
+		boolean over = inside(px, y + 1, 14, 12);
+		Draw.rounded(g, px, y + 1, 14, 12, 2, over ? Colors.mix(surface, text, 0.2f) : control);
+		Icons.draw(g, "play", px + 3, y + 3, 8, text);
+		hit(px, y + 1, 14, 12, fr -> preview(id), false);
+	}
+
+	private static void preview(String id) {
+		SoundEvent event = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.parse(id));
+		if (event != null) Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event, 1f));
+	}
+
 	// --- keys --------------------------------------------------------------------------------
 	private void keyTab() {
 		KeyMapping k = Features.key(detail);
@@ -643,6 +839,9 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.zoom"), Features.key("zoom"));
 		keyRow(Lang.tr("aerion.feature.freelook"), Features.key("freelook"));
 		keyRow(Lang.tr("aerion.feature.fullbright"), Features.key("fullbright"));
+		keyRow(Lang.tr("aerion.feature.hitboxes"), Features.key("hitboxes"));
+		keyRow(Lang.tr("aerion.feature.overlays"), Features.key("overlays"));
+		keyRow(Lang.tr("aerion.nav.sounds"), Features.key("sounds"));
 		keyRow(Lang.tr("aerion.key.sprint"), Features.key("toggleSprint"));
 		keyRow(Lang.tr("aerion.key.sneak"), Features.key("toggleSneak"));
 		y += 4;

@@ -1120,7 +1120,7 @@ const pl: Dict = {
     title: "HUD i funkcje gry",
     open: "Edytuj HUD i funkcje gry",
     intro:
-      "Moduły HUD i funkcje moda Aeriona (instancje Fabric 26.3 i 1.21.11 z włączonym modem). Zmiany zapisują się od razu i działają także w uruchomionej grze. W grze Prawy Shift otwiera menu Aeriona z kartami modułów i edytorem układu.",
+      "Moduły HUD i funkcje moda Aeriona (instancje Fabric 26.3 i 1.21.11 z włączonym modem). Zmiany zapisują się od razu i działają także w uruchomionej grze. W grze prawy Shift otwiera układ HUD z przyciskiem Mody do wszystkich ustawień.",
     enabled: "HUD Aeriona",
     presetsLabel: "Gotowe układy:",
     presetApplied: "Ustawiono układ: {name}",
@@ -1139,7 +1139,7 @@ const pl: Dict = {
     sharedStyle: "Wygląd wszystkich modułów",
     featuresTitle: "Funkcje",
     keysHint:
-      "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, menu Aeriona Prawy Shift, pełna jasność bez klawisza) oraz klawisz włączania każdego modułu ustawisz w grze: menu Aeriona → Klawisze.",
+      "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, układ HUD Prawy Shift, pełna jasność bez klawisza) oraz klawisz włączania każdego modułu ustawisz w grze: prawy Shift → Mody → Klawisze.",
     modules: {
       fps: "FPS",
       coords: "Koordynaty",
@@ -1278,6 +1278,12 @@ const pl: Dict = {
       hold: "Przytrzymaj",
       toggle: "Przełącz",
       fullbright: "Pełna jasność (fullbright)",
+      hitboxes: "Hitboxy",
+      hitboxesHint: "Kolory, zasięg i kolor w zasięgu ciosu ustawisz w menu w grze.",
+      overlays: "Overlaye",
+      overlaysHint: "Niższy ogień i usuwanie efektów ustawisz w menu w grze.",
+      sounds: "Edytor dźwięków",
+      soundsHint: "Głośność każdego dźwięku ustawisz w menu w grze.",
       fullbrightHint: "Widzisz w ciemności; klawisz wyłącza i włącza na chwilę.",
     },
   },

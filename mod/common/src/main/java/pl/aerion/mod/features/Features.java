@@ -16,8 +16,8 @@ import net.minecraft.client.OptionInstance;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import pl.aerion.mod.AerionClient;
-import pl.aerion.mod.hud.AerionMenu;
 import pl.aerion.mod.hud.HudConfig;
+import pl.aerion.mod.hud.HudEditor;
 import pl.aerion.mod.mixin.OptionInstanceAccessor;
 import pl.aerion.mod.platform.EditorScreen;
 import pl.aerion.mod.platform.Game;
@@ -36,7 +36,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright;
+	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -47,7 +47,10 @@ public final class Features {
 			zoom = new KeyMapping("key.aerion.zoom", InputConstants.KEY_C, cat);
 			freelook = new KeyMapping("key.aerion.freelook", InputConstants.KEY_LALT, cat);
 			fullbright = new KeyMapping("key.aerion.fullbright", InputConstants.UNKNOWN.getValue(), cat);
-			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright));
+			hitboxes = new KeyMapping("key.aerion.hitboxes", InputConstants.UNKNOWN.getValue(), cat);
+			overlays = new KeyMapping("key.aerion.overlays", InputConstants.UNKNOWN.getValue(), cat);
+			sounds = new KeyMapping("key.aerion.sounds", InputConstants.UNKNOWN.getValue(), cat);
+			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -71,6 +74,9 @@ public final class Features {
 			case "zoom" -> zoom;
 			case "freelook" -> freelook;
 			case "fullbright" -> fullbright;
+			case "hitboxes" -> hitboxes;
+			case "overlays" -> overlays;
+			case "sounds" -> sounds;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -218,13 +224,24 @@ public final class Features {
 		}
 	}
 
+	private static void toggleOnKey(KeyMapping key, String id, boolean fallback) {
+		while (key.consumeClick()) {
+			JsonObject f = feature(id);
+			f.addProperty("enabled", !HudConfig.bool(f, "enabled", fallback));
+			AerionClient.saveHud();
+		}
+	}
+
 	/** Called every client tick. */
 	public static void tick(Minecraft mc) {
 		if (keys == null) return;
 		while (editor.consumeClick()) {
-			if (Game.screen() == null) Game.setScreen(new EditorScreen(new AerionMenu(), null));
+			if (Game.screen() == null) Game.setScreen(new EditorScreen(new HudEditor(), null));
 		}
 		syncToggles(mc);
+		toggleOnKey(hitboxes, "hitboxes", false);
+		toggleOnKey(overlays, "overlays", false);
+		toggleOnKey(sounds, "sounds", true);
 		for (var e : MODULE_KEYS.entrySet()) {
 			while (e.getValue().consumeClick()) {
 				HudConfig cfg = AerionClient.hud();

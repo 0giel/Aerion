@@ -1062,7 +1062,7 @@ const en = {
     title: "HUD and game features",
     open: "Edit HUD and game features",
     intro:
-      "HUD modules and features of the Aerion mod (Fabric 26.3 and 1.21.11 instances with the mod on). Changes save at once and apply to a running game too. In game, Right Shift opens the Aerion menu with module cards and the layout editor.",
+      "HUD modules and features of the Aerion mod (Fabric 26.3 and 1.21.11 instances with the mod on). Changes save at once and apply to a running game too. In game, Right Shift opens the HUD layout, with a Mods button for all settings.",
     enabled: "Aerion HUD",
     presetsLabel: "Ready layouts:",
     presetApplied: "Layout applied: {name}",
@@ -1081,7 +1081,7 @@ const en = {
     sharedStyle: "Look of all modules",
     featuresTitle: "Features",
     keysHint:
-      "Keys (default: zoom C, freelook left Alt, Aerion menu Right Shift, fullbright unbound), and a key to switch each module on or off, are set in game: Aerion menu → Key bindings.",
+      "Keys (default: zoom C, freelook left Alt, HUD layout Right Shift, fullbright unbound), and a key to switch each module on or off, are set in game: Right Shift → Mods → Key bindings.",
     modules: {
       fps: "FPS",
       coords: "Coordinates",
@@ -1220,6 +1220,12 @@ const en = {
       hold: "Hold",
       toggle: "Toggle",
       fullbright: "Fullbright",
+      hitboxes: "Hitboxes",
+      hitboxesHint: "Colours, range and reach colour are set in the game's menu.",
+      overlays: "Overlays",
+      overlaysHint: "Lower fire and removed effects are set in the game's menu.",
+      sounds: "Sound editor",
+      soundsHint: "Volume of each sound is set in the game's menu.",
       fullbrightHint: "See in the dark; the key switches it off and on for a moment.",
     },
   },

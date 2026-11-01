@@ -79,8 +79,19 @@ public final class Gfx {
 		g.disableScissor();
 	}
 
-	/** Screen pixels per GUI pixel. */
+	private static int pixels;
+
+	/** Screen pixels per drawing unit: the GUI scale, unless a menu sets its own size. */
 	public static int guiScale() {
+		return pixels > 0 ? pixels : realGuiScale();
+	}
+
+	public static int realGuiScale() {
 		return Minecraft.getInstance().getWindow().getGuiScale();
+	}
+
+	/** Draw at `p` screen pixels per unit (0 goes back to the GUI scale). */
+	public static void pixels(int p) {
+		pixels = p;
 	}
 }

@@ -570,6 +570,30 @@ export type ExternalInstance_Serialize = {
 
 export type ExternalSource = "official" | "prism" | "modrinth" | "curseforge" | "sklauncher" | "folder";
 
+/**
+ *  A feature whose settings the in-game menu owns (hitboxes, overlays, sounds); the launcher
+ *  keeps them and only switches the feature on and off.
+ */
+export type FeatureOptions = FeatureOptions_Serialize | FeatureOptions_Deserialize;
+
+/**
+ *  A feature whose settings the in-game menu owns (hitboxes, overlays, sounds); the launcher
+ *  keeps them and only switches the feature on and off.
+ */
+export type FeatureOptions_Deserialize = {
+	enabled?: boolean,
+	options?: { [key in string]: string },
+};
+
+/**
+ *  A feature whose settings the in-game menu owns (hitboxes, overlays, sounds); the launcher
+ *  keeps them and only switches the feature on and off.
+ */
+export type FeatureOptions_Serialize = {
+	enabled: boolean,
+	options?: { [key in string]: string },
+};
+
 export type FolderTarget = { kind: "root" } | { kind: "data" } | { kind: "logs" } | { kind: "themes" } | { kind: "instance"; id: string } | { kind: "gameDir"; id: string } | { kind: "content"; id: string; content: ContentKind } | { kind: "screenshots"; id: string } | 
 /**  A file or folder inside the launcher's directories (crash reports, exports). */
 { kind: "path"; path: string };
@@ -793,6 +817,9 @@ export type HudFeatures_Deserialize = {
 	fullbright?: Toggle_Deserialize,
 	toggleSprint?: Toggle_Deserialize,
 	toggleSneak?: Toggle_Deserialize,
+	hitboxes?: FeatureOptions_Deserialize,
+	overlays?: FeatureOptions_Deserialize,
+	sounds?: SoundOptions_Deserialize,
 };
 
 export type HudFeatures_Serialize = {
@@ -801,6 +828,9 @@ export type HudFeatures_Serialize = {
 	fullbright: Toggle_Serialize,
 	toggleSprint: Toggle_Serialize,
 	toggleSneak: Toggle_Serialize,
+	hitboxes: FeatureOptions_Serialize,
+	overlays: FeatureOptions_Serialize,
+	sounds: SoundOptions_Serialize,
 };
 
 export type HudModule = HudModule_Serialize | HudModule_Deserialize;
@@ -1755,6 +1785,21 @@ export type Skin_Serialize = {
 };
 
 export type SortOrder = "relevance" | "downloads" | "updated" | "newest";
+
+/**  The sound editor: enabled unless switched off, volume per sound id in `options`. */
+export type SoundOptions = SoundOptions_Serialize | SoundOptions_Deserialize;
+
+/**  The sound editor: enabled unless switched off, volume per sound id in `options`. */
+export type SoundOptions_Deserialize = {
+	enabled?: boolean,
+	options?: { [key in string]: string },
+};
+
+/**  The sound editor: enabled unless switched off, volume per sound id in `options`. */
+export type SoundOptions_Serialize = {
+	enabled: boolean,
+	options?: { [key in string]: string },
+};
 
 export type Stats = Stats_Serialize | Stats_Deserialize;
 

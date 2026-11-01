@@ -8,6 +8,7 @@
 		"CameraMixin",
 		"HudMixin",
 		"LogoRendererMixin",
+		"ScreenEffectRendererMixin",
 		"ScreenMixin"
 	],
 	"injectors": {

@@ -25,6 +25,12 @@ Newest entries first.
   and memory, biome, date, off-hand item, key size and pressed colour, north marker and more.
   Checked on 1.21.11: tile switch, tabs, custom colour and smooth font on one module only, binding a
   key (saved in options.txt) and toggling the module with it in the world.
+- **Layout first** (owner's requests, D35): Right Shift opens the HUD layout with a Mods button;
+  corner squares resize, drag snaps with guides, undo works; the menu no longer scales with the GUI
+  scale. **Hitboxes, sound editor, overlays**: checked on 26.3 in a world (white boxes, red within
+  hit range, pumpkin view on and off, fire lowered and removed, sound search and a saved volume) and
+  on 1.21.11 (mixins apply, layout, menu, search, hitboxes draw). **Not heard**: the test display has
+  no audio device, so a changed volume, the preview button and "Just heard" are unverified.
 - **Sharper game UI** (D34): shapes in screen pixels, smooth Inter labels on buttons and sliders;
   checked on title, pause and options screens at GUI scale 3. Other GUI scales not looked at.
 - **Launcher**: the instance page's "more" menu was painted under the next card (cards are stacking

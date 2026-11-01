@@ -9,6 +9,7 @@
 		"GameRendererMixin",
 		"GuiMixin",
 		"LogoRendererMixin",
+		"ScreenEffectRendererMixin",
 		"ScreenMixin"
 	],
 	"injectors": {

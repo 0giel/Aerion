@@ -3,6 +3,7 @@ package pl.aerion.mod.platform;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -54,6 +55,11 @@ public final class EditorScreen extends Screen {
 	public boolean mouseScrolled(double x, double y, double h, double v) {
 		page.scrolled(x, y, v);
 		return true;
+	}
+
+	@Override
+	public boolean charTyped(CharacterEvent e) {
+		return page.charTyped(e.codepoint()) || super.charTyped(e);
 	}
 
 	@Override

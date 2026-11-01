@@ -23,6 +23,11 @@ public interface Page {
 		return false;
 	}
 
+	/** A typed character; true when the page used it. */
+	default boolean charTyped(int codepoint) {
+		return false;
+	}
+
 	/** Save what changed; called when the page is left. */
 	void close();
 

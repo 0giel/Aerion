@@ -106,6 +106,36 @@ pub struct Toggle {
     pub enabled: bool,
 }
 
+/// A feature whose settings the in-game menu owns (hitboxes, overlays, sounds); the launcher
+/// keeps them and only switches the feature on and off.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase", default)]
+pub struct FeatureOptions {
+    pub enabled: bool,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub options: BTreeMap<String, String>,
+}
+
+/// The sound editor: enabled unless switched off, volume per sound id in `options`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase", default)]
+pub struct SoundOptions {
+    pub enabled: bool,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub options: BTreeMap<String, String>,
+}
+
+impl Default for SoundOptions {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            options: BTreeMap::new(),
+        }
+    }
+}
+
 impl Default for Zoom {
     fn default() -> Self {
         Self {
@@ -134,6 +164,9 @@ pub struct HudFeatures {
     pub fullbright: Toggle,
     pub toggle_sprint: Toggle,
     pub toggle_sneak: Toggle,
+    pub hitboxes: FeatureOptions,
+    pub overlays: FeatureOptions,
+    pub sounds: SoundOptions,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -239,7 +272,17 @@ impl HudConfig {
                         .iter()
                         .all(|(k, v)| k.len() <= 32 && v.len() <= 200)
             })
-            && (2..=10).contains(&self.features.zoom.factor);
+            && (2..=10).contains(&self.features.zoom.factor)
+            && self.features.hitboxes.options.len() <= 32
+            && self.features.overlays.options.len() <= 32
+            && self.features.sounds.options.len() <= 8192
+            && [
+                &self.features.hitboxes.options,
+                &self.features.overlays.options,
+                &self.features.sounds.options,
+            ]
+            .iter()
+            .all(|o| o.iter().all(|(k, v)| k.len() <= 200 && v.len() <= 64));
         if ok {
             Ok(())
         } else {
@@ -312,6 +355,26 @@ mod tests {
         let back = serde_json::to_value(&m).unwrap();
         assert_eq!(back["style"]["borderWidth"], 2);
         assert!(back["style"].get("align").is_none());
+    }
+
+    #[test]
+    fn keeps_feature_settings_from_the_game() {
+        let c: HudConfig = serde_json::from_str(
+            r##"{"features":{"sounds":{"options":{"minecraft:entity.zombie.ambient":"25"}},
+                "hitboxes":{"enabled":true,"options":{"reachColor":"#ff0000"}}}}"##,
+        )
+        .unwrap();
+        c.validate().unwrap();
+        assert!(c.features.sounds.enabled);
+        let back = serde_json::to_value(&c).unwrap();
+        assert_eq!(
+            back["features"]["sounds"]["options"]["minecraft:entity.zombie.ambient"],
+            "25"
+        );
+        assert_eq!(
+            back["features"]["hitboxes"]["options"]["reachColor"],
+            "#ff0000"
+        );
     }
 
     #[tokio::test]

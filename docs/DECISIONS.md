@@ -262,3 +262,17 @@ colours are on; a label that is too long or has a character outside the image st
 font, which also keeps its scrolling. HUD modules keep the game's font. Menu layout follows the
 owner's reference screenshots (window, cards, options page) with Aerion's own theme and logo, and no
 other client's branding.
+
+### D35 — Layout first, and features that need no HUD element (2026-11-01)
+Right Shift opens the HUD layout, not the settings: the screen shows the HUD being arranged, with
+the logo and a Mods button in the middle (the owner's reference). Resizing moved from the mouse
+wheel to squares on all four corners, so a module against a screen edge can still grow towards free
+space, and the opposite corner stays put. Dragging snaps to the screen and other modules, with
+guides; arrow keys nudge, and undo and reset are at hand. The menu sets its own pixel size (about
+60 % of the window's height, whole screen pixels per unit) so a high GUI scale can't make it huge.
+Hitboxes, the sound editor and overlays are features, not HUD modules: they have no box on screen.
+Hitboxes use the game's debug shapes (`Gizmos`) and the player's real interaction range for the
+"in reach" colour, so it follows attributes and game mode. Sound volumes apply where the game
+computes a sound's final volume, stored per sound id only when different from 100 %. Overlay and
+hitbox colours can give an edge on some servers, so they are off by default and carry a warning.
+

@@ -4,12 +4,14 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"ClientLanguageMixin",
+		"DebugRendererMixin",
 		"EntityMixin",
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",
-		"OptionsMixin"
+		"OptionsMixin",
+		"SoundEngineMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -1,4 +1,4 @@
-64 6 384 256
+64 6 384 384
 fps
 coords
 direction
@@ -9,6 +9,10 @@ ping
 minimap
 toggles
 toggleSprint
+help
+hitboxes
+overlays
+sounds
 toggleSneak
 armor
 clock
@@ -21,3 +25,8 @@ close
 look
 undo
 keys
+reset
+settings
+hide
+play
+search

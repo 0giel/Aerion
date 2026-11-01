@@ -42,7 +42,8 @@ public final class HudConfig {
 			  "minimap":{"enabled":false,"x":992,"y":120,"scale":100},
 			  "memory":{"enabled":false,"x":8,"y":490,"scale":100}},
 			 "features":{"zoom":{"enabled":true,"factor":4,"smooth":true},"freelook":{"enabled":false,"hold":true},
-			  "fullbright":{"enabled":false},"toggleSprint":{"enabled":false},"toggleSneak":{"enabled":false}}}
+			  "fullbright":{"enabled":false},"toggleSprint":{"enabled":false},"toggleSneak":{"enabled":false},
+			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true}}}
 			""";
 
 	public static HudConfig defaults() {

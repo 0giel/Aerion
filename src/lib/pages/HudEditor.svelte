@@ -407,7 +407,25 @@
               checked={cfg.features.fullbright.enabled}
               onchange={(v) => cfg && ((cfg.features.fullbright.enabled = v), changed())}
             />
+            <Switch
+              label={t("hudEditor.features.hitboxes")}
+              hint={t("hudEditor.features.hitboxesHint")}
+              checked={cfg.features.hitboxes.enabled}
+              onchange={(v) => cfg && ((cfg.features.hitboxes.enabled = v), changed())}
+            />
+            <Switch
+              label={t("hudEditor.features.overlays")}
+              hint={t("hudEditor.features.overlaysHint")}
+              checked={cfg.features.overlays.enabled}
+              onchange={(v) => cfg && ((cfg.features.overlays.enabled = v), changed())}
+            />
           </div>
+          <Switch
+            label={t("hudEditor.features.sounds")}
+            hint={t("hudEditor.features.soundsHint")}
+            checked={cfg.features.sounds.enabled}
+            onchange={(v) => cfg && ((cfg.features.sounds.enabled = v), changed())}
+          />
           <p class="tiny muted">{t("hudEditor.keysHint")}</p>
         </section>
       </aside>

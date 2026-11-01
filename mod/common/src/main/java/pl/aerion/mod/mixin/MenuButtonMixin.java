@@ -10,11 +10,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.aerion.mod.Lang;
-import pl.aerion.mod.hud.AerionMenu;
+import pl.aerion.mod.hud.HudEditor;
 import pl.aerion.mod.platform.EditorScreen;
 import pl.aerion.mod.platform.Game;
 
-/** A button to Aerion's menu in the corner of the title and pause screens. */
+/** A button to Aerion's HUD layout and menu in the corner of the title and pause screens. */
 @Mixin({TitleScreen.class, PauseScreen.class})
 abstract class MenuButtonMixin extends Screen {
 	private MenuButtonMixin(Component title) {
@@ -26,7 +26,7 @@ abstract class MenuButtonMixin extends Screen {
 		Screen self = this;
 		addRenderableWidget(Button.builder(
 						Component.literal(Lang.tr("aerion.menu.button")),
-						b -> Game.setScreen(new EditorScreen(new AerionMenu(), self)))
+						b -> Game.setScreen(new EditorScreen(new HudEditor(), self)))
 				.bounds(width - 64, 4, 60, 20)
 				.build());
 	}
