@@ -106,6 +106,53 @@ public final class Draw {
 		g.pop();
 	}
 
+	/** A frame one screen pixel wide just outside a box. */
+	public static void outline(Gfx g, int x, int y, int w, int h, int color) {
+		int k = Gfx.guiScale();
+		int X = x * k, Y = y * k, W = w * k, H = h * k;
+		g.push();
+		g.scale(1f / k);
+		g.fill(X - 1, Y - 1, X + W + 1, Y, color);
+		g.fill(X - 1, Y + H, X + W + 1, Y + H + 1, color);
+		g.fill(X - 1, Y, X, Y + H, color);
+		g.fill(X + W, Y, X + W + 1, Y + H, color);
+		g.pop();
+	}
+
+	/** Horizontal line one screen pixel high. */
+	public static void hline(Gfx g, int x, int y, int w, int color) {
+		int k = Gfx.guiScale();
+		g.push();
+		g.scale(1f / k);
+		g.fill(x * k, y * k, (x + w) * k, y * k + 1, color);
+		g.pop();
+	}
+
+	/** Vertical line one screen pixel wide. */
+	public static void vline(Gfx g, int x, int y, int h, int color) {
+		int k = Gfx.guiScale();
+		g.push();
+		g.scale(1f / k);
+		g.fill(x * k, y * k, x * k + 1, (y + h) * k, color);
+		g.pop();
+	}
+
+	/** A square of `size` screen pixels centred on a point, with a dark rim so it shows on anything. */
+	public static void handle(Gfx g, int x, int y, int size, int color) {
+		int k = Gfx.guiScale();
+		int X = x * k - size / 2, Y = y * k - size / 2;
+		g.push();
+		g.scale(1f / k);
+		g.fill(X - 1, Y - 1, X + size + 1, Y + size + 1, 0xC0000000);
+		g.fill(X, Y, X + size, Y + size, color);
+		g.pop();
+	}
+
+	/** A soft shadow under a window. */
+	public static void shadow(Gfx g, int x, int y, int w, int h, int r) {
+		for (int i = 6; i >= 1; i--) rounded(g, x - i, y - i + 2, w + 2 * i, h + 2 * i, r + i, 0x0C000000);
+	}
+
 	/** A button or slider label in smooth text; false when the game's own text must draw it. */
 	public static boolean label(Gfx g, String text, int x, int y, int w, int h, boolean active, int alpha) {
 		float size = 8.5f;

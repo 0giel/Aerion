@@ -67,6 +67,12 @@ public final class HudEditor implements Page {
 	}
 
 	// --- drawing -----------------------------------------------------------------------------
+	/** The world stays as it looks in play, so the layout can be judged against it. */
+	@Override
+	public boolean veil() {
+		return false;
+	}
+
 	@Override
 	public void render(Gfx g, int mouseX, int mouseY) {
 		buttons.clear();
@@ -78,7 +84,6 @@ public final class HudEditor implements Page {
 			Draw.background(g, t, 0xFF);
 			Particles.draw(g, t);
 		}
-		g.fill(0, 0, screenW, screenH, 0x40000000);
 		Hud.render(g, true);
 		if (selected != null && !Hud.BOUNDS.containsKey(selected)) selected = null;
 		boolean busy = dragging != null || corner >= 0;
@@ -86,19 +91,18 @@ public final class HudEditor implements Page {
 		for (var e : Hud.BOUNDS.entrySet()) {
 			int[] b = e.getValue();
 			boolean lit = e.getKey().equals(selected) || e.getKey().equals(hover);
-			outline(g, b, lit ? accent : 0x66FFFFFF);
+			Draw.outline(g, b[0], b[1], b[2], b[3], lit ? accent : 0x50FFFFFF);
 			if (lit) {
 				for (int c = 0; c < 4; c++) {
 					int[] p = cornerPoint(b, c);
 					boolean over = !busy && Math.abs(mouseX - p[0]) <= HANDLE && Math.abs(mouseY - p[1]) <= HANDLE;
-					int size = over ? 5 : 4;
-					g.fill(p[0] - size / 2 - 1, p[1] - size / 2 - 1, p[0] - size / 2 + size + 1, p[1] - size / 2 + size + 1, 0xFF000000);
-					g.fill(p[0] - size / 2, p[1] - size / 2, p[0] - size / 2 + size, p[1] - size / 2 + size, over ? 0xFFFFFFFF : accent);
+					int px = Gfx.guiScale() * 2 + 1;
+					Draw.handle(g, p[0], p[1], over ? px + 2 : px, over ? 0xFFFFFFFF : accent);
 				}
 			}
 		}
-		if (guideX >= 0) g.fill(guideX, 0, guideX + 1, screenH, accent);
-		if (guideY >= 0) g.fill(0, guideY, screenW, guideY + 1, accent);
+		if (guideX >= 0) Draw.vline(g, guideX, 0, screenH, accent);
+		if (guideY >= 0) Draw.hline(g, 0, guideY, screenW, accent);
 		if (busy) return;
 
 		center(g, t, accent, mouseX, mouseY);
@@ -106,47 +110,41 @@ public final class HudEditor implements Page {
 		if (selected != null) moduleBar(g, t, accent, Hud.BOUNDS.get(selected), mouseX, mouseY);
 	}
 
-	private static void outline(Gfx g, int[] b, int c) {
-		g.fill(b[0] - 1, b[1] - 1, b[0] + b[2] + 1, b[1], c);
-		g.fill(b[0] - 1, b[1] + b[3], b[0] + b[2] + 1, b[1] + b[3] + 1, c);
-		g.fill(b[0] - 1, b[1], b[0], b[1] + b[3], c);
-		g.fill(b[0] + b[2], b[1], b[0] + b[2] + 1, b[1] + b[3], c);
-	}
-
 	/** The logo and the Mods button in the middle of the screen. */
 	private void center(Gfx g, Theme t, int accent, int mouseX, int mouseY) {
-		int logoH = 28, logoW = Logo.width(logoH);
+		int logoH = 24, logoW = Logo.width(logoH);
 		int cy = screenH / 2;
-		Logo.draw(g, t, (screenW - logoW) / 2, cy - logoH - 8, logoH);
+		Logo.draw(g, t, (screenW - logoW) / 2, cy - logoH - 6, logoH);
 		String label = Lang.tr("aerion.editor.menu");
-		int w = Math.max(90, Math.round(Txt.width(label, 9f)) + 30), h = 20;
-		int bx = (screenW - w) / 2, by = cy - 4;
+		int w = Math.max(84, Math.round(Txt.width(label, 8.5f)) + 30), h = 18;
+		int bx = (screenW - w) / 2, by = cy - 2;
 		boolean over = mouseX >= bx && mouseY >= by && mouseX < bx + w && mouseY < by + h;
-		int surface = t != null ? t.surface2 : 0xFF2A2A2A;
-		Draw.control(g, bx, by, w, h, t != null ? t.radius : 2, over ? accent : Colors.mix(surface, accent, 0.4f),
-				Colors.forWhiteText(Colors.mix(surface, accent, over ? 0.35f : 0.12f)));
-		Txt.center(g, label, screenW / 2f, by + h / 2f, 9f, 0xFFFFFFFF);
+		int surface = t != null ? t.surface : 0xFF1A1A1A;
+		Draw.control(g, bx, by, w, h, 3, over ? accent : 0x40FFFFFF, Colors.alpha(over ? Colors.mix(surface, accent, 0.25f) : surface, 0xE6));
+		Txt.center(g, label, screenW / 2f, by + h / 2f, 8.5f, t != null ? t.text : 0xFFFFFFFF);
 		buttons.add(new Button(bx, by, w, h, () -> Page.go(new AerionMenu())));
 	}
 
-	/** Help, undo and reset in the bottom left corner. */
+	/** Help, undo and reset under the Mods button, where they can't cover a module in a corner. */
 	private void tools(Gfx g, Theme t, int accent, int mouseX, int mouseY) {
-		int size = 16, x = 4, y = screenH - size - 4;
+		int size = 14, count = undo.isEmpty() ? 2 : 3;
+		int y = screenH / 2 + 20, x = (screenW - count * size - (count - 1) * 3) / 2;
 		x = tool(g, t, accent, x, y, size, "help", help, mouseX, mouseY, () -> help = !help);
 		if (!undo.isEmpty()) x = tool(g, t, accent, x, y, size, "undo", false, mouseX, mouseY, this::undo);
 		tool(g, t, accent, x, y, size, "reset", false, mouseX, mouseY, this::resetLayout);
 		if (!help) return;
-		String[] rows = wrap(Lang.tr(Hud.BOUNDS.isEmpty() ? "aerion.editor.empty" : "aerion.editor.hint"), Math.min(220, screenW - 16), 7.5f);
-		int boxH = rows.length * 10 + 8, boxY = y - boxH - 4, boxW = Math.min(228, screenW - 8);
-		Draw.rounded(g, 4, boxY, boxW, boxH, 3, 0xE6000000);
-		for (int i = 0; i < rows.length; i++) Txt.draw(g, rows[i], 8, boxY + 9 + i * 10, 7.5f, 0xFFFFFFFF);
+		int boxW = Math.min(228, screenW - 8);
+		String[] rows = wrap(Lang.tr(Hud.BOUNDS.isEmpty() ? "aerion.editor.empty" : "aerion.editor.hint"), boxW - 8, 7.5f);
+		int boxH = rows.length * 10 + 8, boxX = (screenW - boxW) / 2, boxY = y + size + 4;
+		Draw.rounded(g, boxX, boxY, boxW, boxH, 3, 0xE6000000);
+		for (int i = 0; i < rows.length; i++) Txt.draw(g, rows[i], boxX + 4, boxY + 9 + i * 10, 7.5f, 0xFFFFFFFF);
 	}
 
 	private int tool(Gfx g, Theme t, int accent, int x, int y, int size, String icon, boolean on, int mx, int my, Runnable action) {
 		boolean over = mx >= x && my >= y && mx < x + size && my < y + size;
 		int surface = t != null ? t.surface : 0xFF1A1A1A;
 		Draw.rounded(g, x, y, size, size, 3, on ? accent : Colors.alpha(over ? Colors.mix(surface, accent, 0.4f) : surface, 0xE0));
-		Icons.draw(g, icon, x + 3, y + 3, size - 6, on && t != null ? t.accentText : 0xFFFFFFFF);
+		Icons.draw(g, icon, x + 2.5f, y + 2.5f, size - 5, on && t != null ? t.accentText : 0xFFFFFFFF);
 		buttons.add(new Button(x, y, size, size, action));
 		return x + size + 3;
 	}

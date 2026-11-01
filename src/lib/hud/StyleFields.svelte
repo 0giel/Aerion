@@ -39,7 +39,7 @@
     <span class="label">{t("hudEditor.style.font")}</span>
     <div class="segmented" role="group" aria-label={t("hudEditor.style.font")}>
       {#each ["game", "smooth"] as f (f)}
-        <button aria-pressed={(style.font ?? "game") === f} onclick={() => set({ font: f })}
+        <button aria-pressed={(style.font ?? "smooth") === f} onclick={() => set({ font: f })}
           >{t(`hudEditor.style.fonts.${f}`)}</button
         >
       {/each}

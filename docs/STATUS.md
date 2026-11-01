@@ -31,6 +31,10 @@ Newest entries first.
   hit range, pumpkin view on and off, fire lowered and removed, sound search and a saved volume) and
   on 1.21.11 (mixins apply, layout, menu, search, hitboxes draw). **Not heard**: the test display has
   no audio device, so a changed volume, the preview button and "Just heard" are unverified.
+- **Visual pass** (owner's request): no dimming or blur in the layout, one-pixel outlines and guides,
+  tools moved under the Mods button; menu with cards, thin sliders, segmented choices, eased switches
+  and a window shadow; smooth HUD font by default. Checked on 26.3 in a world, by day and night; on
+  1.21.11 from the title screen (layout, menu, key page). Light themes not looked at.
 - **Sharper game UI** (D34): shapes in screen pixels, smooth Inter labels on buttons and sliders;
   checked on title, pause and options screens at GUI scale 3. Other GUI scales not looked at.
 - **Launcher**: the instance page's "more" menu was painted under the next card (cards are stacking

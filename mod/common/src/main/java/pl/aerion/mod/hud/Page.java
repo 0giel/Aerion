@@ -18,6 +18,11 @@ public interface Page {
 
 	void scrolled(double x, double y, double amount);
 
+	/** Whether the game blurs and tints the world behind this page. */
+	default boolean veil() {
+		return true;
+	}
+
 	/** A key press; true when the page used it. */
 	default boolean keyPressed(InputConstants.Key key) {
 		return false;

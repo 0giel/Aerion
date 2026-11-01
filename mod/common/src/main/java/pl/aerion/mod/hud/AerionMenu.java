@@ -3,7 +3,9 @@ package pl.aerion.mod.hud;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -148,7 +150,14 @@ public final class AerionMenu implements Page {
 	private int scroll, contentHeight, viewTop, viewBottom;
 	private int x, y, colW, mouseX, mouseY;
 	private Gfx g;
-	private int text, muted, accent, accentText, surface, sidebar, tile, line, control;
+	private int text, muted, accent, accentText, surface, sidebar, tile, line, control, track, pick;
+	/** Eased values of switches and hovers, and the height of each card last frame. */
+	private final Map<String, Float> eased = new HashMap<>();
+	private final Map<String, Integer> cards = new HashMap<>();
+	private String cardKey;
+	private int cardTop;
+	private long lastFrame;
+	private float dt = 0.016f;
 
 	public AerionMenu() {}
 
@@ -285,13 +294,16 @@ public final class AerionMenu implements Page {
 		sidebar = Colors.mix(surface, 0xFF000000, t != null && t.light ? 0.04f : 0.18f);
 		tile = Colors.mix(surface, text, 0.05f);
 		line = Colors.mix(surface, text, 0.14f);
-		control = Colors.mix(surface, text, 0.1f);
+		control = Colors.mix(surface, text, 0.09f);
+		track = Colors.mix(surface, text, 0.2f);
+		pick = Colors.mix(surface, accent, 0.32f);
+		long now = System.nanoTime();
+		if (lastFrame != 0) dt = Math.min(0.1f, (now - lastFrame) / 1e9f);
+		lastFrame = now;
 
 		if (Minecraft.getInstance().level == null && t != null) {
 			Draw.background(g, t, 0xFF);
 			Particles.draw(g, t);
-		} else {
-			g.fill(0, 0, g.width(), g.height(), 0x70000000);
 		}
 		// A whole number of screen pixels per unit keeps text and lines sharp; about 60% of the
 		// window's height, so a large window with a high GUI scale doesn't get a huge menu.
@@ -316,9 +328,11 @@ public final class AerionMenu implements Page {
 	private void window() {
 		int winW = Math.min(unitsW - 12, WIN_W), winH = Math.min(unitsH - 12, WIN_H);
 		int left = (unitsW - winW) / 2, top = (unitsH - winH) / 2;
-		Draw.rounded(g, left, top, winW, winH, 4, surface);
+		Draw.shadow(g, left, top, winW, winH, 6);
+		Draw.rounded(g, left, top, winW, winH, 6, surface);
 		sidebar(left, top, winH);
-		Draw.control(g, left, top, winW, winH, 4, line, 0);
+		Draw.vline(g, left + SIDE, top + 1, winH - 2, line);
+		Draw.control(g, left, top, winW, winH, 6, line, 0);
 
 		int mainX = left + SIDE + 10, mainW = winW - SIDE - 20;
 		iconButton(left + winW - 20, top + 6, 14, "close", this::toLayout);
@@ -354,8 +368,8 @@ public final class AerionMenu implements Page {
 	}
 
 	private void sidebar(int left, int top, int h) {
-		Draw.rounded(g, left, top, SIDE, h, 4, sidebar);
-		g.fill(left + SIDE - 2, top, left + SIDE, top + h, sidebar);
+		Draw.rounded(g, left, top, SIDE, h, 6, sidebar);
+		g.fill(left + SIDE - 6, top, left + SIDE, top + h, sidebar);
 		int logoH = 13;
 		Logo.draw(g, AerionClient.theme(), left + 8, top + 7, logoH);
 		int ny = top + 27;
@@ -364,15 +378,19 @@ public final class AerionMenu implements Page {
 		ny = navItem(left + 4, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
 		ny = navItem(left + 4, ny, Section.KEYS, "keys", "aerion.nav.keys");
 		navItem(left + 4, ny, Section.LOOK, "look", "aerion.nav.look");
-		button(left + 4, top + h - 21, SIDE - 8, 16, Lang.tr("aerion.nav.layout"), true, this::toLayout);
+		int by = top + h - 21;
+		button(left + 4, by, SIDE - 8, 16, Lang.tr("aerion.nav.layout"), false, this::toLayout);
+		Icons.draw(g, "layout", left + 8, by + 3, 10, muted);
 	}
 
 	private int navItem(int nx, int ny, Section which, String icon, String label) {
 		int w = SIDE - 8, h = 16;
 		boolean on = section == which, over = inside(nx, ny, w, h);
-		if (on) Draw.rounded(g, nx, ny, w, h, 3, Colors.mix(sidebar, accent, 0.28f));
-		else if (over) Draw.rounded(g, nx, ny, w, h, 3, control);
-		Icons.draw(g, icon, nx + 4, ny + 3, 10, on ? accent : muted);
+		float glow = ease("nav" + which, over ? 1 : 0);
+		if (on) Draw.rounded(g, nx, ny, w, h, 3, Colors.mix(sidebar, accent, 0.2f));
+		else if (glow > 0) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
+		if (on) Draw.rounded(g, nx, ny + 4, 2, h - 8, 1, accent);
+		Icons.draw(g, icon, nx + 5, ny + 3, 10, on ? accent : muted);
 		Txt.draw(g, Lang.tr(label), nx + 18, ny + h / 2f, TEXT, on || over ? text : muted);
 		hit(nx, ny, w, h, f -> {
 			section = which;
@@ -409,7 +427,7 @@ public final class AerionMenu implements Page {
 		Icons.draw(g, id, mx + 19, my + 1, 12, text);
 		Txt.draw(g, name(id), mx + 35, my + 7, TITLE, text);
 		boolean on = enabled(cfg, id);
-		switchAt(mx + w - 22, my + 2, on);
+		switchAt("head" + id, mx + w - 22, my + 2, on);
 		hit(mx + w - 24, my, 24, 14, f -> {
 			item(cfg, id).addProperty("enabled", !on);
 			changed = true;
@@ -418,7 +436,7 @@ public final class AerionMenu implements Page {
 		tx = subTab(tx, my + 19, "aerion.tab.general", Sub.GENERAL);
 		if (!isFeature(id)) tx = subTab(tx, my + 19, "aerion.tab.look", Sub.LOOK);
 		subTab(tx, my + 19, "aerion.tab.key", Sub.KEY);
-		g.fill(mx, my + 33, mx + w + 18, my + 34, line);
+		Draw.hline(g, mx, my + 33, w + 18, line);
 		return 42;
 	}
 
@@ -451,12 +469,12 @@ public final class AerionMenu implements Page {
 
 	private void tileAt(HudConfig cfg, String id, int cx, int cy, int w, int h) {
 		boolean on = enabled(cfg, id), over = inside(cx, cy, w, h);
-		Draw.control(g, cx, cy, w, h, 3, over ? Colors.mix(surface, accent, 0.6f) : line, over ? control : tile);
-		int ink = on ? text : muted;
-		Icons.draw(g, id, cx + 6, cy + (h - 13) / 2f, 13, ink);
-		Txt.draw(g, ellipsize(name(id), w - 53), cx + 23, cy + h / 2f, TEXT, ink);
-		int sx = cx + w - 26, sy = cy + (h - 9) / 2;
-		switchAt(sx, sy, on);
+		Draw.rounded(g, cx, cy, w, h, 4, Colors.mix(tile, control, ease("tile" + id, over ? 1 : 0)));
+		Draw.rounded(g, cx + 4, cy + 4, h - 8, h - 8, 3, on ? pick : control);
+		Icons.draw(g, id, cx + 7, cy + 7, h - 14, on ? accent : muted);
+		Txt.draw(g, ellipsize(name(id), w - 56), cx + h + 1, cy + h / 2f, TEXT, on ? text : muted);
+		int sx = cx + w - 25, sy = cy + (h - 9) / 2;
+		switchAt("tile" + id, sx, sy, on);
 		hit(sx - 3, cy, 26, h, f -> {
 			item(cfg, id).addProperty("enabled", !on);
 			changed = true;
@@ -491,16 +509,17 @@ public final class AerionMenu implements Page {
 	private void moduleGeneral(JsonObject m) {
 		List<Option> options = OPTIONS.getOrDefault(detail, List.of());
 		if (!options.isEmpty()) {
-			section(Lang.tr("aerion.sec.options"));
+			beginCard(Lang.tr("aerion.sec.options"));
 			for (Option o : options) option(m, o);
 			if (options.stream().anyMatch(o -> o.key.equals("format"))) note(Lang.tr("aerion.panel.formatHint"));
-			y += 4;
+			endCard();
 		}
-		section(Lang.tr("aerion.sec.place"));
+		beginCard(Lang.tr("aerion.sec.place"));
 		slider(Lang.tr("aerion.panel.scale"), HudConfig.num(m, "scale", 100), 25, 400, 5, "%", v -> m.addProperty("scale", v));
 		grid(m);
 		slider(Lang.tr("aerion.place.x"), HudConfig.num(m, "x", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("x", v * 10));
 		slider(Lang.tr("aerion.place.y"), HudConfig.num(m, "y", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("y", v * 10));
+		endCard();
 	}
 
 	/** Nine squares for the corners, edges and centre of the screen. */
@@ -527,6 +546,7 @@ public final class AerionMenu implements Page {
 
 	private void featureGeneral(HudConfig cfg) {
 		JsonObject f = cfg.feature(detail);
+		beginCard(null);
 		if (detail.equals("zoom")) {
 			slider(Lang.tr("aerion.feature.zoomFactor"), HudConfig.num(f, "factor", 4), 2, 10, 1, "x", v -> f.addProperty("factor", v));
 			toggle(Lang.tr("aerion.feature.zoomSmooth"), HudConfig.bool(f, "smooth", true), v -> f.addProperty("smooth", v));
@@ -534,10 +554,9 @@ public final class AerionMenu implements Page {
 			toggle(Lang.tr("aerion.feature.freelookHold"), HudConfig.bool(f, "hold", true), v -> f.addProperty("hold", v));
 		}
 		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(f, o);
-		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) {
-			y += 2;
-			note(Lang.tr("aerion.panel.serverWarning"));
-		}
+		if (y == cardTop + 5) note(Lang.tr("aerion.hint.noOptions"));
+		endCard();
+		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) note(Lang.tr("aerion.panel.serverWarning"));
 	}
 
 	private void option(JsonObject m, Option o) {
@@ -631,8 +650,9 @@ public final class AerionMenu implements Page {
 
 	private void lookPage() {
 		HudConfig cfg = AerionClient.hud();
+		beginCard(null);
 		toggle(Lang.tr("aerion.panel.hud"), cfg.enabled(), v -> cfg.root.addProperty("enabled", v));
-		y += 4;
+		endCard();
 		lookFields(new Look(cfg.style(), null));
 	}
 
@@ -656,12 +676,12 @@ public final class AerionMenu implements Page {
 		String theme = Lang.tr("aerion.style.theme"), none = Lang.tr("aerion.style.none"), acc = Lang.tr("aerion.style.accent");
 		reserve = l.module != null ? 14 : 0;
 
-		section(Lang.tr("aerion.sec.text"));
+		beginCard(Lang.tr("aerion.sec.text"));
 		int top = y;
 		color("text", Lang.tr("aerion.style.text"), new String[] {"theme"}, new String[] {theme}, HudConfig.str(l.read("text"), "text", "theme"), v -> l.write().addProperty("text", v));
 		l.mark("text", top);
 		top = y;
-		choiceRow(Lang.tr("aerion.style.font"), new String[] {"game", "smooth"}, new String[] {Lang.tr("aerion.style.game"), Lang.tr("aerion.style.smooth")}, HudConfig.str(l.read("font"), "font", "game"), v -> l.write().addProperty("font", v));
+		choiceRow(Lang.tr("aerion.style.font"), new String[] {"game", "smooth"}, new String[] {Lang.tr("aerion.style.game"), Lang.tr("aerion.style.smooth")}, HudConfig.str(l.read("font"), "font", "smooth"), v -> l.write().addProperty("font", v));
 		l.mark("font", top);
 		top = y;
 		toggle(Lang.tr("aerion.style.shadow"), HudConfig.bool(l.read("shadow"), "shadow", true), v -> l.write().addProperty("shadow", v));
@@ -670,8 +690,8 @@ public final class AerionMenu implements Page {
 		choiceRow(Lang.tr("aerion.style.align"), new String[] {"left", "center", "right"}, new String[] {Lang.tr("aerion.style.left"), Lang.tr("aerion.style.center"), Lang.tr("aerion.style.right")}, HudConfig.str(l.read("align"), "align", "left"), v -> l.write().addProperty("align", v));
 		l.mark("align", top);
 
-		y += 4;
-		section(Lang.tr("aerion.sec.background"));
+		endCard();
+		beginCard(Lang.tr("aerion.sec.background"));
 		top = y;
 		color("background", Lang.tr("aerion.style.background"), new String[] {"theme", "none"}, new String[] {theme, none}, HudConfig.str(l.read("background"), "background", "theme"), v -> l.write().addProperty("background", v));
 		l.mark("background", top);
@@ -685,8 +705,8 @@ public final class AerionMenu implements Page {
 		slider(Lang.tr("aerion.style.radius"), HudConfig.num(l.read("radius"), "radius", 0), 0, 8, 1, "", v -> l.write().addProperty("radius", v));
 		l.mark("radius", top);
 
-		y += 4;
-		section(Lang.tr("aerion.sec.border"));
+		endCard();
+		beginCard(Lang.tr("aerion.sec.border"));
 		top = y;
 		String border = HudConfig.str(l.read("border"), "border", "none");
 		color("border", Lang.tr("aerion.style.border"), new String[] {"none", "accent"}, new String[] {none, acc}, border, v -> l.write().addProperty("border", v));
@@ -696,6 +716,7 @@ public final class AerionMenu implements Page {
 			slider(Lang.tr("aerion.style.borderWidth"), HudConfig.num(l.read("borderWidth"), "borderWidth", 1), 1, 4, 1, "", v -> l.write().addProperty("borderWidth", v));
 			l.mark("borderWidth", top);
 		}
+		endCard();
 		reserve = 0;
 	}
 
@@ -794,11 +815,14 @@ public final class AerionMenu implements Page {
 			label = "…" + label;
 		}
 		Txt.draw(g, label, x, y + 7, SMALL, value == 100 ? muted : text);
-		Draw.rounded(g, bx, y + 1, w, 12, 2, control);
-		int fill = Math.round(w * value / 100f);
-		if (fill > 0) Draw.rounded(g, bx, y + 1, fill, 12, 2, Colors.alpha(value == 100 ? line : accent, 0xC0));
-		Txt.center(g, value + "%", bx + w / 2f, y + 7, SMALL, text);
-		hit(bx, y, w, 14, fr -> {
+		int trackW = w - 26, ty = y + 6;
+		Draw.rounded(g, bx, ty, trackW, 3, 1, track);
+		int fill = Math.round(trackW * value / 100f);
+		if (fill > 0) Draw.rounded(g, bx, ty, fill, 3, 1, value == 100 ? muted : accent);
+		Draw.rounded(g, bx + Math.max(0, Math.min(trackW - 6, fill - 3)), ty - 2, 6, 7, 3, value == 100 ? text : accent);
+		String pct = value + "%";
+		Txt.draw(g, pct, bx + w - Txt.width(pct, SMALL), y + 7.5f, SMALL, value == 100 ? muted : text);
+		hit(bx, y, trackW, 14, fr -> {
 			int v = (int) Math.round(fr * 20) * 5;
 			if (v == 100) {
 				if (f.get("options") instanceof JsonObject o) o.remove(id);
@@ -809,8 +833,8 @@ public final class AerionMenu implements Page {
 		}, true);
 		int px = bx + w + 2;
 		boolean over = inside(px, y + 1, 14, 12);
-		Draw.rounded(g, px, y + 1, 14, 12, 2, over ? Colors.mix(surface, text, 0.2f) : control);
-		Icons.draw(g, "play", px + 3, y + 3, 8, text);
+		if (over) Draw.rounded(g, px, y + 1, 14, 12, 2, control);
+		Icons.draw(g, "play", px + 3, y + 3, 8, over ? text : muted);
 		hit(px, y + 1, 14, 12, fr -> preview(id), false);
 	}
 
@@ -828,14 +852,17 @@ public final class AerionMenu implements Page {
 			case "toggleSneak" -> Lang.tr("aerion.key.sneak");
 			default -> Lang.tr("aerion.key.toggle");
 		};
+		beginCard(null);
 		keyRow(label, k);
+		endCard();
 		note(Lang.tr("aerion.hint.keys"));
 	}
 
 	private void keysPage() {
+		beginCard(null);
 		keyRow(Lang.tr("aerion.key.menu"), Features.key("menu"));
-		y += 4;
-		section(Lang.tr("aerion.key.features"));
+		endCard();
+		beginCard(Lang.tr("aerion.key.features"));
 		keyRow(Lang.tr("aerion.feature.zoom"), Features.key("zoom"));
 		keyRow(Lang.tr("aerion.feature.freelook"), Features.key("freelook"));
 		keyRow(Lang.tr("aerion.feature.fullbright"), Features.key("fullbright"));
@@ -844,9 +871,10 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.nav.sounds"), Features.key("sounds"));
 		keyRow(Lang.tr("aerion.key.sprint"), Features.key("toggleSprint"));
 		keyRow(Lang.tr("aerion.key.sneak"), Features.key("toggleSneak"));
-		y += 4;
-		section(Lang.tr("aerion.key.modules"));
+		endCard();
+		beginCard(Lang.tr("aerion.key.modules"));
 		for (String id : Features.MODULE_IDS) keyRow(Lang.tr("aerion.module." + id), Features.key(id));
+		endCard();
 	}
 
 	private void keyRow(String label, KeyMapping k) {
@@ -894,37 +922,66 @@ public final class AerionMenu implements Page {
 		return mouseX >= cx && mouseY >= cy && mouseX < cx + w && mouseY < cy + h;
 	}
 
+	private int body(boolean on, boolean over) {
+		return on ? (over ? Colors.mix(pick, accent, 0.2f) : pick) : over ? track : control;
+	}
+
 	private void button(int bx, int by, int w, int h, String label, boolean on, Runnable action) {
 		boolean over = inside(bx, by, w, h);
-		int body = on ? (over ? Colors.mix(accent, 0xFFFFFFFF, 0.12f) : accent) : over ? Colors.mix(surface, text, 0.2f) : control;
-		Draw.rounded(g, bx, by, w, h, 3, body);
-		Txt.center(g, label, bx + w / 2f, by + h / 2f, TEXT, on ? accentText : text);
+		Draw.rounded(g, bx, by, w, h, 3, body(on, over));
+		Txt.center(g, label, bx + w / 2f, by + h / 2f, TEXT, text);
 		hit(bx, by, w, h, f -> action.run(), false);
 	}
 
 	private void smallButton(int bx, int by, int w, int h, String label, boolean on, Runnable action) {
 		boolean over = inside(bx, by, w, h);
-		int body = on ? (over ? Colors.mix(accent, 0xFFFFFFFF, 0.12f) : accent) : over ? Colors.mix(surface, text, 0.2f) : control;
-		Draw.rounded(g, bx, by, w, h, 2, body);
-		Txt.center(g, label, bx + w / 2f, by + h / 2f, SMALL, on ? accentText : text);
+		Draw.rounded(g, bx, by, w, h, 3, body(on, over));
+		Txt.center(g, label, bx + w / 2f, by + h / 2f, SMALL, on || over ? text : muted);
 		hit(bx, by, w, h, f -> action.run(), false);
 	}
 
 	private void iconButton(int bx, int by, int size, String icon, Runnable action) {
 		boolean over = inside(bx, by, size, size);
-		Draw.rounded(g, bx, by, size, size, 3, over ? Colors.mix(surface, text, 0.2f) : control);
-		Icons.draw(g, icon, bx + 2, by + 2, size - 4, text);
+		if (over) Draw.rounded(g, bx, by, size, size, 3, control);
+		Icons.draw(g, icon, bx + 2, by + 2, size - 4, over ? text : muted);
 		hit(bx, by, size, size, f -> action.run(), false);
 	}
 
-	private void switchAt(int sx, int sy, boolean on) {
-		Draw.rounded(g, sx, sy, 20, 9, 4, on ? accent : Colors.mix(surface, text, 0.3f));
-		Draw.rounded(g, on ? sx + 12 : sx + 1, sy + 1, 7, 7, 3, on ? accentText : surface);
+	private float ease(String key, float target) {
+		float v = eased.getOrDefault(key, target);
+		v += (target - v) * Math.min(1f, dt * 16f);
+		if (Math.abs(target - v) < 0.01f) v = target;
+		eased.put(key, v);
+		return v;
 	}
 
-	private void section(String s) {
-		Txt.draw(g, s, x, y + 5, SMALL, accent);
-		y += 12;
+	private void switchAt(String key, int sx, int sy, boolean on) {
+		float t = ease("sw" + key, on ? 1 : 0);
+		Draw.rounded(g, sx, sy, 20, 9, 4, Colors.mix(track, accent, t));
+		Draw.rounded(g, sx + 1 + Math.round(11 * t), sy + 1, 7, 7, 3, Colors.mix(muted, accentText, t));
+	}
+
+	/** A group of settings on a slightly lighter panel; its height comes from the last frame. */
+	private void beginCard(String title) {
+		cardKey = section + ":" + detail + ":" + sub + ":" + title;
+		cardTop = y;
+		Integer h = cards.get(cardKey);
+		if (h != null) Draw.rounded(g, x, y, colW, h, 4, tile);
+		x += 7;
+		colW -= 14;
+		y += 5;
+		if (title != null) {
+			Txt.draw(g, title.toUpperCase(Locale.ROOT), x, y + 4, 6.5f, muted);
+			y += 12;
+		}
+	}
+
+	private void endCard() {
+		y += 5;
+		cards.put(cardKey, y - cardTop);
+		x -= 7;
+		colW += 14;
+		y += 5;
 	}
 
 	private void note(String s) {
@@ -955,7 +1012,7 @@ public final class AerionMenu implements Page {
 		int w = colW - reserve;
 		if (inside(x - 2, y, w + 4, ROW)) Draw.rounded(g, x - 2, y, w + 4, ROW, 2, control);
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
-		switchAt(x + w - 20, y + 3, on);
+		switchAt(section + label, x + w - 20, y + 3, on);
 		hit(x - 2, y, w + 4, ROW, f -> {
 			set.accept(!on);
 			changed = true;
@@ -965,13 +1022,16 @@ public final class AerionMenu implements Page {
 
 	/** Value slider; the number sits on the bar. */
 	private void slider(String label, int value, int min, int max, int step, String unit, Consumer<Integer> set) {
-		int bx = controlX(), w = controlW();
+		int bx = controlX(), w = controlW() - 30, ty = y + ROW / 2 - 1;
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
-		Draw.rounded(g, bx, y + 2, w, ROW - 4, 2, control);
+		Draw.rounded(g, bx, ty, w, 3, 1, track);
 		float f = (float) (Math.max(min, Math.min(max, value)) - min) / Math.max(1, max - min);
 		int fill = Math.round(w * f);
-		if (fill > 0) Draw.rounded(g, bx, y + 2, fill, ROW - 4, 2, Colors.alpha(accent, 0xB0));
-		Txt.center(g, value + unit, bx + w / 2f, y + ROW / 2f, SMALL, text);
+		if (fill > 0) Draw.rounded(g, bx, ty, fill, 3, 1, accent);
+		boolean over = inside(bx, y, w, ROW);
+		Draw.rounded(g, bx + Math.max(0, Math.min(w - 7, fill - 3)), ty - 2, 7, 7, 3, over ? 0xFFFFFFFF : accent);
+		String shown = value + unit;
+		Txt.draw(g, shown, bx + w + 30 - Txt.width(shown, SMALL), y + ROW / 2f, SMALL, muted);
 		hit(bx, y, w, ROW, fr -> {
 			int v = min + Math.round((float) (fr * (max - min)) / step) * step;
 			set.accept(Math.max(min, Math.min(max, v)));
@@ -1002,13 +1062,18 @@ public final class AerionMenu implements Page {
 	}
 
 	private void segments(int sx, int width, String[] values, String[] labels, String current, Consumer<String> set) {
-		int w = width / values.length;
+		int w = width / values.length, h = ROW - 4;
+		Draw.rounded(g, sx, y, w * values.length, h, 3, control);
 		for (int i = 0; i < values.length; i++) {
 			String v = values[i];
-			smallButton(sx + i * w, y, w - 1, ROW - 4, labels[i], v.equals(current), () -> {
+			int cx = sx + i * w;
+			boolean on = v.equals(current), over = inside(cx, y, w, h);
+			if (on) Draw.rounded(g, cx + 1, y + 1, w - 2, h - 2, 2, pick);
+			Txt.center(g, labels[i], cx + w / 2f, y + h / 2f, SMALL, on || over ? text : muted);
+			hit(cx, y, w, h, f -> {
 				set.accept(v);
 				changed = true;
-			});
+			}, false);
 		}
 	}
 
@@ -1038,7 +1103,7 @@ public final class AerionMenu implements Page {
 			expanded = id.equals(expanded) ? null : id;
 		});
 		if (custom) {
-			Txt.draw(g, word, bx + 5, by + bh / 2f, SMALL, accentText);
+			Txt.draw(g, word, bx + 5, by + bh / 2f, SMALL, text);
 			int c = Theme.color(current, 0xFFFFFFFF);
 			Draw.control(g, bx + w - 12, by + 2, 9, bh - 4, 1, 0xFF000000, c);
 		}

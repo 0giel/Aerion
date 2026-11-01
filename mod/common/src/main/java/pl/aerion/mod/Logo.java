@@ -64,6 +64,8 @@ public final class Logo {
 		int w = Math.round(h * (float) TEX_W / TEX_H);
 		int ink = t != null ? t.text & 0xFFFFFF : 0xFFFFFF;
 		int spark = t != null ? t.accent & 0xFFFFFF : 0xFFFFFF;
+		// The shadow keeps it readable over a bright world.
+		g.texture(MAIN, x + 1, y + 1, w, h, TEX_W, TEX_H, 0x70000000);
 		g.texture(MAIN, x, y, w, h, TEX_W, TEX_H, 0xFF000000 | ink);
 		g.texture(SPARK, x, y, w, h, TEX_W, TEX_H, 0xFF000000 | spark);
 	}

@@ -213,6 +213,7 @@ public final class Lang {
 			Map.entry("aerion.sound.ambient", new String[] {"Ambient", "Otoczenie"}),
 			Map.entry("aerion.sound.music", new String[] {"Music", "Muzyka"}),
 			Map.entry("aerion.sound.other", new String[] {"Other", "Inne"}),
+			Map.entry("aerion.hint.noOptions", new String[] {"No more options here. Use the switch at the top and the Key tab.", "Nie ma tu więcej opcji. Użyj przełącznika u góry i zakładki Klawisz."}),
 			Map.entry("aerion.toggle.sprint", new String[] {"Sprinting (toggled)", "Bieg (przełączony)"}),
 			Map.entry("aerion.toggle.sneak", new String[] {"Sneaking (toggled)", "Skradanie (przełączone)"}),
 			Map.entry("aerion.toggle.fullbright", new String[] {"Fullbright", "Pełna jasność"}),

@@ -127,7 +127,7 @@
       `background:${bg}`,
       `color:${text}`,
       `border:${kk * (s.borderWidth ?? 1)}px solid ${border}`,
-      `font-family:${s.font === "smooth" ? "var(--font-ui, Inter, sans-serif)" : "monospace"}`,
+      `font-family:${s.font === "game" ? "monospace" : "var(--font-ui, Inter, sans-serif)"}`,
       `--box-r:${(s.radius ?? 0) * kk}px`,
       `border-radius:var(--box-r)`,
       `padding:${(s.padding ?? 3) * kk}px`,

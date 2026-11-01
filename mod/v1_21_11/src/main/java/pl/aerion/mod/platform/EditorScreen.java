@@ -34,6 +34,11 @@ public final class EditorScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float delta) {
+		if (page.veil()) super.renderBackground(g, mouseX, mouseY, delta);
+	}
+
+	@Override
 	public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
 		if (page.pressed(e.x(), e.y(), e.button())) onClose();
 		return true;

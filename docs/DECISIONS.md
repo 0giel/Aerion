@@ -259,13 +259,15 @@ of GUI pixels (thin borders, anti-aliased corners), and `Txt` draws Inter from o
 `scripts/build-mod-assets.py`, because Java's AWT font stack can fail in the game's headless JVM and
 mod font assets don't load without Fabric API. Button and slider labels use it when the theme's
 colours are on; a label that is too long or has a character outside the image stays with the game's
-font, which also keeps its scrolling. HUD modules keep the game's font. Menu layout follows the
+font, which also keeps its scrolling. HUD modules use it too by default (owner's request), with
+Minecraft's font one click away, per module or shared. Menu layout follows the
 owner's reference screenshots (window, cards, options page) with Aerion's own theme and logo, and no
 other client's branding.
 
 ### D35 — Layout first, and features that need no HUD element (2026-11-01)
 Right Shift opens the HUD layout, not the settings: the screen shows the HUD being arranged, with
-the logo and a Mods button in the middle (the owner's reference). Resizing moved from the mouse
+the logo and a Mods button in the middle (the owner's reference). The world isn't dimmed or blurred
+there, so a layout can be judged against the real picture, and lines are one screen pixel wide. Resizing moved from the mouse
 wheel to squares on all four corners, so a module against a screen edge can still grow towards free
 space, and the opposite corner stays put. Dragging snaps to the screen and other modules, with
 guides; arrow keys nudge, and undo and reset are at hand. The menu sets its own pixel size (about

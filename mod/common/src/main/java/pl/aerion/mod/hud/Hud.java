@@ -450,7 +450,7 @@ public final class Hud {
 		boolean shadow = HudConfig.bool(own.has("shadow") ? own : base, "shadow", true);
 		String align = pick(own, base, "align", "left");
 		int borderWidth = HudConfig.num(own.has("borderWidth") ? own : base, "borderWidth", 1);
-		boolean smooth = pick(own, base, "font", "game").equals("smooth");
+		boolean smooth = pick(own, base, "font", "smooth").equals("smooth");
 		return new Style(text, background, borderColor, Math.max(1, Math.min(4, borderWidth)), Math.max(0, Math.min(8, radius)), Math.max(0, Math.min(10, padding)), shadow, align, smooth);
 	}
 

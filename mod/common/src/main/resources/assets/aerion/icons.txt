@@ -13,6 +13,7 @@ help
 hitboxes
 overlays
 sounds
+layout
 toggleSneak
 armor
 clock

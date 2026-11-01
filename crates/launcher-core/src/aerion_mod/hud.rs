@@ -209,7 +209,7 @@ impl Default for HudConfig {
                 padding: Some(3),
                 shadow: Some(true),
                 align: Some("left".into()),
-                font: Some("game".into()),
+                font: Some("smooth".into()),
             },
             modules: MODULES
                 .iter()
