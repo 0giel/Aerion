@@ -239,9 +239,9 @@ commands, so a broken widget can't affect the rest of the launcher.
 thin part that differs (`platform/*`, version mixins). 26.x is unobfuscated, 1.21.11 is remapped
 by Loom. Fabric API proved unnecessary, and leaving it out means nothing extra to download or
 break. Settings live in `aerion-mod/hud.json`: the launcher edits everything, and the in-game editor
-moves and scales modules and, in its side panel, switches modules and features on and off and sets
-each module's look and the shared one (only text formats need the launcher, there is no text field
-in the game). A running game reloads the file within a second, and the launcher reloads it when
+moves and scales modules, and the in-game menu (a window of cards, owner's request) switches modules
+and features on and off and sets each module's look and the shared one (only text formats need the
+launcher, there is no text field in the game). A running game reloads the file within a second, and the launcher reloads it when
 its window regains focus. Corners are square by default (owner's request); the corner setting stays. The minimap draws terrain only: showing other players would be a
 radar, which servers treat as cheating. Freelook and fullbright are off by default and the
 launcher warns that servers may forbid them. Toggle sprint/sneak use Minecraft's own options;
@@ -249,3 +249,12 @@ launcher warns that servers may forbid them. Toggle sprint/sneak use Minecraft's
 off never overrides a choice the player made in the game's settings. Input constants differ by
 version (26.3 counts mouse buttons from 1), so code always uses `InputConstants`, never numbers.
 
+### D34 — Menus drawn in screen pixels with a baked font (2026-11-01)
+Owner asked for higher-resolution buttons in the game. `Draw` fills in real screen pixels instead
+of GUI pixels (thin borders, anti-aliased corners), and `Txt` draws Inter from one image made by
+`scripts/build-mod-assets.py`, because Java's AWT font stack can fail in the game's headless JVM and
+mod font assets don't load without Fabric API. Button and slider labels use it when the theme's
+colours are on; a label that is too long or has a character outside the image stays with the game's
+font, which also keeps its scrolling. HUD modules keep the game's font. Menu layout follows the
+owner's reference screenshots (window, cards, options page) with Aerion's own theme and logo, and no
+other client's branding.

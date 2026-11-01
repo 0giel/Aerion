@@ -409,6 +409,7 @@
     max-height: 18rem;
     overflow: auto;
     padding: 0.35rem;
+    background: var(--c-surface);
     display: flex;
     flex-direction: column;
     gap: 0.15rem;

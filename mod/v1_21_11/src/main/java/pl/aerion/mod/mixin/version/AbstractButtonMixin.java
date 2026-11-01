@@ -1,6 +1,7 @@
 package pl.aerion.mod.mixin.version;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.ActiveTextCollector;
 import net.minecraft.client.gui.components.AbstractButton;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,6 +18,7 @@ import pl.aerion.mod.platform.Gfx;
 abstract class AbstractButtonMixin {
 	@Inject(method = "renderDefaultSprite", at = @At("HEAD"), cancellable = true)
 	private void aerion$button(GuiGraphics g, CallbackInfo ci) {
+		Draw.current = new Gfx(g);
 		Theme t = AerionClient.colors();
 		if (t == null) return;
 		AbstractButton b = (AbstractButton) (Object) this;
@@ -36,5 +38,14 @@ abstract class AbstractButtonMixin {
 		}
 		Draw.control(new Gfx(g), b.getX(), b.getY(), b.getWidth(), b.getHeight(), t.radius, edge, body);
 		ci.cancel();
+	}
+
+	/** Labels in smooth text; anything too long or in an unknown script stays with the game. */
+	@Inject(method = "renderDefaultLabel", at = @At("HEAD"), cancellable = true)
+	private void aerion$label(ActiveTextCollector out, CallbackInfo ci) {
+		if (AerionClient.colors() == null || Draw.current == null) return;
+		AbstractButton b = (AbstractButton) (Object) this;
+		int a = Math.round(b.getAlpha() * 255);
+		if (Draw.label(Draw.current, b.getMessage().getString(), b.getX(), b.getY(), b.getWidth(), b.getHeight(), b.isActive(), a)) ci.cancel();
 	}
 }

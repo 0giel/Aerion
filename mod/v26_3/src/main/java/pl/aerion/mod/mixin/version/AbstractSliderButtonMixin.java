@@ -4,7 +4,9 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.ActiveTextCollector;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,6 +25,7 @@ abstract class AbstractSliderButtonMixin {
 	@WrapOperation(method = "extractWidgetRenderState", at = @At(value = "INVOKE", target = BLIT, ordinal = 0))
 	private void aerion$track(
 			GuiGraphicsExtractor g, RenderPipeline p, Identifier s, int x, int y, int w, int h, int c, Operation<Void> original) {
+		Draw.current = new Gfx(g);
 		Theme t = AerionClient.colors();
 		if (t == null) {
 			original.call(g, p, s, x, y, w, h, c);
@@ -44,5 +47,16 @@ abstract class AbstractSliderButtonMixin {
 		}
 		int a = (c >>> 24) & 0xFF;
 		Draw.rounded(new Gfx(g), x + 1, y + 1, w - 2, h - 2, t.radius, Colors.alpha(t.accent, a));
+	}
+
+	@WrapOperation(
+			method = "extractWidgetRenderState",
+			at = @At(
+					value = "INVOKE",
+					target = "Lnet/minecraft/client/gui/components/AbstractSliderButton;extractScrollingStringOverContents(Lnet/minecraft/client/gui/ActiveTextCollector;Lnet/minecraft/network/chat/Component;I)V"))
+	private void aerion$label(AbstractSliderButton b, ActiveTextCollector out, Component text, int margin, Operation<Void> original) {
+		boolean smooth = AerionClient.colors() != null && Draw.current != null
+				&& Draw.label(Draw.current, text.getString(), b.getX(), b.getY(), b.getWidth(), b.getHeight(), b.isActive(), Math.round(b.getAlpha() * 255));
+		if (!smooth) original.call(b, out, text, margin);
 	}
 }

@@ -5,6 +5,7 @@
 	"client": [
 		"ClientLanguageMixin",
 		"EntityMixin",
+		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",

@@ -146,9 +146,7 @@
       <div class="col gap-1 grow" style="min-width:0">
         <h1 class="truncate">{inst.name}</h1>
         <div class="row wrap small muted">
-          <span class="badge accent"
-            >{instanceVersionLabel(inst)}{inst.loaderVersion ? ` ${inst.loaderVersion}` : ""}</span
-          >
+          <span class="badge accent">{instanceVersionLabel(inst, true)}</span>
           {#if newerRelease}<button class="badge newer" onclick={() => (upgradeOpen = true)}
               ><Icon name="upload" size={12} />{t("instance.upgrade.available", {
                 version: newerRelease,
@@ -324,6 +322,9 @@
     gap: var(--sp-3);
   }
   .head {
+    /* Cards are stacking contexts: without this the next card paints over the "more" menu. */
+    position: relative;
+    z-index: 5;
     display: flex;
     align-items: center;
     gap: var(--sp-3);
@@ -347,6 +348,7 @@
     z-index: 10;
     min-width: 13rem;
     padding: 0.35rem;
+    background: var(--c-surface);
     display: flex;
     flex-direction: column;
     animation: fade-up var(--dur) var(--ease);

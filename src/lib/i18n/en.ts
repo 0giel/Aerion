@@ -1062,7 +1062,7 @@ const en = {
     title: "HUD and game features",
     open: "Edit HUD and game features",
     intro:
-      "HUD modules and features of the Aerion mod (Fabric 26.3 and 1.21.11 instances with the mod on). Changes save at once and apply to a running game too. In game, Right Shift opens the editor where you drag modules and resize them with the mouse wheel.",
+      "HUD modules and features of the Aerion mod (Fabric 26.3 and 1.21.11 instances with the mod on). Changes save at once and apply to a running game too. In game, Right Shift opens the Aerion menu with module cards and the layout editor.",
     enabled: "Aerion HUD",
     presetsLabel: "Ready layouts:",
     presetApplied: "Layout applied: {name}",
@@ -1081,7 +1081,7 @@ const en = {
     sharedStyle: "Look of all modules",
     featuresTitle: "Features",
     keysHint:
-      "Keys (default: zoom C, freelook left Alt, HUD editor Right Shift, fullbright unbound) are changed in game: Options → Controls → Aerion.",
+      "Keys (default: zoom C, freelook left Alt, Aerion menu Right Shift, fullbright unbound) are changed in game: Options → Controls → Aerion.",
     modules: {
       fps: "FPS",
       coords: "Coordinates",

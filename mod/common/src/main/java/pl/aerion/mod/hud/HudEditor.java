@@ -3,32 +3,25 @@ package pl.aerion.mod.hud;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.Minecraft;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
 import pl.aerion.mod.Lang;
 import pl.aerion.mod.Theme;
-import pl.aerion.mod.platform.Game;
+import pl.aerion.mod.Txt;
 import pl.aerion.mod.platform.Gfx;
 
 /**
- * The in-game HUD editor: modules are dragged into place and resized with the mouse wheel, and
- * the side panel ({@link EditorPanel}) switches them on and off and sets their look. Everything
- * is saved to hud.json, which the launcher reads too.
+ * The HUD layout editor: modules are dragged into place, resized with the mouse wheel and opened
+ * in the menu with a right click. The layout is saved to hud.json, which the launcher reads too.
  */
-public final class HudEditor {
+public final class HudEditor implements Page {
 	private String dragging;
 	private double grabX, grabY;
 	private boolean changed;
 	private int[] done = new int[4];
-	private int[] panelButton = new int[4];
-	private int screenW;
-	private final EditorPanel panel = new EditorPanel(() -> changed = true);
-
-	public HudEditor() {
-		// The game draws toasts over every screen, here right over the panel's tabs.
-		Game.clearToasts();
-	}
+	private int[] menu = new int[4];
 
 	private static boolean inside(int[] b, double x, double y) {
 		return x >= b[0] && y >= b[1] && x < b[0] + b[2] && y < b[1] + b[3];
@@ -40,67 +33,63 @@ public final class HudEditor {
 		return hit;
 	}
 
+	@Override
 	public void render(Gfx g, int mouseX, int mouseY) {
 		Theme t = AerionClient.theme();
 		int accent = t != null ? t.accent : 0xFF7AA2FF;
-		g.fill(0, 0, g.width(), g.height(), 0x88000000);
+		if (Minecraft.getInstance().level == null && t != null) Draw.background(g, t, 0xFF);
+		g.fill(0, 0, g.width(), g.height(), 0x66000000);
 		// Faint guides through the middle help to centre modules.
 		g.fill(g.width() / 2, 0, g.width() / 2 + 1, g.height(), 0x22FFFFFF);
 		g.fill(0, g.height() / 2, g.width(), g.height() / 2 + 1, 0x22FFFFFF);
 		Hud.render(g, true);
-		screenW = g.width();
-		String hover = dragging != null ? dragging : panel.contains(mouseX, mouseY, screenW) ? null : at(mouseX, mouseY);
+		String hover = dragging != null ? dragging : at(mouseX, mouseY);
 		for (var e : Hud.BOUNDS.entrySet()) {
 			int[] b = e.getValue();
-			boolean lit = e.getKey().equals(hover) || e.getKey().equals(EditorPanel.selected);
-			int c = lit ? accent : 0x88FFFFFF;
+			int c = e.getKey().equals(hover) ? accent : 0x88FFFFFF;
 			g.fill(b[0] - 1, b[1] - 1, b[0] + b[2] + 1, b[1], c);
 			g.fill(b[0] - 1, b[1] + b[3], b[0] + b[2] + 1, b[1] + b[3] + 1, c);
 			g.fill(b[0] - 1, b[1], b[0], b[1] + b[3], c);
 			g.fill(b[0] + b[2], b[1], b[0] + b[2] + 1, b[1] + b[3], c);
 		}
-		// Hint and buttons sit in the middle of the space the panel leaves free.
-		int[] free = panel.freeArea(g.width());
-		int middle = (free[0] + free[1]) / 2;
+		float size = 8f;
 		String hint = Lang.tr(Hud.BOUNDS.isEmpty() ? "aerion.editor.empty" : "aerion.editor.hint");
-		int hintW = Gfx.textWidth(hint), hintX = middle - hintW / 2, hintY = g.height() / 2 + 14;
-		g.fill(hintX - 4, hintY - 3, hintX + hintW + 4, hintY + 11, 0xCC000000);
-		g.text(hint, hintX, hintY, 0xFFFFFFFF, true);
-		String label = Lang.tr("aerion.editor.done");
-		int w = Gfx.textWidth(label) + 24, h = 18;
-		int bx = panel.isOpen() ? middle - w / 2 : middle - w - 2;
-		done = new int[] {bx, g.height() / 2 + 30, w, h};
-		button(g, t, accent, done, label, mouseX, mouseY);
-		if (panel.isOpen()) {
-			panelButton = new int[4];
-		} else {
-			String more = Lang.tr("aerion.editor.panel");
-			panelButton = new int[] {middle + 2, done[1], Gfx.textWidth(more) + 24, h};
-			button(g, t, accent, panelButton, more, mouseX, mouseY);
-		}
-		panel.render(g, mouseX, mouseY);
+		float hintW = Txt.width(hint, size);
+		int cx = g.width() / 2, hintY = g.height() / 2 + 14;
+		Draw.rounded(g, Math.round(cx - hintW / 2) - 5, hintY - 2, Math.round(hintW) + 10, 13, 2, 0xCC000000);
+		Txt.center(g, hint, cx, hintY + 4.5f, size, 0xFFFFFFFF);
+		String doneLabel = Lang.tr("aerion.editor.done"), menuLabel = Lang.tr("aerion.editor.menu");
+		int w1 = Math.round(Txt.width(doneLabel, size)) + 20, w2 = Math.round(Txt.width(menuLabel, size)) + 20, h = 18;
+		int y = g.height() / 2 + 30, x = cx - (w1 + w2 + 4) / 2;
+		menu = new int[] {x, y, w2, h};
+		done = new int[] {x + w2 + 4, y, w1, h};
+		button(g, t, accent, menu, menuLabel, mouseX, mouseY);
+		button(g, t, accent, done, doneLabel, mouseX, mouseY);
 	}
 
 	private static void button(Gfx g, Theme t, int accent, int[] b, String label, int mouseX, int mouseY) {
 		boolean over = inside(b, mouseX, mouseY);
 		int surface = t != null ? t.surface2 : 0xFF2A2A2A;
-		Draw.control(g, b[0], b[1], b[2], b[3], 0, over ? accent : Colors.mix(surface, accent, 0.4f),
+		Draw.control(g, b[0], b[1], b[2], b[3], t != null ? t.radius : 2, over ? accent : Colors.mix(surface, accent, 0.4f),
 				Colors.forWhiteText(Colors.mix(surface, accent, over ? 0.35f : 0.12f)));
-		g.text(label, b[0] + 12, b[1] + 5, 0xFFFFFFFF, true);
+		Txt.center(g, label, b[0] + b[2] / 2f, b[1] + b[3] / 2f, 8f, 0xFFFFFFFF);
 	}
 
-	/** True when the click closes the editor (the Done button). */
+	@Override
 	public boolean pressed(double x, double y, int button) {
+		if (button == InputConstants.MOUSE_BUTTON_RIGHT) {
+			String id = at(x, y);
+			if (id != null) Page.go(new AerionMenu(id));
+			return false;
+		}
 		if (button != InputConstants.MOUSE_BUTTON_LEFT) return false;
-		if (panel.pressed(x, y, screenW)) return false;
 		if (inside(done, x, y)) return true;
-		if (inside(panelButton, x, y)) {
-			panel.show();
+		if (inside(menu, x, y)) {
+			Page.go(new AerionMenu());
 			return false;
 		}
 		dragging = at(x, y);
 		if (dragging != null) {
-			panel.select(dragging);
 			int[] b = Hud.BOUNDS.get(dragging);
 			grabX = x - b[0];
 			grabY = y - b[1];
@@ -108,8 +97,9 @@ public final class HudEditor {
 		return false;
 	}
 
+	@Override
 	public void dragged(double x, double y, int screenW, int screenH) {
-		if (panel.dragged(x) || dragging == null) return;
+		if (dragging == null) return;
 		int[] b = Hud.BOUNDS.get(dragging);
 		if (b == null) return;
 		JsonObject m = AerionClient.hud().module(dragging);
@@ -120,13 +110,13 @@ public final class HudEditor {
 		changed = true;
 	}
 
+	@Override
 	public void released() {
-		panel.released();
 		dragging = null;
 	}
 
+	@Override
 	public void scrolled(double x, double y, double amount) {
-		if (panel.scrolled(x, y, amount, screenW)) return;
 		String id = at(x, y);
 		if (id == null) return;
 		JsonObject m = AerionClient.hud().module(id);
@@ -135,6 +125,7 @@ public final class HudEditor {
 		changed = true;
 	}
 
+	@Override
 	public void close() {
 		if (changed) AerionClient.saveHud();
 		changed = false;

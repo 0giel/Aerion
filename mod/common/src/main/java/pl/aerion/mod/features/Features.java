@@ -12,6 +12,7 @@ import net.minecraft.client.OptionInstance;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import pl.aerion.mod.AerionClient;
+import pl.aerion.mod.hud.AerionMenu;
 import pl.aerion.mod.hud.HudConfig;
 import pl.aerion.mod.mixin.OptionInstanceAccessor;
 import pl.aerion.mod.platform.EditorScreen;
@@ -186,7 +187,7 @@ public final class Features {
 	public static void tick(Minecraft mc) {
 		if (keys == null) return;
 		while (editor.consumeClick()) {
-			if (Game.screen() == null) Game.setScreen(new EditorScreen());
+			if (Game.screen() == null) Game.setScreen(new EditorScreen(new AerionMenu(), null));
 		}
 		syncToggles(mc);
 		if (mc.player == null) {

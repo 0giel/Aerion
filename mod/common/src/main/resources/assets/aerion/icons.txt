@@ -1,0 +1,20 @@
+64 6 384 256
+fps
+coords
+direction
+cps
+keystrokes
+potions
+ping
+minimap
+toggles
+toggleSprint
+toggleSneak
+armor
+clock
+memory
+zoom
+freelook
+fullbright
+back
+close

@@ -4,53 +4,58 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import pl.aerion.mod.hud.HudEditor;
+import pl.aerion.mod.hud.Page;
 
-/** The in-game HUD editor for Minecraft 26.x; the logic lives in {@link HudEditor}. */
+/** Aerion's in-game screen, for Minecraft 26.x; what it shows lives in a {@link Page}. */
 public final class EditorScreen extends Screen {
-	private final HudEditor editor = new HudEditor();
+	private Page page;
+	private final Screen parent;
 
-	public EditorScreen() {
-		super(Component.literal("Aerion HUD"));
+	public EditorScreen(Page page, Screen parent) {
+		super(Component.literal("Aerion"));
+		this.page = page;
+		this.parent = parent;
+		// The game draws toasts over every screen, here right over the menu.
+		Game.clearToasts();
+	}
+
+	public void show(Page next) {
+		page.close();
+		page = next;
 	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-		editor.render(new Gfx(g), mouseX, mouseY);
+		page.render(new Gfx(g), mouseX, mouseY);
 	}
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-		if (editor.pressed(e.x(), e.y(), e.button())) onClose();
+		if (page.pressed(e.x(), e.y(), e.button())) onClose();
 		return true;
 	}
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
-		editor.dragged(e.x(), e.y(), width, height);
+		page.dragged(e.x(), e.y(), width, height);
 		return true;
 	}
 
 	@Override
 	public boolean mouseReleased(MouseButtonEvent e) {
-		editor.released();
+		page.released();
 		return true;
 	}
 
 	@Override
 	public boolean mouseScrolled(double x, double y, double h, double v) {
-		editor.scrolled(x, y, v);
+		page.scrolled(x, y, v);
 		return true;
 	}
 
 	@Override
-	public boolean isPauseScreen() {
-		return false;
-	}
-
-	@Override
 	public void onClose() {
-		editor.close();
-		super.onClose();
+		page.close();
+		Game.setScreen(parent);
 	}
 }

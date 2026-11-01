@@ -57,4 +57,18 @@ public final class Logo {
 		g.texture(SPARK, x, y, w, h, TEX_W, TEX_H, (a << 24) | (t.accent & 0xFFFFFF));
 		return true;
 	}
+
+	/** The logo at any height (menu headers). */
+	public static void draw(Gfx g, Theme t, int x, int y, int h) {
+		if (!ensureLoaded()) return;
+		int w = Math.round(h * (float) TEX_W / TEX_H);
+		int ink = t != null ? t.text & 0xFFFFFF : 0xFFFFFF;
+		int spark = t != null ? t.accent & 0xFFFFFF : 0xFFFFFF;
+		g.texture(MAIN, x, y, w, h, TEX_W, TEX_H, 0xFF000000 | ink);
+		g.texture(SPARK, x, y, w, h, TEX_W, TEX_H, 0xFF000000 | spark);
+	}
+
+	public static int width(int h) {
+		return Math.round(h * (float) TEX_W / TEX_H);
+	}
 }

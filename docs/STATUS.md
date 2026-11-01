@@ -18,10 +18,15 @@ Newest entries first.
   modules couldn't be dragged) → `InputConstants`; toggle options were overwritten at start even
   with the feature off → ownership marker (`aerion-toggles`); default positions overlapped;
   editor hint unreadable over modules → backing plate.
-- **Editor panel** (owner's request after testing): square corners by default; module and feature
-  switches, per-module size, options and own look, shared look, exact R/G/B colours, in the game.
-  Checked on 26.3: switching a module off, own look, swatch, slider drag, tabs, scrolling, saved
-  on Done and read back by the launcher. On 1.21.11: panel opens, toggle and tabs work.
+- **In-game menu** (owner's requests after testing): square HUD corners by default; Right Shift or
+  an Aerion button on the title and pause screens opens a window of cards (switch + options per
+  module and feature), a shared look tab with exact R/G/B colours, and the layout editor. Checked
+  on 26.3: card switch saved, options page, look tab, editor, Esc back to the pause or title screen.
+  On 1.21.11: menu, options opening and themed pause menu.
+- **Sharper game UI** (D34): shapes in screen pixels, smooth Inter labels on buttons and sliders;
+  checked on title, pause and options screens at GUI scale 3. Other GUI scales not looked at.
+- **Launcher**: the instance page's "more" menu was painted under the next card (cards are stacking
+  contexts) → fixed and checked; instances with the mod read "Fabric + Aerion".
 - **Quilt** does not get the mod (the launcher only offers it on Fabric), confirmed by launching.
 - **Widgets, checked with real mouse input**: all 11 kinds render, drag and corner resize saved,
   catalog, own page in the sidebar. Fixed the squeezed Play button and loose rows in Recent.

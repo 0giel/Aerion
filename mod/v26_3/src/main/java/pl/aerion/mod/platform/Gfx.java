@@ -65,4 +65,22 @@ public final class Gfx {
 	public void texture(Identifier id, int x, int y, int w, int h, int texW, int texH, int argb) {
 		g.blit(RenderPipelines.GUI_TEXTURED, id, x, y, 0f, 0f, w, h, texW, texH, texW, texH, argb);
 	}
+
+	/** A part of a texture, drawn at its own size in the current pose. */
+	public void region(Identifier id, int x, int y, int w, int h, int u, int v, int texW, int texH, int argb) {
+		g.blit(RenderPipelines.GUI_TEXTURED, id, x, y, (float) u, (float) v, w, h, w, h, texW, texH, argb);
+	}
+
+	public void scissor(int x1, int y1, int x2, int y2) {
+		g.enableScissor(x1, y1, x2, y2);
+	}
+
+	public void endScissor() {
+		g.disableScissor();
+	}
+
+	/** Screen pixels per GUI pixel. */
+	public static int guiScale() {
+		return Minecraft.getInstance().getWindow().getGuiScale();
+	}
 }

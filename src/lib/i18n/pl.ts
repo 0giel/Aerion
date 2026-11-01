@@ -1120,7 +1120,7 @@ const pl: Dict = {
     title: "HUD i funkcje gry",
     open: "Edytuj HUD i funkcje gry",
     intro:
-      "Moduły HUD i funkcje moda Aeriona (instancje Fabric 26.3 i 1.21.11 z włączonym modem). Zmiany zapisują się od razu i działają także w uruchomionej grze. W grze Prawy Shift otwiera edytor, w którym przeciągasz moduły i zmieniasz ich rozmiar kółkiem.",
+      "Moduły HUD i funkcje moda Aeriona (instancje Fabric 26.3 i 1.21.11 z włączonym modem). Zmiany zapisują się od razu i działają także w uruchomionej grze. W grze Prawy Shift otwiera menu Aeriona z kartami modułów i edytorem układu.",
     enabled: "HUD Aeriona",
     presetsLabel: "Gotowe układy:",
     presetApplied: "Ustawiono układ: {name}",
@@ -1139,7 +1139,7 @@ const pl: Dict = {
     sharedStyle: "Wygląd wszystkich modułów",
     featuresTitle: "Funkcje",
     keysHint:
-      "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, edytor HUD Prawy Shift, pełna jasność bez klawisza) zmienisz w grze: Opcje → Sterowanie → Aerion.",
+      "Klawisze (domyślnie: zoom C, swobodne rozglądanie lewy Alt, menu Aeriona Prawy Shift, pełna jasność bez klawisza) zmienisz w grze: Opcje → Sterowanie → Aerion.",
     modules: {
       fps: "FPS",
       coords: "Koordynaty",

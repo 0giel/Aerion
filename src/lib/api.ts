@@ -138,13 +138,19 @@ export function loaderLabel(l: LoaderKind | string): string {
   return t(`loaders.${l}`);
 }
 
-export function instanceVersionLabel(i: Pick<Instance, "gameVersion" | "loader" | "loaderVersion">): string {
-  return i.loader === "vanilla" ? i.gameVersion : `${i.gameVersion} · ${loaderLabel(i.loader)}`;
+export function instanceVersionLabel(
+  i: Pick<Instance, "gameVersion" | "loader" | "loaderVersion"> & { aerionMod?: boolean },
+  withLoaderVersion = false,
+): string {
+  if (i.loader === "vanilla") return i.gameVersion;
+  const version = withLoaderVersion && i.loaderVersion ? ` ${i.loaderVersion}` : "";
+  const aerion = i.aerionMod && i.loader === "fabric" ? " + Aerion" : "";
+  return `${i.gameVersion} · ${loaderLabel(i.loader)}${version}${aerion}`;
 }
 
 /** "Name · 1.21.11 · Fabric", leaving out the version or loader when the name already says it. */
 export function instanceTitle(
-  i: Pick<Instance, "name" | "gameVersion" | "loader" | "loaderVersion">,
+  i: Pick<Instance, "name" | "gameVersion" | "loader" | "loaderVersion"> & { aerionMod?: boolean },
 ): string {
   const name = i.name.toLowerCase();
   const parts = [i.name];
@@ -152,6 +158,7 @@ export function instanceTitle(
   if (i.loader !== "vanilla") {
     const loader = loaderLabel(i.loader);
     if (!name.includes(loader.toLowerCase())) parts.push(loader);
+    if (i.aerionMod && i.loader === "fabric" && !name.includes("aerion")) parts.push("Aerion");
   }
   return parts.join(" · ");
 }
