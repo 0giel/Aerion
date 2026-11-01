@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build the Aerion mod (mod/) and copy the jar to where the launcher embeds it from
-# (src-tauri/resources/aerion-ui.jar). Needs JDK 25: $JAVA_HOME, or the private one that
+# Build the Aerion mod (mod/, one jar per Minecraft version) and copy the jars to where the
+# launcher embeds them from (src-tauri/resources/aerion-ui-<version>.jar). Needs JDK 25: $JAVA_HOME, or the private one that
 # `scripts/build-mod.sh setup` unpacks into ~/.cache/luncher-devroot (nothing system-wide).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -25,8 +25,14 @@ export JAVA_HOME="${JAVA_HOME:-$BASE/jdk25}"
 export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$BASE/gradle-home}"
 GRADLE="$BASE/gradle/gradle-$GRADLE_VERSION/bin/gradle"
 # Old version numbers would otherwise leave several jars to choose from.
-rm -f mod/build/libs/*.jar
+rm -f mod/*/build/libs/*.jar
 (cd mod && "$GRADLE" --no-daemon -q build)
 mkdir -p src-tauri/resources
-cp mod/build/libs/aerion-ui-*[0-9].jar src-tauri/resources/aerion-ui.jar
-echo "mod built: src-tauri/resources/aerion-ui.jar ($(stat -c %s src-tauri/resources/aerion-ui.jar) bytes)"
+rm -f src-tauri/resources/aerion-ui*.jar
+# One jar per Minecraft version (the remapped one for obfuscated versions).
+for dir in mod/v*/; do
+  mc=$(sed -n 's/^minecraft_version=//p' "$dir/gradle.properties")
+  jar=$(ls "$dir"build/libs/aerion-ui-*[0-9].jar | grep -v -- '-sources' | head -1)
+  cp "$jar" "src-tauri/resources/aerion-ui-$mc.jar"
+  echo "mod built: src-tauri/resources/aerion-ui-$mc.jar ($(stat -c %s "$jar") bytes)"
+done

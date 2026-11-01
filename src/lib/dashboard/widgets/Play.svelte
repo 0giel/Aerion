@@ -48,7 +48,9 @@
   .big {
     justify-content: flex-start;
     gap: var(--sp-3);
+    height: auto;
     min-height: 3.2rem;
+    padding-block: var(--sp-2);
     font-size: 1.05rem;
   }
 </style>

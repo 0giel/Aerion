@@ -309,6 +309,11 @@
           <span class="label">{t("settings.inGame")}</span>
           <span class="small muted">{t("settings.inGameHint")}</span>
         </div>
+        <div class="row wrap gap-2">
+          <button class="btn sm primary" onclick={() => router.go("hud")}
+            ><Icon name="sliders" size={15} />{t("hudEditor.open")}</button
+          >
+        </div>
         {#each ["colors", "particles", "logo"] as const as key (key)}
           <Switch
             label={t(`settings.inGameOptions.${key}`)}

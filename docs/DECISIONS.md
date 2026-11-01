@@ -198,7 +198,7 @@ buttons, sliders and menu backgrounds with the launcher theme's colours. The lau
 theme into plain colours (`aerion_mod::GameTheme`, gradient stops extracted from the CSS) and
 writes `<root>/aerion-mod/theme.json`; the mod re-reads it once a second, so theme changes apply
 to a running game. The jar is embedded in the launcher and loaded with `-Dfabric.addMods`, never
-copied into the player's mods folder. Built only for 26.3 for now: Minecraft's GUI code changes
+copied into the player's mods folder. Built only for 26.3 at first (see D33 for 1.21.11): Minecraft's GUI code changes
 between versions (26.x renamed rendering to `GuiGraphicsExtractor`/`extract*`), so each further
 version is a separate build. Labels stay white (vanilla draws them so), therefore button bodies
 are darkened until white text reads well, also with light themes. Off by default per instance.
@@ -226,3 +226,24 @@ not counted once per thread) and never invented numbers about other launchers. G
 from the Aerion mod (`-Daerion.status`, written once a second). Sampling runs only while the page
 is open and the window visible. The busiest programs are listed by name locally; nothing leaves
 the computer.
+
+### D32 — Widget dashboards start as an experimental switch (2026-11-01)
+The classic pages stay the default so nobody is pushed into arranging their launcher. With
+`experimentalWidgets` on, the home screen can become a dashboard and any number of own pages
+appear in the sidebar. Layouts are a 12-column grid in the settings file; placement is free (no
+gravity), so a gap the user leaves stays. Widgets only show existing data through existing
+commands, so a broken widget can't affect the rest of the launcher.
+
+### D33 — Lunar-style mod: one source, one jar per game version, no Fabric API (2026-11-01)
+`mod/common` holds everything that doesn't touch rendering names; `v26_3` and `v1_21_11` hold the
+thin part that differs (`platform/*`, version mixins). 26.x is unobfuscated, 1.21.11 is remapped
+by Loom. Fabric API proved unnecessary, and leaving it out means nothing extra to download or
+break. Settings live in `aerion-mod/hud.json`: the launcher edits everything, the in-game editor
+moves and scales, a running game reloads the file within a second, and the launcher reloads it
+when its window regains focus. The minimap draws terrain only: showing other players would be a
+radar, which servers treat as cheating. Freelook and fullbright are off by default and the
+launcher warns that servers may forbid them. Toggle sprint/sneak use Minecraft's own options;
+`aerion-toggles` in the game directory records what Aerion turned on, so switching the feature
+off never overrides a choice the player made in the game's settings. Input constants differ by
+version (26.3 counts mouse buttons from 1), so code always uses `InputConstants`, never numbers.
+

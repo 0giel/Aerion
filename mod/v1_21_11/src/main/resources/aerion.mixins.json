@@ -1,0 +1,17 @@
+{
+	"required": true,
+	"package": "pl.aerion.mod.mixin.version",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"AbstractButtonMixin",
+		"AbstractSliderButtonMixin",
+		"CameraMixin",
+		"GameRendererMixin",
+		"GuiMixin",
+		"LogoRendererMixin",
+		"ScreenMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

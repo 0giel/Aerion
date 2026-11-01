@@ -336,3 +336,22 @@ pub async fn set_game_theme(
 ) -> CmdResult<()> {
     Ok(launcher_core::aerion_mod::write_theme(&state.paths, &theme).await?)
 }
+
+/// HUD modules and client features of the Aerion mod (`hud.json`).
+#[tauri::command]
+#[specta::specta]
+pub async fn get_hud_config(
+    state: State<'_, AppState>,
+) -> CmdResult<launcher_core::aerion_mod::hud::HudConfig> {
+    Ok(launcher_core::aerion_mod::hud::load(&state.paths).await)
+}
+
+/// Save HUD settings; running games pick them up within a second.
+#[tauri::command]
+#[specta::specta]
+pub async fn save_hud_config(
+    state: State<'_, AppState>,
+    config: launcher_core::aerion_mod::hud::HudConfig,
+) -> CmdResult<()> {
+    Ok(launcher_core::aerion_mod::hud::save(&state.paths, &config).await?)
+}

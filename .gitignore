@@ -33,3 +33,4 @@ portable
 mod/.gradle/
 mod/build/
 mod/run/
+mod/*/build/

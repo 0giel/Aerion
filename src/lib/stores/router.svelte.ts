@@ -5,6 +5,7 @@ export type Page =
   | "mods"
   | "performance"
   | "dashboard"
+  | "hud"
   | "accounts"
   | "skins"
   | "stats"

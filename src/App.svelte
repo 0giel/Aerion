@@ -37,6 +37,7 @@
     stats: () => import("./lib/pages/Stats.svelte"),
     performance: () => import("./lib/pages/Performance.svelte"),
     dashboard: () => import("./lib/pages/Dashboard.svelte"),
+    hud: () => import("./lib/pages/HudEditor.svelte"),
     console: () => import("./lib/pages/Console.svelte"),
     settings: () => import("./lib/pages/Settings.svelte"),
     themeEditor: () => import("./lib/pages/ThemeEditor.svelte"),

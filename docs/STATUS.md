@@ -3,6 +3,27 @@
 Running log of what is verified; milestones and next steps live in [`PLAN.md`](PLAN.md).
 Newest entries first.
 
+## 2026-11-01
+
+### 0.3.0: roadmap stages 2 (experimental) and 3 — widgets, HUD, game features (D32, D33)
+- **Test rig**: games run on a private Xvfb (no window manager) so real keyboard, mouse and focus
+  work without touching the owner's desktop; weston's XWM blocked focus and held button presses.
+- **Fabric 26.3, checked in a world**: every HUD module with live data (armor and potion effects
+  via commands, CPS for both buttons), themed pause menu, zoom, freelook (camera turns, the player
+  doesn't), hud.json edits appearing in the running game, Right Shift editor: drag and scroll both
+  saved on Done.
+- **Fabric 1.21.11, checked in a new world**: mixins apply, themed menus, particles and logo, HUD,
+  minimap, zoom, freelook, editor drag saved.
+- **Bugs found this way**: 26.3 counts mouse buttons from 1 (left clicks were counted as right and
+  modules couldn't be dragged) → `InputConstants`; toggle options were overwritten at start even
+  with the feature off → ownership marker (`aerion-toggles`); default positions overlapped;
+  editor hint unreadable over modules → backing plate.
+- **Quilt** does not get the mod (the launcher only offers it on Fabric), confirmed by launching.
+- **Widgets, checked with real mouse input**: all 11 kinds render, drag and corner resize saved,
+  catalog, own page in the sidebar. Fixed the squeezed Play button and loose rows in Recent.
+- **Not checked**: the mod on a real multiplayer server (ping); 0.3.0 on Windows; the fullbright
+  key once bound.
+
 ## 2026-10-31
 
 ### 0.2.0: roadmap stage 1 — performance page and mod manager (D30, D31)

@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"package": "pl.aerion.mod.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ClientLanguageMixin",
+		"EntityMixin",
+		"MinecraftMixin",
+		"MouseHandlerMixin",
+		"OptionInstanceAccessor",
+		"OptionsMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

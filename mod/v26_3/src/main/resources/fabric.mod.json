@@ -1,0 +1,23 @@
+{
+	"schemaVersion": 1,
+	"id": "aerion",
+	"version": "${version}",
+	"name": "Aerion UI",
+	"description": "The Aerion launcher's theme in the game's menus, HUD modules and client features.",
+	"authors": ["Aerion"],
+	"contact": {
+		"homepage": "https://github.com/0giel/Aerion"
+	},
+	"license": "All-Rights-Reserved",
+	"icon": "assets/aerion/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["pl.aerion.mod.AerionClient"]
+	},
+	"mixins": ["aerion.mixins.json", "aerion.common.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "${minecraft}",
+		"java": ">=25"
+	}
+}

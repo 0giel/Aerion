@@ -1,31 +1,26 @@
-// Aerion UI: the launcher's theme in the game's menus. Client only, no Fabric API needed, so it
-// works next to any mod list. The launcher bundles the built jar (see scripts/build-mod.sh).
+// Aerion mod: the launcher's theme, HUD modules and client features. Client only and without
+// Fabric API, so it works next to any mod list. scripts/build-mod.sh copies the jars into the
+// launcher, which loads the one matching the instance's Minecraft version.
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
 }
 
-base {
-	archivesName = 'aerion-ui'
-}
+subprojects {
+	version = rootProject.version
+	group = rootProject.group
 
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-}
+	afterEvaluate {
+		// Shared sources and assets (theme, HUD, features) next to the version's own code.
+		sourceSets.main.java.srcDir rootProject.file('common/src/main/java')
+		sourceSets.main.resources.srcDir rootProject.file('common/src/main/resources')
 
-processResources {
-	def version = project.version
-	inputs.property "version", version
-	filesMatching("fabric.mod.json") {
-		expand "version": version
+		base.archivesName = "aerion-ui-${project.minecraft_version}"
+
+		processResources {
+			def props = [version: project.version, minecraft: project.minecraft_range]
+			inputs.properties props
+			filesMatching('fabric.mod.json') { expand props }
+		}
 	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
-}
-
-java {
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
 }

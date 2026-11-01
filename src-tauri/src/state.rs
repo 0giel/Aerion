@@ -22,8 +22,14 @@ use crate::tasks::TaskRegistry;
 pub const KEYRING_SERVICE: &str = "aerion";
 pub const CF_KEY_ENTRY: &str = "curseforge-api-key";
 
-/// Built from `mod/` by `scripts/build-mod.sh`.
-const AERION_MOD_JAR: &[u8] = include_bytes!("../resources/aerion-ui.jar");
+/// Built from `mod/` by `scripts/build-mod.sh`, one jar per supported Minecraft version.
+const AERION_MOD_JARS: &[(&str, &[u8])] = &[
+    ("26.3", include_bytes!("../resources/aerion-ui-26.3.jar")),
+    (
+        "1.21.11",
+        include_bytes!("../resources/aerion-ui-1.21.11.jar"),
+    ),
+];
 
 pub struct AppState {
     pub paths: Paths,
@@ -82,8 +88,10 @@ impl AppState {
             }
         };
         // The Aerion mod ships inside the launcher; games load it from the data folder.
-        if let Err(e) = launcher_core::aerion_mod::install_jar(&paths, AERION_MOD_JAR) {
-            tracing::warn!(error = %e, "can't install the Aerion mod");
+        for (version, bytes) in AERION_MOD_JARS {
+            if let Err(e) = launcher_core::aerion_mod::install_jar(&paths, version, bytes) {
+                tracing::warn!(error = %e, version, "can't install the Aerion mod");
+            }
         }
         Ok(Self {
             accounts: Accounts::new(paths.accounts_file(), keyring.clone()),

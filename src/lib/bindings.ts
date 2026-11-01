@@ -170,6 +170,10 @@ export const commands = {
 	listUserThemes: () => __TAURI_INVOKE<ThemeFile_Serialize[]>("list_user_themes"),
 	/**  Save the active theme's colours for running and future games with the Aerion mod. */
 	setGameTheme: (theme: GameTheme) => __TAURI_INVOKE<null>("set_game_theme", { theme }),
+	/**  HUD modules and client features of the Aerion mod (`hud.json`). */
+	getHudConfig: () => __TAURI_INVOKE<HudConfig_Serialize>("get_hud_config"),
+	/**  Save HUD settings; running games pick them up within a second. */
+	saveHudConfig: (config: HudConfig_Deserialize) => __TAURI_INVOKE<null>("save_hud_config", { config }),
 	saveUserTheme: (theme: ThemeFile_Deserialize) => __TAURI_INVOKE<null>("save_user_theme", { theme }),
 	deleteUserTheme: (id: string) => __TAURI_INVOKE<null>("delete_user_theme", { id }),
 	/**  Copy an image/video into the themes asset folder; returns the asset name. */
@@ -570,6 +574,20 @@ export type FolderTarget = { kind: "root" } | { kind: "data" } | { kind: "logs" 
 /**  A file or folder inside the launcher's directories (crash reports, exports). */
 { kind: "path"; path: string };
 
+export type Freelook = Freelook_Serialize | Freelook_Deserialize;
+
+export type Freelook_Deserialize = {
+	enabled?: boolean,
+	/**  Look around while the key is held (otherwise the key switches it on and off). */
+	hold?: boolean,
+};
+
+export type Freelook_Serialize = {
+	enabled: boolean,
+	/**  Look around while the key is held (otherwise the key switches it on and off). */
+	hold: boolean,
+};
+
 export type GalleryImage = GalleryImage_Serialize | GalleryImage_Deserialize;
 
 export type GalleryImage_Deserialize = {
@@ -749,6 +767,108 @@ export type GroupStat = {
 	key: string,
 	playSecs: number,
 	instances: number,
+};
+
+export type HudConfig = HudConfig_Serialize | HudConfig_Deserialize;
+
+export type HudConfig_Deserialize = {
+	enabled?: boolean,
+	style?: HudStyle_Deserialize,
+	modules?: { [key in string]: HudModule_Deserialize },
+	features?: HudFeatures_Deserialize,
+};
+
+export type HudConfig_Serialize = {
+	enabled: boolean,
+	style: HudStyle_Serialize,
+	modules: { [key in string]: HudModule_Serialize },
+	features: HudFeatures_Serialize,
+};
+
+export type HudFeatures = HudFeatures_Serialize | HudFeatures_Deserialize;
+
+export type HudFeatures_Deserialize = {
+	zoom?: Zoom_Deserialize,
+	freelook?: Freelook_Deserialize,
+	fullbright?: Toggle_Deserialize,
+	toggleSprint?: Toggle_Deserialize,
+	toggleSneak?: Toggle_Deserialize,
+};
+
+export type HudFeatures_Serialize = {
+	zoom: Zoom_Serialize,
+	freelook: Freelook_Serialize,
+	fullbright: Toggle_Serialize,
+	toggleSprint: Toggle_Serialize,
+	toggleSneak: Toggle_Serialize,
+};
+
+export type HudModule = HudModule_Serialize | HudModule_Deserialize;
+
+export type HudModule_Deserialize = {
+	enabled?: boolean,
+	x?: number,
+	y?: number,
+	scale?: number,
+	style?: HudStyle_Deserialize,
+	/**  Module-specific options, as strings (formats, layouts, on/off as "1"/"0"). */
+	options?: { [key in string]: string },
+};
+
+export type HudModule_Serialize = {
+	enabled: boolean,
+	x: number,
+	y: number,
+	scale: number,
+	style?: HudStyle_Serialize,
+	/**  Module-specific options, as strings (formats, layouts, on/off as "1"/"0"). */
+	options: { [key in string]: string },
+};
+
+/**
+ *  Look of a module. In the shared style every field is set; a module's own style overrides
+ *  only what it sets.
+ */
+export type HudStyle = HudStyle_Serialize | HudStyle_Deserialize;
+
+/**
+ *  Look of a module. In the shared style every field is set; a module's own style overrides
+ *  only what it sets.
+ */
+export type HudStyle_Deserialize = {
+	/**  `theme` or `#rrggbb`. */
+	text?: string | null,
+	/**  `theme`, `none` or `#rrggbb`. */
+	background?: string | null,
+	/**  Background opacity, 0–100. */
+	opacity?: number | null,
+	/**  `none`, `accent` or `#rrggbb`. */
+	border?: string | null,
+	radius?: number | null,
+	padding?: number | null,
+	shadow?: boolean | null,
+	/**  `left`, `center` or `right`. */
+	align?: string | null,
+};
+
+/**
+ *  Look of a module. In the shared style every field is set; a module's own style overrides
+ *  only what it sets.
+ */
+export type HudStyle_Serialize = {
+	/**  `theme` or `#rrggbb`. */
+	text?: string,
+	/**  `theme`, `none` or `#rrggbb`. */
+	background?: string,
+	/**  Background opacity, 0–100. */
+	opacity?: number,
+	/**  `none`, `accent` or `#rrggbb`. */
+	border?: string,
+	radius?: number,
+	padding?: number,
+	shadow?: boolean,
+	/**  `left`, `center` or `right`. */
+	align?: string,
 };
 
 export type InstallPlan = InstallPlan_Serialize | InstallPlan_Deserialize;
@@ -1722,6 +1842,16 @@ export type ThemeFile_Serialize = {
 
 export type ThemesChangedEvent = null;
 
+export type Toggle = Toggle_Serialize | Toggle_Deserialize;
+
+export type Toggle_Deserialize = {
+	enabled?: boolean,
+};
+
+export type Toggle_Serialize = {
+	enabled: boolean,
+};
+
 export type UpdateInfo = UpdateInfo_Serialize | UpdateInfo_Deserialize;
 
 export type UpdateInfo_Deserialize = {
@@ -1851,6 +1981,22 @@ export type WorldInfo = {
 	lastPlayed: number,
 	sizeBytes: number,
 	hasIcon: boolean,
+};
+
+export type Zoom = Zoom_Serialize | Zoom_Deserialize;
+
+export type Zoom_Deserialize = {
+	enabled?: boolean,
+	/**  How many times closer, 2–10. */
+	factor?: number,
+	smooth?: boolean,
+};
+
+export type Zoom_Serialize = {
+	enabled: boolean,
+	/**  How many times closer, 2–10. */
+	factor: number,
+	smooth: boolean,
 };
 
 /* Tauri Specta runtime */

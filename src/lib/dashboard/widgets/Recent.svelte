@@ -31,7 +31,7 @@
   {#each list as i (i.id)}
     <div class="row item">
       <InstanceIcon name={i.name} loader={i.loader} icon={i.icon} id={i.id} size={28} />
-      <button class="link grow col" onclick={() => router.go("instance", { id: i.id })}>
+      <button class="link grow col gap-1" onclick={() => router.go("instance", { id: i.id })}>
         <span class="truncate strong">{i.name}</span>
         <span class="tiny faint truncate">{instanceVersionLabel(i)} · {formatRelative(i.lastPlayed)}</span>
       </button>

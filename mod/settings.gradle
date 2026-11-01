@@ -9,4 +9,6 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'aerion-ui'
+rootProject.name = 'aerion-mod'
+// One jar per Minecraft version; the shared code in common/ is compiled into each.
+include 'v26_3', 'v1_21_11'

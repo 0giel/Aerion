@@ -1,0 +1,15 @@
+// Minecraft 1.21.x is obfuscated: compile against Mojang's names and remap the jar.
+plugins {
+	id 'net.fabricmc.fabric-loom-remap'
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+	// The shared code is compiled for 1.21.11's Java 21 too.
+	it.options.release = 21
+}
