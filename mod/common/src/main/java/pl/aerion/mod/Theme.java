@@ -25,6 +25,10 @@ public final class Theme {
 	/** `sparkles`, `dust`, `snow` or `none`. */
 	public final String particles;
 	public final boolean logo;
+	/** The launcher background's picture (absolute path, PNG/JPEG/GIF) for the menus, or null. */
+	public final String backgroundFile;
+	/** How much that picture is darkened, 0–1. */
+	public final float backgroundDim;
 
 	private Theme(JsonObject o) {
 		name = str(o, "name", "Aerion");
@@ -48,6 +52,14 @@ public final class Theme {
 		colors = bool(o, "colors");
 		particles = str(o, "particles", "none");
 		logo = bool(o, "logo");
+		backgroundFile = str(o, "backgroundFile", null);
+		float dim;
+		try {
+			dim = o.has("backgroundDim") ? o.get("backgroundDim").getAsFloat() : 0f;
+		} catch (RuntimeException e) {
+			dim = 0f;
+		}
+		backgroundDim = dim;
 	}
 
 	public static Theme parse(JsonObject o) {

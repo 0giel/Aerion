@@ -232,17 +232,34 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
 
     let quit_after = after_launch == AfterLaunch::Close;
     let pid_registry = state.games.clone();
+    let shares_options = plan.share_back;
     tauri::async_runtime::spawn(async move {
         let started = SystemTime::now();
         let game_dir = plan.game_dir.clone();
         let max_mb = plan.max_memory_mb;
         let pid_id = id.clone();
+        // FPS and memory while it runs, for the summary on the performance page.
+        let (pid_tx, pid_rx) = tokio::sync::watch::channel(None);
+        let sampling = CancellationToken::new();
+        let recorder = tauri::async_runtime::spawn(launcher_core::sessions::record(
+            app.state::<AppState>().paths.clone(),
+            id.clone(),
+            pid_rx,
+            sampling.clone(),
+        ));
+        let (name, modded) = (
+            plan.instance.name.clone(),
+            plan.instance.loader != launcher_core::instances::LoaderKind::Vanilla,
+        );
         let result = run(plan.spec, tx, stop, move |pid| {
+            let _ = pid_tx.send(pid);
             if let Some(s) = pid_registry.lock().get_mut(&pid_id) {
                 s.pid = pid;
             }
         })
         .await;
+        sampling.cancel();
+        let samples = recorder.await.unwrap_or_default();
         let _ = pump.await;
         let state = app.state::<AppState>();
         let session = state.games.lock().remove(&id);
@@ -265,6 +282,17 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
                 (None, false, 0)
             }
         };
+        if shares_options {
+            // Whatever the player changed in this game becomes the shared settings.
+            let (dir, shared) = (game_dir.clone(), state.paths.shared_options_dir());
+            let pushed = tokio::task::spawn_blocking(move || {
+                launcher_core::instances::options::push_shared(&dir, &shared)
+            })
+            .await;
+            if !matches!(pushed, Ok(Ok(_))) {
+                tracing::warn!("couldn't keep this game's settings as the shared ones");
+            }
+        }
         let crash = if killed {
             None
         } else {
@@ -300,6 +328,36 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
             .map(|d| d.as_secs() as i64)
             .unwrap_or(0);
         let _ = state.instances.record_play(&id, started_secs, secs).await;
+        if crash.is_none() {
+            let dir = game_dir.clone();
+            let (has_sodium, render_distance) = tokio::task::spawn_blocking(move || {
+                (
+                    launcher_core::sessions::has_sodium(&dir),
+                    launcher_core::sessions::render_distance(&dir),
+                )
+            })
+            .await
+            .unwrap_or((true, None));
+            let ctx = launcher_core::sessions::Context {
+                instance_id: id.clone(),
+                instance_name: name,
+                play_secs: secs,
+                max_memory_mb: max_mb,
+                system_total_mb: launcher_core::util::sys::total_memory_mb() as u32,
+                has_sodium,
+                render_distance,
+                modded,
+            };
+            let now = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .map(|d| d.as_secs() as i64)
+                .unwrap_or(0);
+            if let Some(summary) = launcher_core::sessions::summarize(&ctx, &samples, now)
+                && let Err(e) = launcher_core::sessions::add(&state.paths, summary).await
+            {
+                tracing::warn!(error = %e, "couldn't keep the game's performance summary");
+            }
+        }
         let _ = GameStateEvent {
             instance_id: id,
             state: GameState::Exited,

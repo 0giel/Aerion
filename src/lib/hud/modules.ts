@@ -34,6 +34,9 @@ export const MODULE_IDS = [
   "bossbar",
   "scoreboard",
   "chatbox",
+  "blockInfo",
+  "fpsGraph",
+  "playerList",
 ] as const;
 
 export const FIELDS: Record<string, Field[]> = {
@@ -137,6 +140,18 @@ export const FIELDS: Record<string, Field[]> = {
   bossbar: [{ key: "hide", type: "toggle", def: "0" }],
   scoreboard: [{ key: "hide", type: "toggle", def: "0" }],
   chatbox: [{ key: "hide", type: "toggle", def: "0" }],
+  blockInfo: [{ key: "state", type: "toggle", def: "0" }],
+  fpsGraph: [
+    { key: "width", type: "number", def: "100", min: 50, max: 200 },
+    { key: "height", type: "number", def: "40", min: 20, max: 80 },
+    { key: "value", type: "toggle", def: "1" },
+    { key: "colored", type: "toggle", def: "1" },
+  ],
+  playerList: [
+    { key: "max", type: "number", def: "10", min: 1, max: 50 },
+    { key: "ping", type: "toggle", def: "1" },
+    { key: "dimension", type: "toggle", def: "0" },
+  ],
   toggles: [
     { key: "sprint", type: "toggle", def: "1" },
     { key: "sneak", type: "toggle", def: "1" },
@@ -209,6 +224,15 @@ export function sample(id: string, opt: (key: string, def: string) => string): s
       return ["<Steve> Chat"];
     case "light":
       return [opt("sky", "0") === "1" ? "12  15" : "12"];
+    case "blockInfo":
+      return opt("state", "0") === "1" ? ["Diamond Ore", "Hardness 3.0"] : ["Diamond Ore"];
+    case "fpsGraph":
+      return opt("value", "1") === "1" ? ["144 FPS", "▁▃▅▇▆▅▇█"] : ["▁▃▅▇▆▅▇█"];
+    case "playerList": {
+      const ping = opt("ping", "1") === "1";
+      const mode = opt("dimension", "0") === "1" ? "  S" : "";
+      return [`Alex${ping ? "  32 ms" : ""}${mode}`, `Steve${ping ? "  45 ms" : ""}${mode}`];
+    }
     default:
       return [];
   }

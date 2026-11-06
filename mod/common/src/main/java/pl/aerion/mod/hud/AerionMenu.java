@@ -43,10 +43,12 @@ public final class AerionMenu implements Page {
 		0xFFFFFFFF, 0xFF000000, 0xFFFF5555, 0xFFFFAA33, 0xFFFFE25A, 0xFF55DD77, 0xFF55AAFF, 0xFFB98CFF
 	};
 	private static final float TEXT = 8f, SMALL = 7f, TITLE = 10f;
-	private static final int ROW = 16, SIDE = 92, GAP = 5;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "worldLook", "hitColor", "screens"};
+	private static final int ROW = 16, SIDE = 104, GAP = 5;
+	/** Space inside a setting's own panel: above and below its row, and on the sides. */
+	private static final int ROW_PAD = 3, ROW_IN = 8;
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
-	private static final int WIN_W = 440, WIN_H = 250;
+	private static final int WIN_W = 480, WIN_H = 280;
 
 	/** A module setting; `formats` lists {value, label} choices for a text format. */
 	private record Option(String key, String def, String[] choices, String[] labels, int min, int max, boolean color) {
@@ -134,6 +136,8 @@ public final class AerionMenu implements Page {
 			Map.entry("chat", List.of(Option.toggle("time", true), Option.toggle("seconds", false), Option.toggle("stack", true), Option.toggle("history", true))),
 			Map.entry("perspective", List.of(Option.toggle("hold", true), Option.select("view", "back", "back", "front"))),
 			Map.entry("fovKey", List.of(Option.number("fov", 110, 10, 170))),
+			Map.entry("fovLock", List.of(Option.toggle("spyglass", true))),
+			Map.entry("fullbright", List.of(Option.number("level", 1500, 100, 1500))),
 			Map.entry("worldLook", List.of(
 					Option.toggle("fixTime", true), Option.number("hour", 12, 0, 23), Option.select("weather", "clear", "game", "clear", "rain", "thunder"))),
 			Map.entry("hitColor", List.of(Option.colour("color", "#55aaff"), Option.number("opacity", 70, 0, 100))),
@@ -156,6 +160,9 @@ public final class AerionMenu implements Page {
 					Option.toggle("water", false), Option.toggle("block", false), Option.toggle("vignette", false), Option.toggle("portal", false),
 					Option.toggle("nausea", false), Option.toggle("spyglass", false), Option.toggle("totem", false),
 					Option.colour("tint", "#ff0000"), Option.number("tintOpacity", 0, 0, 80), Option.toggle("lowHealth", false), Option.number("lowHealthAt", 6, 1, 19))),
+			Map.entry("blockInfo", List.of(Option.toggle("state", false))),
+			Map.entry("fpsGraph", List.of(Option.number("width", 100, 50, 200), Option.number("height", 40, 20, 80), Option.toggle("value", true), Option.toggle("colored", true))),
+			Map.entry("playerList", List.of(Option.number("max", 10, 1, 50), Option.toggle("ping", true), Option.toggle("dimension", false))),
 			Map.entry("toggles", List.of(
 					Option.toggle("sprint", true), Option.toggle("sneak", true), Option.toggle("fullbright", true), Option.toggle("freelook", true))));
 
@@ -206,7 +213,7 @@ public final class AerionMenu implements Page {
 	private int scroll, contentHeight, viewTop, viewBottom;
 	private int x, y, colW, mouseX, mouseY;
 	private Gfx g;
-	private int text, muted, accent, accentText, surface, sidebar, tile, line, control, track, pick;
+	private int text, muted, accent, accentText, surface, sidebar, tile, line, control, track;
 	/** Eased values of switches and hovers, and the height of each card last frame. */
 	private final Map<String, Float> eased = new HashMap<>();
 	private final Map<String, Integer> cards = new HashMap<>();
@@ -221,6 +228,52 @@ public final class AerionMenu implements Page {
 	public AerionMenu(String module) {
 		section = Section.HUD;
 		detail = module;
+	}
+
+	/** Width of the docked panel, in menu units. */
+	private static final int DOCK_W = 232;
+
+	/** Docked beside the HUD layout instead of in the middle: one module, changes seen live. */
+	private boolean docked, dockLeft;
+	private Runnable onClose;
+	private int panelX, panelY, panelW, panelH;
+
+	/** One module's settings in a panel at the screen's edge, over the HUD layout. */
+	static AerionMenu docked(String module, Runnable onClose) {
+		AerionMenu m = new AerionMenu(module);
+		m.docked = true;
+		m.onClose = onClose;
+		return m;
+	}
+
+	/** Show another module's settings in the same panel. */
+	void show(String module) {
+		if (module.equals(detail)) return;
+		detail = module;
+		sub = isFeature(module) ? Sub.GENERAL : sub;
+		expanded = null;
+		capturing = null;
+		scroll = 0;
+	}
+
+	String module() {
+		return detail;
+	}
+
+	/** The panel goes to the side away from the module being set up. */
+	void dockLeft(boolean left) {
+		dockLeft = left;
+	}
+
+	/** Whether a point (GUI pixels) is on the docked panel. */
+	boolean contains(double gx, double gy) {
+		double px = gx * toUnits, py = gy * toUnits;
+		return px >= panelX && py >= panelY && px < panelX + panelW && py < panelY + panelH;
+	}
+
+	private void leave() {
+		if (docked) onClose.run();
+		else toLayout();
 	}
 
 	private static boolean isFeature(String id) {
@@ -304,6 +357,10 @@ public final class AerionMenu implements Page {
 			}
 		}
 		// Esc steps back: settings to the list, the list to the HUD layout.
+		if (escape && docked) {
+			onClose.run();
+			return true;
+		}
 		if (escape) {
 			if (detail != null) {
 				detail = null;
@@ -394,12 +451,11 @@ public final class AerionMenu implements Page {
 		line = Colors.mix(surface, text, 0.14f);
 		control = Colors.mix(surface, text, 0.09f);
 		track = Colors.mix(surface, text, 0.2f);
-		pick = Colors.mix(surface, accent, 0.32f);
 		long now = System.nanoTime();
 		if (lastFrame != 0) dt = Math.min(0.1f, (now - lastFrame) / 1e9f);
 		lastFrame = now;
 
-		if (Minecraft.getInstance().level == null && t != null) {
+		if (!docked && Minecraft.getInstance().level == null && t != null) {
 			Draw.background(g, t, 0xFF);
 			Particles.draw(g, t);
 		}
@@ -424,16 +480,35 @@ public final class AerionMenu implements Page {
 	}
 
 	private void window() {
-		int winW = Math.min(unitsW - 12, WIN_W), winH = Math.min(unitsH - 12, WIN_H);
-		int left = (unitsW - winW) / 2, top = (unitsH - winH) / 2;
+		int winW, winH, left, top, side;
+		if (docked) {
+			// Full height at the screen's edge, so the HUD stays in view beside it.
+			winW = Math.min(unitsW - 12, DOCK_W);
+			winH = unitsH - 12;
+			left = dockLeft ? 6 : unitsW - winW - 6;
+			top = 6;
+			side = 0;
+		} else {
+			winW = Math.min(unitsW - 12, WIN_W);
+			winH = Math.min(unitsH - 12, WIN_H);
+			left = (unitsW - winW) / 2;
+			top = (unitsH - winH) / 2;
+			side = SIDE;
+		}
+		panelX = left;
+		panelY = top;
+		panelW = winW;
+		panelH = winH;
 		Draw.shadow(g, left, top, winW, winH, 6);
 		Draw.rounded(g, left, top, winW, winH, 6, surface);
-		sidebar(left, top, winH);
-		Draw.vline(g, left + SIDE, top + 1, winH - 2, line);
+		if (!docked) {
+			sidebar(left, top, winH);
+			Draw.vline(g, left + SIDE, top + 1, winH - 2, line);
+		}
 		Draw.control(g, left, top, winW, winH, 6, line, 0);
 
-		int mainX = left + SIDE + 10, mainW = winW - SIDE - 20;
-		iconButton(left + winW - 20, top + 6, 14, "close", this::toLayout);
+		int mainX = left + side + 10, mainW = winW - side - 20;
+		iconButton(left + winW - 20, top + 6, 14, "close", this::leave);
 		int head = detail != null ? pageHead(mainX, top + 6, mainW - 18) : listHead(mainX, top + 7);
 		if (detail == null && (section == Section.HUD || section == Section.FEATURES)) searchBox(left + winW - 134, top + 6, 110);
 
@@ -442,7 +517,7 @@ public final class AerionMenu implements Page {
 		int maxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
 		scroll = Math.max(0, Math.min(maxScroll, scroll));
 		clipping = true;
-		g.scissor(left + SIDE, viewTop, left + winW - 1, viewBottom);
+		g.scissor(left + side, viewTop, left + winW - 1, viewBottom);
 		x = mainX;
 		colW = mainW;
 		y = viewTop + 2 - scroll;
@@ -470,29 +545,56 @@ public final class AerionMenu implements Page {
 	private void sidebar(int left, int top, int h) {
 		Draw.rounded(g, left, top, SIDE, h, 6, sidebar);
 		g.fill(left + SIDE - 6, top, left + SIDE, top + h, sidebar);
-		int logoH = 13;
-		Logo.draw(g, AerionClient.theme(), left + 8, top + 7, logoH);
-		int ny = top + 27;
-		ny = navItem(left + 4, ny, Section.HUD, "fps", "aerion.nav.hud");
-		ny = navItem(left + 4, ny, Section.FEATURES, "zoom", "aerion.nav.features");
-		ny = navItem(left + 4, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
-		ny = navItem(left + 4, ny, Section.WAYPOINTS, "waypoints", "aerion.nav.waypoints");
-		ny = navItem(left + 4, ny, Section.KEYS, "keys", "aerion.nav.keys");
-		navItem(left + 4, ny, Section.LOOK, "look", "aerion.nav.look");
-		int by = top + h - 21;
-		button(left + 4, by, SIDE - 8, 16, Lang.tr("aerion.nav.layout"), false, this::toLayout);
-		Icons.draw(g, "layout", left + 8, by + 3, 10, muted);
+		Logo.draw(g, AerionClient.theme(), left + 9, top + 8, 13);
+		int nx = left + 5, ny = top + 30;
+		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + 5;
+		ny = navHead(nx, ny, "aerion.navhead.mods");
+		ny = navItem(nx, ny, Section.HUD, "fps", "aerion.nav.hud");
+		ny = navItem(nx, ny, Section.FEATURES, "features", "aerion.nav.features") + 5;
+		ny = navHead(nx, ny, "aerion.navhead.tools");
+		ny = navItem(nx, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
+		ny = navItem(nx, ny, Section.WAYPOINTS, "waypoints", "aerion.nav.waypoints");
+		ny = navItem(nx, ny, Section.KEYS, "keys", "aerion.nav.keys") + 5;
+		ny = navHead(nx, ny, "aerion.navhead.look");
+		navItem(nx, ny, Section.LOOK, "look", "aerion.nav.look");
+		// The player at the foot, as in the launcher's sidebar.
+		int py = top + h - 26;
+		Draw.hline(g, left + 6, py - 4, SIDE - 12, line);
+		g.playerFace(left + 9, py + 2, 16);
+		String name = Minecraft.getInstance().getUser().getName();
+		Txt.draw(g, ellipsize(name, SIDE - 36), left + 30, py + 6, TEXT, text);
+		Txt.draw(g, "Aerion " + VERSION, left + 30, py + 15, 6f, muted);
+	}
+
+	private static final String VERSION = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("aerion")
+			.map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("");
+
+	private int navHead(int nx, int ny, String key) {
+		Txt.draw(g, Lang.tr(key).toUpperCase(Locale.ROOT), nx + 4, ny + 4, 6f, Colors.mix(sidebar, muted, 0.75f));
+		return ny + 10;
+	}
+
+	/** A sidebar entry that does something instead of opening a section. */
+	private int navAction(int nx, int ny, String icon, String label, Runnable run) {
+		int w = SIDE - 10, h = 16;
+		boolean over = inside(nx, ny, w, h);
+		float glow = ease("navAction" + label, over ? 1 : 0);
+		if (glow > 0) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
+		Icons.draw(g, icon, nx + 5, ny + 3, 10, over ? text : muted);
+		Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, over ? text : muted);
+		hit(nx, ny, w, h, f -> run.run(), false);
+		return ny + h + 2;
 	}
 
 	private int navItem(int nx, int ny, Section which, String icon, String label) {
-		int w = SIDE - 8, h = 16;
+		int w = SIDE - 10, h = 16;
 		boolean on = section == which, over = inside(nx, ny, w, h);
 		float glow = ease("nav" + which, over ? 1 : 0);
-		if (on) Draw.rounded(g, nx, ny, w, h, 3, Colors.mix(sidebar, accent, 0.2f));
+		// The open section is filled with the accent, the others light up under the pointer.
+		if (on) Draw.rounded(g, nx, ny, w, h, 3, over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent);
 		else if (glow > 0) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
-		if (on) Draw.rounded(g, nx, ny + 4, 2, h - 8, 1, accent);
-		Icons.draw(g, icon, nx + 5, ny + 3, 10, on ? accent : muted);
-		Txt.draw(g, Lang.tr(label), nx + 18, ny + h / 2f, TEXT, on || over ? text : muted);
+		Icons.draw(g, icon, nx + 5, ny + 3, 10, on ? accentText : over ? text : muted);
+		Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, on ? accentText : over ? text : muted);
 		hit(nx, ny, w, h, f -> {
 			section = which;
 			detail = null;
@@ -521,14 +623,20 @@ public final class AerionMenu implements Page {
 	private int pageHead(int mx, int my, int w) {
 		HudConfig cfg = AerionClient.hud();
 		String id = detail;
-		iconButton(mx, my, 14, "back", () -> {
-			detail = null;
-			expanded = null;
-			capturing = null;
-			scroll = 0;
-		});
-		Icons.draw(g, id, mx + 19, my + 1, 12, text);
-		Txt.draw(g, name(id), mx + 35, my + 7, TITLE, text);
+		if (docked) {
+			// No list to go back to: the layout behind is where another module is picked.
+			Icons.draw(g, id, mx, my + 1, 12, accent);
+			Txt.draw(g, ellipsize(name(id), w - 46), mx + 16, my + 7, TITLE, text);
+		} else {
+			iconButton(mx, my, 14, "back", () -> {
+				detail = null;
+				expanded = null;
+				capturing = null;
+				scroll = 0;
+			});
+			Icons.draw(g, id, mx + 19, my + 1, 12, text);
+			Txt.draw(g, name(id), mx + 35, my + 7, TITLE, text);
+		}
 		boolean on = enabled(cfg, id);
 		switchAt("head" + id, mx + w - 22, my + 2, on);
 		hit(mx + w - 24, my, 24, 14, f -> {
@@ -584,34 +692,62 @@ public final class AerionMenu implements Page {
 		else Txt.draw(g, query + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : ""), bx + 15, by + 7, SMALL, text);
 	}
 
-	private void tiles(int left, int w, List<String> items) {
-		// Features have longer names, and there are few of them.
+	/** Which tiles the list shows: all, only the switched-on ones, or only the switched-off ones. */
+	private static String listFilter = "all";
+
+	private void filters(int left) {
+		int bx = left;
+		for (String f : new String[] {"all", "on", "off"}) {
+			String label = Lang.tr("aerion.filter." + f);
+			int w = Math.round(Txt.width(label, SMALL)) + 14;
+			boolean on = f.equals(listFilter), over = inside(bx, y, w, 14);
+			Draw.rounded(g, bx, y, w, 14, 3, on ? accent : over ? control : tile);
+			Txt.center(g, label, bx + w / 2f, y + 7, SMALL, on ? accentText : over ? text : muted);
+			hit(bx, y, w, 14, fr -> {
+				listFilter = f;
+				scroll = 0;
+			}, false);
+			bx += w + 3;
+		}
+		y += 20;
+	}
+
+	private void tiles(int left, int w, List<String> all) {
+		filters(left);
+		HudConfig cfg = AerionClient.hud();
+		List<String> items = new ArrayList<>();
+		for (String id : all) {
+			boolean on = enabled(cfg, id);
+			if (listFilter.equals("all") || listFilter.equals("on") == on) items.add(id);
+		}
 		if (items.isEmpty()) {
 			note(Lang.tr("aerion.sound.empty"));
 			return;
 		}
-		// Three columns, or two when a name wouldn't fit in full.
-		int cols = Math.max(2, (w + GAP) / (96 + GAP));
-		float widest = 0;
-		for (String id : items) widest = Math.max(widest, Txt.width(name(id), TEXT));
-		if (widest > (w - (cols - 1) * GAP) / cols - 56) cols = 2;
-		int cw = (w - (cols - 1) * GAP) / cols, ch = 26;
-		HudConfig cfg = AerionClient.hud();
+		// Four columns on a wide menu, three otherwise; a tile is a little taller than wide.
+		int cols = w >= 4 * 80 + 3 * GAP ? 4 : 3;
+		int cw = (w - (cols - 1) * GAP) / cols, ch = 50;
 		for (int i = 0; i < items.size(); i++) {
 			tileAt(cfg, items.get(i), left + (i % cols) * (cw + GAP), y + (i / cols) * (ch + GAP), cw, ch);
 		}
 		y += ((items.size() + cols - 1) / cols) * (ch + GAP);
 	}
 
+	/** A big icon over a band with the name; the band is the accent while the tile is on. */
 	private void tileAt(HudConfig cfg, String id, int cx, int cy, int w, int h) {
 		boolean on = enabled(cfg, id), over = inside(cx, cy, w, h);
-		Draw.rounded(g, cx, cy, w, h, 4, Colors.mix(tile, control, ease("tile" + id, over ? 1 : 0)));
-		Draw.rounded(g, cx + 4, cy + 4, h - 8, h - 8, 3, on ? pick : control);
-		Icons.draw(g, id, cx + 7, cy + 7, h - 14, on ? accent : muted);
-		Txt.draw(g, ellipsize(name(id), w - 56), cx + h + 1, cy + h / 2f, TEXT, on ? text : muted);
-		int sx = cx + w - 25, sy = cy + (h - 9) / 2;
+		float lift = ease("tile" + id, over ? 1 : 0);
+		int band = 15;
+		Draw.rounded(g, cx, cy, w, h, 4, Colors.mix(tile, control, lift));
+		int bandColor = on ? (over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent) : Colors.mix(control, track, lift);
+		Draw.rounded(g, cx, cy + h - band, w, band, 4, bandColor);
+		g.fill(cx, cy + h - band, cx + w, cy + h - band + 4, bandColor);
+		int icon = 16;
+		Icons.draw(g, id, cx + (w - icon) / 2f, cy + (h - band - icon) / 2f, icon, on ? text : muted);
+		Txt.center(g, ellipsize(name(id), w - 8, SMALL), cx + w / 2f, cy + h - band / 2f, SMALL, on ? accentText : over ? text : muted);
+		int sx = cx + w - 24, sy = cy + 5;
 		switchAt("tile" + id, sx, sy, on);
-		hit(sx - 3, cy, 26, h, f -> {
+		hit(sx - 3, cy, 27, 16, f -> {
 			item(cfg, id).addProperty("enabled", !on);
 			changed = true;
 		}, false);
@@ -623,14 +759,21 @@ public final class AerionMenu implements Page {
 	}
 
 	private static String ellipsize(String s, int width) {
-		if (Txt.width(s, TEXT) <= width) return s;
-		while (s.length() > 1 && Txt.width(s + "…", TEXT) > width) s = s.substring(0, s.length() - 1);
+		return ellipsize(s, width, TEXT);
+	}
+
+	private static String ellipsize(String s, int width, float size) {
+		if (Txt.width(s, size) <= width) return s;
+		while (s.length() > 1 && Txt.width(s + "…", size) > width) s = s.substring(0, s.length() - 1);
 		return s + "…";
 	}
 
 	// --- settings of one tile ----------------------------------------------------------------
 	private void detailBody() {
 		HudConfig cfg = AerionClient.hud();
+		// What the module or feature does, before its settings.
+		String about = sub == Sub.GENERAL ? Lang.get("aerion.desc." + detail) : null;
+		if (about != null) description(about);
 		if (sub == Sub.KEY) {
 			keyTab();
 		} else if (isFeature(detail)) {
@@ -659,26 +802,31 @@ public final class AerionMenu implements Page {
 		endCard();
 	}
 
-	/** Nine squares for the corners, edges and centre of the screen. */
+	/** Nine spots for the corners, edges and centre, drawn on a little screen. */
 	private void grid(JsonObject m) {
-		Txt.draw(g, Lang.tr("aerion.place.corner"), x, y + 13, TEXT, text);
-		int cx = controlX(), size = 7;
+		beginRow("grid");
+		int cw = 11, ch = 6, gap = 2, pad = 3;
+		int frameW = 3 * cw + 2 * gap + 2 * pad, frameH = 3 * ch + 2 * gap + 2 * pad;
+		Txt.draw(g, Lang.tr("aerion.place.corner"), x, y + 2 + frameH / 2f, TEXT, text);
+		int cx = controlX(), top = y + 2;
+		Draw.control(g, cx, top, frameW, frameH, 2, line, Colors.mix(tile, 0xFF000000, 0.25f));
 		int[] xs = {8, 500, 992}, ys = {10, 500, 990};
 		int mx = HudConfig.num(m, "x", 0), my = HudConfig.num(m, "y", 0);
 		for (int row = 0; row < 3; row++) {
 			for (int col = 0; col < 3; col++) {
-				int tx = cx + col * (size + 2), ty = y + 2 + row * (size + 2);
+				int tx = cx + pad + col * (cw + gap), ty = top + pad + row * (ch + gap);
 				int vx = xs[col], vy = ys[row];
-				boolean on = Math.abs(mx - vx) < 15 && Math.abs(my - vy) < 15, over = inside(tx, ty, size, size);
-				Draw.rounded(g, tx, ty, size, size, 1, on ? accent : over ? Colors.mix(surface, text, 0.3f) : control);
-				hit(tx, ty, size, size, f -> {
+				boolean on = Math.abs(mx - vx) < 15 && Math.abs(my - vy) < 15, over = inside(tx, ty, cw, ch);
+				Draw.rounded(g, tx, ty, cw, ch, 1, on ? accent : over ? Colors.mix(surface, text, 0.35f) : Colors.mix(surface, text, 0.16f));
+				hit(tx, ty, cw, ch, f -> {
 					m.addProperty("x", vx);
 					m.addProperty("y", vy);
 					changed = true;
 				}, false);
 			}
 		}
-		y += 3 * (size + 2) + 4;
+		y += frameH + 4;
+		endRow();
 	}
 
 	private void featureGeneral(HudConfig cfg) {
@@ -688,13 +836,14 @@ public final class AerionMenu implements Page {
 		if (detail.equals("zoom")) {
 			slider(Lang.tr("aerion.feature.zoomFactor"), HudConfig.num(f, "factor", 4), 2, 10, 1, "x", v -> f.addProperty("factor", v));
 			toggle(Lang.tr("aerion.feature.zoomSmooth"), HudConfig.bool(f, "smooth", true), v -> f.addProperty("smooth", v));
+			toggle(Lang.tr("aerion.feature.zoomScroll"), HudConfig.bool(f, "scroll", true), v -> f.addProperty("scroll", v));
 		} else if (detail.equals("freelook")) {
 			toggle(Lang.tr("aerion.feature.freelookHold"), HudConfig.bool(f, "hold", true), v -> f.addProperty("hold", v));
 		}
 		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(f, o);
 		if (detail.equals("hurtCam")) note(Lang.tr("aerion.hint.hurtCam"));
 		if (detail.equals("chat")) chatOpacity();
-		if (y == cardTop + 5) note(Lang.tr("aerion.hint.noOptions"));
+		if (y == cardTop) note(Lang.tr("aerion.hint.noOptions"));
 		endCard();
 		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) note(Lang.tr("aerion.panel.serverWarning"));
 	}
@@ -729,9 +878,9 @@ public final class AerionMenu implements Page {
 	}
 
 	private void option(JsonObject m, Option o, String owner) {
-		String label = Lang.tr(o.key.equals("format") || o.key.equals("colored") && !owner.equals("armor") && !owner.equals("light")
-				? "aerion.opt." + o.key
-				: "aerion.opt." + owner + "." + o.key);
+		// A module's own wording when it has one, else the shared one ("Text format", "Color by value").
+		String own = Lang.get("aerion.opt." + owner + "." + o.key);
+		String label = own != null ? own : Lang.tr("aerion.opt." + o.key);
 		String value = HudConfig.opt(m, o.key, o.def);
 		if (o.isToggle()) {
 			toggle(label, "1".equals(value), v -> setOption(m, o.key, v ? "1" : "0"));
@@ -811,9 +960,10 @@ public final class AerionMenu implements Page {
 		void mark(String key, int rowY) {
 			if (!overridden(key)) return;
 			int ix = x + colW - 11;
-			boolean over = inside(ix, rowY + 2, 11, 11);
-			Icons.draw(g, "undo", ix + 1, rowY + 3, 9, over ? text : muted);
-			hit(ix, rowY + 2, 11, 11, f -> reset(key), false);
+			int iy = rowY + ROW_PAD + 2;
+			boolean over = inside(ix, iy, 11, 11);
+			Icons.draw(g, "undo", ix + 1, iy + 1, 9, over ? text : muted);
+			hit(ix, iy, 11, 11, f -> reset(key), false);
 		}
 	}
 
@@ -931,11 +1081,12 @@ public final class AerionMenu implements Page {
 
 	private List<String> shownSounds() {
 		List<String> source = soundGroup.equals("recent") ? Sounds.recent() : allSounds();
-		String q = query.toLowerCase(java.util.Locale.ROOT);
+		// Spaces match the underscores and dots of the ids, as the names are shown with spaces.
+		String q = query.toLowerCase(java.util.Locale.ROOT).trim().replaceAll("[\\s·]+", "_");
 		List<String> out = new ArrayList<>();
 		for (String id : source) {
 			boolean group = soundGroup.equals("all") || soundGroup.equals("recent") || groupOf(id).equals(soundGroup);
-			if (group && (q.isEmpty() || id.contains(q))) out.add(id);
+			if (group && (q.isEmpty() || id.replace('.', '_').contains(q))) out.add(id);
 		}
 		return out;
 	}
@@ -994,13 +1145,18 @@ public final class AerionMenu implements Page {
 			value = 100;
 		}
 		int bx = x + colW - 110, w = 92;
-		float room = bx - x - 4;
-		String label = shown;
+		// "ambient.basalt_deltas.additions" reads as a faint "ambient" and "Basalt deltas · additions".
+		int dot = shown.indexOf('.');
+		String kind = dot > 0 ? shown.substring(0, dot) : "";
+		String label = soundName(dot > 0 ? shown.substring(dot + 1) : shown);
+		float kindW = kind.isEmpty() ? 0 : Txt.width(kind, SMALL) + 5;
+		float room = bx - x - 6 - kindW;
 		if (Txt.width(label, SMALL) > room) {
-			while (label.length() > 1 && Txt.width("…" + label, SMALL) > room) label = label.substring(1);
-			label = "…" + label;
+			while (label.length() > 1 && Txt.width(label + "…", SMALL) > room) label = label.substring(0, label.length() - 1);
+			label = label + "…";
 		}
-		Txt.draw(g, label, x, y + 7, SMALL, value == 100 ? muted : text);
+		if (!kind.isEmpty()) Txt.draw(g, kind, x, y + 7, SMALL, Colors.mix(surface, muted, 0.6f));
+		Txt.draw(g, label, x + kindW, y + 7, SMALL, value == 100 ? muted : text);
 		int trackW = w - 26, ty = y + 6;
 		Draw.rounded(g, bx, ty, trackW, 3, 1, track);
 		int fill = Math.round(trackW * value / 100f);
@@ -1022,6 +1178,12 @@ public final class AerionMenu implements Page {
 		if (over) Draw.rounded(g, px, y + 1, 14, 12, 2, control);
 		Icons.draw(g, "play", px + 3, y + 3, 8, over ? text : muted);
 		hit(px, y + 1, 14, 12, fr -> preview(id), false);
+	}
+
+	/** A sound path for people: underscores to spaces, dots to separators, first letter capital. */
+	static String soundName(String path) {
+		String s = path.replace('_', ' ').replace(".", " · ");
+		return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
 	}
 
 	private static void preview(String id) {
@@ -1061,6 +1223,7 @@ public final class AerionMenu implements Page {
 
 	private void waypointRow(Waypoints.Point w, net.minecraft.client.player.LocalPlayer player) {
 		String id = "wp" + System.identityHashCode(w);
+		beginRow(id);
 		int rowY = y, right = x + colW;
 		Draw.control(g, x, rowY + 3, 10, 10, 2, line, Waypoints.color(w));
 		hit(x, rowY + 2, 10, 12, f -> expanded = id.equals(expanded) ? null : id, false);
@@ -1079,6 +1242,7 @@ public final class AerionMenu implements Page {
 		});
 		iconButton(right - 15, rowY + 1, 14, "close", () -> Waypoints.remove(w));
 		y += ROW;
+		endRow();
 		if (id.equals(expanded)) color(id, Lang.tr("aerion.waypoint.color"), new String[] {}, new String[] {}, w.color, v -> w.color = v);
 	}
 
@@ -1093,6 +1257,10 @@ public final class AerionMenu implements Page {
 		};
 		beginCard(null);
 		keyRow(label, k);
+		if (detail.equals("fullbright")) {
+			keyRow(Lang.tr("aerion.key.brighter"), Features.key("fullbrightUp"));
+			keyRow(Lang.tr("aerion.key.darker"), Features.key("fullbrightDown"));
+		}
 		endCard();
 		note(Lang.tr("aerion.hint.keys"));
 	}
@@ -1105,6 +1273,9 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.zoom"), Features.key("zoom"));
 		keyRow(Lang.tr("aerion.feature.freelook"), Features.key("freelook"));
 		keyRow(Lang.tr("aerion.feature.fullbright"), Features.key("fullbright"));
+		keyRow(Lang.tr("aerion.feature.fullbright") + ": " + Lang.tr("aerion.key.brighter"), Features.key("fullbrightUp"));
+		keyRow(Lang.tr("aerion.feature.fullbright") + ": " + Lang.tr("aerion.key.darker"), Features.key("fullbrightDown"));
+		keyRow(Lang.tr("aerion.feature.fovLock"), Features.key("fovLock"));
 		keyRow(Lang.tr("aerion.feature.hitboxes"), Features.key("hitboxes"));
 		keyRow(Lang.tr("aerion.feature.overlays"), Features.key("overlays"));
 		keyRow(Lang.tr("aerion.nav.sounds"), Features.key("sounds"));
@@ -1128,16 +1299,25 @@ public final class AerionMenu implements Page {
 	}
 
 	private void keyRow(String label, KeyMapping k) {
+		beginRow("key:" + label);
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
 		int bx = controlX(), w = x + colW - bx - 15;
 		boolean listening = capturing == k;
-		String shown = listening ? Lang.tr("aerion.key.press") : k.isUnbound() ? Lang.tr("aerion.key.none") : k.getTranslatedKeyMessage().getString();
-		button(bx, y + 1, w, ROW - 3, shown, listening, () -> capturing = k);
-		iconButton(bx + w + 2, y + 1, ROW - 3, "close", () -> {
-			capturing = k;
-			bind(InputConstants.UNKNOWN);
-			capturing = null;
-		});
+		if (k.isUnbound() && !listening) {
+			// An empty slot stays quiet, so the bound keys stand out in the list.
+			boolean over = inside(bx, y + 1, w, ROW - 3);
+			Draw.control(g, bx, y + 1, w, ROW - 3, 3, over ? track : control, over ? control : tile);
+			Txt.center(g, Lang.tr("aerion.key.none"), bx + w / 2f, y + 1 + (ROW - 3) / 2f, SMALL, muted);
+			hit(bx, y + 1, w, ROW - 3, f -> capturing = k, false);
+		} else {
+			String shown = listening ? Lang.tr("aerion.key.press") : k.getTranslatedKeyMessage().getString();
+			button(bx, y + 1, w, ROW - 3, shown, listening, () -> capturing = k);
+			iconButton(bx + w + 2, y + 1, ROW - 3, "close", () -> {
+				capturing = k;
+				bind(InputConstants.UNKNOWN);
+				capturing = null;
+			});
+		}
 		y += ROW;
 		if (!k.isUnbound()) {
 			for (KeyMapping other : Minecraft.getInstance().options.keyMappings) {
@@ -1149,6 +1329,7 @@ public final class AerionMenu implements Page {
 				}
 			}
 		}
+		endRow();
 	}
 
 	// --- controls ----------------------------------------------------------------------------
@@ -1172,21 +1353,22 @@ public final class AerionMenu implements Page {
 		return mouseX >= cx && mouseY >= cy && mouseX < cx + w && mouseY < cy + h;
 	}
 
+	/** A control's fill: the accent when chosen (as in the sidebar), lighter under the pointer. */
 	private int body(boolean on, boolean over) {
-		return on ? (over ? Colors.mix(pick, accent, 0.2f) : pick) : over ? track : control;
+		return on ? (over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent) : over ? track : control;
 	}
 
 	private void button(int bx, int by, int w, int h, String label, boolean on, Runnable action) {
 		boolean over = inside(bx, by, w, h);
 		Draw.rounded(g, bx, by, w, h, 3, body(on, over));
-		Txt.center(g, label, bx + w / 2f, by + h / 2f, TEXT, text);
+		Txt.center(g, label, bx + w / 2f, by + h / 2f, TEXT, on ? accentText : text);
 		hit(bx, by, w, h, f -> action.run(), false);
 	}
 
 	private void smallButton(int bx, int by, int w, int h, String label, boolean on, Runnable action) {
 		boolean over = inside(bx, by, w, h);
 		Draw.rounded(g, bx, by, w, h, 3, body(on, over));
-		Txt.center(g, label, bx + w / 2f, by + h / 2f, SMALL, on || over ? text : muted);
+		Txt.center(g, label, bx + w / 2f, by + h / 2f, SMALL, on ? accentText : over ? text : muted);
 		hit(bx, by, w, h, f -> action.run(), false);
 	}
 
@@ -1211,27 +1393,54 @@ public final class AerionMenu implements Page {
 		Draw.rounded(g, sx + 1 + Math.round(11 * t), sy + 1, 7, 7, 3, Colors.mix(muted, accentText, t));
 	}
 
-	/** A group of settings on a slightly lighter panel; its height comes from the last frame. */
+	/** A group of settings: a quiet heading over panels of their own (see {@link #beginRow}). */
 	private void beginCard(String title) {
 		cardKey = section + ":" + detail + ":" + sub + ":" + cardIndex++;
 		cardTop = y;
-		Integer h = cards.get(cardKey);
-		if (h != null) Draw.rounded(g, x, y, colW, h, 4, tile);
-		x += 7;
-		colW -= 14;
-		y += 5;
 		if (title != null) {
-			Txt.draw(g, title.toUpperCase(Locale.ROOT), x, y + 4, 6.5f, muted);
-			y += 12;
+			Txt.draw(g, title.toUpperCase(Locale.ROOT), x + 2, y + 5, 6.5f, muted);
+			y += 13;
 		}
 	}
 
 	private void endCard() {
-		y += 5;
-		cards.put(cardKey, y - cardTop);
-		x -= 7;
-		colW += 14;
-		y += 5;
+		y += 6;
+	}
+
+	/** Heights of setting panels last frame, so a panel can be drawn before its contents. */
+	private final Map<String, Integer> rows = new HashMap<>();
+	private String rowKey;
+	private int rowTop;
+
+	/** One setting on its own panel, lighter under the pointer; the contents go inside it. */
+	private void beginRow(String key) {
+		rowKey = section + ":" + detail + ":" + sub + ":" + key;
+		rowTop = y;
+		int h = rows.getOrDefault(rowKey, ROW + 2 * ROW_PAD);
+		boolean over = inside(x, y, colW, h);
+		Draw.rounded(g, x, y, colW, h, 4, Colors.mix(tile, control, ease("row" + rowKey, over ? 1 : 0)));
+		x += ROW_IN;
+		colW -= 2 * ROW_IN;
+		y += ROW_PAD;
+	}
+
+	private void endRow() {
+		y += ROW_PAD;
+		rows.put(rowKey, y - rowTop);
+		x -= ROW_IN;
+		colW += 2 * ROW_IN;
+		y += 3;
+	}
+
+	/** A module's description: readable text, a little apart from the settings under it. */
+	private void description(String s) {
+		y += 1;
+		// Wrapped by the small size's widths, with room for the slightly larger letters.
+		for (String row : wrap(s, colW - 16)) {
+			Txt.draw(g, row, x + 2, y + 5, 7.5f, Colors.mix(muted, text, 0.45f));
+			y += 11;
+		}
+		y += 6;
 	}
 
 	private void note(String s) {
@@ -1259,19 +1468,23 @@ public final class AerionMenu implements Page {
 	}
 
 	private void toggle(String label, boolean on, Consumer<Boolean> set) {
+		beginRow(label);
 		int w = colW - reserve;
-		if (inside(x - 2, y, w + 4, ROW)) Draw.rounded(g, x - 2, y, w + 4, ROW, 2, control);
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
+		String state = Lang.tr(on ? "aerion.state.on" : "aerion.state.off");
+		Txt.draw(g, state, x + w - 24 - Txt.width(state, SMALL), y + ROW / 2f, SMALL, muted);
 		switchAt(section + label, x + w - 20, y + 3, on);
-		hit(x - 2, y, w + 4, ROW, f -> {
+		hit(x - ROW_IN, y - ROW_PAD, w + 2 * ROW_IN, ROW + 2 * ROW_PAD, f -> {
 			set.accept(!on);
 			changed = true;
 		}, false);
 		y += ROW;
+		endRow();
 	}
 
 	/** Value slider; the number sits on the bar. */
 	private void slider(String label, int value, int min, int max, int step, String unit, Consumer<Integer> set) {
+		beginRow(label);
 		int bx = controlX(), w = controlW() - 30, ty = y + ROW / 2 - 1;
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
 		Draw.rounded(g, bx, ty, w, 3, 1, track);
@@ -1288,6 +1501,7 @@ public final class AerionMenu implements Page {
 			changed = true;
 		}, true);
 		y += ROW;
+		endRow();
 	}
 
 	/** Mutually exclusive buttons on the label's row, or under it when they don't fit. */
@@ -1295,20 +1509,24 @@ public final class AerionMenu implements Page {
 		float widest = 0;
 		for (String l : labels) widest = Math.max(widest, Txt.width(l, SMALL));
 		if (widest + 8 > (float) controlW() / values.length) {
+			beginRow(label);
 			Txt.draw(g, label, x, y + 6, TEXT, text);
 			y += 13;
 			segments(x, colW - reserve, values, labels, current, set);
-			y += 16;
+			y += ROW - 4;
+			endRow();
 		} else {
 			choiceRow(label, values, labels, current, set);
 		}
 	}
 
 	private void choiceRow(String label, String[] values, String[] labels, String current, Consumer<String> set) {
+		beginRow(label);
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
 		y += 2;
 		segments(controlX(), controlW(), values, labels, current, set);
 		y += ROW - 2;
+		endRow();
 	}
 
 	private void segments(int sx, int width, String[] values, String[] labels, String current, Consumer<String> set) {
@@ -1318,8 +1536,8 @@ public final class AerionMenu implements Page {
 			String v = values[i];
 			int cx = sx + i * w;
 			boolean on = v.equals(current), over = inside(cx, y, w, h);
-			if (on) Draw.rounded(g, cx + 1, y + 1, w - 2, h - 2, 2, pick);
-			Txt.center(g, labels[i], cx + w / 2f, y + h / 2f, SMALL, on || over ? text : muted);
+			if (on) Draw.rounded(g, cx + 1, y + 1, w - 2, h - 2, 2, accent);
+			Txt.center(g, labels[i], cx + w / 2f, y + h / 2f, SMALL, on ? accentText : over ? text : muted);
 			hit(cx, y, w, h, f -> {
 				set.accept(v);
 				changed = true;
@@ -1329,8 +1547,17 @@ public final class AerionMenu implements Page {
 
 	/** Named choices, chroma, and a custom colour whose picker opens on demand. */
 	private void color(String id, String label, String[] words, String[] wordLabels, String current, Consumer<String> set) {
+		beginRow("color:" + id);
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
-		int bx = controlX(), by = y + 2, bh = ROW - 4;
+		// The chips' width: on the label's row when they fit, else on a row of their own below.
+		float chips = Txt.width(Lang.tr("aerion.style.chroma"), SMALL) + Txt.width(Lang.tr("aerion.style.custom"), SMALL) + 31 + 2 * (words.length + 1);
+		for (String l : wordLabels) chips += Txt.width(l, SMALL) + 10;
+		int bx = controlX();
+		if (bx + chips > x + colW - reserve) {
+			y += ROW - 2;
+			bx = x;
+		}
+		int by = y + 2, bh = ROW - 4;
 		for (int i = 0; i < words.length; i++) {
 			String v = words[i];
 			int w = Math.round(Txt.width(wordLabels[i], SMALL)) + 10;
@@ -1370,10 +1597,11 @@ public final class AerionMenu implements Page {
 				expanded = id.equals(expanded) ? null : id;
 			}
 		});
-		Txt.draw(g, word, bx + 5, by + bh / 2f, SMALL, custom ? text : muted);
+		Txt.draw(g, word, bx + 5, by + bh / 2f, SMALL, custom ? accentText : muted);
 		Draw.control(g, bx + w - 12, by + 2, 9, bh - 4, 1, 0x80000000, custom ? Theme.color(current, 0xFFFFFFFF) : 0xFFFFFFFF);
 		y += ROW;
 		if (id.equals(expanded) && custom) picker(id, current, set);
+		endRow();
 	}
 
 	/** Saturation and brightness square, hue bar, preview, colour code and ready colours. */

@@ -1,7 +1,7 @@
 //! Worlds (with backups), screenshots and the server list of an instance.
 
-use launcher_core::instances::options::{self, OptionsTemplate};
-use launcher_core::instances::screenshots::{self, Screenshot};
+use launcher_core::instances::options::{self, KeyBinding, OptionsTemplate};
+use launcher_core::instances::screenshots::{self, GalleryShot, Screenshot};
 use launcher_core::instances::servers::{self, SavedServer};
 use launcher_core::instances::worlds::{self, WorldBackup, WorldInfo};
 use launcher_core::net::mcping::{self, ServerStatus};
@@ -98,6 +98,53 @@ pub async fn delete_screenshot(
 ) -> CmdResult<()> {
     let game = state.instances.game_dir(&id)?;
     blocking(move || screenshots::delete(&game, &name)).await
+}
+
+/// Show a screenshot selected in the system file manager.
+#[tauri::command]
+#[specta::specta]
+pub async fn reveal_screenshot(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    name: String,
+) -> CmdResult<()> {
+    let path = screenshots::path(&state.instances.game_dir(&id)?, &name)?;
+    app.opener()
+        .reveal_item_in_dir(&path)
+        .map_err(|e| launcher_core::Error::Invalid(e.to_string()))?;
+    Ok(())
+}
+
+/// Copy a screenshot to a place the player picked in the save dialog (to share it).
+#[tauri::command]
+#[specta::specta]
+pub async fn save_screenshot_copy(
+    state: State<'_, AppState>,
+    id: String,
+    name: String,
+    dest: String,
+) -> CmdResult<()> {
+    let path = screenshots::path(&state.instances.game_dir(&id)?, &name)?;
+    blocking(move || {
+        std::fs::copy(&path, &dest)
+            .map_err(|e| launcher_core::Error::Invalid(format!("{dest}: {e}")))?;
+        Ok(())
+    })
+    .await
+}
+
+/// Screenshots of every instance, newest first (the gallery page).
+#[tauri::command]
+#[specta::specta]
+pub async fn all_screenshots(state: State<'_, AppState>) -> CmdResult<Vec<GalleryShot>> {
+    let mut dirs = Vec::new();
+    for i in state.instances.list().await {
+        if let Ok(dir) = state.instances.game_dir(&i.id) {
+            dirs.push((i.id, i.name, dir));
+        }
+    }
+    blocking(move || Ok(screenshots::gallery(&dirs))).await
 }
 
 /// Open a screenshot in the system image viewer.
@@ -230,4 +277,65 @@ pub async fn share_game_log(
     let url = launcher_core::game::share::upload(&http, &path).await?;
     tracing::info!(%url, "shared game log");
     Ok(url)
+}
+
+/// Where key bindings are read and written: an instance's game folder, or the shared settings.
+async fn bindings_dir(
+    state: &AppState,
+    instance_id: Option<&str>,
+) -> launcher_core::error::Result<std::path::PathBuf> {
+    match instance_id {
+        Some(id) => state.instances.game_dir(id),
+        None => Ok(state.paths.shared_options_dir()),
+    }
+}
+
+/// The key bindings of an instance (`instanceId`), or of the shared settings (`null`).
+#[tauri::command]
+#[specta::specta]
+pub async fn key_bindings(
+    state: State<'_, AppState>,
+    instance_id: Option<String>,
+) -> CmdResult<Vec<KeyBinding>> {
+    let dir = bindings_dir(&state, instance_id.as_deref()).await?;
+    Ok(
+        tokio::task::spawn_blocking(move || options::read_bindings(&dir))
+            .await
+            .unwrap_or_default(),
+    )
+}
+
+/// Change key bindings. Refused while a game uses those settings: it would write its own back.
+#[tauri::command]
+#[specta::specta]
+pub async fn set_key_bindings(
+    state: State<'_, AppState>,
+    instance_id: Option<String>,
+    bindings: Vec<KeyBinding>,
+) -> CmdResult<()> {
+    let busy = match &instance_id {
+        Some(id) => state.games.is_running(id),
+        None => {
+            let mut any = false;
+            for g in state.games.running() {
+                if state
+                    .instances
+                    .get(&g.instance_id)
+                    .await
+                    .is_ok_and(|i| i.shared_options)
+                {
+                    any = true;
+                }
+            }
+            any
+        }
+    };
+    if busy {
+        return Err(launcher_core::Error::AlreadyRunning.into());
+    }
+    let dir = bindings_dir(&state, instance_id.as_deref()).await?;
+    tokio::task::spawn_blocking(move || options::write_bindings(&dir, &bindings))
+        .await
+        .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+    Ok(())
 }

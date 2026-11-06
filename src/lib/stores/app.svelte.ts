@@ -221,7 +221,11 @@ class AppStore {
 
   async saveSettings(patch: Partial<Settings>) {
     if (!this.settings) return;
-    const next = await commands.saveSettings({ ...this.settings, ...patch });
+    return this.applySettings(await commands.saveSettings({ ...this.settings, ...patch }));
+  }
+
+  /** Settings already saved by the backend (e.g. imported from a file). */
+  applySettings(next: Settings) {
     this.settings = next;
     i18n.set(next.language);
     themes.sync(next);

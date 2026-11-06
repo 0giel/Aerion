@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AdSlot from "../components/AdSlot.svelte";
   import Icon from "../components/Icon.svelte";
   import InstanceIcon from "../components/InstanceIcon.svelte";
   import ProgressBar from "../components/ProgressBar.svelte";
@@ -182,6 +183,7 @@
         </div>
       {/if}
     {/each}
+    <AdSlot slot="home" />
   </section>
 
   {#if layout.player !== "hidden"}

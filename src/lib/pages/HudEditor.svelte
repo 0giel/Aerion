@@ -455,7 +455,7 @@
             checked={cfg.features.lightLevels.enabled}
             onchange={(v) => cfg && ((cfg.features.lightLevels.enabled = v), changed())}
           />
-          {#each ["blockOutline", "chat", "perspective", "fovKey", "worldLook", "hitColor", "screens", "waypoints"] as const as key (key)}
+          {#each ["blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "waypoints"] as const as key (key)}
             <Switch
               label={t(`hudEditor.features.${key}`)}
               hint={t(`hudEditor.features.${key}Hint`)}

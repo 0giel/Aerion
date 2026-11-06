@@ -27,13 +27,17 @@
 
   let { instance }: { instance: Instance } = $props();
 
+  // Horizon runs no Java: no mods or shaders from Modrinth/CurseForge, only packs.
+  const horizon = untrack(() => instance.loader) === "horizon";
   const kinds: { kind: ContentKind; key: string; icon: string }[] = [
-    { kind: "mod", key: "instance.content.mods", icon: "package" },
-    { kind: "resourcePack", key: "instance.content.resourcePacks", icon: "image" },
-    { kind: "shader", key: "instance.content.shaders", icon: "sparkles" },
-    { kind: "dataPack", key: "instance.content.dataPacks", icon: "database" },
-  ];
-  let kind = $state<ContentKind>(untrack(() => instance.loader) === "vanilla" ? "resourcePack" : "mod");
+    { kind: "mod" as ContentKind, key: "instance.content.mods", icon: "package" },
+    { kind: "resourcePack" as ContentKind, key: "instance.content.resourcePacks", icon: "image" },
+    { kind: "shader" as ContentKind, key: "instance.content.shaders", icon: "sparkles" },
+    { kind: "dataPack" as ContentKind, key: "instance.content.dataPacks", icon: "database" },
+  ].filter((k) => !horizon || k.kind === "resourcePack" || k.kind === "dataPack");
+  let kind = $state<ContentKind>(
+    ["vanilla", "horizon"].includes(untrack(() => instance.loader)) ? "resourcePack" : "mod",
+  );
   let entries = $state.raw<ContentEntry[]>([]);
   let filter = $state("");
   let loading = $state(true);
@@ -238,6 +242,7 @@
 </script>
 
 <div class="content col gap-3">
+  {#if horizon}<p class="small muted">{t("instance.content.horizonNote")}</p>{/if}
   <div class="row wrap between">
     <div class="segmented" role="tablist">
       {#each kinds as k (k.kind)}

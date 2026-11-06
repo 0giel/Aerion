@@ -3,6 +3,7 @@
   import { untrack } from "svelte";
   import Advanced from "../../components/Advanced.svelte";
   import Switch from "../../components/Switch.svelte";
+  import KeybindEditor from "../../components/KeybindEditor.svelte";
   import Icon from "../../components/Icon.svelte";
   import MemorySlider from "../../components/MemorySlider.svelte";
   import { app } from "../../stores/app.svelte";
@@ -68,7 +69,7 @@
   $effect(() => {
     const l = draft.loader;
     const gv = draft.gameVersion;
-    if (l === "vanilla") return void (loaderVersions = []);
+    if (l === "vanilla" || l === "horizon") return void (loaderVersions = []);
     commands
       .listLoaderVersions(l, gv)
       .then((v) => (loaderVersions = v))
@@ -227,6 +228,7 @@
   const globalRes = $derived(
     g?.resolution ? `${g.resolution.width}×${g.resolution.height}` : t("common.auto"),
   );
+  let keysOpen = $state(false);
 </script>
 
 <div class="settings col gap-4">
@@ -271,42 +273,47 @@
 
   <section class="card col gap-3">
     <h3>{t("instance.settings.versionLoader")}</h3>
-    <div class="grid2">
-      <div class="field">
-        <label for="s-ver">{t("common.version")}</label>
-        <select id="s-ver" class="select" bind:value={draft.gameVersion}>
-          {#if !versions}<option value={draft.gameVersion}>{draft.gameVersion}</option>{/if}
-          {#each versions?.versions.filter((v) => v.kind === "release" || v.kind === "snapshot" || v.id === draft.gameVersion) ?? [] as v (v.id)}
-            <option value={v.id}>{v.id}{v.kind === "snapshot" ? " (snapshot)" : ""}</option>
-          {/each}
-        </select>
+    {#if instance.loader === "horizon"}
+      <!-- Horizon is one version of the game; it changes with its builds, below. -->
+      <p class="small muted">{instance.gameVersion} · {loaderLabel("horizon")}</p>
+    {:else}
+      <div class="grid2">
+        <div class="field">
+          <label for="s-ver">{t("common.version")}</label>
+          <select id="s-ver" class="select" bind:value={draft.gameVersion}>
+            {#if !versions}<option value={draft.gameVersion}>{draft.gameVersion}</option>{/if}
+            {#each versions?.versions.filter((v) => v.kind === "release" || v.kind === "snapshot" || v.id === draft.gameVersion) ?? [] as v (v.id)}
+              <option value={v.id}>{v.id}{v.kind === "snapshot" ? " (snapshot)" : ""}</option>
+            {/each}
+          </select>
+        </div>
+        <div class="field">
+          <label for="s-lv">{t("newInstance.loaderVersion")}</label>
+          <select
+            id="s-lv"
+            class="select"
+            bind:value={draft.loaderVersion}
+            disabled={draft.loader === "vanilla"}
+          >
+            <option value={null}>{t("common.auto")}</option>
+            {#each loaderVersions.slice(0, 200) as v (v.version)}<option value={v.version}
+                >{v.version}{v.stable ? "" : " (beta)"}</option
+              >{/each}
+          </select>
+        </div>
       </div>
-      <div class="field">
-        <label for="s-lv">{t("newInstance.loaderVersion")}</label>
-        <select
-          id="s-lv"
-          class="select"
-          bind:value={draft.loaderVersion}
-          disabled={draft.loader === "vanilla"}
-        >
-          <option value={null}>{t("common.auto")}</option>
-          {#each loaderVersions.slice(0, 200) as v (v.version)}<option value={v.version}
-              >{v.version}{v.stable ? "" : " (beta)"}</option
-            >{/each}
-        </select>
+      <div class="segmented" role="group" aria-label={t("common.loader")}>
+        {#each LOADERS as l (l)}<button
+            type="button"
+            aria-pressed={draft.loader === l}
+            onclick={() => ((draft.loader = l), (draft.loaderVersion = null))}>{loaderLabel(l)}</button
+          >{/each}
       </div>
-    </div>
-    <div class="segmented" role="group" aria-label={t("common.loader")}>
-      {#each LOADERS as l (l)}<button
-          type="button"
-          aria-pressed={draft.loader === l}
-          onclick={() => ((draft.loader = l), (draft.loaderVersion = null))}>{loaderLabel(l)}</button
-        >{/each}
-    </div>
-    {#if draft.gameVersion !== instance.gameVersion || draft.loader !== instance.loader}
-      <div class="alert warning">
-        <Icon name="alert" size={18} /><span class="small">{t("instance.settings.changeVersionWarn")}</span>
-      </div>
+      {#if draft.gameVersion !== instance.gameVersion || draft.loader !== instance.loader}
+        <div class="alert warning">
+          <Icon name="alert" size={18} /><span class="small">{t("instance.settings.changeVersionWarn")}</span>
+        </div>
+      {/if}
     {/if}
   </section>
 
@@ -461,11 +468,35 @@
         bind:checked={draft.aerionMod}
       />
     {/if}
+    {#if draft.loader === "horizon"}
+      <div class="row wrap gap-2 horizon-build">
+        <span class="col gap-1 grow">
+          <span>{t("instance.settings.horizonBuild")}</span>
+          <code class="small muted selectable">{instance.loaderVersion ?? "—"}</code>
+          <span class="hint">{t("instance.settings.horizonUpdateHint")}</span>
+        </span>
+        <button
+          class="btn"
+          onclick={() => commands.updateHorizon(instance.id).catch((e) => toasts.error(errorMessage(e)))}
+          ><Icon name="refresh" size={15} />{t("instance.settings.horizonUpdate")}</button
+        >
+      </div>
+    {/if}
   </section>
 
   <section class="card col gap-3">
     <h3>{t("instance.settings.gameOptions")}</h3>
     <span class="hint">{t("instance.settings.gameOptionsHint")}</span>
+    <Switch
+      label={t("instance.settings.sharedOptions")}
+      hint={t("settings.sharedOptionsHint")}
+      bind:checked={draft.sharedOptions}
+    />
+    <div class="row">
+      <button class="btn" onclick={() => (keysOpen = true)}
+        ><Icon name="key" size={15} />{t("instance.settings.keys")}</button
+      >
+    </div>
     <div class="row wrap gap-2">
       <select class="select grow" bind:value={copyFrom} aria-label={t("instance.settings.copyFrom")}>
         <option value="">{t("instance.settings.copyFrom")}</option>
@@ -626,6 +657,12 @@
     </div>
   </section>
 </div>
+
+<KeybindEditor
+  bind:open={keysOpen}
+  instanceId={instance.id}
+  title={`${t("keybinds.title")} · ${instance.name}`}
+/>
 
 <style>
   .settings {

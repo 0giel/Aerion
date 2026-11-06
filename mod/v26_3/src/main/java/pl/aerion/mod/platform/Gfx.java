@@ -62,6 +62,11 @@ public final class Gfx {
 		g.pose().scale(s, s);
 	}
 
+	/** Turn the drawing by `radians` (clockwise on screen for positive values). */
+	public void rotate(float radians) {
+		g.pose().rotate(radians);
+	}
+
 	public void texture(Identifier id, int x, int y, int w, int h, int texW, int texH, int argb) {
 		g.blit(RenderPipelines.GUI_TEXTURED, id, x, y, 0f, 0f, w, h, texW, texH, texW, texH, argb);
 	}
@@ -97,5 +102,20 @@ public final class Gfx {
 
 	public void sprite(Identifier id, int x, int y, int w, int h) {
 		g.blitSprite(RenderPipelines.GUI_TEXTURED, id, x, y, w, h);
+	}
+
+	private static java.util.function.Supplier<net.minecraft.world.entity.player.PlayerSkin> skin;
+
+	private static net.minecraft.world.entity.player.PlayerSkin skin() {
+		if (skin == null) {
+			Minecraft mc = Minecraft.getInstance();
+			skin = mc.getSkinManager().createLookup(mc.getGameProfile(), false);
+		}
+		return skin.get();
+	}
+
+	/** The signed-in player's face (with the hat layer), `size` pixels square. */
+	public void playerFace(int x, int y, int size) {
+		net.minecraft.client.gui.components.PlayerFaceExtractor.extractRenderState(g, skin(), x, y, size);
 	}
 }

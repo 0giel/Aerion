@@ -6,7 +6,8 @@ use crate::mods::model::{ContentKind, ProjectVersion, ReleaseKind};
 /// Loader tags a mod may carry to run on `loader`, in order of preference.
 pub fn compatible_loaders(loader: LoaderKind, game_version: &str) -> Vec<&'static str> {
     match loader {
-        LoaderKind::Vanilla => vec![],
+        // Horizon runs no Java mods (it has its own `.hmod` format).
+        LoaderKind::Vanilla | LoaderKind::Horizon => vec![],
         LoaderKind::Fabric => vec!["fabric"],
         // Quilt loads Fabric mods.
         LoaderKind::Quilt => vec!["quilt", "fabric"],

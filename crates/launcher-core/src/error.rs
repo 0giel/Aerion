@@ -120,6 +120,10 @@ pub enum Error {
 
     #[error("{0}")]
     Invalid(String),
+
+    /// Horizon (the Rust reimplementation): `kind` picks the explanation shown to the player.
+    #[error("Horizon: {kind}: {detail}")]
+    Horizon { kind: &'static str, detail: String },
 }
 
 /// Authentication failures, each with a dedicated user-facing explanation.
@@ -315,6 +319,19 @@ impl Error {
                 "instance.folderNotEmpty"
             }
             Error::Invalid(_) => "generic",
+            Error::Horizon { kind, detail } => {
+                put("detail", detail.clone());
+                match *kind {
+                    "platform" => "horizon.platform",
+                    "noBuild" => "horizon.noBuild",
+                    "signature" => "horizon.signature",
+                    "needsOwner" => "horizon.needsOwner",
+                    "prepare" => "horizon.prepare",
+                    "unpack" => "horizon.unpack",
+                    "notInstalled" => "horizon.notInstalled",
+                    _ => "horizon.failed",
+                }
+            }
         };
         ErrorInfo {
             code: code.to_owned(),

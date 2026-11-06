@@ -37,6 +37,22 @@ public final class HudEditor implements Page {
 	private int screenW, screenH;
 	private final Deque<JsonObject> undo = new ArrayDeque<>();
 	private final List<Button> buttons = new ArrayList<>();
+	/** The selected module's settings beside the layout, so every change shows on the HUD at once. */
+	private AerionMenu panel;
+	/** The pointer went down on the panel: its drags and release are the panel's. */
+	private boolean panelGesture;
+
+	/** Open (or move to) the settings of `id` in the side panel. */
+	private void openPanel(String id) {
+		if (panel == null) panel = AerionMenu.docked(id, this::closePanel);
+		else panel.show(id);
+		selected = id;
+	}
+
+	private void closePanel() {
+		if (panel != null) panel.close();
+		panel = null;
+	}
 
 	private record Button(int x, int y, int w, int h, Runnable action) {
 		boolean contains(double px, double py) {
@@ -103,11 +119,25 @@ public final class HudEditor implements Page {
 		}
 		if (guideX >= 0) Draw.vline(g, guideX, 0, screenH, accent);
 		if (guideY >= 0) Draw.hline(g, 0, guideY, screenW, accent);
-		if (busy) return;
+		if (busy) {
+			drawPanel(g, mouseX, mouseY);
+			return;
+		}
 
-		center(g, t, accent, mouseX, mouseY);
-		tools(g, t, accent, mouseX, mouseY);
+		if (panel == null) {
+			center(g, t, accent, mouseX, mouseY);
+			tools(g, t, accent, mouseX, mouseY);
+		}
 		if (selected != null) moduleBar(g, t, accent, Hud.BOUNDS.get(selected), mouseX, mouseY);
+		drawPanel(g, mouseX, mouseY);
+	}
+
+	private void drawPanel(Gfx g, int mouseX, int mouseY) {
+		if (panel == null) return;
+		int[] b = selected != null ? Hud.BOUNDS.get(selected) : null;
+		// Pick the side away from the module, but not mid-drag: the panel would jump around.
+		if (b != null && dragging == null) panel.dockLeft(b[0] + b[2] / 2 > screenW / 2);
+		panel.render(g, mouseX, mouseY);
 	}
 
 	/** The logo and the Mods button in the middle of the screen. */
@@ -161,11 +191,12 @@ public final class HudEditor implements Page {
 		Draw.rounded(g, x, y, barW, barH, 3, Colors.alpha(surface, 0xF0));
 		Txt.center(g, size, x + textW / 2f, y + barH / 2f, 7.5f, t != null ? t.text : 0xFFFFFFFF);
 		int ink = t != null ? t.text : 0xFFFFFF;
-		barIcon(g, x + textW, y, barH, "settings", ink, accent, mx, my, () -> Page.go(new AerionMenu(id)));
+		barIcon(g, x + textW, y, barH, "settings", ink, accent, mx, my, () -> openPanel(id));
 		barIcon(g, x + textW + 15, y, barH, "hide", ink, accent, mx, my, () -> {
 			remember();
 			m.addProperty("enabled", false);
 			selected = null;
+			closePanel();
 			changed = true;
 		});
 	}
@@ -225,9 +256,14 @@ public final class HudEditor implements Page {
 	// --- input -------------------------------------------------------------------------------
 	@Override
 	public boolean pressed(double x, double y, int button) {
+		if (panel != null && panel.contains(x, y)) {
+			panelGesture = true;
+			return panel.pressed(x, y, button);
+		}
+		panelGesture = false;
 		if (button == InputConstants.MOUSE_BUTTON_RIGHT) {
 			String id = at(x, y);
-			if (id != null) Page.go(new AerionMenu(id));
+			if (id != null) openPanel(id);
 			return false;
 		}
 		if (button != InputConstants.MOUSE_BUTTON_LEFT) return false;
@@ -245,6 +281,9 @@ public final class HudEditor implements Page {
 		if (hit != null && startCorner(hit, x, y)) return false;
 		selected = hit;
 		dragging = hit;
+		// Picking a module shows its settings; a click on empty space puts the panel away.
+		if (hit != null) openPanel(hit);
+		else closePanel();
 		if (hit != null) {
 			int[] b = Hud.BOUNDS.get(hit);
 			grabX = x - b[0];
@@ -257,6 +296,7 @@ public final class HudEditor implements Page {
 		int[] b = Hud.BOUNDS.get(id);
 		int c = cornerAt(b, x, y);
 		if (c < 0) return false;
+		if (panel != null) panel.show(id);
 		selected = id;
 		dragging = id;
 		corner = c;
@@ -279,6 +319,10 @@ public final class HudEditor implements Page {
 
 	@Override
 	public void dragged(double x, double y, int w, int h) {
+		if (panelGesture && panel != null) {
+			panel.dragged(x, y, w, h);
+			return;
+		}
 		if (dragging == null) return;
 		int[] b = Hud.BOUNDS.get(dragging);
 		if (b == null) return;
@@ -341,6 +385,8 @@ public final class HudEditor implements Page {
 
 	@Override
 	public void released() {
+		if (panel != null) panel.released();
+		panelGesture = false;
 		dragging = null;
 		corner = -1;
 		guideX = -1;
@@ -349,10 +395,14 @@ public final class HudEditor implements Page {
 	}
 
 	@Override
-	public void scrolled(double x, double y, double amount) {}
+	public void scrolled(double x, double y, double amount) {
+		if (panel != null && panel.contains(x, y)) panel.scrolled(x, y, amount);
+	}
 
 	@Override
 	public boolean keyPressed(InputConstants.Key key) {
+		// The panel first: typing in it, and Esc puts it away before leaving the layout.
+		if (panel != null && panel.keyPressed(key)) return true;
 		if (selected == null) return false;
 		int[] b = Hud.BOUNDS.get(selected);
 		if (b == null) return false;
@@ -368,7 +418,13 @@ public final class HudEditor implements Page {
 	}
 
 	@Override
+	public boolean charTyped(int codepoint) {
+		return panel != null && panel.charTyped(codepoint);
+	}
+
+	@Override
 	public void close() {
+		closePanel();
 		if (changed) AerionClient.saveHud();
 		changed = false;
 	}

@@ -31,6 +31,9 @@ hitColor
 waypoints
 bossbar
 toggleSneak
+blockInfo
+fpsGraph
+playerList
 armor
 clock
 memory
@@ -54,3 +57,5 @@ screens
 scoreboard
 packs
 armorWarn
+features
+fovLock

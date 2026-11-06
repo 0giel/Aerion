@@ -9,6 +9,47 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.0",
+    notes: {
+      pl: [
+        "Aerion 1.0.0: logowanie kontem Microsoft działa — Mojang zatwierdził aplikację.",
+        "Nowe menu moda: sekcje w pasku bocznym, kafelki modułów z dużymi ikonami, filtry Włączone/Wyłączone, każde ustawienie we własnej karcie i krótki opis każdego modułu i funkcji.",
+        "W układzie HUD kliknięcie modułu otwiera z boku jego ustawienia — każdą zmianę widać od razu na ekranie.",
+        "Nowy ekran główny gry: falująca zorza w kolorach motywu, napis pod logo, Twoja postać po prawej i przycisk „Hostuj świat”, który otwiera świat dla znajomych (przez internet dzięki e4mc, dodawanemu do nowych instancji Fabric + Aerion).",
+        "Tło-obraz motywu, także animowany GIF, jest teraz również w menu gry.",
+        "Nowe instancje Fabric + Aerion mogą od razu dostać mody optymalizacyjne — Sodium, Lithium, FerriteCore i ImmediatelyFast: więcej FPS i mniej pamięci bez zmiany rozgrywki.",
+        "Wspólne ustawienia gry: sterowanie, grafika i dźwięk przechodzą między instancjami, które je włączą — zmiana w jednej grze pojawia się w pozostałych.",
+        "Nowy edytor klawiszy z klawiaturą i myszą: widać, co jest pod którym klawiszem, konflikty świecą na czerwono, a przypisanie zmienia się naciśnięciem klawisza.",
+        "Znajomi: lista nicków z twarzami ze skórek, kropka pokazuje, kto właśnie hostuje, a „Dołącz” wchodzi na jego świat. Wystarczy wkleić wiadomość z adresem e4mc — Aerion sam go znajdzie.",
+        "Galeria zrzutów ekranu ze wszystkich instancji naraz: filtr instancji, kopiowanie obrazu do schowka, „Zapisz jako…”, pokaż w folderze i usuwanie.",
+        "Strona Wydajność pokazuje podsumowanie po ostatniej grze: średnie i najniższe FPS, szczyt pamięci i podpowiedzi typu „ta instancja ma za mało RAM” z przyciskiem, który od razu to poprawia.",
+        "Przenoszenie na inny komputer: eksport i import ustawień, motywów, skórek, HUD-u i wspólnych ustawień gry jednym plikiem (Ustawienia → Dane). Konta i tokeny nigdy nie trafiają do pliku.",
+        "Nowe funkcje: blokada FOV, regulowana jasność pełnej jasności z klawiszami Jaśniej i Ciemniej oraz przybliżanie zooma kółkiem myszy.",
+        "Nowe moduły HUD: info o bloku pod celownikiem, wykres FPS i lista graczy. Czytelniejsze nazwy dźwięków w edytorze dźwięków.",
+        "Eksperymentalnie: instancje Horizon (Rust) — Minecraft 26.3 przepisany w Rust przez otwarty projekt Horizon. Aerion pobiera podpisany build i przygotowuje go z Twoich plików gry.",
+        "Peleryny wczytują się same i poprawnie pokazują się wszystkie, także nowsze; link do GitHuba w ustawieniach i w pasku bocznym; podgląd w edytorze motywu pokazuje motyw w działaniu.",
+      ],
+      en: [
+        "Aerion 1.0.0: signing in with a Microsoft account works — Mojang approved the app.",
+        "A new mod menu: sections in the sidebar, module tiles with big icons, Enabled/Disabled filters, every setting on its own card and a short description of each module and feature.",
+        "In the HUD layout, clicking a module opens its settings beside it — every change shows on screen at once.",
+        "A new title screen in the game: a moving aurora in the theme's colours, the splash under the logo, your character on the right and a “Host a world” button that opens a world to friends (over the internet with e4mc, added to new Fabric + Aerion instances).",
+        "A picture background in your theme, animated GIFs included, now shows in the game's menus too.",
+        "New Fabric + Aerion instances can come with optimization mods — Sodium, Lithium, FerriteCore and ImmediatelyFast: more FPS and less memory without changing how the game plays.",
+        "Shared game settings: controls, video and sound follow you between the instances that switch them on — a change in one game shows in the others.",
+        "A new key binding editor with a keyboard and mouse: see what each key does, clashes light up red, and a binding changes by pressing the key.",
+        "Friends: a list of names with faces from their skins, a dot showing who is hosting right now, and “Join” to enter their world. Paste the message with the e4mc address — Aerion finds the address itself.",
+        "A screenshot gallery of every instance at once: filter by instance, copy the image to the clipboard, “Save as…”, show in folder and delete.",
+        "The Performance page shows a summary after your last game: average and lowest FPS, the memory peak and hints like “this instance has too little RAM”, with a button that fixes it.",
+        "Moving to another computer: export and import settings, themes, skins, the HUD and shared game settings in one file (Settings → Data). Accounts and tokens never go in the file.",
+        "New features: FOV lock, adjustable fullbright brightness with Brighter and Darker keys, and zooming in and out with the mouse wheel.",
+        "New HUD modules: block info under the crosshair, an FPS graph and a player list. Clearer sound names in the sound editor.",
+        "Experimental: Horizon (Rust) instances — Minecraft 26.3 rewritten in Rust by the open-source Horizon project. Aerion downloads the signed build and prepares it from your own game files.",
+        "Capes load by themselves and all of them show, newer ones too; a GitHub link in settings and the sidebar; the theme editor's preview shows the theme in action.",
+      ],
+    },
+  },
+  {
     version: "0.3.0",
     notes: {
       pl: [

@@ -59,6 +59,8 @@ pub struct CommandSpec {
     pub env: Vec<(String, String)>,
     /// Values that must never appear in logs (access token).
     pub secrets: Vec<String>,
+    /// Written to the game's standard input, then closed (Horizon's session JSON). Never logged.
+    pub stdin: Option<String>,
 }
 
 impl CommandSpec {
@@ -215,6 +217,7 @@ pub fn build_command(
         cwd: opts.game_dir.clone(),
         env: opts.env.clone(),
         secrets: vec![auth.access_token.clone()],
+        stdin: None,
     }
 }
 
@@ -243,7 +246,11 @@ pub async fn run(
     cmd.args(&spec.args)
         .current_dir(&spec.cwd)
         .envs(spec.env.iter().cloned())
-        .stdin(Stdio::null())
+        .stdin(if spec.stdin.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     hide_console(&mut cmd);
@@ -254,6 +261,13 @@ pub async fn run(
         reason: e.to_string(),
     })?;
     tracing::info!(pid = child.id(), cmd = %spec.redacted(), "game started");
+    if let (Some(data), Some(mut input)) = (spec.stdin.as_deref(), child.stdin.take()) {
+        use tokio::io::AsyncWriteExt;
+        // Then dropped, which closes it: the game reads to the end.
+        if let Err(e) = input.write_all(data.as_bytes()).await {
+            tracing::warn!("couldn't hand the session to the game: {e}");
+        }
+    }
     on_spawn(child.id());
 
     let mut readers = Vec::new();

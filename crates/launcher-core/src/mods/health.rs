@@ -69,7 +69,8 @@ fn loads(loader: LoaderKind, family: Family) -> bool {
         LoaderKind::Forge => family == Family::Forge,
         // NeoForge still reads `mods.toml` on its first versions.
         LoaderKind::Neoforge => matches!(family, Family::NeoForge | Family::Forge),
-        LoaderKind::Vanilla => false,
+        // No Java at all: neither Java mods nor a mod loader.
+        LoaderKind::Vanilla | LoaderKind::Horizon => false,
     }
 }
 

@@ -19,7 +19,9 @@ export const NAV: NavDef[] = [
   { id: "instances", page: "instances", icon: "grid", key: "nav.instances", visible: true },
   { id: "mods", page: "mods", icon: "package", key: "nav.mods", visible: true },
   { id: "skins", page: "skins", icon: "shirt", key: "nav.skins", visible: true },
+  { id: "friends", page: "friends", icon: "users", key: "nav.friends", visible: true },
   { id: "stats", page: "stats", icon: "chart", key: "nav.stats", visible: true },
+  { id: "screenshots", page: "screenshots", icon: "image", key: "nav.screenshots", visible: true },
   { id: "performance", page: "performance", icon: "cpu", key: "nav.performance", visible: true },
   // The account button at the bottom of the sidebar opens Accounts too.
   { id: "accounts", page: "accounts", icon: "user", key: "nav.accounts", visible: false },

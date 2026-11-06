@@ -9,6 +9,8 @@ export type Page =
   | "accounts"
   | "skins"
   | "stats"
+  | "screenshots"
+  | "friends"
   | "console"
   | "settings"
   | "themeEditor"

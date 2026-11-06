@@ -30,6 +30,8 @@ sha2 = "0.11"
 md-5 = "0.11"
 hex = "0.4"
 base64 = "0.23"
+# Ed25519 for Horizon's signed releases (already in the tree through rustls).
+ring = "0.17"
 getrandom = "0.4"
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock", "serde"] }

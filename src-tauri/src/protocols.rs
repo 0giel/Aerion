@@ -109,7 +109,10 @@ async fn proxy<R: Runtime>(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("")
         .to_ascii_lowercase();
-    if !ct.starts_with("image/")
+    // Some hosts send images untyped (newer capes on textures.minecraft.net come as
+    // `application/octet-stream`); those are accepted only when the bytes are a raster image.
+    let generic = ct.is_empty() || ct.starts_with("application/octet-stream");
+    if !(ct.starts_with("image/") || generic)
         || resp
             .content_length()
             .is_some_and(|l| l as usize > MAX_IMAGE)
@@ -120,12 +123,34 @@ async fn proxy<R: Runtime>(
     if body.len() > MAX_IMAGE {
         return Err(StatusCode::PAYLOAD_TOO_LARGE);
     }
+    let ct = if generic {
+        sniff_image(&body)
+            .ok_or(StatusCode::UNSUPPORTED_MEDIA_TYPE)?
+            .to_owned()
+    } else {
+        ct
+    };
     if !no_cache {
         let _ = tokio::fs::create_dir_all(&cache_dir).await;
         let _ = launcher_core::util::fs::atomic_write(&body_path, &body).await;
         let _ = tokio::fs::write(&type_path, &ct).await;
     }
     Ok(image_response(body.to_vec(), &ct))
+}
+
+/// The type of a raster image recognised by its magic bytes (never SVG: it can carry script).
+fn sniff_image(body: &[u8]) -> Option<&'static str> {
+    if body.starts_with(b"\x89PNG\r\n\x1a\n") {
+        Some("image/png")
+    } else if body.starts_with(b"\xff\xd8\xff") {
+        Some("image/jpeg")
+    } else if body.starts_with(b"GIF87a") || body.starts_with(b"GIF89a") {
+        Some("image/gif")
+    } else if body.len() >= 12 && body.starts_with(b"RIFF") && &body[8..12] == b"WEBP" {
+        Some("image/webp")
+    } else {
+        None
+    }
 }
 
 fn image_response(body: Vec<u8>, content_type: &str) -> Response<Vec<u8>> {
@@ -342,6 +367,19 @@ pub async fn trim_image_cache(dir: std::path::PathBuf) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sniffs_untyped_images() {
+        assert_eq!(sniff_image(b"\x89PNG\r\n\x1a\n...."), Some("image/png"));
+        assert_eq!(sniff_image(b"\xff\xd8\xff\xe0"), Some("image/jpeg"));
+        assert_eq!(sniff_image(b"GIF89a.."), Some("image/gif"));
+        assert_eq!(sniff_image(b"RIFF\0\0\0\0WEBPVP8 "), Some("image/webp"));
+        assert_eq!(
+            sniff_image(b"<svg xmlns=\"http://www.w3.org/2000/svg\"/>"),
+            None
+        );
+        assert_eq!(sniff_image(b"<html>"), None);
+    }
 
     #[test]
     fn blocks_private_hosts() {

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
@@ -23,6 +24,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import java.util.Comparator;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.Chroma;
 import pl.aerion.mod.Colors;
@@ -56,6 +61,15 @@ public final class Hud {
 
 		boolean flag(String key, boolean fallback) {
 			return "1".equals(opt(key, fallback ? "1" : "0")) || "true".equals(opt(key, ""));
+		}
+
+		/** A number option as the menu stores it (text in "options"). */
+		int num(String key, int fallback) {
+			try {
+				return Integer.parseInt(opt(key, String.valueOf(fallback)).trim());
+			} catch (NumberFormatException e) {
+				return fallback;
+			}
 		}
 	}
 
@@ -394,6 +408,9 @@ public final class Hud {
 		MODULES.put("armor", new Armor());
 		MODULES.put("keystrokes", new Keystrokes());
 		MODULES.put("minimap", new Minimap());
+		MODULES.put("blockInfo", new BlockInfo());
+		MODULES.put("fpsGraph", new FpsGraph());
+		MODULES.put("playerList", new PlayerList());
 	}
 
 	static String roman(int n) {
@@ -739,6 +756,140 @@ public final class Hud {
 			if (c.flag("space", true)) {
 				key(c, g, p, y, 3 * k + 2 * GAP, k / 2, "", o.keyJump.isDown());
 			}
+		}
+	}
+
+	/** The block under the crosshair: its item, name and, if wanted, hardness. */
+	static final class BlockInfo implements Module {
+		private record Seen(ItemStack item, String name, float hardness) {}
+
+		private static Seen seen(Ctx c) {
+			if (c.mc().level != null && c.mc().hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
+				BlockState state = c.mc().level.getBlockState(hit.getBlockPos());
+				if (!state.isAir()) {
+					return new Seen(new ItemStack(state.getBlock().asItem()), state.getBlock().getName().getString(),
+							state.getDestroySpeed(c.mc().level, hit.getBlockPos()));
+				}
+			}
+			return c.preview() ? new Seen(new ItemStack(Items.DIAMOND_ORE), "Diamond Ore", 3f) : null;
+		}
+
+		private static String detailLine(Ctx c, Seen s) {
+			if (!c.flag("state", false)) return "";
+			return s.hardness < 0 ? Lang.tr("aerion.hud.unbreakable") : Lang.tr("aerion.hud.hardness").replace("{n}", String.format(Locale.ROOT, "%.1f", s.hardness));
+		}
+
+		@Override
+		public int[] size(Ctx c) {
+			Seen s = seen(c);
+			if (s == null) return new int[] {0, 0};
+			int p = c.style().padding();
+			int w = Math.max(Hud.width(c, s.name), Hud.width(c, detailLine(c, s)));
+			return new int[] {(s.item.isEmpty() ? 0 : 19) + w + 2 * p, 16 + 2 * p};
+		}
+
+		@Override
+		public void draw(Ctx c, Gfx g) {
+			Seen s = seen(c);
+			if (s == null) return;
+			int p = c.style().padding(), x = p;
+			if (!s.item.isEmpty()) {
+				g.item(s.item, p, p);
+				x += 19;
+			}
+			String d = detailLine(c, s);
+			if (d.isEmpty()) {
+				Hud.text(c, g, s.name, x, p + 4, c.style().text(), c.style().shadow());
+			} else {
+				Hud.text(c, g, s.name, x, p, c.style().text(), c.style().shadow());
+				Hud.text(c, g, d, x, p + 9, Colors.alpha(c.style().text(), 0xAA), c.style().shadow());
+			}
+		}
+	}
+
+	/** FPS over the last seconds, one sample every quarter second, the current value on top. */
+	static final class FpsGraph implements Module {
+		private static final int SAMPLES = 100;
+		private static final int[] HISTORY = new int[SAMPLES];
+		private static int next, count;
+		private static long lastSample;
+
+		private static void sample(Minecraft mc) {
+			long now = System.currentTimeMillis();
+			if (now - lastSample < 250) return;
+			lastSample = now;
+			HISTORY[next] = mc.getFps();
+			next = (next + 1) % SAMPLES;
+			count = Math.min(SAMPLES, count + 1);
+		}
+
+		private static int graphW(Ctx c) {
+			return Math.max(50, Math.min(200, c.num("width", 100)));
+		}
+
+		private static int graphH(Ctx c) {
+			return Math.max(20, Math.min(80, c.num("height", 40)));
+		}
+
+		@Override
+		public int[] size(Ctx c) {
+			int p = c.style().padding();
+			return new int[] {graphW(c) + 2 * p, (c.flag("value", true) ? LINE + 2 : 0) + graphH(c) + 2 * p};
+		}
+
+		@Override
+		public void draw(Ctx c, Gfx g) {
+			Minecraft mc = c.mc();
+			sample(mc);
+			int p = c.style().padding(), w = graphW(c), h = graphH(c), y = p;
+			boolean colored = c.flag("colored", true);
+			if (c.flag("value", true)) {
+				int fps = mc.getFps();
+				Hud.text(c, g, fps + " FPS", p, y, colored ? graded(fps >= 60, fps >= 30) : c.style().text(), c.style().shadow());
+				y += LINE + 2;
+			}
+			int top = y, bottom = y + h;
+			g.fill(p, bottom - 1, p + w, bottom, Colors.alpha(c.style().text(), 0x40));
+			int peak = 60;
+			for (int i = 0; i < count; i++) peak = Math.max(peak, HISTORY[i]);
+			// A faint line at 60 FPS, the usual target.
+			int line60 = bottom - Math.round(h * 60f / peak);
+			if (line60 > top) g.fill(p, line60, p + w, line60 + 1, Colors.alpha(c.style().text(), 0x22));
+			int cols = Math.min(count, w / 2);
+			for (int i = 0; i < cols; i++) {
+				int v = HISTORY[Math.floorMod(next - 1 - i, SAMPLES)];
+				int bh = Math.max(1, Math.round(h * Math.min(1f, (float) v / peak)));
+				int bx = p + w - (i + 1) * 2;
+				int color = colored ? graded(v >= 60, v >= 30) : c.style().text();
+				g.fill(bx, bottom - bh, bx + 1, bottom, Colors.alpha(color, 0xCC));
+			}
+		}
+	}
+
+	/** Players on the server, sorted by name, with their ping and game mode if wanted. */
+	static final class PlayerList extends Lines {
+		@Override
+		List<String> lines(Ctx c) {
+			List<String> out = new ArrayList<>();
+			if (c.mc().getConnection() == null) {
+				if (c.preview()) {
+					out.add("Alex  32 ms");
+					out.add("Steve  45 ms");
+				}
+				return out;
+			}
+			int max = Math.max(1, Math.min(50, c.num("max", 10)));
+			boolean ping = c.flag("ping", true), mode = c.flag("dimension", false);
+			List<PlayerInfo> players = new ArrayList<>(c.mc().getConnection().getOnlinePlayers());
+			players.sort(Comparator.comparing(pi -> pi.getProfile().name().toLowerCase(Locale.ROOT)));
+			for (PlayerInfo pi : players) {
+				if (out.size() >= max) break;
+				String line = pi.getProfile().name();
+				if (ping) line += "  " + pi.getLatency() + " ms";
+				if (mode && pi.getGameMode() != null) line += "  " + pi.getGameMode().getShortDisplayName().getString();
+				out.add(line);
+			}
+			return out;
 		}
 	}
 

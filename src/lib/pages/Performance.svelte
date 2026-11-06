@@ -6,8 +6,10 @@
   import Sparkline from "../components/Sparkline.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
-  import { commands, errorMessage, type PerfSnapshot } from "../api";
-  import { i18n, t } from "../i18n/index.svelte";
+  import { toasts } from "../stores/toasts.svelte";
+  import { commands, errorMessage, events, type PerfSnapshot } from "../api";
+  import type { Hint, SessionSummary_Serialize as SessionSummary } from "../bindings";
+  import { formatPlayTime, formatRelative, i18n, t } from "../i18n/index.svelte";
 
   const SLOTS = 60;
   let snap = $state.raw<PerfSnapshot | null>(null);
@@ -52,6 +54,44 @@
     const timer = setInterval(sample, 1000);
     return () => clearInterval(timer);
   });
+
+  // Summaries of the last games, written by the launcher when a game exits.
+  let sessions = $state.raw<SessionSummary[]>([]);
+  let picked = $state(0);
+  const session = $derived(sessions[picked] ?? null);
+  async function loadSessions() {
+    sessions = await commands.perfSessions().catch(() => []);
+    picked = 0;
+  }
+  $effect(() => {
+    void loadSessions();
+    const off = events.gameStateEvent.listen(({ payload }) => {
+      // The summary is saved right after the exit event's work; give it a moment.
+      if (payload.state === "exited") setTimeout(loadSessions, 1500);
+    });
+    return () => void off.then((f) => f());
+  });
+  async function clearSessions() {
+    await commands.clearPerfSessions().catch(() => {});
+    sessions = [];
+  }
+
+  const hintText = (h: Hint) => {
+    const p: Record<string, string | number> = { ...h.params };
+    for (const k of ["peak", "max", "suggest", "free"]) if (k in p) p[k] = size(Number(p[k]));
+    return t(`perf.hints.${h.kind}` as never, p);
+  };
+  async function setMemory(id: string, mb: number) {
+    const inst = app.instances.find((i) => i.id === id);
+    if (!inst) return;
+    try {
+      await commands.updateInstance({ ...inst, maxMemoryMb: mb });
+      await app.refreshInstances();
+      toasts.success(t("perf.hints.memorySet", { name: inst.name, size: size(mb) }));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
 
   const n1 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 1 }));
   const n0 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 0 }));
@@ -214,6 +254,86 @@
       {/if}
     </section>
 
+    {#if session}
+      <section class="col gap-3">
+        <div class="row between wrap">
+          <h2 class="section-title">{t("perf.lastGames")}</h2>
+          <div class="row gap-1 wrap">
+            {#if sessions.length > 1}
+              <select class="input sm" bind:value={picked} aria-label={t("perf.lastGames")}>
+                {#each sessions as s, i (s.ended + s.instanceId)}
+                  <option value={i}>{s.instanceName} · {formatRelative(s.ended)}</option>
+                {/each}
+              </select>
+            {/if}
+            <button class="btn sm ghost" onclick={clearSessions} title={t("perf.clearSessions")}
+              ><Icon name="trash" size={14} /></button
+            >
+          </div>
+        </div>
+        <article class="summary card">
+          <div class="row between wrap">
+            <strong>{session.instanceName}</strong>
+            <span class="tiny muted"
+              >{formatRelative(session.ended)} · {formatPlayTime(session.playSecs)}</span
+            >
+          </div>
+          <div class="stats">
+            <div class="stat">
+              <span class="label">{t("perf.fpsAvg")}</span>
+              <strong class="value">{session.fpsAvg ?? "—"}</strong>
+            </div>
+            <div class="stat">
+              <span class="label">{t("perf.fpsLow")}</span>
+              <strong class="value">{session.fpsLow ?? "—"}</strong>
+            </div>
+            <div class="stat">
+              <span class="label">{t("perf.heapPeak")}</span>
+              {#if session.heapPeakMb !== null && session.maxMemoryMb}
+                <strong class="value"
+                  >{size(session.heapPeakMb)} <span class="of">/ {size(session.maxMemoryMb)}</span></strong
+                >
+                <Meter value={session.heapPeakMb} max={session.maxMemoryMb} label={t("perf.heapPeak")} />
+              {:else}
+                <strong class="value">—</strong>
+              {/if}
+            </div>
+            <div class="stat">
+              <span class="label">{t("perf.processPeak")}</span>
+              <strong class="value">{size(session.processPeakMb)}</strong>
+              <span class="tiny muted">{t("perf.systemFree", { size: size(session.systemFreeMinMb) })}</span>
+            </div>
+          </div>
+          {#if session.fpsAvg === null}
+            <span class="tiny muted">{t("perf.noFpsData")}</span>
+          {/if}
+          {#if session.hints.length}
+            <ul class="hints">
+              {#each session.hints as h (h.kind)}
+                <li class="hint-row {h.level}">
+                  <Icon name={h.level === "ok" ? "check" : h.level === "warn" ? "alert" : "info"} size={15} />
+                  <span class="small grow">{hintText(h)}</span>
+                  {#if (h.kind === "lowMemory" || h.kind === "tooMuchMemory") && app.instances.some((i) => i.id === session.instanceId)}
+                    <button
+                      class="btn sm"
+                      onclick={() => setMemory(session.instanceId, Number(h.params.suggest))}
+                      >{t("perf.hints.setMemory", { size: size(Number(h.params.suggest)) })}</button
+                    >
+                  {:else if h.kind === "noSodium" && app.instances.some((i) => i.id === session.instanceId)}
+                    <button
+                      class="btn sm"
+                      onclick={() => router.go("instance", { id: session.instanceId, tab: "content" })}
+                      >{t("perf.hints.openMods")}</button
+                    >
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </article>
+      </section>
+    {/if}
+
     {#if snap.top.length}
       <section class="col gap-2">
         <h2 class="section-title">{t("perf.topTitle")}</h2>
@@ -317,6 +437,49 @@
   .num {
     text-align: right;
     font-variant-numeric: tabular-nums;
+  }
+  .summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--sp-3);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+  .hints {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+  .hint-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    background: var(--c-surface-2);
+    flex-wrap: wrap;
+  }
+  .hint-row :global(.icon) {
+    flex: none;
+    color: var(--c-info);
+  }
+  .hint-row.warn :global(.icon) {
+    color: var(--c-warning);
+  }
+  .hint-row.ok :global(.icon) {
+    color: var(--c-success);
   }
   .tips ul {
     list-style: none;

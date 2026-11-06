@@ -323,3 +323,16 @@ build that works before Mojang's approval, so `scripts/export-dev.sh` makes port
 binaries; `LAUNCHER_DEV_OFFLINE` only exists in that profile, so these are for the owner's own tests
 and are never published or handed out.
 
+
+### D40 — Horizon instances: the project's signed Nightly, prepared from the player's files (2026-11-06)
+Horizon (github.com/horizon-rust/horizon, MIT) rewrites Minecraft 26.3 in Rust. Its Launch API has
+no build index yet ("Not yet: finding a build"), so Aerion does what Horizon's own launcher does:
+the newest `nightly*` release with this platform's archive, accepted only when `SHA256SUMS.sig` is a
+valid Ed25519 signature over `horizon release nightly\n` + `SHA256SUMS` by a key from the project's
+`release-keys.txt` (pinned in `horizon.rs`; checked against the real 2026-11-05 files in a test), and
+the archive's SHA-256 matches that list. Builds are kept locally (Nightlies vanish after seven days).
+`horizon-prepare` reads the 26.3 files Aerion already downloads (version JSON byte for byte, client
+jar, libraries, assets) plus the server jar and Java 25; `--check` runs before every start. The game
+gets the session on stdin (`CommandSpec::stdin`), never in argv, and starts only for a Microsoft
+account, as the project asks of launchers. Java mods, shaders and the Aerion mod don't apply; Modrinth
+and CurseForge exports refuse Horizon instances. The Launch API is experimental, so expect changes.

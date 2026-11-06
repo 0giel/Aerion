@@ -127,6 +127,36 @@
   }
   const fonts = Object.keys(FONT_STACKS).filter((f) => f !== "system-mono");
   const particles: Particles[] = ["none", "sparkles", "dust", "snow"];
+
+  // The preview's controls act out the theme (progress, a toast, a menu) and touch nothing real.
+  let demoProgress = $state(0.62);
+  let demoRunning = $state(false);
+  let demoMenu = $state(false);
+  let demoFrame = 0;
+
+  function demoPlay() {
+    if (demoRunning) return;
+    demoRunning = true;
+    demoProgress = 0;
+    const started = performance.now();
+    const step = (now: number) => {
+      demoProgress = Math.min(1, (now - started) / 1600);
+      if (demoProgress < 1) demoFrame = requestAnimationFrame(step);
+      else {
+        demoRunning = false;
+        toasts.success(t("themeEditor.previewToast"));
+      }
+    };
+    demoFrame = requestAnimationFrame(step);
+  }
+
+  function demoCancel() {
+    cancelAnimationFrame(demoFrame);
+    demoRunning = false;
+    demoProgress = 0.62;
+  }
+
+  onDestroy(() => cancelAnimationFrame(demoFrame));
 </script>
 
 <div class="page editor">
@@ -397,10 +427,26 @@
       <span class="section-title">{t("themeEditor.preview")}</span>
       <h2>{draft.name}</h2>
       <p class="muted">{t("app.tagline")}</p>
-      <div class="row wrap">
-        <button class="btn primary"><Icon name="play" size={15} />{t("common.play")}</button>
-        <button class="btn">{t("common.cancel")}</button>
-        <button class="btn ghost">{t("common.more")}</button>
+      <div class="row wrap demo-actions">
+        <button class="btn primary" onclick={demoPlay} disabled={demoRunning}
+          >{#if demoRunning}<span class="spinner"></span>{:else}<Icon name="play" size={15} />{/if}{t(
+            "common.play",
+          )}</button
+        >
+        <button class="btn" onclick={demoCancel}>{t("common.cancel")}</button>
+        <button class="btn ghost" aria-expanded={demoMenu} onclick={() => (demoMenu = !demoMenu)}
+          >{t("common.more")}<Icon name={demoMenu ? "chevronUp" : "chevronDown"} size={14} /></button
+        >
+        {#if demoMenu}
+          <div class="demo-menu card raised" role="menu">
+            <button class="demo-item" role="menuitem" onclick={() => (demoMenu = false)}
+              ><Icon name="folder" size={15} />{t("themeEditor.previewItemA")}</button
+            >
+            <button class="demo-item" role="menuitem" onclick={() => (demoMenu = false)}
+              ><Icon name="copy" size={15} />{t("themeEditor.previewItemB")}</button
+            >
+          </div>
+        {/if}
       </div>
       <input class="input" placeholder={t("common.search")} />
       <div class="row wrap">
@@ -408,13 +454,14 @@
           class="badge warning">Beta</span
         ><span class="badge danger">!</span>
       </div>
-      <ProgressBar value={0.62} />
+      <ProgressBar value={demoProgress} />
       <div class="card flat col gap-1">
         <strong>{t("instances.title")}</strong><span class="small muted"
           >{t("home.lastPlayed", { when: t("time.justNow") })}</span
         >
       </div>
       <div class="alert"><Icon name="info" size={16} /><span class="small">{t("app.disclaimer")}</span></div>
+      <p class="tiny faint">{t("themeEditor.previewNote")}</p>
     </aside>
   </div>
 </div>
@@ -429,6 +476,32 @@
   .preview {
     position: sticky;
     top: 0;
+  }
+  .demo-actions {
+    position: relative;
+  }
+  .demo-menu {
+    position: absolute;
+    top: calc(100% + 0.3rem);
+    right: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 11rem;
+    padding: 0.35rem;
+    background: var(--c-surface);
+  }
+  .demo-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: var(--r-sm);
+    text-align: left;
+  }
+  .demo-item:hover {
+    background: var(--c-surface-2);
   }
   .colors {
     display: grid;

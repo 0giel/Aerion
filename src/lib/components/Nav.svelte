@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { openUrl } from "@tauri-apps/plugin-opener";
+  import { REPO_URL } from "../links";
   import Icon from "./Icon.svelte";
   import SkinFace from "./SkinFace.svelte";
   import { DEFAULT_SKIN } from "../api";
@@ -123,6 +125,12 @@
       <Icon name="panelLeft" size={17} />
     </button>
     <button
+      class="icon-btn github"
+      onclick={() => openUrl(REPO_URL)}
+      aria-label={t("nav.github")}
+      title={t("nav.github")}><Icon name="github" size={16} /></button
+    >
+    <button
       class="icon-btn customize"
       onclick={() => (ui.customize = "nav")}
       aria-label={t("layout.navTitle")}
@@ -242,6 +250,10 @@
     display: flex;
     justify-content: space-between;
   }
+  /* GitHub sits with the customise button on the right. */
+  .tools .github {
+    margin-left: auto;
+  }
   .favs {
     display: flex;
     flex-direction: column;
@@ -295,6 +307,9 @@
     flex-direction: column;
     align-items: center;
     gap: 0.2rem;
+  }
+  .collapsed .tools .github {
+    margin-left: 0;
   }
   .collapsed .section,
   .collapsed .fav .quick {

@@ -5,6 +5,23 @@
   let { skinUrl, size = 32 }: { skinUrl: string | null | undefined; size?: number } = $props();
   let canvas: HTMLCanvasElement | undefined = $state();
 
+  /** Old 64×32 skins often fill the hat layer with an opaque colour; the game hides it then. */
+  function hatShown(img: HTMLImageElement): boolean {
+    if (img.naturalHeight !== img.naturalWidth / 2) return true;
+    try {
+      const c = document.createElement("canvas");
+      c.width = c.height = 8;
+      const x = c.getContext("2d");
+      if (!x) return false;
+      x.drawImage(img, 40, 8, 8, 8, 0, 0, 8, 8);
+      const px = x.getImageData(0, 0, 8, 8).data;
+      for (let i = 3; i < px.length; i += 4) if (px[i] < 128) return true;
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   $effect(() => {
     const c = canvas;
     const url = imgUrl(skinUrl);
@@ -17,7 +34,7 @@
     const img = new Image();
     img.onload = () => {
       ctx.drawImage(img, 8, 8, 8, 8, 0, 0, 8, 8);
-      ctx.drawImage(img, 40, 8, 8, 8, 0, 0, 8, 8);
+      if (hatShown(img)) ctx.drawImage(img, 40, 8, 8, 8, 0, 0, 8, 8);
     };
     img.src = url;
   });

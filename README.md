@@ -29,20 +29,37 @@ CurseForge content, modpacks — built with Tauri 2 (Rust) and Svelte 5.
 - **Theming** — themes are one JSON file of design tokens (+ optional CSS), applied live; seven
   built-in themes, follow-system light/dark, a theme editor with live preview, export/import,
   image/video backgrounds. See [docs/THEMING.md](docs/THEMING.md).
+- **Aerion mod** (Fabric 26.3 and 1.21.11, optional per instance) — the game's menus in the launcher
+  theme, a HUD of 27 modules arranged in an in-game layout editor with live settings, a modern
+  mod menu, and client features (zoom with the mouse wheel, freelook, fullbright with brightness keys,
+  FOV lock, hitboxes, crosshair, waypoints, sound editor, overlays and more). The title screen shows
+  your character and a *Host a world* button for playing with friends (over the internet with the
+  bundled [e4mc](https://modrinth.com/mod/e4mc)). The theme's picture or animated GIF background
+  shows in the game's menus too. New Fabric + Aerion instances can also get Sodium, Lithium,
+  FerriteCore and ImmediatelyFast (downloaded from Modrinth, checked to work with the mod) for more
+  FPS and less memory without changing how the game plays.
+- **Horizon (experimental)** — instances of [Horizon](https://github.com/horizon-rust/horizon), an
+  open-source Rust rewrite of Minecraft 26.3: Aerion installs the signed build and prepares it from
+  your own game files. Java mods don't run in it.
+- **Shared game settings and a visual key editor** — controls, video and sound shared between the
+  instances that opt in (packs and servers stay per instance); key bindings edited on a drawn
+  keyboard and mouse, with clashes shown per context (F3 combinations don't clash with movement).
 - **Comfort** — Ctrl+K command palette, task panel, onboarding, tray, portable mode, proxy,
   Polish and English UI.
 
 ## Status
 
-Work in progress (version 0.1.0). Verified end-to-end on Linux (2026-10-31): vanilla 26.3,
+Version 1.0.0, developed by one person; bug reports are welcome in
+[issues](https://github.com/0giel/Aerion/issues). Verified end-to-end on Linux (2026-10-31): vanilla 26.3,
 1.21.11, 1.20.1, 1.16.5, 1.8.9 and snapshots; Fabric 1.21.11 with Sodium + Fabric API from
 Modrinth; Forge 1.20.1; NeoForge 26.3; the *Fabulously Optimized* modpack (149 mods). Details:
 [docs/STATUS.md](docs/STATUS.md); roadmap: [docs/PLAN.md](docs/PLAN.md).
 
 ## Before first use
 
-1. **Microsoft sign-in** needs your own Azure application approved by Mojang —
-   [docs/AZURE_SETUP.md](docs/AZURE_SETUP.md). Without it everything except signing in works.
+1. **Microsoft sign-in** works out of the box in the released installers. A build from source needs
+   its own Azure application approved by Mojang — [docs/AZURE_SETUP.md](docs/AZURE_SETUP.md) — and
+   never another launcher's client ID. Without one, everything except signing in works.
 2. **CurseForge** (optional) needs a personal API key from <https://console.curseforge.com>,
    entered in *Settings → Mods* (stored in the OS keyring) or as `CURSEFORGE_API_KEY`.
    Modrinth needs nothing.
@@ -120,5 +137,5 @@ personal keys, no identity concealment through proxies), Mojang's EULA and brand
 
 ## License
 
-No license has been chosen yet; until a `LICENSE` file is added, all rights are reserved by the
-author.
+[GNU General Public License v3.0](LICENSE). Dependencies keep their own licences. Minecraft is a
+trademark of Mojang Synergies AB; Aerion contains none of its code or assets.

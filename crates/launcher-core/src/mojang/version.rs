@@ -141,6 +141,9 @@ pub struct AssetIndexRef {
 pub struct VersionDownloads {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client: Option<Artifact>,
+    /// The dedicated server jar (Horizon prepares its resources from it).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub server: Option<Artifact>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

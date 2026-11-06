@@ -195,6 +195,7 @@ mod tests {
                     game_dir: None,
                     link_existing: false,
                     aerion_mod: false,
+                    shared_options: false,
                 })
                 .await
                 .unwrap();

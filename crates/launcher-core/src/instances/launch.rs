@@ -26,6 +26,8 @@ pub struct LaunchPlan {
     pub spec: CommandSpec,
     pub max_memory_mb: u32,
     pub game_dir: PathBuf,
+    /// Give this game's settings back to the shared ones when it exits (see `options::Pulled`).
+    pub share_back: bool,
 }
 
 /// Version id to launch, installing the mod loader profile when needed.
@@ -138,6 +140,9 @@ pub async fn plan(
     ctx: &TaskCtx,
 ) -> Result<LaunchPlan> {
     let inst = instances.get(instance_id).await?;
+    if inst.loader == LoaderKind::Horizon {
+        return plan_horizon(engine, settings, instances, inst, auth, join_server, ctx).await;
+    }
     let version_id = ensure_version(engine, instances, &inst, ctx).await?;
     let prepared = prepare(&engine.meta, &engine.env, &version_id, mode, ctx).await?;
     ctx.stage("stage.java", None);
@@ -160,6 +165,25 @@ pub async fn plan(
         .unwrap_or_else(|| default_max_memory_mb(total_memory_mb(), modded));
     let game_dir = instances.game_dir(&inst.id)?;
     prepare_game_dir(&prepared, &game_dir).await?;
+    let mut share_back = false;
+    if inst.shared_options {
+        // The shared settings (controls, video, sound…) before the game reads its own.
+        let (shared, dir, ver) = (
+            engine.paths.shared_options_dir(),
+            game_dir.clone(),
+            inst.game_version.clone(),
+        );
+        match tokio::task::spawn_blocking(move || super::options::pull_shared(&shared, &dir, &ver))
+            .await
+        {
+            Ok(Ok(pulled)) => {
+                tracing::info!(?pulled, "shared game settings");
+                share_back = pulled.shares_back();
+            }
+            Ok(Err(e)) => tracing::warn!(error = %e, "couldn't apply the shared game settings"),
+            Err(e) => tracing::warn!(error = %e, "couldn't apply the shared game settings"),
+        }
+    }
     let quick_world = if join_server.is_some() {
         None
     } else {
@@ -209,6 +233,78 @@ pub async fn plan(
         spec,
         max_memory_mb,
         game_dir,
+        share_back,
+    })
+}
+
+/// A Horizon instance: its build (installed on first start), the resources prepared from the
+/// player's own 26.3 files, and the game started with the session on its standard input.
+async fn plan_horizon(
+    engine: &Engine,
+    settings: &Settings,
+    instances: &InstanceManager,
+    inst: Instance,
+    auth: AuthInfo,
+    join_server: Option<String>,
+    ctx: &TaskCtx,
+) -> Result<LaunchPlan> {
+    use crate::horizon;
+    let build = match inst
+        .loader_version
+        .as_deref()
+        .and_then(|id| horizon::installed_build(engine, id))
+    {
+        Some(b) => b,
+        None => {
+            let b = horizon::install_latest(engine, ctx).await?;
+            let id = b.id.clone();
+            instances
+                .modify(&inst.id, move |i| i.loader_version = Some(id))
+                .await?;
+            b
+        }
+    };
+    let (resources, prepared, java) = horizon::ensure_resources(engine, &build, None, ctx).await?;
+    let game_dir = instances.game_dir(&inst.id)?;
+    tokio::fs::create_dir_all(&game_dir)
+        .await
+        .map_err(|e| Error::Invalid(format!("{}: {e}", game_dir.display())))?;
+    let world = if join_server.is_some() {
+        None
+    } else {
+        super::worlds::resolve_join_world(&game_dir, inst.join_world.as_deref())
+    };
+    let server = join_server
+        .or_else(|| world.is_none().then(|| inst.join_server.clone()).flatten())
+        .filter(|s| !s.trim().is_empty());
+    let spec = horizon::command(
+        engine,
+        &build,
+        &auth,
+        &horizon::StartOptions {
+            game_dir: game_dir.clone(),
+            resources,
+            resolution: inst
+                .resolution
+                .or(settings.resolution)
+                .map(|r| (r.width, r.height)),
+            fullscreen: inst.fullscreen.unwrap_or(settings.fullscreen),
+            world,
+            server,
+            env: merge_env(
+                settings.env_vars.clone().into_iter().collect(),
+                &inst.env_vars,
+            ),
+        },
+    )?;
+    Ok(LaunchPlan {
+        instance: inst,
+        prepared,
+        java,
+        spec,
+        max_memory_mb: 0,
+        game_dir,
+        share_back: false,
     })
 }
 

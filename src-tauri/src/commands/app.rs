@@ -226,3 +226,81 @@ pub async fn perf_snapshot(
     };
     Ok(monitor.sample(&games).await)
 }
+
+/// Launcher settings, themes, skins, the in-game HUD and the shared game settings in one file.
+#[tauri::command]
+#[specta::specta]
+pub async fn export_settings(
+    state: State<'_, AppState>,
+    dest: String,
+) -> CmdResult<launcher_core::transfer::TransferSummary> {
+    let paths = state.paths.clone();
+    let settings = state.settings.read().await.clone();
+    Ok(tokio::task::spawn_blocking(move || {
+        launcher_core::transfer::export(&paths, &settings, std::path::Path::new(&dest))
+    })
+    .await
+    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??)
+}
+
+#[derive(Debug, Clone, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportedSettings {
+    pub settings: Settings,
+    pub summary: launcher_core::transfer::TransferSummary,
+}
+
+/// Bring in a file made by `export_settings`. Refused while a game runs: it would write its
+/// own game settings back over the imported shared ones when it exits.
+#[tauri::command]
+#[specta::specta]
+pub async fn import_settings(
+    state: State<'_, AppState>,
+    src: String,
+) -> CmdResult<ImportedSettings> {
+    if !state.games.running().is_empty() {
+        return Err(launcher_core::Error::AlreadyRunning.into());
+    }
+    let paths = state.paths.clone();
+    let current = state.settings.read().await.clone();
+    let (settings, summary) = tokio::task::spawn_blocking(move || {
+        launcher_core::transfer::import(&paths, std::path::Path::new(&src), &current)
+    })
+    .await
+    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+    let settings = save_settings(state, settings).await?;
+    Ok(ImportedSettings { settings, summary })
+}
+
+/// Summaries of the last games (FPS, memory, hints), newest first.
+#[tauri::command]
+#[specta::specta]
+pub async fn perf_sessions(
+    state: State<'_, AppState>,
+) -> CmdResult<Vec<launcher_core::sessions::SessionSummary>> {
+    Ok(launcher_core::sessions::load(&state.paths).await)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn clear_perf_sessions(state: State<'_, AppState>) -> CmdResult<()> {
+    Ok(launcher_core::sessions::clear(&state.paths).await?)
+}
+
+/// A Minecraft player by name (for the friends list); `None` when there is no such player.
+#[tauri::command]
+#[specta::specta]
+pub async fn lookup_player(
+    state: State<'_, AppState>,
+    name: String,
+) -> CmdResult<Option<launcher_core::friends::PlayerProfile>> {
+    let http = state.engine.read().await.http.clone();
+    Ok(launcher_core::friends::lookup(&http, name.trim()).await?)
+}
+
+/// The server address in text a friend sent (an e4mc address anywhere in a message).
+#[tauri::command]
+#[specta::specta]
+pub fn parse_friend_address(text: String) -> Option<String> {
+    launcher_core::friends::parse_address(&text)
+}

@@ -35,7 +35,8 @@ pub async fn versions(
     game_version: &str,
 ) -> Result<Vec<LoaderVersion>> {
     match kind {
-        LoaderKind::Vanilla => Ok(vec![]),
+        // Horizon builds are not loader versions: see `crate::horizon`.
+        LoaderKind::Vanilla | LoaderKind::Horizon => Ok(vec![]),
         LoaderKind::Fabric => fabric::versions(engine, &fabric::FABRIC, game_version).await,
         LoaderKind::Quilt => fabric::versions(engine, &fabric::QUILT, game_version).await,
         LoaderKind::Forge => forge::forge_versions(engine, game_version).await,
@@ -69,6 +70,12 @@ pub async fn install(
     ctx.stage("stage.loader", Some(format!("{} {version}", kind.as_str())));
     let id = match kind {
         LoaderKind::Vanilla => return Ok((game_version.to_owned(), String::new())),
+        LoaderKind::Horizon => {
+            return Err(Error::Horizon {
+                kind: "notInstalled",
+                detail: "Horizon has no loader profile".into(),
+            });
+        }
         LoaderKind::Fabric => {
             fabric::install(engine, &fabric::FABRIC, game_version, &version, ctx).await?
         }

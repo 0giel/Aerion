@@ -109,6 +109,7 @@ pub async fn import(
             game_dir: None,
             link_existing: false,
             aerion_mod: false,
+            shared_options: false,
         })
         .await?;
     let id = inst.id.clone();
@@ -236,6 +237,11 @@ pub async fn export(
                 entry_path(&game_dir, e),
             )),
         }
+    }
+    if inst.loader == LoaderKind::Horizon {
+        return Err(Error::Invalid(
+            "Horizon instances can't be shared as this pack format (it has no Horizon)".into(),
+        ));
     }
     let mod_loaders = match (inst.loader, &inst.loader_version) {
         (LoaderKind::Vanilla, _) => vec![],

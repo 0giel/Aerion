@@ -36,6 +36,8 @@ pub enum LoaderKind {
     Quilt,
     Forge,
     Neoforge,
+    /// Horizon: Minecraft 26.3 rewritten in Rust (see [`crate::horizon`]); no Java, no Java mods.
+    Horizon,
 }
 
 impl LoaderKind {
@@ -46,6 +48,7 @@ impl LoaderKind {
             LoaderKind::Quilt => "quilt",
             LoaderKind::Forge => "forge",
             LoaderKind::Neoforge => "neoforge",
+            LoaderKind::Horizon => "horizon",
         }
     }
 
@@ -56,6 +59,7 @@ impl LoaderKind {
             "quilt" | "quilt-loader" => Some(Self::Quilt),
             "forge" => Some(Self::Forge),
             "neoforge" | "neo-forge" => Some(Self::Neoforge),
+            "horizon" => Some(Self::Horizon),
             _ => None,
         }
     }
@@ -127,6 +131,9 @@ pub struct Instance {
     pub modpack: Option<ModpackInfo>,
     /// Load the Aerion mod (launcher theme in the game's menus) where it supports the version.
     pub aerion_mod: bool,
+    /// Take the shared game settings before starting and give changes back after (controls,
+    /// video, sound…); see [`options::pull_shared`].
+    pub shared_options: bool,
 }
 
 impl Default for Instance {
@@ -163,6 +170,7 @@ impl Default for Instance {
             launches: 0,
             modpack: None,
             aerion_mod: false,
+            shared_options: false,
         }
     }
 }
@@ -187,6 +195,8 @@ pub struct NewInstance {
     /// "Fabric + Aerion": start with the Aerion mod switched on (Fabric only).
     #[serde(default)]
     pub aerion_mod: bool,
+    #[serde(default)]
+    pub shared_options: bool,
 }
 
 pub struct InstanceManager {
@@ -346,6 +356,15 @@ impl InstanceManager {
         if spec.game_version.trim().is_empty() {
             return Err(Error::Invalid("missing game version".into()));
         }
+        // Horizon reimplements exactly one version.
+        if spec.loader == LoaderKind::Horizon
+            && spec.game_version.trim() != crate::horizon::MINECRAFT
+        {
+            return Err(Error::Invalid(format!(
+                "Horizon plays Minecraft {} only",
+                crate::horizon::MINECRAFT
+            )));
+        }
         let _g = self.lock.lock().await;
         let id = self.unique_id(&name);
         let dir = self.root.join(&id);
@@ -378,6 +397,7 @@ impl InstanceManager {
             game_dir,
             group: spec.group.filter(|g| !g.trim().is_empty()),
             aerion_mod: spec.aerion_mod && spec.loader == LoaderKind::Fabric,
+            shared_options: spec.shared_options,
             created_at: now_secs(),
             ..Instance::default()
         };
@@ -635,6 +655,7 @@ mod tests {
             game_dir: None,
             link_existing: false,
             aerion_mod: false,
+            shared_options: false,
         }
     }
 

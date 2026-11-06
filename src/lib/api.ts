@@ -16,6 +16,7 @@ export type TaskInfo = B.TaskInfo_Serialize;
 export type LogLine = B.LogLine_Serialize;
 export type CrashInfo = B.CrashInfo_Serialize;
 export type GameTheme = B.GameTheme;
+export type KeyBinding = B.KeyBinding;
 export type ModIssue = B.ModIssue_Serialize;
 export type IssueKind = B.IssueKind;
 export type Replacement = B.Replacement_Serialize;

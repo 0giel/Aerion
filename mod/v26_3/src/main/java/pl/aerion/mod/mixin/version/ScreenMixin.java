@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.aerion.mod.AerionClient;
+import pl.aerion.mod.Backdrop;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
 import pl.aerion.mod.Particles;
@@ -22,6 +23,7 @@ abstract class ScreenMixin {
 		Theme t = AerionClient.colors();
 		if (t == null) return;
 		Draw.background(new Gfx(g), t, 0xFF);
+		Backdrop.draw(new Gfx(g), t);
 		Particles.draw(new Gfx(g), t);
 		ci.cancel();
 	}

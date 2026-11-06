@@ -51,6 +51,33 @@ pub fn list(game_dir: &Path) -> Vec<Screenshot> {
     out
 }
 
+/// A screenshot in the gallery of every instance: which instance it belongs to.
+#[derive(Debug, Clone, Serialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct GalleryShot {
+    pub instance_id: String,
+    pub instance_name: String,
+    #[serde(flatten)]
+    pub shot: Screenshot,
+}
+
+/// Every instance's screenshots together, newest first.
+pub fn gallery(instances: &[(String, String, std::path::PathBuf)]) -> Vec<GalleryShot> {
+    let mut out: Vec<GalleryShot> = instances
+        .iter()
+        .flat_map(|(id, name, dir)| {
+            list(dir).into_iter().map(|shot| GalleryShot {
+                instance_id: id.clone(),
+                instance_name: name.clone(),
+                shot,
+            })
+        })
+        .collect();
+    out.sort_by_key(|a| std::cmp::Reverse(a.shot.taken));
+    out
+}
+
 pub fn delete(game_dir: &Path, name: &str) -> Result<()> {
     let p = path(game_dir, name)?;
     std::fs::remove_file(&p).at(&p)

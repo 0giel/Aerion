@@ -35,6 +35,8 @@
     accounts: () => import("./lib/pages/Accounts.svelte"),
     skins: () => import("./lib/pages/Skins.svelte"),
     stats: () => import("./lib/pages/Stats.svelte"),
+    screenshots: () => import("./lib/pages/Screenshots.svelte"),
+    friends: () => import("./lib/pages/Friends.svelte"),
     performance: () => import("./lib/pages/Performance.svelte"),
     dashboard: () => import("./lib/pages/Dashboard.svelte"),
     hud: () => import("./lib/pages/HudEditor.svelte"),

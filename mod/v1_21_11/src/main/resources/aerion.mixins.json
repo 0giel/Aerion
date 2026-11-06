@@ -13,7 +13,8 @@
 		"LevelTimeMixin",
 		"LogoRendererMixin",
 		"ScreenEffectRendererMixin",
-		"ScreenMixin"
+		"ScreenMixin",
+		"SplashRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

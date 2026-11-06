@@ -176,6 +176,8 @@ pub struct Settings {
     /// With experimental widgets: the home screen is the `home` dashboard.
     pub home_dashboard: bool,
     pub dashboards: Vec<Dashboard>,
+    /// Friends to join (no server of ours involved: they share an e4mc or LAN address).
+    pub friends: Vec<crate::friends::Friend>,
 }
 
 impl Default for Settings {
@@ -218,6 +220,7 @@ impl Default for Settings {
             experimental_widgets: false,
             home_dashboard: false,
             dashboards: Vec::new(),
+            friends: Vec::new(),
         }
     }
 }
@@ -248,6 +251,7 @@ impl Settings {
     /// Reject values that would break every launch (same rules as an instance's own settings).
     pub fn validate(&self) -> Result<()> {
         crate::java::flags::validate_syntax(&self.jvm_args)?;
+        crate::friends::validate(&self.friends)?;
         if self
             .game_args
             .iter()

@@ -80,6 +80,10 @@ impl Paths {
         self.root.join("accounts.json")
     }
     /// Game settings that new instances start with.
+    /// Game settings shared by the instances that opt in (see `instances::options`).
+    pub fn shared_options_dir(&self) -> PathBuf {
+        self.root.join("shared").join("game-options")
+    }
     pub fn options_template_dir(&self) -> PathBuf {
         self.root.join("templates").join("game-options")
     }

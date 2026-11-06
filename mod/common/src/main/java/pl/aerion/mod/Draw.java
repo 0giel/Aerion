@@ -168,6 +168,8 @@ public final class Draw {
 	}
 
 	public static void background(Gfx g, Theme t, int alpha) {
+		// Menus out of a world show the launcher's background picture when it has one.
+		if (alpha == 0xFF && MenuPicture.draw(g, t)) return;
 		int top = Colors.alpha(behindText(t, t.gradient[0]), alpha);
 		int bottom = Colors.alpha(behindText(t, t.gradient[t.gradient.length - 1]), alpha);
 		g.gradient(0, 0, g.width(), g.height(), top, bottom);

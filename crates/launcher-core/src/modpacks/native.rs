@@ -67,6 +67,7 @@ pub async fn import(instances: &InstanceManager, archive: &Path) -> Result<Insta
             game_dir: None,
             link_existing: false,
             aerion_mod: false,
+            shared_options: false,
         })
         .await?;
     let id = created.id.clone();

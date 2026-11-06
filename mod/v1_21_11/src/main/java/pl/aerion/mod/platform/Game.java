@@ -37,4 +37,15 @@ public final class Game {
 	public static void overlayMessage(net.minecraft.network.chat.Component message) {
 		Minecraft.getInstance().gui.setOverlayMessage(message, false);
 	}
+
+	/** Opens the running single-player world to others on `port`. */
+	public static boolean publish(net.minecraft.client.server.IntegratedServer server, int port) {
+		var mode = Minecraft.getInstance().gameMode;
+		return server.publishServer(mode != null ? mode.getPlayerMode() : net.minecraft.world.level.GameType.SURVIVAL, false, port);
+	}
+
+	/** A line in the chat from the client, not from a player. */
+	public static void chat(net.minecraft.network.chat.Component message) {
+		Minecraft.getInstance().gui.getChat().addMessage(message);
+	}
 }

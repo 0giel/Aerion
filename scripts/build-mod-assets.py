@@ -86,9 +86,12 @@ ICONS = {
     "waypoints": '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
     "bossbar": '<path d="M2 18h20"/><path d="m2 8 5 5 5-8 5 8 5-5-2 10H4z"/>',
     "toggleSneak": '<path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/>',
+    "blockInfo": '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+    "fpsGraph": '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+    "playerList": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
 }
 # Shared with the launcher's own icon set.
-FROM_LAUNCHER = {"armor": "shield", "clock": "clock", "memory": "cpu", "zoom": "search", "freelook": "eye", "fullbright": "sun", "back": "arrowLeft", "close": "x", "look": "palette", "undo": "undo", "keys": "key", "reset": "refresh", "settings": "sliders", "hide": "eyeOff", "play": "play", "search": "search", "items": "package", "day": "moon", "perspective": "user", "screens": "monitor", "scoreboard": "list", "packs": "layers", "armorWarn": "alert"}
+FROM_LAUNCHER = {"armor": "shield", "clock": "clock", "memory": "cpu", "zoom": "search", "freelook": "eye", "fullbright": "sun", "back": "arrowLeft", "close": "x", "look": "palette", "undo": "undo", "keys": "key", "reset": "refresh", "settings": "sliders", "hide": "eyeOff", "play": "play", "search": "search", "items": "package", "day": "moon", "perspective": "user", "screens": "monitor", "scoreboard": "list", "packs": "layers", "armorWarn": "alert", "features": "sparkles", "fovLock": "lock"}
 
 
 def launcher_icons():

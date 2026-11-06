@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
+  import KeybindEditor from "../components/KeybindEditor.svelte";
+  import { ISSUES_URL, REPO_URL } from "../links";
   import Icon from "../components/Icon.svelte";
   import { dashboards } from "../stores/dashboards.svelte";
   import { dialogs } from "../stores/dialogs.svelte";
@@ -112,6 +114,44 @@
     }
   }
 
+  // Everything (settings, themes, skins, HUD, shared game settings) to or from one file.
+  async function exportAll() {
+    const day = new Date().toISOString().slice(0, 10);
+    const dest = await saveDialog({
+      defaultPath: `aerion-settings-${day}.aerion`,
+      filters: [{ name: "Aerion", extensions: ["aerion"] }],
+    });
+    if (!dest) return;
+    try {
+      const r = await commands.exportSettings(dest);
+      toasts.success(t("settings.transfer.exported", { n: r.files + 1 }));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+  async function importAll() {
+    const src = await openDialog({
+      multiple: false,
+      filters: [{ name: "Aerion", extensions: ["aerion", "zip"] }],
+    });
+    if (typeof src !== "string") return;
+    const ok = await dialogs.confirm({
+      title: t("settings.transfer.importTitle"),
+      text: t("settings.transfer.importText"),
+      confirmLabel: t("settings.transfer.import"),
+    });
+    if (!ok) return;
+    try {
+      const r = await commands.importSettings(src);
+      app.applySettings(r.settings);
+      proxy = r.settings.proxy ?? "";
+      clientId = r.settings.msaClientId ?? "";
+      toasts.success(t("settings.transfer.imported", { themes: r.summary.themes, skins: r.summary.skins }));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
   async function chooseDataDir() {
     const dir = await openDialog({ directory: true, multiple: false });
     if (typeof dir === "string") {
@@ -136,6 +176,7 @@
 
   const majors = [8, 17, 21, 25];
   const sysLang = LOCALES.find((l) => l.id === systemLocale())?.name ?? "";
+  let sharedKeysOpen = $state(false);
 </script>
 
 <div class="page settings">
@@ -428,6 +469,15 @@
         <h2>{t("settings.sections.game")}</h2>
         <span class="hint">{t("settings.gameHint")}</span>
         <div class="field">
+          <span class="label">{t("settings.sharedOptions")}</span>
+          <span class="hint">{t("settings.sharedOptionsHint")}</span>
+          <div class="row">
+            <button class="btn" onclick={() => (sharedKeysOpen = true)}
+              ><Icon name="key" size={15} />{t("settings.sharedKeys")}</button
+            >
+          </div>
+        </div>
+        <div class="field">
           <span class="label">{t("instance.settings.gameOptions")}</span>
           <div class="row wrap gap-2">
             <span class="small grow"
@@ -632,6 +682,17 @@
           </div>
           {#if app.info?.portable}<span class="badge accent">{t("settings.portable")}</span>{/if}
         </div>
+        <div class="field">
+          <span class="label">{t("settings.transfer.label")}</span>
+          <div class="row">
+            <button class="btn sm" onclick={exportAll}
+              ><Icon name="upload" size={15} />{t("settings.transfer.export")}</button
+            ><button class="btn sm" onclick={importAll}
+              ><Icon name="download" size={15} />{t("settings.transfer.import")}</button
+            >
+          </div>
+          <span class="hint">{t("settings.transfer.hint")}</span>
+        </div>
         <div class="row">
           <button class="btn sm" onclick={() => commands.openFolder({ kind: "logs" })}
             ><Icon name="terminal" size={15} />{t("settings.openLogs")}</button
@@ -694,6 +755,15 @@
           </div>
         </div>
         <p class="small">{t("settings.about")}</p>
+        <div class="row gap-2 wrap">
+          <button class="btn" onclick={() => openUrl(REPO_URL)} title={REPO_URL}>
+            <Icon name="github" size={16} />{t("settings.github")}
+          </button>
+          <button class="btn ghost" onclick={() => openUrl(ISSUES_URL)}>
+            <Icon name="bug" size={16} />{t("settings.reportIssue")}
+          </button>
+          <span class="small faint">{t("settings.githubHint")}</span>
+        </div>
         <div class="alert">
           <Icon name="info" size={18} /><span class="small">{t("app.disclaimer")}</span>
         </div>
@@ -707,6 +777,7 @@
 </div>
 
 <ThemeGalleryModal bind:open={galleryOpen} />
+<KeybindEditor bind:open={sharedKeysOpen} instanceId={null} title={t("keybinds.sharedTitle")} />
 
 <style>
   .num {

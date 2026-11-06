@@ -94,6 +94,8 @@ pub struct Zoom {
     /// How many times closer, 2–10.
     pub factor: u8,
     pub smooth: bool,
+    /// The mouse wheel zooms in and out while the key is held.
+    pub scroll: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -148,6 +150,7 @@ impl Default for Zoom {
             enabled: true,
             factor: 4,
             smooth: true,
+            scroll: true,
         }
     }
 }
@@ -167,7 +170,10 @@ impl Default for Freelook {
 pub struct HudFeatures {
     pub zoom: Zoom,
     pub freelook: Freelook,
-    pub fullbright: Toggle,
+    /// `options.level`: gamma in percent (100–1500), also changed in the game with keys.
+    pub fullbright: FeatureOptions,
+    /// The field of view ignores sprinting, speed effects and bows (`options.spyglass`).
+    pub fov_lock: FeatureOptions,
     pub toggle_sprint: Toggle,
     pub toggle_sneak: Toggle,
     pub hitboxes: FeatureOptions,
@@ -222,6 +228,9 @@ pub const MODULES: &[(&str, bool, u16, u16)] = &[
     ("bossbar", false, 500, 55),
     ("scoreboard", false, 1000, 500),
     ("chatbox", false, 0, 733),
+    ("blockInfo", false, 300, 90),
+    ("fpsGraph", false, 992, 700),
+    ("playerList", false, 992, 300),
 ];
 
 impl Default for HudConfig {
@@ -292,7 +301,7 @@ fn style_ok(s: &HudStyle) -> bool {
 impl HudConfig {
     pub fn validate(&self) -> Result<()> {
         let ok = style_ok(&self.style)
-            && self.modules.len() <= 32
+            && self.modules.len() <= 64
             && self.modules.iter().all(|(id, m)| {
                 !id.is_empty()
                     && id.len() <= 32
@@ -320,6 +329,8 @@ impl HudConfig {
                 &self.features.chat.options,
                 &self.features.perspective.options,
                 &self.features.fov_key.options,
+                &self.features.fullbright.options,
+                &self.features.fov_lock.options,
                 &self.features.world_look.options,
                 &self.features.hit_color.options,
                 &self.features.screens.options,

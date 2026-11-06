@@ -104,6 +104,11 @@ public final class AerionClient implements ClientModInitializer {
 		} catch (RuntimeException e) {
 			warnOnce("features", e);
 		}
+		try {
+			Host.tick(Minecraft.getInstance());
+		} catch (RuntimeException e) {
+			warnOnce("host", e);
+		}
 		if (++ticks % 20 != 0) return;
 		if (file != null) reload();
 		if (hudFile != null) reloadHud();
@@ -116,7 +121,12 @@ public final class AerionClient implements ClientModInitializer {
 		try {
 			Files.createDirectories(status.getParent());
 			Path tmp = status.resolveSibling(status.getFileName() + ".tmp");
-			String json = "{\"fps\":" + Minecraft.getInstance().getFps() + ",\"time\":" + System.currentTimeMillis() + "}";
+			// FPS, used heap and whether a world is open: the launcher's after-game summary.
+			Minecraft mc = Minecraft.getInstance();
+			Runtime rt = Runtime.getRuntime();
+			long heapMb = (rt.totalMemory() - rt.freeMemory()) >> 20;
+			String json = "{\"fps\":" + mc.getFps() + ",\"heapMb\":" + heapMb + ",\"heapMaxMb\":" + (rt.maxMemory() >> 20)
+					+ ",\"inWorld\":" + (mc.level != null) + ",\"time\":" + System.currentTimeMillis() + "}";
 			Files.writeString(tmp, json, StandardCharsets.UTF_8);
 			Files.move(tmp, status, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
 		} catch (Exception e) {

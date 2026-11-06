@@ -44,6 +44,30 @@ pub struct GameTheme {
     pub colors: bool,
     pub particles: String,
     pub logo: bool,
+    /// The theme's background picture for the menus: a theme asset's file name (PNG, JPEG or
+    /// GIF, animated or not), or none for the gradient.
+    #[serde(default)]
+    pub background_asset: Option<String>,
+    /// How much the picture is darkened behind the menus, 0–1.
+    #[serde(default)]
+    pub background_dim: f32,
+    /// Absolute path of that picture for the mod; set by [`write_theme`], ignored from callers.
+    #[serde(default)]
+    pub background_file: Option<String>,
+}
+
+/// Picture formats the mod can read (Java's own decoders); videos and WebP keep the gradient.
+const PICTURES: &[&str] = &["png", "jpg", "jpeg", "gif"];
+
+/// The picture file for the mod: an existing theme asset of a supported format, nothing else.
+fn background_file(paths: &Paths, asset: Option<&str>) -> Option<String> {
+    let name = asset?;
+    let ext = name.rsplit_once('.')?.1.to_ascii_lowercase();
+    if !PICTURES.contains(&ext.as_str()) {
+        return None;
+    }
+    let path = crate::util::fs::safe_join(&paths.themes_dir().join("assets"), name).ok()?;
+    path.is_file().then(|| display(&path))
 }
 
 pub fn dir(paths: &Paths) -> PathBuf {
@@ -72,7 +96,10 @@ pub fn install_jar(paths: &Paths, game_version: &str, bytes: &[u8]) -> Result<Pa
 
 /// Save the theme where running games pick it up (they poll the file once a second).
 pub async fn write_theme(paths: &Paths, theme: &GameTheme) -> Result<()> {
-    crate::util::fs::write_json(dir(paths).join("theme.json"), theme).await
+    let mut theme = theme.clone();
+    theme.background_file = background_file(paths, theme.background_asset.as_deref());
+    theme.background_dim = theme.background_dim.clamp(0.0, 1.0);
+    crate::util::fs::write_json(dir(paths).join("theme.json"), &theme).await
 }
 
 /// JVM arguments that load the mod, or nothing when the instance doesn't use it.
@@ -106,19 +133,31 @@ pub fn status_file(paths: &Paths, instance_id: &str) -> PathBuf {
         .join(format!("{safe}-{hash:08x}.json"))
 }
 
-#[derive(Deserialize)]
-struct Status {
-    fps: u32,
+/// What the mod reports about the running game about once a second.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Status {
+    pub fps: u32,
+    /// Used Java heap (mods from 1.0.0 on).
+    pub heap_mb: Option<u32>,
+    pub heap_max_mb: Option<u32>,
+    /// A world is open (not the menus).
+    pub in_world: Option<bool>,
     /// Milliseconds since the epoch when the mod wrote the file.
     time: i64,
 }
 
-/// The FPS the mod reported in the last few seconds, if any.
-pub fn read_fps(paths: &Paths, instance_id: &str) -> Option<u32> {
+/// The mod's report from the last few seconds, if any.
+pub fn read_status(paths: &Paths, instance_id: &str) -> Option<Status> {
     let s: Status =
         serde_json::from_slice(&std::fs::read(status_file(paths, instance_id)).ok()?).ok()?;
     let age = crate::util::now_millis().saturating_sub(s.time);
-    (age < 3_000).then_some(s.fps)
+    (age < 3_000).then_some(s)
+}
+
+/// The FPS the mod reported in the last few seconds, if any.
+pub fn read_fps(paths: &Paths, instance_id: &str) -> Option<u32> {
+    read_status(paths, instance_id).map(|s| s.fps)
 }
 
 fn display(p: &Path) -> String {
@@ -128,6 +167,28 @@ fn display(p: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn background_only_for_existing_pictures() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::at(dir.path().to_path_buf(), false);
+        let assets = paths.themes_dir().join("assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        for f in ["sky.gif", "sky.PNG", "clip.mp4", "pic.webp"] {
+            std::fs::write(assets.join(f), b"x").unwrap();
+        }
+        assert!(
+            background_file(&paths, Some("sky.gif"))
+                .unwrap()
+                .ends_with("sky.gif")
+        );
+        assert!(background_file(&paths, Some("sky.PNG")).is_some());
+        assert_eq!(background_file(&paths, Some("clip.mp4")), None);
+        assert_eq!(background_file(&paths, Some("pic.webp")), None);
+        assert_eq!(background_file(&paths, Some("missing.gif")), None);
+        assert_eq!(background_file(&paths, Some("../../etc/x.gif")), None);
+        assert_eq!(background_file(&paths, None), None);
+    }
 
     #[test]
     fn loads_only_where_supported() {

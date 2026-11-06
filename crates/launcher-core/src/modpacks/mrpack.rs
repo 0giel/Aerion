@@ -123,6 +123,7 @@ pub async fn import(
             game_dir: None,
             link_existing: false,
             aerion_mod: false,
+            shared_options: false,
         })
         .await?;
     let result = install_into(
@@ -215,6 +216,11 @@ pub async fn export(
     let content = instances.content(id)?;
     let entries = content.scan().await?;
     let mut deps = BTreeMap::new();
+    if inst.loader == LoaderKind::Horizon {
+        return Err(Error::Invalid(
+            "Horizon instances can't be shared as this pack format (it has no Horizon)".into(),
+        ));
+    }
     deps.insert("minecraft".to_owned(), inst.game_version.clone());
     if inst.loader != LoaderKind::Vanilla {
         let v = inst.loader_version.clone().ok_or_else(|| {

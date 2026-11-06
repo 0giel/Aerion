@@ -11,6 +11,20 @@ export const commands = {
 	getSettings: () => __TAURI_INVOKE<Settings_Serialize>("get_settings"),
 	/**  Save settings; rebuilds the HTTP stack when network options change. */
 	saveSettings: (settings: Settings_Deserialize) => __TAURI_INVOKE<Settings_Serialize>("save_settings", { settings }),
+	/**  Launcher settings, themes, skins, the in-game HUD and the shared game settings in one file. */
+	exportSettings: (dest: string) => __TAURI_INVOKE<TransferSummary>("export_settings", { dest }),
+	/**
+	 *  Bring in a file made by `export_settings`. Refused while a game runs: it would write its
+	 *  own game settings back over the imported shared ones when it exits.
+	 */
+	importSettings: (src: string) => __TAURI_INVOKE<ImportedSettings_Serialize>("import_settings", { src }),
+	/**  A Minecraft player by name (for the friends list); `None` when there is no such player. */
+	lookupPlayer: (name: string) => __TAURI_INVOKE<PlayerProfile_Serialize | null>("lookup_player", { name }),
+	/**  The server address in text a friend sent (an e4mc address anywhere in a message). */
+	parseFriendAddress: (text: string) => __TAURI_INVOKE<string | null>("parse_friend_address", { text }),
+	/**  Summaries of the last games (FPS, memory, hints), newest first. */
+	perfSessions: () => __TAURI_INVOKE<SessionSummary_Serialize[]>("perf_sessions"),
+	clearPerfSessions: () => __TAURI_INVOKE<null>("clear_perf_sessions"),
 	openFolder: (target: FolderTarget) => __TAURI_INVOKE<null>("open_folder", { target }),
 	/**
 	 *  Frontend errors and lifecycle messages go to the launcher log (WebView consoles are not
@@ -65,6 +79,11 @@ export const commands = {
 	createShortcut: (id: string) => __TAURI_INVOKE<string>("create_shortcut", { id }),
 	/**  Re-check every file with full hashing and repair what is broken ("Verify files"). */
 	verifyInstance: (id: string) => __TAURI_INVOKE<string>("verify_instance", { id }),
+	/**
+	 *  Download the newest Horizon build (if there is a newer one) and prepare it, so the next start
+	 *  uses it. The old build stays on disk until this one is ready.
+	 */
+	updateHorizon: (id: string) => __TAURI_INVOKE<string>("update_horizon", { id }),
 	/**  Import a `.mrpack`, CurseForge zip or Aerion archive (also used for drag & drop). */
 	importPack: (path: string) => __TAURI_INVOKE<string>("import_pack", { path }),
 	exportInstance: (id: string, path: string, options: ExportOptions_Deserialize) => __TAURI_INVOKE<string>("export_instance", { id, path, options }),
@@ -150,6 +169,16 @@ export const commands = {
 	/**  Copy game settings (options.txt …) from one instance to others. Returns how many received them. */
 	copyGameOptions: (from: string, to: string[]) => __TAURI_INVOKE<number>("copy_game_options", { from, to }),
 	saveOptionsTemplate: (from: string) => __TAURI_INVOKE<OptionsTemplate>("save_options_template", { from }),
+	/**  Screenshots of every instance, newest first (the gallery page). */
+	allScreenshots: () => __TAURI_INVOKE<GalleryShot[]>("all_screenshots"),
+	/**  Show a screenshot selected in the system file manager. */
+	revealScreenshot: (id: string, name: string) => __TAURI_INVOKE<null>("reveal_screenshot", { id, name }),
+	/**  Copy a screenshot to a place the player picked in the save dialog (to share it). */
+	saveScreenshotCopy: (id: string, name: string, dest: string) => __TAURI_INVOKE<null>("save_screenshot_copy", { id, name, dest }),
+	/**  The key bindings of an instance (`instanceId`), or of the shared settings (`null`). */
+	keyBindings: (instanceId: string | null) => __TAURI_INVOKE<KeyBinding[]>("key_bindings", { instanceId }),
+	/**  Change key bindings. Refused while a game uses those settings: it would write its own back. */
+	setKeyBindings: (instanceId: string | null, bindings: KeyBinding[]) => __TAURI_INVOKE<null>("set_key_bindings", { instanceId, bindings }),
 	optionsTemplate: () => __TAURI_INVOKE<OptionsTemplate | null>("options_template"),
 	clearOptionsTemplate: () => __TAURI_INVOKE<null>("clear_options_template"),
 	listSkins: () => __TAURI_INVOKE<SavedSkin[]>("list_skins"),
@@ -169,7 +198,7 @@ export const commands = {
 	setCape: (accountId: string, capeId: string | null) => __TAURI_INVOKE<Account_Serialize>("set_cape", { accountId, capeId }),
 	listUserThemes: () => __TAURI_INVOKE<ThemeFile_Serialize[]>("list_user_themes"),
 	/**  Save the active theme's colours for running and future games with the Aerion mod. */
-	setGameTheme: (theme: GameTheme) => __TAURI_INVOKE<null>("set_game_theme", { theme }),
+	setGameTheme: (theme: GameTheme_Deserialize) => __TAURI_INVOKE<null>("set_game_theme", { theme }),
 	/**  HUD modules and client features of the Aerion mod (`hud.json`). */
 	getHudConfig: () => __TAURI_INVOKE<HudConfig_Serialize>("get_hud_config"),
 	/**  Save HUD settings; running games pick them up within a second. */
@@ -612,6 +641,34 @@ export type Freelook_Serialize = {
 	hold: boolean,
 };
 
+export type Friend = Friend_Serialize | Friend_Deserialize;
+
+export type Friend_Deserialize = {
+	name: string,
+	/**  Mojang profile id without dashes; `None` for names Mojang doesn't know (offline players). */
+	uuid?: string | null,
+	skinUrl?: string | null,
+	/**  The last address they shared (`abc-def.eu.e4mc.link`, `192.168.1.5:25565`…). */
+	address?: string | null,
+	/**  Instance to join them with; `None` = the last played one. */
+	instanceId?: string | null,
+	/**  Unix seconds. */
+	added: number,
+};
+
+export type Friend_Serialize = {
+	name: string,
+	/**  Mojang profile id without dashes; `None` for names Mojang doesn't know (offline players). */
+	uuid: string | null,
+	skinUrl: string | null,
+	/**  The last address they shared (`abc-def.eu.e4mc.link`, `192.168.1.5:25565`…). */
+	address: string | null,
+	/**  Instance to join them with; `None` = the last played one. */
+	instanceId: string | null,
+	/**  Unix seconds. */
+	added: number,
+};
+
 export type GalleryImage = GalleryImage_Serialize | GalleryImage_Deserialize;
 
 export type GalleryImage_Deserialize = {
@@ -634,6 +691,12 @@ export type GalleryPreview = {
 	text: string,
 	accent: string,
 };
+
+/**  A screenshot in the gallery of every instance: which instance it belongs to. */
+export type GalleryShot = {
+	instanceId: string,
+	instanceName: string,
+} & Screenshot;
 
 export type GalleryTheme = GalleryTheme_Serialize | GalleryTheme_Deserialize;
 
@@ -688,7 +751,10 @@ export type GameStateEvent_Serialize = {
 };
 
 /**  Colours the mod uses, resolved by the launcher from the active theme (the mod parses no CSS). */
-export type GameTheme = {
+export type GameTheme = GameTheme_Serialize | GameTheme_Deserialize;
+
+/**  Colours the mod uses, resolved by the launcher from the active theme (the mod parses no CSS). */
+export type GameTheme_Deserialize = {
 	name: string,
 	/**  `dark` or `light`. */
 	base: string,
@@ -711,6 +777,50 @@ export type GameTheme = {
 	colors: boolean,
 	particles: string,
 	logo: boolean,
+	/**
+	 *  The theme's background picture for the menus: a theme asset's file name (PNG, JPEG or
+	 *  GIF, animated or not), or none for the gradient.
+	 */
+	backgroundAsset?: string | null,
+	/**  How much the picture is darkened behind the menus, 0–1. */
+	backgroundDim?: number | null,
+	/**  Absolute path of that picture for the mod; set by [`write_theme`], ignored from callers. */
+	backgroundFile?: string | null,
+};
+
+/**  Colours the mod uses, resolved by the launcher from the active theme (the mod parses no CSS). */
+export type GameTheme_Serialize = {
+	name: string,
+	/**  `dark` or `light`. */
+	base: string,
+	bg: string,
+	surface: string,
+	surface2: string,
+	border: string,
+	text: string,
+	textMuted: string,
+	accent: string,
+	accentText: string,
+	/**  Background gradient stops (`#rrggbb`), top to bottom; empty = `bg`. */
+	gradient: string[],
+	/**  Corner radius of medium controls in CSS pixels. */
+	radius: number,
+	/**
+	 *  The player's choices ([`crate::settings::GameUiPrefs`]); particles carry the theme's kind
+	 *  (`sparkles`, `dust`, `snow`) or `none`.
+	 */
+	colors: boolean,
+	particles: string,
+	logo: boolean,
+	/**
+	 *  The theme's background picture for the menus: a theme asset's file name (PNG, JPEG or
+	 *  GIF, animated or not), or none for the gradient.
+	 */
+	backgroundAsset: string | null,
+	/**  How much the picture is darkened behind the menus, 0–1. */
+	backgroundDim: number | null,
+	/**  Absolute path of that picture for the mod; set by [`write_theme`], ignored from callers. */
+	backgroundFile: string | null,
 };
 
 /**  What the Aerion mod changes in the game (Settings → Appearance → In game). */
@@ -793,6 +903,14 @@ export type GroupStat = {
 	instances: number,
 };
 
+/**  One tip, translated by the UI as `perf.hints.<kind>` with `params`. */
+export type Hint = {
+	kind: string,
+	/**  `warn` for something to fix, `info` for something to know. */
+	level: string,
+	params: { [key in string]: string },
+};
+
 export type HudConfig = HudConfig_Serialize | HudConfig_Deserialize;
 
 export type HudConfig_Deserialize = {
@@ -814,7 +932,10 @@ export type HudFeatures = HudFeatures_Serialize | HudFeatures_Deserialize;
 export type HudFeatures_Deserialize = {
 	zoom?: Zoom_Deserialize,
 	freelook?: Freelook_Deserialize,
-	fullbright?: Toggle_Deserialize,
+	/**  `options.level`: gamma in percent (100–1500), also changed in the game with keys. */
+	fullbright?: FeatureOptions_Deserialize,
+	/**  The field of view ignores sprinting, speed effects and bows (`options.spyglass`). */
+	fovLock?: FeatureOptions_Deserialize,
 	toggleSprint?: Toggle_Deserialize,
 	toggleSneak?: Toggle_Deserialize,
 	hitboxes?: FeatureOptions_Deserialize,
@@ -836,7 +957,10 @@ export type HudFeatures_Deserialize = {
 export type HudFeatures_Serialize = {
 	zoom: Zoom_Serialize,
 	freelook: Freelook_Serialize,
-	fullbright: Toggle_Serialize,
+	/**  `options.level`: gamma in percent (100–1500), also changed in the game with keys. */
+	fullbright: FeatureOptions_Serialize,
+	/**  The field of view ignores sprinting, speed effects and bows (`options.spyglass`). */
+	fovLock: FeatureOptions_Serialize,
 	toggleSprint: Toggle_Serialize,
 	toggleSneak: Toggle_Serialize,
 	hitboxes: FeatureOptions_Serialize,
@@ -939,6 +1063,18 @@ export type HudStyle_Serialize = {
 	chromaWave?: boolean,
 };
 
+export type ImportedSettings = ImportedSettings_Serialize | ImportedSettings_Deserialize;
+
+export type ImportedSettings_Deserialize = {
+	settings: Settings_Deserialize,
+	summary: TransferSummary,
+};
+
+export type ImportedSettings_Serialize = {
+	settings: Settings_Serialize,
+	summary: TransferSummary,
+};
+
 export type InstallPlan = InstallPlan_Serialize | InstallPlan_Deserialize;
 
 export type InstallPlan_Deserialize = {
@@ -1035,6 +1171,11 @@ export type Instance_Deserialize = {
 	modpack?: ModpackInfo_Deserialize | null,
 	/**  Load the Aerion mod (launcher theme in the game's menus) where it supports the version. */
 	aerionMod?: boolean,
+	/**
+	 *  Take the shared game settings before starting and give changes back after (controls,
+	 *  video, sound…); see [`options::pull_shared`].
+	 */
+	sharedOptions?: boolean,
 };
 
 export type Instance_Serialize = {
@@ -1085,6 +1226,11 @@ export type Instance_Serialize = {
 	modpack: ModpackInfo_Serialize | null,
 	/**  Load the Aerion mod (launcher theme in the game's menus) where it supports the version. */
 	aerionMod: boolean,
+	/**
+	 *  Take the shared game settings before starting and give changes back after (controls,
+	 *  video, sound…); see [`options::pull_shared`].
+	 */
+	sharedOptions: boolean,
 };
 
 export type IssueKind = 
@@ -1139,6 +1285,13 @@ export type JvmPreset =
 /**  Smallest footprint: returns memory to the OS, compact headers on Java 25+. */
 "lowMemory";
 
+export type KeyBinding = {
+	/**  The action, e.g. `key.jump` or `key.aerion.zoom`. */
+	action: string,
+	/**  The key, e.g. `key.keyboard.space`, `key.mouse.left`, `key.keyboard.unknown` for none. */
+	key: string,
+};
+
 /**  One entry of a user-arranged list (sidebar items, home blocks): order is the list order. */
 export type LayoutItem = {
 	id: string,
@@ -1191,7 +1344,9 @@ export type License_Serialize = {
 	url: string | null,
 };
 
-export type LoaderKind = "vanilla" | "fabric" | "quilt" | "forge" | "neoforge";
+export type LoaderKind = "vanilla" | "fabric" | "quilt" | "forge" | "neoforge" | 
+/**  Horizon: Minecraft 26.3 rewritten in Rust (see [`crate::horizon`]); no Java, no Java mods. */
+"horizon";
 
 export type LoaderVersion = {
 	version: string,
@@ -1312,6 +1467,7 @@ export type NewInstance_Deserialize = {
 	linkExisting?: boolean,
 	/**  "Fabric + Aerion": start with the Aerion mod switched on (Fabric only). */
 	aerionMod?: boolean,
+	sharedOptions?: boolean,
 };
 
 export type NewInstance_Serialize = {
@@ -1330,6 +1486,7 @@ export type NewInstance_Serialize = {
 	linkExisting: boolean,
 	/**  "Fabric + Aerion": start with the Aerion mod switched on (Fabric only). */
 	aerionMod: boolean,
+	sharedOptions: boolean,
 };
 
 export type OptionsTemplate = {
@@ -1387,6 +1544,20 @@ export type PlannedFile_Serialize = {
 	version: ProjectVersion_Serialize,
 	/**  Title of the project that required this one (`None` = requested by the user). */
 	requiredBy: string | null,
+};
+
+export type PlayerProfile = PlayerProfile_Serialize | PlayerProfile_Deserialize;
+
+export type PlayerProfile_Deserialize = {
+	name: string,
+	uuid: string,
+	skinUrl?: string | null,
+};
+
+export type PlayerProfile_Serialize = {
+	name: string,
+	uuid: string,
+	skinUrl: string | null,
 };
 
 export type ProcessUse = {
@@ -1684,6 +1855,46 @@ export type ServerStatus_Serialize = {
 	pingMs: number,
 };
 
+export type SessionSummary = SessionSummary_Serialize | SessionSummary_Deserialize;
+
+export type SessionSummary_Deserialize = {
+	instanceId: string,
+	instanceName: string,
+	/**  Unix seconds. */
+	ended: number,
+	playSecs: number,
+	fpsAvg?: number | null,
+	/**  The worst 5 % of the samples: stutter shows here, not in the average. */
+	fpsLow?: number | null,
+	heapPeakMb?: number | null,
+	heapAvgMb?: number | null,
+	/**  `-Xmx`, 0 when unknown (Horizon). */
+	maxMemoryMb: number,
+	processPeakMb: number,
+	systemTotalMb: number,
+	systemFreeMinMb: number,
+	hints: Hint[],
+};
+
+export type SessionSummary_Serialize = {
+	instanceId: string,
+	instanceName: string,
+	/**  Unix seconds. */
+	ended: number,
+	playSecs: number,
+	fpsAvg: number | null,
+	/**  The worst 5 % of the samples: stutter shows here, not in the average. */
+	fpsLow: number | null,
+	heapPeakMb: number | null,
+	heapAvgMb: number | null,
+	/**  `-Xmx`, 0 when unknown (Horizon). */
+	maxMemoryMb: number,
+	processPeakMb: number,
+	systemTotalMb: number,
+	systemFreeMinMb: number,
+	hints: Hint[],
+};
+
 export type Settings = Settings_Serialize | Settings_Deserialize;
 
 export type Settings_Deserialize = {
@@ -1738,6 +1949,8 @@ export type Settings_Deserialize = {
 	/**  With experimental widgets: the home screen is the `home` dashboard. */
 	homeDashboard?: boolean,
 	dashboards?: Dashboard_Deserialize[],
+	/**  Friends to join (no server of ours involved: they share an e4mc or LAN address). */
+	friends?: Friend_Deserialize[],
 };
 
 export type Settings_Serialize = {
@@ -1792,6 +2005,8 @@ export type Settings_Serialize = {
 	/**  With experimental widgets: the home screen is the `home` dashboard. */
 	homeDashboard: boolean,
 	dashboards: Dashboard_Serialize[],
+	/**  Friends to join (no server of ours involved: they share an e4mc or LAN address). */
+	friends: Friend_Serialize[],
 };
 
 export type Skin = Skin_Serialize | Skin_Deserialize;
@@ -1945,6 +2160,15 @@ export type Toggle_Serialize = {
 	enabled: boolean,
 };
 
+/**  What an export or import moved. */
+export type TransferSummary = {
+	files: number,
+	themes: number,
+	skins: number,
+	hud: boolean,
+	gameOptions: boolean,
+};
+
 export type UpdateInfo = UpdateInfo_Serialize | UpdateInfo_Deserialize;
 
 export type UpdateInfo_Deserialize = {
@@ -2083,6 +2307,8 @@ export type Zoom_Deserialize = {
 	/**  How many times closer, 2–10. */
 	factor?: number,
 	smooth?: boolean,
+	/**  The mouse wheel zooms in and out while the key is held. */
+	scroll?: boolean,
 };
 
 export type Zoom_Serialize = {
@@ -2090,6 +2316,8 @@ export type Zoom_Serialize = {
 	/**  How many times closer, 2–10. */
 	factor: number,
 	smooth: boolean,
+	/**  The mouse wheel zooms in and out while the key is held. */
+	scroll: boolean,
 };
 
 /* Tauri Specta runtime */

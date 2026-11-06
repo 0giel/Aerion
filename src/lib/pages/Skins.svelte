@@ -1,6 +1,7 @@
 <script lang="ts">
   // Skin library + changing the skin and cape of the selected Microsoft account.
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import { untrack } from "svelte";
   import Icon from "../components/Icon.svelte";
   import Modal from "../components/Modal.svelte";
   import SkinViewer from "../components/SkinViewer.svelte";
@@ -67,10 +68,17 @@
     return () => (ui.dropHandler = null);
   });
 
-  // Capes belong to the account; forget them when it changes.
+  // Capes belong to the account; forget them when it changes. Keyed on the id: refreshing the
+  // accounts replaces the object, which must not throw away the capes that were just loaded.
+  // They load by themselves on opening the page and after switching to a Microsoft account.
+  const accountId = $derived(account?.id ?? null);
   $effect(() => {
-    void account?.id;
-    capes = null;
+    void accountId;
+    const load = microsoft;
+    untrack(() => {
+      capes = null;
+      if (load) void loadCapes();
+    });
   });
 
   async function run<T>(key: string, fn: () => Promise<T>, success?: string): Promise<T | undefined> {
@@ -172,8 +180,11 @@
 
   async function chooseCape(id: string | null) {
     if (!account) return;
-    if (await run(`cape:${id}`, () => commands.setCape(account.id, id), t("skins.capeChanged")))
+    if (await run(`cape:${id}`, () => commands.setCape(account.id, id), t("skins.capeChanged"))) {
+      // The tiles read `state`; mirror what Minecraft services now report.
+      capes = capes?.map((c) => ({ ...c, state: c.id === id ? "ACTIVE" : "INACTIVE" })) ?? null;
       await app.refreshAccounts();
+    }
   }
 
   /** Draws the front of a cape texture (10×16 at 1,1). */
@@ -300,7 +311,7 @@
                   <button
                     class="cape"
                     role="radio"
-                    aria-checked={!activeCape}
+                    aria-checked={!capes.some((c) => c.state === "ACTIVE")}
                     disabled={!!busy}
                     onclick={() => chooseCape(null)}
                     onpointerenter={() => (hoverCape = "none")}

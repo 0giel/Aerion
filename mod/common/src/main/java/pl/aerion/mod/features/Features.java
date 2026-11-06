@@ -34,11 +34,12 @@ public final class Features {
 
 	/** Every HUD module; each can have a key that switches it on and off. */
 	public static final String[] MODULE_IDS = {
-		"fps", "coords", "direction", "speed", "cps", "keystrokes", "armor", "totems", "items", "potions", "death", "armorWarn", "ping", "clock", "session", "day", "light", "memory", "packs", "minimap", "toggles", "bossbar", "scoreboard", "chatbox"
+		"fps", "coords", "direction", "speed", "cps", "keystrokes", "armor", "totems", "items", "potions", "death", "armorWarn", "ping", "clock", "session", "day", "light", "memory", "packs", "minimap", "toggles", "bossbar", "scoreboard", "chatbox",
+		"blockInfo", "fpsGraph", "playerList"
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -49,6 +50,9 @@ public final class Features {
 			zoom = new KeyMapping("key.aerion.zoom", InputConstants.KEY_C, cat);
 			freelook = new KeyMapping("key.aerion.freelook", InputConstants.KEY_LALT, cat);
 			fullbright = new KeyMapping("key.aerion.fullbright", InputConstants.UNKNOWN.getValue(), cat);
+			fullbrightUp = new KeyMapping("key.aerion.fullbrightUp", InputConstants.UNKNOWN.getValue(), cat);
+			fullbrightDown = new KeyMapping("key.aerion.fullbrightDown", InputConstants.UNKNOWN.getValue(), cat);
+			fovLock = new KeyMapping("key.aerion.fovLock", InputConstants.UNKNOWN.getValue(), cat);
 			hitboxes = new KeyMapping("key.aerion.hitboxes", InputConstants.UNKNOWN.getValue(), cat);
 			overlays = new KeyMapping("key.aerion.overlays", InputConstants.UNKNOWN.getValue(), cat);
 			sounds = new KeyMapping("key.aerion.sounds", InputConstants.UNKNOWN.getValue(), cat);
@@ -63,7 +67,7 @@ public final class Features {
 			hitColor = new KeyMapping("key.aerion.hitColor", InputConstants.UNKNOWN.getValue(), cat);
 			screens = new KeyMapping("key.aerion.screens", InputConstants.UNKNOWN.getValue(), cat);
 			waypointAdd = new KeyMapping("key.aerion.waypointAdd", InputConstants.UNKNOWN.getValue(), cat);
-			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
+			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
 					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
@@ -88,6 +92,9 @@ public final class Features {
 			case "zoom" -> zoom;
 			case "freelook" -> freelook;
 			case "fullbright" -> fullbright;
+			case "fullbrightUp" -> fullbrightUp;
+			case "fullbrightDown" -> fullbrightDown;
+			case "fovLock" -> fovLock;
 			case "hitboxes" -> hitboxes;
 			case "overlays" -> overlays;
 			case "sounds" -> sounds;
@@ -120,12 +127,28 @@ public final class Features {
 	// --- zoom -------------------------------------------------------------------------------
 	private static float zoomNow = 1f, fovNow = 1f;
 	private static long lastFrame;
+	/** The zoom factor while the key is held: starts at the setting, the mouse wheel changes it. */
+	private static float scrolled = -1;
+
+	private static boolean zooming() {
+		return zoom != null && HudConfig.bool(feature("zoom"), "enabled", true) && zoom.isDown();
+	}
+
+	/** The mouse wheel while zooming: closer or further instead of the hotbar. True when used. */
+	public static boolean zoomScroll(double amount) {
+		JsonObject z = feature("zoom");
+		if (amount == 0 || Game.screen() != null || !zooming() || !HudConfig.bool(z, "scroll", true)) return false;
+		float base = scrolled > 0 ? scrolled : Math.max(2, Math.min(10, HudConfig.num(z, "factor", 4)));
+		scrolled = Math.max(1.5f, Math.min(50f, base * (float) Math.pow(1.2, Math.signum(amount))));
+		return true;
+	}
 
 	/** Multiplies the field of view; eases in and out when "smooth" is on. */
 	public static float fovMultiplier() {
 		JsonObject z = feature("zoom");
-		boolean want = zoom != null && HudConfig.bool(z, "enabled", true) && zoom.isDown();
-		float factor = Math.max(2, Math.min(10, HudConfig.num(z, "factor", 4)));
+		boolean want = zooming();
+		if (!want) scrolled = -1;
+		float factor = scrolled > 0 ? scrolled : Math.max(2, Math.min(10, HudConfig.num(z, "factor", 4)));
 		float target = want ? 1f / factor : 1f;
 		float fovTarget = 1f;
 		JsonObject fk = feature("fovKey");
@@ -228,6 +251,40 @@ public final class Features {
 	// --- fullbright -------------------------------------------------------------------------
 	private static boolean bright;
 	private static Double gammaBefore;
+	/** Gamma in percent while fullbright is on: 100 is the game's brightest, 1500 lights caves. */
+	private static final int LEVEL_MIN = 100, LEVEL_MAX = 1500, LEVEL_STEP = 100;
+
+	private static int level() {
+		try {
+			return Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, Integer.parseInt(HudConfig.opt(feature("fullbright"), "level", "1500"))));
+		} catch (NumberFormatException e) {
+			return LEVEL_MAX;
+		}
+	}
+
+	private static double applied = -1;
+
+	/** Keeps the game's gamma on the chosen level while fullbright is on (it can change any time). */
+	@SuppressWarnings("unchecked")
+	private static void applyLevel(Minecraft mc) {
+		double want = level() / 100.0;
+		if (!bright || want == applied) return;
+		((OptionInstanceAccessor<Double>) (Object) mc.options.gamma()).aerion$setValue(want);
+		applied = want;
+	}
+
+	/** A key raised or lowered the level: store it and say so above the hotbar. */
+	private static void stepLevel(Minecraft mc, int direction) {
+		int next = Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, level() + direction * LEVEL_STEP));
+		JsonObject f = feature("fullbright");
+		JsonObject options = f.get("options") instanceof JsonObject o ? o : new JsonObject();
+		options.addProperty("level", String.valueOf(next));
+		f.add("options", options);
+		AerionClient.saveHud();
+		if (!bright) setBright(mc, true);
+		applyLevel(mc);
+		Game.overlayMessage(net.minecraft.network.chat.Component.literal(Lang.tr("aerion.fullbright.level").replace("{n}", String.valueOf(next))));
+	}
 
 	public static boolean fullbrightOn() {
 		return bright;
@@ -240,9 +297,11 @@ public final class Features {
 		if (on) {
 			gammaBefore = mc.options.gamma().get();
 			// Past the slider's range on purpose; the game clamps it again when options reload.
-			gamma.aerion$setValue(15.0);
+			gamma.aerion$setValue(level() / 100.0);
+			applied = level() / 100.0;
 		} else if (gammaBefore != null) {
 			gamma.aerion$setValue(gammaBefore);
+			applied = -1;
 		}
 		bright = on;
 	}
@@ -370,7 +429,30 @@ public final class Features {
 		while (fullbright.consumeClick()) {
 			if (brightWanted) setBright(mc, !bright);
 		}
+		while (fullbrightUp.consumeClick()) {
+			if (brightWanted) stepLevel(mc, 1);
+		}
+		while (fullbrightDown.consumeClick()) {
+			if (brightWanted) stepLevel(mc, -1);
+		}
 		if (!brightWanted) setBright(mc, false);
 		else if (gammaBefore == null) setBright(mc, true);
+		applyLevel(mc);
+		while (fovLock.consumeClick()) {
+			JsonObject f = feature("fovLock");
+			boolean next = !HudConfig.bool(f, "enabled", false);
+			f.addProperty("enabled", next);
+			AerionClient.saveHud();
+			Game.overlayMessage(net.minecraft.network.chat.Component.literal(Lang.tr("aerion.feature.fovLock") + ": " + Lang.tr(next ? "aerion.state.on" : "aerion.state.off")));
+		}
+	}
+
+	// --- FOV lock ---------------------------------------------------------------------------
+	/** True while the field of view should ignore sprinting, speed effects and bows. */
+	public static boolean fovLocked(net.minecraft.world.entity.player.Player player) {
+		JsonObject f = feature("fovLock");
+		if (!HudConfig.bool(f, "enabled", false)) return false;
+		// The spyglass still zooms, unless the player asked otherwise.
+		return !(player.isScoping() && "1".equals(HudConfig.opt(f, "spyglass", "1")));
 	}
 }

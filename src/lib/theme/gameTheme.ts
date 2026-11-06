@@ -28,5 +28,10 @@ export function toGameTheme(t: Theme, prefs: GameUiPrefs): GameTheme {
     colors: prefs.colors,
     particles: prefs.particles ? b.particles : "none",
     logo: prefs.logo,
+    // A picture (or GIF) background shows in the game's menus too; the launcher checks the file
+    // and the mod reads it. Videos stay launcher-only and leave the gradient in the game.
+    backgroundAsset: prefs.colors && b.type === "image" && b.asset ? b.asset : null,
+    backgroundDim: b.dim,
+    backgroundFile: null,
   };
 }

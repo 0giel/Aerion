@@ -37,4 +37,14 @@ public final class Game {
 	public static void overlayMessage(net.minecraft.network.chat.Component message) {
 		Minecraft.getInstance().gui.hud.setOverlayMessage(message, false);
 	}
+
+	/** Opens the running single-player world to others on `port`. */
+	public static boolean publish(net.minecraft.client.server.IntegratedServer server, int port) {
+		return server.publishServer(net.minecraft.server.MinecraftServer.MultiplayerScope.LAN, port);
+	}
+
+	/** A line in the chat from the client, not from a player. */
+	public static void chat(net.minecraft.network.chat.Component message) {
+		Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(message);
+	}
 }
