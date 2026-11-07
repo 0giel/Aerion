@@ -11,7 +11,7 @@ use crate::instances::{InstanceManager, ModpackInfo};
 use crate::loaders::LoaderKind;
 use crate::modpacks::{
     ExportOptions, ImportResult, ManualDownload, exported_loader_version, finish_platform_pack,
-    import_into_new, pack_instance, write_pack,
+    pack_instance, write_pack,
 };
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::{ModProvider, Provider};
@@ -109,92 +109,93 @@ pub async fn import(
         loader,
         loader_version,
     );
-    import_into_new(instances, spec, |inst| async move {
-        let id = inst.id;
-        let game_dir = instances.game_dir(&id)?;
-        let file_ids: Vec<u64> = manifest
-            .files
-            .iter()
-            .filter(|f| f.required)
-            .map(|f| f.file_id)
-            .collect();
-        let versions = cf.files_by_id(&file_ids).await?;
-        let project_ids: Vec<String> = versions.iter().map(|v| v.project_id.clone()).collect();
-        let projects: HashMap<String, _> = cf
-            .projects(&project_ids)
-            .await?
-            .into_iter()
-            .map(|p| (p.id.clone(), p))
-            .collect();
+    instances
+        .create_with(spec, |inst| async move {
+            let id = inst.id;
+            let game_dir = instances.game_dir(&id)?;
+            let file_ids: Vec<u64> = manifest
+                .files
+                .iter()
+                .filter(|f| f.required)
+                .map(|f| f.file_id)
+                .collect();
+            let versions = cf.files_by_id(&file_ids).await?;
+            let project_ids: Vec<String> = versions.iter().map(|v| v.project_id.clone()).collect();
+            let projects: HashMap<String, _> = cf
+                .projects(&project_ids)
+                .await?
+                .into_iter()
+                .map(|p| (p.id.clone(), p))
+                .collect();
 
-        let content = instances.content(&id)?;
-        let mut manual = Vec::new();
-        let mut by_kind: HashMap<_, Vec<PlannedFile>> = HashMap::new();
-        for v in versions {
-            let project = projects.get(&v.project_id);
-            let kind = project
-                .map(|p| p.kind)
-                .unwrap_or(crate::mods::model::ContentKind::Mod);
-            let Some(file) = v.primary_file().cloned() else {
-                continue;
-            };
-            safe_file_name(&file.filename)?;
-            if file.url.is_none() {
-                manual.push(ManualDownload {
-                    name: project
-                        .map(|p| p.title.clone())
-                        .unwrap_or_else(|| v.project_id.clone()),
-                    file_name: file.filename.clone(),
-                    url: v.page_url.clone().unwrap_or_default(),
-                    folder: game_dir.join(kind.folder()).display().to_string(),
+            let content = instances.content(&id)?;
+            let mut manual = Vec::new();
+            let mut by_kind: HashMap<_, Vec<PlannedFile>> = HashMap::new();
+            for v in versions {
+                let project = projects.get(&v.project_id);
+                let kind = project
+                    .map(|p| p.kind)
+                    .unwrap_or(crate::mods::model::ContentKind::Mod);
+                let Some(file) = v.primary_file().cloned() else {
+                    continue;
+                };
+                safe_file_name(&file.filename)?;
+                if file.url.is_none() {
+                    manual.push(ManualDownload {
+                        name: project
+                            .map(|p| p.title.clone())
+                            .unwrap_or_else(|| v.project_id.clone()),
+                        file_name: file.filename.clone(),
+                        url: v.page_url.clone().unwrap_or_default(),
+                        folder: game_dir.join(kind.folder()).display().to_string(),
+                    });
+                    continue;
+                }
+                by_kind.entry(kind).or_default().push(PlannedFile {
+                    project_id: v.project_id.clone(),
+                    title: project.map(|p| p.title.clone()).unwrap_or_default(),
+                    icon_url: project.and_then(|p| p.icon_url.clone()),
+                    page_url: project.map(|p| p.page_url.clone()),
+                    version: v,
+                    required_by: None,
                 });
-                continue;
             }
-            by_kind.entry(kind).or_default().push(PlannedFile {
-                project_id: v.project_id.clone(),
-                title: project.map(|p| p.title.clone()).unwrap_or_default(),
-                icon_url: project.and_then(|p| p.icon_url.clone()),
-                page_url: project.map(|p| p.page_url.clone()),
-                version: v,
-                required_by: None,
+            ctx.stage("stage.modpackFiles", Some(manifest.name.clone()));
+            for (kind, install) in by_kind {
+                let plan = InstallPlan {
+                    provider: Some(Provider::Curseforge),
+                    install,
+                    ..Default::default()
+                };
+                content
+                    .install(&engine.downloader, &plan, kind, ctx)
+                    .await?;
+            }
+            let prefix = format!(
+                "{}/",
+                manifest
+                    .overrides
+                    .clone()
+                    .unwrap_or_else(|| "overrides".into())
+                    .trim_end_matches('/')
+            );
+            let (a, g) = (archive.to_path_buf(), game_dir.clone());
+            crate::util::blocking(move || extract_zip_prefix(&a, &prefix, &g)).await?;
+            let info = origin.unwrap_or(ModpackInfo {
+                provider: "local".into(),
+                project_id: None,
+                version_id: None,
+                name: manifest.name.clone(),
+                version_name: manifest.version.clone(),
             });
-        }
-        ctx.stage("stage.modpackFiles", Some(manifest.name.clone()));
-        for (kind, install) in by_kind {
-            let plan = InstallPlan {
-                provider: Some(Provider::Curseforge),
-                install,
-                ..Default::default()
-            };
-            content
-                .install(&engine.downloader, &plan, kind, ctx)
-                .await?;
-        }
-        let prefix = format!(
-            "{}/",
-            manifest
-                .overrides
-                .clone()
-                .unwrap_or_else(|| "overrides".into())
-                .trim_end_matches('/')
-        );
-        let (a, g) = (archive.to_path_buf(), game_dir.clone());
-        crate::util::blocking(move || extract_zip_prefix(&a, &prefix, &g)).await?;
-        let info = origin.unwrap_or(ModpackInfo {
-            provider: "local".into(),
-            project_id: None,
-            version_id: None,
-            name: manifest.name.clone(),
-            version_name: manifest.version.clone(),
-        });
-        let instance =
-            finish_platform_pack(engine, instances, &id, info, modrinth, Some(cf), ctx).await?;
-        Ok(ImportResult {
-            instance,
-            manual_downloads: manual,
+            let instance =
+                finish_platform_pack(engine, instances, &id, info, modrinth, Some(cf), ctx).await?;
+            Ok(ImportResult {
+                instance,
+                manual_downloads: manual,
+            })
         })
-    })
-    .await
+        .await
 }
 
 /// Export as a CurseForge pack: CurseForge-tracked files by id, the rest in `overrides/`.

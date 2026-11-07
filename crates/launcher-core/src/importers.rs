@@ -6,7 +6,11 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
+use crate::instances::{Instance, InstanceManager, NewInstance};
 use crate::loaders::LoaderKind;
+use crate::mods::curseforge::CurseForge;
+use crate::mods::modrinth::Modrinth;
+use crate::progress::TaskCtx;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
@@ -35,8 +39,54 @@ pub struct ExternalInstance {
     pub worlds: u32,
 }
 
+/// Import another launcher's instance as `name`: copy its files, or use its folder in place
+/// (`link`). `ext` carries the version and loader the user confirmed. Its mods are recognised
+/// for updates where possible.
+pub async fn import(
+    instances: &InstanceManager,
+    ext: ExternalInstance,
+    name: String,
+    link: bool,
+    modrinth: &Modrinth,
+    curseforge: &CurseForge,
+    ctx: &TaskCtx,
+) -> Result<Instance> {
+    let game_version = ext
+        .game_version
+        .clone()
+        .filter(|v| !v.trim().is_empty())
+        .ok_or_else(|| Error::Invalid("choose the Minecraft version".into()))?;
+    let spec = NewInstance {
+        name,
+        game_version,
+        loader: ext.loader,
+        loader_version: ext.loader_version.clone(),
+        icon: None,
+        group: None,
+        game_dir: link.then(|| ext.game_dir.clone()),
+        link_existing: link,
+        aerion_mod: false,
+        shared_options: false,
+    };
+    instances
+        .create_with(spec, |inst| async move {
+            if !link {
+                ctx.stage("stage.copyFiles", None);
+                let (src, dst) = (ext.game_dir, instances.game_dir(&inst.id)?);
+                crate::util::blocking(move || copy_game_dir(&src, &dst)).await?;
+            }
+            ctx.stage("stage.identify", None);
+            let _ = instances
+                .content(&inst.id)?
+                .identify(modrinth, Some(curseforge))
+                .await;
+            Ok(inst)
+        })
+        .await
+}
+
 /// Copy another launcher's game folder, leaving out [`skip_on_copy`] entries at its top level.
-pub fn copy_game_dir(src: &Path, dst: &Path) -> Result<()> {
+fn copy_game_dir(src: &Path, dst: &Path) -> Result<()> {
     crate::util::fs::copy_dir_sync(src, dst, &|p| {
         p.parent() == Some(src)
             && p.file_name()

@@ -9,7 +9,6 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
-use std::future::Future;
 use std::path::PathBuf;
 
 use crate::Engine;
@@ -82,24 +81,6 @@ fn pack_instance(
         aerion_mod: false,
         shared_options: false,
     }
-}
-
-/// Create the instance and fill it in; a pack that fails half-way leaves no instance behind.
-async fn import_into_new<T, Fut>(
-    instances: &InstanceManager,
-    spec: NewInstance,
-    fill: impl FnOnce(Instance) -> Fut,
-) -> Result<T>
-where
-    Fut: Future<Output = Result<T>>,
-{
-    let inst = instances.create(spec).await?;
-    let id = inst.id.clone();
-    let result = fill(inst).await;
-    if result.is_err() {
-        let _ = instances.delete(&id).await;
-    }
-    result
 }
 
 /// The last steps of a platform pack: recognise its files (for updates), record where it came

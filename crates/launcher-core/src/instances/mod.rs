@@ -578,6 +578,25 @@ impl InstanceManager {
         Ok(inst)
     }
 
+    /// Create an instance and fill it in (files from a pack or another launcher); one that fails
+    /// half-way leaves no instance behind.
+    pub async fn create_with<T, Fut>(
+        &self,
+        spec: NewInstance,
+        fill: impl FnOnce(Instance) -> Fut,
+    ) -> Result<T>
+    where
+        Fut: std::future::Future<Output = Result<T>>,
+    {
+        let inst = self.create(spec).await?;
+        let id = inst.id.clone();
+        let result = fill(inst).await;
+        if result.is_err() {
+            let _ = self.delete(&id).await;
+        }
+        result
+    }
+
     /// All group names in use, for the UI's group picker.
     pub async fn groups(&self) -> Vec<String> {
         let mut g: Vec<String> = self

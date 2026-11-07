@@ -10,8 +10,7 @@ use crate::error::{Error, Result};
 use crate::instances::{Instance, InstanceManager, ModpackInfo};
 use crate::loaders::LoaderKind;
 use crate::modpacks::{
-    ExportOptions, exported_loader_version, finish_platform_pack, import_into_new, pack_instance,
-    write_pack,
+    ExportOptions, exported_loader_version, finish_platform_pack, pack_instance, write_pack,
 };
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
@@ -114,18 +113,19 @@ pub async fn import(
     let (loader, loader_version) = loader_of(&index.dependencies);
     ctx.stage("stage.modpack", Some(index.name.clone()));
     let spec = pack_instance(index.name.clone(), game_version, loader, loader_version);
-    import_into_new(instances, spec, |inst| async move {
-        install_files(engine, instances, archive, &index, &inst, ctx).await?;
-        let info = origin.unwrap_or(ModpackInfo {
-            provider: "local".into(),
-            project_id: None,
-            version_id: None,
-            name: index.name.clone(),
-            version_name: Some(index.version_id.clone()),
-        });
-        finish_platform_pack(engine, instances, &inst.id, info, modrinth, None, ctx).await
-    })
-    .await
+    instances
+        .create_with(spec, |inst| async move {
+            install_files(engine, instances, archive, &index, &inst, ctx).await?;
+            let info = origin.unwrap_or(ModpackInfo {
+                provider: "local".into(),
+                project_id: None,
+                version_id: None,
+                name: index.name.clone(),
+                version_name: Some(index.version_id.clone()),
+            });
+            finish_platform_pack(engine, instances, &inst.id, info, modrinth, None, ctx).await
+        })
+        .await
 }
 
 async fn install_files(

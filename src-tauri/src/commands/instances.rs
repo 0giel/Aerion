@@ -342,11 +342,6 @@ pub async fn import_external(
     name: String,
     link: bool,
 ) -> CmdResult<String> {
-    let game_version = ext
-        .game_version
-        .clone()
-        .filter(|v| !v.trim().is_empty())
-        .ok_or_else(|| launcher_core::Error::Invalid("choose the Minecraft version".into()))?;
     let app2 = app.clone();
     Ok(state.tasks.spawn(
         &app,
@@ -356,32 +351,9 @@ pub async fn import_external(
         None,
         move |ctx| async move {
             let state = app2.state::<AppState>();
-            let inst = state
-                .instances
-                .create(NewInstance {
-                    name,
-                    game_version,
-                    loader: ext.loader,
-                    loader_version: ext.loader_version.clone(),
-                    icon: None,
-                    group: None,
-                    game_dir: link.then(|| ext.game_dir.clone()),
-                    link_existing: link,
-                    aerion_mod: false,
-                    shared_options: false,
-                })
-                .await?;
-            if !link {
-                ctx.stage("stage.copyFiles", None);
-                let (src, dst) = (ext.game_dir.clone(), state.instances.game_dir(&inst.id)?);
-                launcher_core::util::blocking(move || importers::copy_game_dir(&src, &dst)).await?;
-            }
-            // Recognise mods (for updates); a failure only costs that.
-            ctx.stage("stage.identify", None);
-            if let Ok(content) = state.instances.content(&inst.id) {
-                let cf = state.curseforge().await;
-                let _ = content.identify(&state.modrinth().await, Some(&cf)).await;
-            }
+            let (modrinth, cf) = (state.modrinth().await, state.curseforge().await);
+            let inst =
+                importers::import(&state.instances, ext, name, link, &modrinth, &cf, &ctx).await?;
             let result = ImportResult {
                 instance: inst,
                 manual_downloads: vec![],
