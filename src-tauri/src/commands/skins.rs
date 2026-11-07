@@ -76,12 +76,9 @@ pub async fn save_account_skin(
     let acc = account(&state, &account_id).await?;
     let url = acc
         .skin_url
-        .filter(|u| {
-            u.starts_with("https://textures.minecraft.net/")
-                || u.starts_with("http://textures.minecraft.net/")
-        })
-        .ok_or_else(|| launcher_core::Error::Invalid("this account has no custom skin".into()))?
-        .replacen("http://", "https://", 1);
+        .as_deref()
+        .and_then(skins::mojang_texture_url)
+        .ok_or_else(|| launcher_core::Error::Invalid("this account has no custom skin".into()))?;
     let variant = match acc.skin_variant.as_deref() {
         Some("slim") => SkinVariant::Slim,
         _ => SkinVariant::Classic,

@@ -53,6 +53,15 @@ pub struct SavedSkin {
 }
 
 /// A PNG of 64×64 (modern) or 64×32 (legacy) pixels.
+/// A skin picture on Mojang's texture server, always over https; `None` for anything else.
+pub fn mojang_texture_url(url: &str) -> Option<String> {
+    let rest = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))?;
+    rest.starts_with("textures.minecraft.net/")
+        .then(|| format!("https://{rest}"))
+}
+
 pub fn validate_skin(bytes: &[u8]) -> Result<()> {
     if bytes.len() > MAX_SKIN_BYTES {
         return Err(Error::FileTooLarge {

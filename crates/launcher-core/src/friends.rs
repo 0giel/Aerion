@@ -125,11 +125,7 @@ fn skin_url(profile: &SessionProfile) -> Option<String> {
         .decode(value)
         .ok()?;
     let t: Textures = serde_json::from_slice(&json).ok()?;
-    let url = t.textures.skin?.url;
-    Some(match url.strip_prefix("http://") {
-        Some(rest) => format!("https://{rest}"),
-        None => url,
-    })
+    crate::skins::mojang_texture_url(&t.textures.skin?.url)
 }
 
 /// A player's profile by name; `None` when Mojang has no such player.
@@ -182,7 +178,7 @@ pub fn validate(friends: &[Friend]) -> Result<()> {
             return Err(Error::Invalid(format!("{a}: not a server address")));
         }
         if let Some(u) = &f.skin_url
-            && !u.starts_with("https://textures.minecraft.net/")
+            && crate::skins::mojang_texture_url(u).as_deref() != Some(u.as_str())
         {
             return Err(Error::Invalid("skins come only from Mojang".into()));
         }

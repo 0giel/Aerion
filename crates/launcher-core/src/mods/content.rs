@@ -601,7 +601,7 @@ impl ContentManager {
     }
 
     fn backups_dir(&self) -> PathBuf {
-        self.instance_dir.join(".backups")
+        self.instance_dir.join(crate::paths::INSTANCE_BACKUPS)
     }
 
     /// Apply updates; the replaced files and `content.json` are kept in `.backups/<id>`

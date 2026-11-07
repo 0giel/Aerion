@@ -575,7 +575,9 @@ impl InstanceManager {
                     .file_name()
                     .map(|n| n.to_string_lossy().into_owned())
                     .unwrap_or_default();
-                regenerated_by_game(&n) || matches!(n.as_str(), ".backups" | GAME_DIR_MARKER)
+                regenerated_by_game(&n)
+                    || n == crate::paths::INSTANCE_BACKUPS
+                    || n == GAME_DIR_MARKER
             };
             copy_dir_sync(&from, &to, &skip)?;
             if let Some((g, dst)) = external {

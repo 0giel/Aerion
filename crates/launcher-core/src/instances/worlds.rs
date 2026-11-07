@@ -53,7 +53,9 @@ fn check_folder(folder: &str) -> Result<()> {
 }
 
 fn backups_dir(instance_dir: &Path) -> PathBuf {
-    instance_dir.join(".backups").join("worlds")
+    instance_dir
+        .join(crate::paths::INSTANCE_BACKUPS)
+        .join("worlds")
 }
 
 /// The world an instance's `join_world` setting points at, if it still exists.

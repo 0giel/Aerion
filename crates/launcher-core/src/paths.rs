@@ -161,6 +161,10 @@ impl Paths {
     }
 }
 
+/// Name of the folder inside an instance that holds its backups: mod updates (`<timestamp>/`,
+/// see `mods::content`) and worlds (`worlds/`).
+pub const INSTANCE_BACKUPS: &str = ".backups";
+
 /// Make a path suitable for handing to Java / other processes (no `\\?\` prefixes on Windows).
 pub fn display_path(p: &Path) -> String {
     #[cfg(windows)]
