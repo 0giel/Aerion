@@ -122,8 +122,11 @@ pub enum Error {
     Invalid(String),
 
     /// Horizon (the Rust reimplementation): `kind` picks the explanation shown to the player.
-    #[error("Horizon: {kind}: {detail}")]
-    Horizon { kind: &'static str, detail: String },
+    #[error("Horizon: {}: {detail}", kind.as_str())]
+    Horizon {
+        kind: HorizonFailure,
+        detail: String,
+    },
 }
 
 /// Authentication failures, each with a dedicated user-facing explanation.
@@ -321,16 +324,7 @@ impl Error {
             Error::Invalid(_) => "generic",
             Error::Horizon { kind, detail } => {
                 put("detail", detail.clone());
-                match *kind {
-                    "platform" => "horizon.platform",
-                    "noBuild" => "horizon.noBuild",
-                    "signature" => "horizon.signature",
-                    "needsOwner" => "horizon.needsOwner",
-                    "prepare" => "horizon.prepare",
-                    "unpack" => "horizon.unpack",
-                    "notInstalled" => "horizon.notInstalled",
-                    _ => "horizon.failed",
-                }
+                kind.code()
             }
         };
         ErrorInfo {
@@ -366,6 +360,47 @@ impl AuthError {
 }
 
 /// Attach a path to `std::io::Result`s.
+/// What went wrong with Horizon; each has its own explanation in the UI.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HorizonFailure {
+    Platform,
+    NoBuild,
+    Signature,
+    NeedsOwner,
+    Prepare,
+    Unpack,
+    NotInstalled,
+    Download,
+}
+
+impl HorizonFailure {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Platform => "platform",
+            Self::NoBuild => "noBuild",
+            Self::Signature => "signature",
+            Self::NeedsOwner => "needsOwner",
+            Self::Prepare => "prepare",
+            Self::Unpack => "unpack",
+            Self::NotInstalled => "notInstalled",
+            Self::Download => "download",
+        }
+    }
+
+    fn code(self) -> &'static str {
+        match self {
+            Self::Platform => "horizon.platform",
+            Self::NoBuild => "horizon.noBuild",
+            Self::Signature => "horizon.signature",
+            Self::NeedsOwner => "horizon.needsOwner",
+            Self::Prepare => "horizon.prepare",
+            Self::Unpack => "horizon.unpack",
+            Self::NotInstalled => "horizon.notInstalled",
+            Self::Download => "horizon.failed",
+        }
+    }
+}
+
 pub trait IoContext<T> {
     fn at(self, path: impl AsRef<Path>) -> Result<T>;
 }

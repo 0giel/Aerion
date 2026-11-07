@@ -129,3 +129,12 @@ impl AppState {
         CurseForge::new(e.http.clone(), self.cf_key.read().await.clone())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn a_bundled_mod_jar_for_every_supported_version() {
+        let bundled: Vec<&str> = super::AERION_MOD_JARS.iter().map(|(v, _)| *v).collect();
+        assert_eq!(bundled, launcher_core::aerion_mod::GAME_VERSIONS);
+    }
+}

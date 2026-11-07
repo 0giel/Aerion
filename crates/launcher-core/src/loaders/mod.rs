@@ -114,7 +114,7 @@ pub async fn install(
         LoaderKind::Vanilla => return Ok((game_version.to_owned(), String::new())),
         LoaderKind::Horizon => {
             return Err(Error::Horizon {
-                kind: "notInstalled",
+                kind: crate::error::HorizonFailure::NotInstalled,
                 detail: "Horizon has no loader profile".into(),
             });
         }

@@ -20,7 +20,7 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 
 use crate::Engine;
 use crate::auth::AuthInfo;
-use crate::error::{Error, IoContext, Result};
+use crate::error::{Error, HorizonFailure, IoContext, Result};
 use crate::game::install::{Prepared, prepare};
 use crate::game::launch::CommandSpec;
 use crate::java::JavaInstall;
@@ -41,7 +41,7 @@ const RELEASE_KEYS: &[&str] = &["MU4oiIQcCxkZvbwSjjXs7SySCuM6ywRQ3nGaJYZG0gw="];
 /// Nightly builds are signed for the channel: `horizon release nightly\n` + `SHA256SUMS`.
 const CHANNEL: &str = "nightly";
 
-fn err(kind: &'static str, detail: impl Into<String>) -> Error {
+fn err(kind: HorizonFailure, detail: impl Into<String>) -> Error {
     Error::Horizon {
         kind,
         detail: detail.into(),
@@ -183,14 +183,14 @@ async fn get_text(engine: &Engine, url: &str) -> Result<String> {
     let resp = engine.http.send(|c| c.get(url)).await?;
     resp.text()
         .await
-        .map_err(|e| err("download", format!("{url}: {e}")))
+        .map_err(|e| err(HorizonFailure::Download, format!("{url}: {e}")))
 }
 
 /// The newest Nightly build for this platform that is signed and lists its archive.
 async fn latest(engine: &Engine) -> Result<(String, ReleaseAsset, String)> {
     let asset_name = asset_name(engine.env.os, engine.env.arch).ok_or_else(|| {
         err(
-            "platform",
+            HorizonFailure::Platform,
             format!("{:?} {:?}", engine.env.os, engine.env.arch),
         )
     })?;
@@ -208,7 +208,7 @@ async fn latest(engine: &Engine) -> Result<(String, ReleaseAsset, String)> {
         let sums_text = get_text(engine, &sums.browser_download_url).await?;
         let sig_text = get_text(engine, &sig.browser_download_url).await?;
         if !signed(sums_text.as_bytes(), &sig_text, RELEASE_KEYS) {
-            return Err(err("signature", r.tag_name.clone()));
+            return Err(err(HorizonFailure::Signature, r.tag_name.clone()));
         }
         let Some((hash, _)) = parse_sums(&sums_text)
             .into_iter()
@@ -235,7 +235,7 @@ async fn latest(engine: &Engine) -> Result<(String, ReleaseAsset, String)> {
         };
         return Ok((id, archive, hash));
     }
-    Err(err("noBuild", asset_name))
+    Err(err(HorizonFailure::NoBuild, asset_name))
 }
 
 /// One install at a time: two instances started together would otherwise unpack the same build
@@ -272,11 +272,11 @@ pub async fn install_latest(engine: &Engine, ctx: &TaskCtx) -> Result<Build> {
         }
     })
     .await
-    .map_err(|e| err("unpack", e.to_string()))??;
+    .map_err(|e| err(HorizonFailure::Unpack, e.to_string()))??;
     let _ = tokio::fs::remove_file(&file).await;
     let root = build_root(&staging)
         .await
-        .ok_or_else(|| err("unpack", "no horizon-client in the archive"))?;
+        .ok_or_else(|| err(HorizonFailure::Unpack, "no horizon-client in the archive"))?;
     make_executable(&root).await;
     let dest = builds.join(&id);
     let _ = tokio::fs::remove_dir_all(&dest).await;
@@ -391,7 +391,12 @@ pub async fn ensure_resources(
         .downloads
         .as_ref()
         .and_then(|d| d.server.clone())
-        .ok_or_else(|| err("prepare", "26.3 has no server jar in its version JSON"))?;
+        .ok_or_else(|| {
+            err(
+                HorizonFailure::Prepare,
+                "26.3 has no server jar in its version JSON",
+            )
+        })?;
     let jar = server_jar(engine);
     let item = DownloadItem::new(&server.url, &jar)
         .sha1(server.sha1.as_deref())
@@ -405,7 +410,7 @@ pub async fn ensure_resources(
         .parent()
         .and_then(Path::parent)
         .map(Path::to_path_buf)
-        .ok_or_else(|| err("prepare", "no Java home"))?;
+        .ok_or_else(|| err(HorizonFailure::Prepare, "no Java home"))?;
     let p = &engine.paths;
     let args: Vec<String> = vec![
         "--prepare".into(),
@@ -434,7 +439,9 @@ pub async fn ensure_resources(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
-    let mut child = cmd.spawn().map_err(|e| err("prepare", e.to_string()))?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| err(HorizonFailure::Prepare, e.to_string()))?;
     let stderr = child.stderr.take();
     let stderr_task = tokio::spawn(async move {
         let mut text = String::new();
@@ -479,11 +486,11 @@ pub async fn ensure_resources(
     let status = child
         .wait()
         .await
-        .map_err(|e| err("prepare", e.to_string()))?;
+        .map_err(|e| err(HorizonFailure::Prepare, e.to_string()))?;
     let last_err = stderr_task.await.unwrap_or_default();
     if !status.success() {
         return Err(err(
-            "prepare",
+            HorizonFailure::Prepare,
             failure.unwrap_or(if last_err.is_empty() {
                 format!("horizon-prepare exited with {status}")
             } else {
@@ -540,7 +547,7 @@ fn session_json(auth: &AuthInfo) -> String {
 /// Horizon starts only for a signed-in Microsoft account (which Aerion has checked owns the game).
 pub fn command(build: &Build, auth: &AuthInfo, o: &StartOptions) -> Result<CommandSpec> {
     if auth.user_type != "msa" || auth.access_token.is_empty() {
-        return Err(err("needsOwner", ""));
+        return Err(err(HorizonFailure::NeedsOwner, ""));
     }
     let mut args = vec![
         "--resources".to_owned(),
