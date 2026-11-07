@@ -52,6 +52,18 @@ jobs:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Microsoft sign-in needs this identifier inside the build. A release made without it can't
+      # log anyone in (1.0.0 shipped like that), so an empty value stops the build right here.
+      - name: The Microsoft client ID is set
+        shell: bash
+        run: |
+          if [ -z "${LAUNCHER_MSA_CLIENT_ID// /}" ]; then
+            echo "::error::LAUNCHER_MSA_CLIENT_ID is empty: add it under Settings > Secrets and variables > Actions (a repository variable or a secret)."
+            exit 1
+          fi
+          echo "client ID present (${#LAUNCHER_MSA_CLIENT_ID} characters)"
+        env:
+          LAUNCHER_MSA_CLIENT_ID: ${{ vars.LAUNCHER_MSA_CLIENT_ID || secrets.LAUNCHER_MSA_CLIENT_ID }}
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,3 +78,17 @@ jobs:
           releaseDraft: true
           includeUpdaterJson: true
           args: --bundles ${{ matrix.bundles }}
+      # The finished program must contain the identifier; otherwise this job fails and the draft
+      # release must not be published.
+      - name: The build contains the client ID
+        shell: bash
+        run: |
+          bin=target/release/aerion
+          [ -f "$bin.exe" ] && bin="$bin.exe"
+          if ! grep -a -q -F "$LAUNCHER_MSA_CLIENT_ID" "$bin"; then
+            echo "::error::$bin was built without the Microsoft client ID. Do NOT publish this draft."
+            exit 1
+          fi
+          echo "client ID found in $bin"
+        env:
+          LAUNCHER_MSA_CLIENT_ID: ${{ vars.LAUNCHER_MSA_CLIENT_ID || secrets.LAUNCHER_MSA_CLIENT_ID }}

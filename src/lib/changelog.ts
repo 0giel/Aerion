@@ -9,6 +9,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.1",
+    notes: {
+      pl: [
+        "Naprawione logowanie przez Microsoft w wersji 1.0.0: instalator nie miał w sobie identyfikatora aplikacji.",
+      ],
+      en: ["Fixed Microsoft sign-in in 1.0.0: the installer was built without the application ID."],
+    },
+  },
+  {
     version: "1.0.0",
     notes: {
       pl: [
