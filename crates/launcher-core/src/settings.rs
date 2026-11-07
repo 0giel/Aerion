@@ -188,6 +188,40 @@ pub struct Settings {
     pub friends: Vec<crate::friends::Friend>,
 }
 
+/// Reject launch settings that would break every start; the same rules hold globally and for
+/// one instance.
+pub fn validate_launch_overrides(
+    jvm_args: &[String],
+    game_args: &[String],
+    memory_mb: [Option<u32>; 2],
+    env_vars: &BTreeMap<String, String>,
+) -> Result<()> {
+    crate::java::flags::validate_syntax(jvm_args)?;
+    if game_args.iter().any(|a| a.contains(['\0', '\n', '\r'])) {
+        return Err(crate::Error::Invalid(
+            "game arguments may not contain line breaks".into(),
+        ));
+    }
+    if memory_mb
+        .into_iter()
+        .flatten()
+        .any(|m| !(256..=262_144).contains(&m))
+    {
+        return Err(crate::Error::Invalid(
+            "memory must be between 256 MB and 256 GB".into(),
+        ));
+    }
+    if env_vars
+        .keys()
+        .any(|k| k.is_empty() || k.contains(['=', '\0']))
+    {
+        return Err(crate::Error::Invalid(
+            "invalid environment variable name".into(),
+        ));
+    }
+    Ok(())
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
@@ -256,29 +290,14 @@ impl Settings {
         Ok(s)
     }
 
-    /// Reject values that would break every launch (same rules as an instance's own settings).
     pub fn validate(&self) -> Result<()> {
-        crate::java::flags::validate_syntax(&self.jvm_args)?;
+        validate_launch_overrides(
+            &self.jvm_args,
+            &self.game_args,
+            [self.max_memory_mb, self.min_memory_mb],
+            &self.env_vars,
+        )?;
         crate::friends::validate(&self.friends)?;
-        if self
-            .game_args
-            .iter()
-            .any(|a| a.contains(['\0', '\n', '\r']))
-        {
-            return Err(crate::Error::Invalid(
-                "game arguments may not contain line breaks".into(),
-            ));
-        }
-        for m in [self.max_memory_mb, self.min_memory_mb]
-            .into_iter()
-            .flatten()
-        {
-            if !(256..=262_144).contains(&m) {
-                return Err(crate::Error::Invalid(
-                    "memory must be between 256 MB and 256 GB".into(),
-                ));
-            }
-        }
         let id_ok = |id: &str| {
             !id.is_empty()
                 && id.len() <= 40
@@ -317,15 +336,6 @@ impl Settings {
             || !matches!(l.home_player.as_str(), "right" | "left" | "hidden")
         {
             return Err(crate::Error::Invalid("invalid layout".into()));
-        }
-        if self
-            .env_vars
-            .keys()
-            .any(|k| k.is_empty() || k.contains(['=', '\0']))
-        {
-            return Err(crate::Error::Invalid(
-                "invalid environment variable name".into(),
-            ));
         }
         Ok(())
     }

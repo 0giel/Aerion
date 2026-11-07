@@ -21,9 +21,9 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 use crate::error::{Error, IoContext, Result};
-use crate::java::flags::{JvmPreset, validate_syntax};
+use crate::java::flags::JvmPreset;
 use crate::loaders::LoaderKind;
-use crate::settings::Resolution;
+use crate::settings::{Resolution, validate_launch_overrides};
 use crate::util::fs::{copy_dir_sync, read_json, write_json};
 use crate::util::image::ImageKind;
 use crate::util::names::{folder_name, validate_display_name};
@@ -376,25 +376,14 @@ impl InstanceManager {
         let _g = self.lock.lock().await;
         let current = self.get(&edited.id).await?;
         edited.name = validate_display_name(&edited.name)?;
-        validate_syntax(&edited.jvm_args)?;
+        validate_launch_overrides(
+            &edited.jvm_args,
+            &edited.game_args,
+            [edited.max_memory_mb, edited.min_memory_mb],
+            &edited.env_vars,
+        )?;
         if let Some(icon) = &edited.icon {
             validate_icon(icon)?;
-        }
-        if edited
-            .game_args
-            .iter()
-            .any(|a| a.contains(['\0', '\n', '\r']))
-        {
-            return Err(Error::Invalid(
-                "game arguments may not contain line breaks".into(),
-            ));
-        }
-        if let Some(m) = edited.max_memory_mb
-            && !(512..=262_144).contains(&m)
-        {
-            return Err(Error::Invalid(
-                "memory must be between 512 MB and 256 GB".into(),
-            ));
         }
         // Changing version or loader invalidates the installed profile.
         if edited.game_version != current.game_version
