@@ -23,17 +23,11 @@ use tokio::sync::Mutex;
 use crate::error::{Error, IoContext, Result};
 use crate::java::flags::{JvmPreset, validate_syntax};
 use crate::loaders::LoaderKind;
+use crate::settings::Resolution;
 use crate::util::fs::{copy_dir_sync, read_json, write_json};
 use crate::util::image::ImageKind;
 use crate::util::names::{folder_name, validate_display_name};
 use crate::util::now_secs;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "specta", derive(specta::Type))]
-pub struct Resolution {
-    pub width: u32,
-    pub height: u32,
-}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]

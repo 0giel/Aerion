@@ -10,6 +10,14 @@ use crate::java::flags::JvmPreset;
 use crate::paths::Paths;
 use crate::util::fs::{read_json, write_json};
 
+/// A game window size.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+pub struct Resolution {
+    pub width: u32,
+    pub height: u32,
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase")]
@@ -144,7 +152,7 @@ pub struct Settings {
     // game arguments, environment) or replace them (resolution, fullscreen, wrapper).
     pub jvm_args: Vec<String>,
     pub game_args: Vec<String>,
-    pub resolution: Option<crate::instances::Resolution>,
+    pub resolution: Option<Resolution>,
     pub fullscreen: bool,
     pub env_vars: BTreeMap<String, String>,
     /// Command the game runs under, e.g. `gamemoderun` or `mangohud`.

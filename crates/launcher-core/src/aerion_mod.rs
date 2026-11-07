@@ -9,7 +9,6 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{IoContext, Result};
-use crate::instances::Instance;
 use crate::loaders::LoaderKind;
 use crate::paths::{Paths, display_path};
 
@@ -75,8 +74,8 @@ fn theme_file(paths: &Paths) -> PathBuf {
     paths.aerion_mod_dir().join("theme.json")
 }
 
-pub fn supports(inst: &Instance) -> bool {
-    inst.loader == LoaderKind::Fabric && GAME_VERSIONS.contains(&inst.game_version.as_str())
+fn supports(loader: LoaderKind, game_version: &str) -> bool {
+    loader == LoaderKind::Fabric && GAME_VERSIONS.contains(&game_version)
 }
 
 /// Write a bundled jar unless the same bytes are already there.
@@ -103,10 +102,15 @@ pub async fn write_theme(paths: &Paths, theme: &GameTheme) -> Result<()> {
     crate::util::fs::write_json(theme_file(paths), &theme).await
 }
 
-/// JVM arguments that load the mod, or nothing when the instance doesn't use it.
-pub fn jvm_args(paths: &Paths, inst: &Instance) -> Vec<String> {
-    let jar = paths.aerion_mod_dir().join(jar_name(&inst.game_version));
-    if !inst.aerion_mod || !supports(inst) || !jar.is_file() {
+/// JVM arguments that load the mod into an instance, or nothing where it can't run.
+pub fn jvm_args(
+    paths: &Paths,
+    instance_id: &str,
+    loader: LoaderKind,
+    game_version: &str,
+) -> Vec<String> {
+    let jar = paths.aerion_mod_dir().join(jar_name(game_version));
+    if !supports(loader, game_version) || !jar.is_file() {
         return Vec::new();
     }
     vec![
@@ -115,7 +119,7 @@ pub fn jvm_args(paths: &Paths, inst: &Instance) -> Vec<String> {
         format!("-Daerion.hud={}", display_path(&hud::file(paths))),
         format!(
             "-Daerion.status={}",
-            display_path(&status_file(paths, &inst.id))
+            display_path(&status_file(paths, instance_id))
         ),
     ]
 }
@@ -190,25 +194,15 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::at(dir.path().to_path_buf(), false);
         install_jar(&paths, "26.3", b"jar").unwrap();
-        let mut inst = Instance {
-            loader: LoaderKind::Fabric,
-            game_version: "26.3".into(),
-            aerion_mod: true,
-            ..Default::default()
-        };
-        let args = jvm_args(&paths, &inst);
+        let args = jvm_args(&paths, "a", LoaderKind::Fabric, "26.3");
         assert_eq!(args.len(), 4);
         assert!(
             args[0].starts_with("-Dfabric.addMods=") && args[0].ends_with("aerion-ui-26.3.jar")
         );
         // Supported, but its jar isn't installed in this test.
-        inst.game_version = "1.21.11".into();
-        assert!(jvm_args(&paths, &inst).is_empty());
-        inst.game_version = "1.20.1".into();
-        assert!(jvm_args(&paths, &inst).is_empty());
-        inst.game_version = "26.3".into();
-        inst.loader = LoaderKind::Neoforge;
-        assert!(jvm_args(&paths, &inst).is_empty());
+        assert!(jvm_args(&paths, "a", LoaderKind::Fabric, "1.21.11").is_empty());
+        assert!(jvm_args(&paths, "a", LoaderKind::Fabric, "1.20.1").is_empty());
+        assert!(jvm_args(&paths, "a", LoaderKind::Neoforge, "26.3").is_empty());
     }
 
     #[test]
