@@ -1,0 +1,58 @@
+{
+  "id": "ocean",
+  "name": "Deep Ocean",
+  "author": "Aerion",
+  "base": "dark",
+  "colors": {
+    "bg": "#0e1620",
+    "surface": "#14202d",
+    "surface2": "#1a2938",
+    "surface3": "#223446",
+    "border": "#ffffff17",
+    "text": "#e6f1fb",
+    "textMuted": "#9fb6cb",
+    "textFaint": "#6c8296",
+    "accent": "#4cc9f0",
+    "accentText": "#062330",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#8fe3fb"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#0e1620",
+    "gradient": "radial-gradient(1100px 650px at 15% -10%, #123a52 0%, transparent 60%), linear-gradient(170deg, #0f1823 0%, #0a1118 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "dust"
+  }
+}

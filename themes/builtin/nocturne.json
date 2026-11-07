@@ -1,0 +1,59 @@
+{
+  "$schema": "../theme.schema.json",
+  "id": "nocturne",
+  "name": "Nocturne",
+  "author": "Aerion",
+  "base": "dark",
+  "colors": {
+    "bg": "#16171b",
+    "surface": "#1f2026",
+    "surface2": "#272930",
+    "surface3": "#31333b",
+    "border": "#ffffff17",
+    "text": "#ecebf3",
+    "textMuted": "#a9a8b6",
+    "textFaint": "#74737f",
+    "accent": "#a395ff",
+    "accentText": "#140f2e",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#c4baff"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#16171b",
+    "gradient": "radial-gradient(1200px 700px at 85% 10%, #2a2740 0%, transparent 60%), radial-gradient(900px 600px at 10% 100%, #1d2333 0%, transparent 55%), linear-gradient(160deg, #1b1c21 0%, #141519 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "sparkles"
+  }
+}

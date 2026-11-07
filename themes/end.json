@@ -1,0 +1,58 @@
+{
+  "id": "end",
+  "name": "The End",
+  "author": "Aerion",
+  "base": "dark",
+  "colors": {
+    "bg": "#110d18",
+    "surface": "#1a1424",
+    "surface2": "#221a30",
+    "surface3": "#2c223d",
+    "border": "#ffffff17",
+    "text": "#f1ecfa",
+    "textMuted": "#b6a9cc",
+    "textFaint": "#7d7192",
+    "accent": "#c792ea",
+    "accentText": "#250b38",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#e2c4f7"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#110d18",
+    "gradient": "radial-gradient(1000px 600px at 70% 0%, #2d1a47 0%, transparent 60%), linear-gradient(160deg, #130f1b 0%, #0b0910 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "dust"
+  }
+}

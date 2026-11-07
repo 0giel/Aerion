@@ -3,7 +3,7 @@
 import { commands, events, type ThemeFile } from "../api";
 import { normalizeTheme, themeToCss, type Theme } from "./schema";
 
-const files = import.meta.glob(["../../../themes/*.json", "!../../../themes/theme.schema.json"], {
+const files = import.meta.glob("../../../themes/builtin/*.json", {
   eager: true,
   import: "default",
 });

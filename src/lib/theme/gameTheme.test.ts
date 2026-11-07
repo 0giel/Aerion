@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { toGameTheme } from "./gameTheme";
 import type { Theme } from "./schema";
 
-const files = import.meta.glob(["../../../themes/*.json", "!../../../themes/theme.schema.json"], {
+const files = import.meta.glob("../../../themes/builtin/*.json", {
   eager: true,
   import: "default",
 }) as Record<string, Theme>;

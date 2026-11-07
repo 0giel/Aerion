@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { normalizeTheme, themeToCss, type Theme } from "./schema";
 
-const files = import.meta.glob(["../../../themes/*.json", "!../../../themes/theme.schema.json"], {
+const files = import.meta.glob("../../../themes/builtin/*.json", {
   eager: true,
   import: "default",
 }) as Record<string, Record<string, unknown>>;

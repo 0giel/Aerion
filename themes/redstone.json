@@ -1,25 +1,24 @@
 {
-  "$schema": "./theme.schema.json",
-  "id": "emerald",
-  "name": "Emerald",
+  "id": "redstone",
+  "name": "Redstone",
   "author": "Aerion",
   "base": "dark",
   "colors": {
-    "bg": "#16171b",
-    "surface": "#1f2026",
-    "surface2": "#272930",
-    "surface3": "#31333b",
+    "bg": "#121214",
+    "surface": "#1b1b1f",
+    "surface2": "#232328",
+    "surface3": "#2d2d33",
     "border": "#ffffff17",
-    "text": "#ecebf3",
-    "textMuted": "#a9a8b6",
-    "textFaint": "#74737f",
-    "accent": "#34d399",
-    "accentText": "#04261a",
+    "text": "#ececf1",
+    "textMuted": "#a7a7b3",
+    "textFaint": "#73737e",
+    "accent": "#cc2a2e",
+    "accentText": "#ffffff",
     "success": "#4ade80",
     "warning": "#fbbf24",
     "danger": "#f87171",
     "info": "#60a5fa",
-    "focus": "#6ee7b7"
+    "focus": "#ff7b7d"
   },
   "radius": {
     "sm": 6,
@@ -48,12 +47,12 @@
   },
   "background": {
     "type": "gradient",
-    "color": "#141716",
-    "gradient": "radial-gradient(1100px 650px at 85% 0%, #17322a 0%, transparent 60%), linear-gradient(160deg, #181b1a 0%, #121413 100%)",
+    "color": "#121214",
+    "gradient": "radial-gradient(900px 560px at 50% -10%, #3a1214 0%, transparent 60%), linear-gradient(170deg, #141416 0%, #0d0d0f 100%)",
     "asset": null,
     "dim": 0,
     "blur": 0,
     "ribbons": true,
-    "particles": "dust"
+    "particles": "sparkles"
   }
 }

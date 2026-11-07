@@ -1,25 +1,24 @@
 {
-  "$schema": "./theme.schema.json",
-  "id": "nocturne",
-  "name": "Nocturne",
+  "id": "forest",
+  "name": "Forest",
   "author": "Aerion",
   "base": "dark",
   "colors": {
-    "bg": "#16171b",
-    "surface": "#1f2026",
-    "surface2": "#272930",
-    "surface3": "#31333b",
+    "bg": "#121611",
+    "surface": "#1a2018",
+    "surface2": "#212a1f",
+    "surface3": "#2a3527",
     "border": "#ffffff17",
-    "text": "#ecebf3",
-    "textMuted": "#a9a8b6",
-    "textFaint": "#74737f",
-    "accent": "#a395ff",
-    "accentText": "#140f2e",
+    "text": "#eaf2e4",
+    "textMuted": "#a9b8a0",
+    "textFaint": "#76846e",
+    "accent": "#8bc34a",
+    "accentText": "#13240a",
     "success": "#4ade80",
     "warning": "#fbbf24",
     "danger": "#f87171",
     "info": "#60a5fa",
-    "focus": "#c4baff"
+    "focus": "#b5df85"
   },
   "radius": {
     "sm": 6,
@@ -48,12 +47,12 @@
   },
   "background": {
     "type": "gradient",
-    "color": "#16171b",
-    "gradient": "radial-gradient(1200px 700px at 85% 10%, #2a2740 0%, transparent 60%), radial-gradient(900px 600px at 10% 100%, #1d2333 0%, transparent 55%), linear-gradient(160deg, #1b1c21 0%, #141519 100%)",
+    "color": "#121611",
+    "gradient": "radial-gradient(1000px 620px at 20% 0%, #24391c 0%, transparent 60%), linear-gradient(165deg, #141812 0%, #0d100c 100%)",
     "asset": null,
     "dim": 0,
     "blur": 0,
     "ribbons": true,
-    "particles": "sparkles"
+    "particles": "dust"
   }
 }

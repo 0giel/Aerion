@@ -1,61 +1,190 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo-light-text.png">
+    <img src="docs/brand/logo-dark-text.png" alt="Aerion" width="420">
+  </picture>
+</p>
+
 # Aerion
 
-A fast, themeable launcher for **Minecraft: Java Edition** — instances, mod loaders, Modrinth and
-CurseForge content, modpacks — built with Tauri 2 (Rust) and Svelte 5.
+**Aerion** is a fast and **highly customizable** launcher for **Minecraft: Java Edition**
+(Windows and Linux), with its own in-game mod: a full HUD you arrange with the mouse, dozens of
+settings for every module, and your launcher theme inside Minecraft's menus.
 
-> **Unofficial product.** Aerion is not approved by, endorsed by or associated with Mojang or
-> Microsoft. "Minecraft" is a trademark of Mojang Synergies AB. Aerion contains no game files:
-> the game, libraries, assets and Java runtimes are downloaded at run time from Mojang's servers
-> (and Adoptium for missing Java builds), and you need a Minecraft licence to play.
+**Highlights:** no data collection · 24 HUD modules and elements, each with its own look ·
+drag-and-resize HUD layout · hitboxes, sound editor, overlays, crosshair, waypoints ·
+theme editor with live preview · Fabric, Quilt, Forge, NeoForge · Modrinth mods and modpacks ·
+one-click crash fixes · automatic updates.
 
-## Features
+> **Unofficial product.** Aerion is not approved by or associated with Mojang or Microsoft.
+> "Minecraft" is a trademark of Mojang Synergies AB.
 
-- **Play in one click** — home screen with *Play*, every Java Edition version from the manifest
-  (releases, snapshots, old versions), both argument formats, automatic Java (Mojang runtimes,
-  Adoptium fallback), JVM presets (*Standard / Performance / Low RAM*) with flag validation.
-- **Reliable downloads** — parallel, resumable, hash-verified (SHA-1/SHA-512), retried with
-  back-off, cancellable; libraries and assets shared between instances.
-- **Accounts** — Microsoft sign-in (browser with PKCE, or device code), several accounts, silent
-  refresh; tokens only in the OS credential store. Offline accounts after a licensed account.
-- **Instances** like Prism — wizard, groups, clone, desktop shortcuts, per-instance Java/memory/
-  arguments/environment, drag & drop import, console with log levels and crash analysis
-  (out of memory, wrong Java, GPU driver, mod conflicts, missing dependencies, mixin errors…).
-- **Mod loaders** — Fabric, Quilt, NeoForge, Forge (all installer generations).
-- **Content browser** — Modrinth and CurseForge side by side: filters, project pages, one-click
-  install with dependencies, enable/disable, update check with undo, recognition of manually added
-  files by hash. Resource packs, shaders, data packs.
-- **Modpacks** — install from the browser, import/export `.mrpack` and CurseForge zips, plus a
-  native archive format.
-- **Theming** — themes are one JSON file of design tokens (+ optional CSS), applied live; seven
-  built-in themes, follow-system light/dark, a theme editor with live preview, export/import,
-  image/video backgrounds. See [docs/THEMING.md](docs/THEMING.md).
-- **Aerion mod** (Fabric 26.3 and 1.21.11, optional per instance) — the game's menus in the launcher
-  theme, a HUD of 27 modules arranged in an in-game layout editor with live settings, a modern
-  mod menu, and client features (zoom with the mouse wheel, freelook, fullbright with brightness keys,
-  FOV lock, hitboxes, crosshair, waypoints, sound editor, overlays and more). The title screen shows
-  your character and a *Host a world* button for playing with friends (over the internet with the
-  bundled [e4mc](https://modrinth.com/mod/e4mc)). The theme's picture or animated GIF background
-  shows in the game's menus too. New Fabric + Aerion instances can also get Sodium, Lithium,
-  FerriteCore and ImmediatelyFast (downloaded from Modrinth, checked to work with the mod) for more
-  FPS and less memory without changing how the game plays.
-- **Horizon (experimental)** — instances of [Horizon](https://github.com/horizon-rust/horizon), an
-  open-source Rust rewrite of Minecraft 26.3: Aerion installs the signed build and prepares it from
-  your own game files. Java mods don't run in it.
-- **Shared game settings and a visual key editor** — controls, video and sound shared between the
-  instances that opt in (packs and servers stay per instance); key bindings edited on a drawn
-  keyboard and mouse, with clashes shown per context (F3 combinations don't clash with movement).
-- **Comfort** — Ctrl+K command palette, task panel, onboarding, tray, portable mode, proxy,
-  Polish and English UI.
+![Home screen](docs/screenshots/home.png)
+
+## New in 1.0.0
+
+- **HUD profiles:** separate layouts for PvP, building or survival, switched with a key or by
+  themselves when you join a server you assigned to a profile.
+- **In-game map** (M): click to add a waypoint; a death point, Nether/Overworld positions,
+  sharing a point in chat.
+- **Key editor** in the game with a keyboard that shows conflicts, and a shared one in the launcher.
+- **Friends** with skin faces and a *Join* button for worlds hosted through e4mc.
+- **Screenshot gallery** of every instance, **after-game performance summary**, and moving all
+  settings to another computer in one file.
+- **Badges** next to names in the game, for example for players who report bugs.
+- The mod **updates itself** between launcher releases, and launcher updates download in the
+  background.
+
+## The Aerion mod
+
+Create an instance with **Fabric + Aerion**, or switch the mod on in any Fabric instance. It works
+on **Minecraft 26.3 and 1.21.11**, needs no Fabric API and never touches your mods folder.
+
+![The HUD in a world](docs/screenshots/in-game-hud.png)
+
+### Arrange your HUD
+
+Press **Right Shift** in the game, or the **Aerion** button in the menu.
+
+- Drag a module anywhere. It snaps to the screen and other modules, with guides.
+- Pull a square on any corner to resize it, or nudge it with the arrow keys.
+- Undo a change or reset the layout.
+- The world stays as you see it in play, so you can judge the layout against the real picture.
+
+![Arranging the HUD](docs/screenshots/hud-layout.png)
+
+### Modules
+
+FPS, CPS, coordinates, direction, speed, ping, clock, session time, world day, light level, memory,
+armor, armor warning, totem counter, item counter, potion effects with their icons, death position,
+keystrokes, minimap, resource pack and active toggles. The game's own **boss bar, scoreboard and chat**
+can be moved, resized or hidden too.
+
+![Mods menu](docs/screenshots/mods-menu.png)
+
+### Make every module your own
+
+Each module has its own options, a key to turn it on or off, and its own look, or the look they all
+share:
+
+- text color, background and its opacity, border and its thickness, corners, padding, alignment,
+- smooth text or Minecraft's font,
+- a full color picker with color codes, and **chroma**, a color that keeps moving, with its own
+  speed and a wave across letters.
+
+![Shared look](docs/screenshots/shared-look.png)
+
+### Game features
+
+Each is switched on separately, and none needs a box on your screen.
+
+- **Hitboxes** in your colors, with another color when a target is in hit range
+- **Sound editor:** a volume for every sound in the game, with search and a list of what you just heard
+- **Overlays:** lower or fade the fire, remove the pumpkin view, totem animation, vignette and
+  other effects, add a screen tint and red edges at low health
+- **Crosshair:** your own shape, size and colors
+- **Block outline:** color, thickness, fill
+- **Waypoints** with a name, color and distance, also on the minimap
+- **Light numbers** on the floor around you
+- **Hurt cam** strength, **zoom**, **freelook**, **fullbright**, **perspective** and **FOV** keys,
+  toggle sprint and sneak
+- **Chat:** times, counted repeats, history after disconnecting, opacity
+- **Time and weather** that only you see, and the **color of hits**
+- **Screen background:** remove the tint and blur behind the inventory and menus
+
+The minimap shows terrain only, and there is no player radar or anything that shows players or mobs
+through walls. Some servers forbid extras like freelook, fullbright, hitbox colors or removed
+overlays, so check a server's rules first. Those features are off by default.
+
+![Game features](docs/screenshots/mod-features.png)
+
+![Sound editor](docs/screenshots/sounds.png)
+
+### Your theme, in the game
+
+Minecraft's buttons, sliders and menu backgrounds follow your launcher theme, sharp at every scale,
+with the theme's particles and the Aerion logo. Change the theme or any HUD setting in the launcher
+and a **running game updates within a second**. Each part can be switched off.
+
+![Minecraft's title screen with the Aerion mod](docs/screenshots/in-game.png)
+
+The launcher can edit the HUD as well:
+
+![HUD page in the launcher](docs/screenshots/hud-launcher.png)
+
+## The launcher
+
+- **Microsoft account sign-in** for players who own the game, with silent token refresh.
+- **Instances:** separate game folders per version and mod setup, each with its own icon,
+  favourites and groups. Import from other launchers, put a game folder on another drive, or choose
+  a world to enter right after start.
+- **Vanilla and mod loaders:** Fabric, Quilt, Forge and NeoForge, installed automatically with the
+  right Java from Mojang. Move an instance to a newer Minecraft version with its mods updated.
+- **Mods, resource packs, shaders and modpacks** from Modrinth (and CurseForge with your own API key).
+- **Mod manager:** a check before launch for duplicates, missing dependencies and conflicts, update
+  checks in the background, any older version on demand, replacement suggestions.
+- **Worlds, servers and screenshots:** world backups, a server list with live status, a gallery.
+- **Crash help:** Aerion explains the crash, points at the mod behind it and can **disable it and
+  relaunch in one click**. **Share log** uploads a report to mclo.gs for your Discord, with sign-in
+  tokens and your computer's user name removed first.
+- **Skins:** a local library with a 3D preview; wear a skin or choose a cape on your account.
+- **Performance page:** live processor, memory, graphics card and game FPS, measured on your computer.
+- **Statistics**, **automatic updates** with a short "What's new", Polish and English.
+- **Experimental:** build your home screen and your own pages from widgets.
+
+![Instances](docs/screenshots/instances.png)
+
+![Creating a Fabric + Aerion instance](docs/screenshots/new-instance.png)
+
+![Mod browser](docs/screenshots/mods.png)
+
+![Performance page](docs/screenshots/performance.png)
+
+![Skins](docs/screenshots/skins.png)
+
+## Make the launcher yours
+
+- **7 built-in themes**, a **theme gallery** and a **theme editor** with instant preview: colors,
+  corners, density, sidebar or top navigation, UI scale, fonts, blur and shadows, animation speed.
+- **Backgrounds:** solid color, gradient, **your own image or video**, particles.
+- **Arrange the launcher:** reorder or hide sidebar items and home-screen blocks.
+- **Custom CSS** and themes as plain JSON files, updated live.
+- **Simple by default:** everyday options up front, JVM arguments and the like in "Advanced".
+
+![Themes and in-game settings](docs/screenshots/themes.png)
+
+## Accounts, privacy and security
+
+- **Aerion collects no information about you.** No telemetry, no analytics, no tracking, no Aerion
+  account. Your statistics, settings and libraries stay on your computer. The launcher only talks to
+  the services needed for what you do: Microsoft and Mojang (sign-in, game files),
+  Fabric/Quilt/Forge/NeoForge (loaders), Modrinth or CurseForge (when you browse mods), Adoptium (Java
+  when Mojang has none for your system), GitHub (updates of the launcher and the mod, theme gallery, badges) and mclo.gs (only when
+  you share a log). Minecraft itself has its own telemetry, which Mojang controls.
+- Sign-in uses Microsoft's official OAuth flow and the official Minecraft services. Aerion verifies
+  game ownership and **does not offer any way to bypass licensing**; offline play is only available
+  after a licensed account was added.
+- There is **no Aerion server**: tokens are kept only in the operating system's credential store and
+  are never sent anywhere except Microsoft and Mojang.
+- Updates are signed and verified before they are installed.
+- All game files are downloaded from Mojang's servers at run time; no Minecraft assets are
+  redistributed.
+
+## Download
+
+Get the latest version from [Releases](https://github.com/0giel/Aerion/releases/latest):
+`Aerion_x.y.z_x64-setup.exe` for Windows, `.AppImage` or `.deb` for Linux. Installed copies update
+themselves. The Windows installer isn't signed by Microsoft yet, so SmartScreen may warn you: choose
+"More info", then "Run anyway".
 
 ## Status
 
-Version 1.0.0, developed by one person; bug reports are welcome in
-[issues](https://github.com/0giel/Aerion/issues). Verified end-to-end on Linux (2026-10-31): vanilla 26.3,
-1.21.11, 1.20.1, 1.16.5, 1.8.9 and snapshots; Fabric 1.21.11 with Sodium + Fabric API from
-Modrinth; Forge 1.20.1; NeoForge 26.3; the *Fabulously Optimized* modpack (149 mods). Details:
-[docs/STATUS.md](docs/STATUS.md); roadmap: [docs/PLAN.md](docs/PLAN.md).
+Version 1.0.0, made by one person and open source under the GPL-3.0. Microsoft sign-in is approved
+by Mojang. Bug reports and ideas are welcome in [issues](https://github.com/0giel/Aerion/issues).
 
-## Before first use
+## Building from source
+
+### Before first use
 
 1. **Microsoft sign-in** works out of the box in the released installers. A build from source needs
    its own Azure application approved by Mojang — [docs/AZURE_SETUP.md](docs/AZURE_SETUP.md) — and
@@ -64,7 +193,7 @@ Modrinth; Forge 1.20.1; NeoForge 26.3; the *Fabulously Optimized* modpack (149 m
    entered in *Settings → Mods* (stored in the OS keyring) or as `CURSEFORGE_API_KEY`.
    Modrinth needs nothing.
 
-## Build and run
+### Build and run
 
 Requirements: Rust ≥ 1.88 (`rustup`), Node.js ≥ 22 and pnpm; on Linux the WebKitGTK 4.1 stack:
 
@@ -81,7 +210,7 @@ pnpm tauri build    # release build + installers (NSIS/MSI, deb/AppImage, dmg) i
 Without root on Linux, `scripts/linux-devroot.sh` unpacks the `-dev` packages into a private
 prefix and `source scripts/env.sh` points the build at it (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
-## Configuration
+### Configuration
 
 | Variable | Effect |
 |----------|--------|
@@ -97,7 +226,7 @@ See `.env.example`. Never commit a `.env` file.
 `~/Library/Application Support/Aerion`. **Portable mode**: create an empty file named `portable`
 next to the executable — data then lives in `data/` beside it.
 
-## Troubleshooting
+### Troubleshooting
 
 - **Linux: blank window.** Aerion works around two known causes automatically: broken fontconfig
   caches (symlinks between cache versions, left by newer Flatpak runtimes) and the NVIDIA DMA-BUF
@@ -111,7 +240,7 @@ next to the executable — data then lives in `data/` beside it.
 - Launcher logs: *Settings → Data & storage → Launcher logs*; game logs: *Console* or the
   instance's *Logs* tab.
 
-## Documentation
+### Documentation
 
 - [docs/PLAN.md](docs/PLAN.md) — research, architecture, milestones
 - [docs/STATUS.md](docs/STATUS.md) — what is verified, running log
@@ -120,7 +249,7 @@ next to the executable — data then lives in `data/` beside it.
 - [docs/AZURE_SETUP.md](docs/AZURE_SETUP.md) — Microsoft sign-in setup
 - [CONTRIBUTING.md](CONTRIBUTING.md) — commands and conventions for contributors
 
-## Development
+### Development
 
 | Task | Command |
 |------|---------|

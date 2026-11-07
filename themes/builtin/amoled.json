@@ -1,5 +1,5 @@
 {
-  "$schema": "./theme.schema.json",
+  "$schema": "../theme.schema.json",
   "id": "amoled",
   "name": "AMOLED",
   "author": "Aerion",

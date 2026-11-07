@@ -1,0 +1,58 @@
+{
+  "id": "cherry",
+  "name": "Cherry Blossom",
+  "author": "Aerion",
+  "base": "dark",
+  "colors": {
+    "bg": "#1a1418",
+    "surface": "#241b21",
+    "surface2": "#2e232a",
+    "surface3": "#3a2c35",
+    "border": "#ffffff17",
+    "text": "#f6e9ef",
+    "textMuted": "#c3a9b6",
+    "textFaint": "#8c7480",
+    "accent": "#f49ac1",
+    "accentText": "#3a0f22",
+    "success": "#4ade80",
+    "warning": "#fbbf24",
+    "danger": "#f87171",
+    "info": "#60a5fa",
+    "focus": "#ffc2dc"
+  },
+  "radius": {
+    "sm": 6,
+    "md": 10,
+    "lg": 16,
+    "xl": 22
+  },
+  "font": {
+    "family": "system",
+    "mono": "system-mono",
+    "size": 14
+  },
+  "density": "comfortable",
+  "layout": {
+    "sidebar": "left",
+    "scale": 1
+  },
+  "effects": {
+    "blur": 18,
+    "glass": 0.72,
+    "shadow": 0.45
+  },
+  "motion": {
+    "enabled": true,
+    "speed": 1
+  },
+  "background": {
+    "type": "gradient",
+    "color": "#1a1418",
+    "gradient": "radial-gradient(1000px 600px at 80% -5%, #4a2238 0%, transparent 60%), linear-gradient(165deg, #1d161b 0%, #130f12 100%)",
+    "asset": null,
+    "dim": 0,
+    "blur": 0,
+    "ribbons": true,
+    "particles": "sparkles"
+  }
+}
