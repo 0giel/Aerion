@@ -61,12 +61,6 @@ pub struct Stats {
     pub mods: Vec<ModStat>,
 }
 
-fn count_dir(path: &std::path::Path, f: impl Fn(&std::fs::DirEntry) -> bool) -> u32 {
-    std::fs::read_dir(path)
-        .map(|rd| rd.flatten().filter(|e| f(e)).count() as u32)
-        .unwrap_or(0)
-}
-
 fn group(instances: &[Instance], key: impl Fn(&Instance) -> String) -> Vec<GroupStat> {
     let mut map: HashMap<String, GroupStat> = HashMap::new();
     for i in instances {
@@ -102,10 +96,8 @@ pub async fn compute(manager: &InstanceManager) -> Stats {
             let g = game.clone();
             let (w, s) = tokio::task::spawn_blocking(move || {
                 (
-                    count_dir(&g.join("saves"), |e| e.path().join("level.dat").is_file()),
-                    count_dir(&g.join("screenshots"), |e| {
-                        e.file_name().to_string_lossy().ends_with(".png")
-                    }),
+                    crate::instances::worlds::count(&g),
+                    crate::instances::screenshots::count(&g),
                 )
             })
             .await

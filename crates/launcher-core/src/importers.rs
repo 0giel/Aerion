@@ -138,12 +138,6 @@ pub fn detect_from_log(game_dir: &Path) -> Option<(String, LoaderKind, Option<St
     None
 }
 
-fn count(dir: &Path, f: impl Fn(&std::fs::DirEntry) -> bool) -> u32 {
-    std::fs::read_dir(dir)
-        .map(|rd| rd.flatten().filter(|e| f(e)).count() as u32)
-        .unwrap_or(0)
-}
-
 fn found(
     source: ExternalSource,
     name: String,
@@ -162,12 +156,10 @@ fn found(
     Some(ExternalInstance {
         source,
         name,
-        mods: count(&game_dir.join("mods"), |e| {
+        mods: crate::util::fs::count_entries(&game_dir.join("mods"), |e| {
             e.file_name().to_string_lossy().ends_with(".jar")
         }),
-        worlds: count(&game_dir.join("saves"), |e| {
-            e.path().join("level.dat").is_file()
-        }),
+        worlds: crate::instances::worlds::count(&game_dir),
         game_dir,
         game_version,
         loader,

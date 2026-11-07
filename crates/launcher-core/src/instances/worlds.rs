@@ -39,21 +39,6 @@ pub struct WorldBackup {
     pub auto: bool,
 }
 
-fn dir_size(dir: &Path) -> u64 {
-    let mut total = 0;
-    let mut stack = vec![dir.to_path_buf()];
-    while let Some(d) = stack.pop() {
-        for e in std::fs::read_dir(&d).into_iter().flatten().flatten() {
-            match e.file_type() {
-                Ok(t) if t.is_dir() => stack.push(e.path()),
-                Ok(_) => total += e.metadata().map(|m| m.len()).unwrap_or(0),
-                Err(_) => {}
-            }
-        }
-    }
-    total
-}
-
 /// A world folder name from the UI: one plain path segment.
 fn check_folder(folder: &str) -> Result<()> {
     if folder.is_empty()
@@ -87,6 +72,13 @@ pub fn resolve_join_world(game_dir: &Path, join_world: Option<&str>) -> Option<S
         .map(|w| w.folder)
 }
 
+/// Worlds in `saves/`: folders with a `level.dat`.
+pub fn count(game_dir: &Path) -> u32 {
+    crate::util::fs::count_entries(&game_dir.join("saves"), |e| {
+        e.path().join("level.dat").is_file()
+    })
+}
+
 pub fn list_worlds(game_dir: &Path) -> Vec<WorldInfo> {
     let mut out: Vec<WorldInfo> = std::fs::read_dir(game_dir.join("saves"))
         .into_iter()
@@ -114,7 +106,7 @@ pub fn list_worlds(game_dir: &Path) -> Vec<WorldInfo> {
                 .unwrap_or(0);
             Some(WorldInfo {
                 has_icon: path.join("icon.png").is_file(),
-                size_bytes: dir_size(&path),
+                size_bytes: crate::util::fs::dir_size_sync(&path),
                 folder,
                 name,
                 last_played,

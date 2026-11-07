@@ -130,6 +130,13 @@ pub fn copy_dir_sync(src: &Path, dst: &Path, skip: &dyn Fn(&Path) -> bool) -> Re
     Ok(())
 }
 
+/// Entries of `dir` that pass `f` (0 when it can't be read).
+pub fn count_entries(dir: &Path, f: impl Fn(&std::fs::DirEntry) -> bool) -> u32 {
+    std::fs::read_dir(dir)
+        .map(|rd| rd.flatten().filter(|e| f(e)).count() as u32)
+        .unwrap_or(0)
+}
+
 pub fn dir_size_sync(path: &Path) -> u64 {
     let Ok(rd) = std::fs::read_dir(path) else {
         return 0;

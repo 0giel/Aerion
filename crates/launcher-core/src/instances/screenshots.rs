@@ -16,12 +16,22 @@ pub struct Screenshot {
     pub taken: i64,
 }
 
+fn is_screenshot(name: &str) -> bool {
+    !name.contains(['/', '\\', '\0', ':']) && !name.starts_with('.') && name.ends_with(".png")
+}
+
 /// A screenshot file name from the UI: a plain `.png` name in the folder.
 pub fn path(game_dir: &Path, name: &str) -> Result<PathBuf> {
-    if name.contains(['/', '\\', '\0', ':']) || name.starts_with('.') || !name.ends_with(".png") {
+    if !is_screenshot(name) {
         return Err(Error::UnsafePath(name.to_owned()));
     }
     Ok(game_dir.join("screenshots").join(name))
+}
+
+pub fn count(game_dir: &Path) -> u32 {
+    crate::util::fs::count_entries(&game_dir.join("screenshots"), |e| {
+        is_screenshot(&e.file_name().to_string_lossy())
+    })
 }
 
 /// Newest first.
