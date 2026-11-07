@@ -51,26 +51,14 @@ fn folders(paths: &Paths) -> [(&'static str, PathBuf); 4] {
 }
 
 /// Settings that belong to this computer stay out of the file (and are kept on import).
-fn portable(mut s: Settings) -> Settings {
-    let d = Settings::default();
-    s.data_dir = None;
-    s.java_overrides = d.java_overrides;
-    s.client_id = String::new();
-    s.selected_account = None;
-    s.last_instance = None;
-    s.last_seen_version = None;
-    s
+fn portable(s: Settings) -> Settings {
+    s.with_machine_values_of(&Settings::default())
 }
 
-fn keep_local(mut imported: Settings, current: &Settings) -> Settings {
-    imported.data_dir = current.data_dir.clone();
-    imported.java_overrides = current.java_overrides.clone();
-    imported.client_id = current.client_id.clone();
-    imported.selected_account = current.selected_account.clone();
-    imported.last_instance = current.last_instance.clone();
-    imported.last_seen_version = current.last_seen_version.clone();
-    imported.onboarding_done = true;
-    imported
+fn keep_local(imported: Settings, current: &Settings) -> Settings {
+    let mut s = imported.with_machine_values_of(current);
+    s.onboarding_done = true;
+    s
 }
 
 fn files_in(dir: &Path, out: &mut Vec<(String, PathBuf)>, prefix: &str) {

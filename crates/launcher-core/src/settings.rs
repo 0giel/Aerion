@@ -327,6 +327,18 @@ impl Settings {
     }
 
     /// Client ID from the environment (or build) first, then settings.
+    /// These settings with `other`'s values for what belongs to one computer (folders, Java
+    /// paths, this install's id, the last account and instance used).
+    pub fn with_machine_values_of(mut self, other: &Settings) -> Settings {
+        self.data_dir = other.data_dir.clone();
+        self.java_overrides = other.java_overrides.clone();
+        self.client_id = other.client_id.clone();
+        self.selected_account = other.selected_account.clone();
+        self.last_instance = other.last_instance.clone();
+        self.last_seen_version = other.last_seen_version.clone();
+        self
+    }
+
     pub fn effective_client_id(&self) -> Option<String> {
         std::env::var("LAUNCHER_MSA_CLIENT_ID")
             .ok()
