@@ -176,6 +176,15 @@ const MAX_ICON_BYTES: u64 = 2 * 1024 * 1024;
 /// carry it are ever deleted with their instance.
 const GAME_DIR_MARKER: &str = ".aerion-instance";
 
+/// Entries of a game folder the game or its loader writes for this machine and recreates when
+/// missing (logs, crash dumps, extracted natives, loader caches); never worth copying or sharing.
+pub fn regenerated_by_game(name: &str) -> bool {
+    matches!(
+        name,
+        "logs" | "crash-reports" | "natives" | ".cache" | ".fabric" | ".quilt"
+    ) || name.starts_with("hs_err_pid")
+}
+
 /// A user-chosen game folder must be absolute and empty (or not exist yet), so the launcher never
 /// mixes an instance into, or later deletes, a folder holding other files.
 fn prepare_external_game_dir(dir: &Path, id: &str) -> Result<()> {
@@ -562,10 +571,7 @@ impl InstanceManager {
                     .file_name()
                     .map(|n| n.to_string_lossy().into_owned())
                     .unwrap_or_default();
-                matches!(
-                    n.as_str(),
-                    "logs" | "crash-reports" | ".backups" | GAME_DIR_MARKER
-                ) || n.starts_with("hs_err_pid")
+                regenerated_by_game(&n) || matches!(n.as_str(), ".backups" | GAME_DIR_MARKER)
             };
             copy_dir_sync(&from, &to, &skip)?;
             if let Some((g, dst)) = external {

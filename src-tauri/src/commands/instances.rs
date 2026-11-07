@@ -440,15 +440,7 @@ pub async fn import_external(
             if !link {
                 ctx.stage("stage.copyFiles", None);
                 let (src, dst) = (ext.game_dir.clone(), state.instances.game_dir(&inst.id)?);
-                let top = src.clone();
-                tokio::task::spawn_blocking(move || {
-                    // Only the game folder's own top-level entries are filtered.
-                    launcher_core::util::fs::copy_dir_sync(&src, &dst, &|p| {
-                        p.parent() == Some(top.as_path())
-                            && p.file_name()
-                                .is_some_and(|n| importers::skip_on_copy(&n.to_string_lossy()))
-                    })
-                })
+                tokio::task::spawn_blocking(move || importers::copy_game_dir(&src, &dst))
                 .await
                 .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
             }

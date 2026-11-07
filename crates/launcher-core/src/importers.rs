@@ -35,10 +35,20 @@ pub struct ExternalInstance {
     pub worlds: u32,
 }
 
+/// Copy another launcher's game folder, leaving out [`skip_on_copy`] entries at its top level.
+pub fn copy_game_dir(src: &Path, dst: &Path) -> Result<()> {
+    crate::util::fs::copy_dir_sync(src, dst, &|p| {
+        p.parent() == Some(src)
+            && p.file_name()
+                .is_some_and(|n| skip_on_copy(&n.to_string_lossy()))
+    })
+}
+
 /// Never copied: other launchers' own data, and anything holding credentials.
-pub fn skip_on_copy(name: &str) -> bool {
+fn skip_on_copy(name: &str) -> bool {
     let n = name.to_ascii_lowercase();
-    n.starts_with("launcher_")
+    crate::instances::regenerated_by_game(&n)
+        || n.starts_with("launcher_")
         || n.contains("credential")
         || n.contains("accounts")
         || matches!(
@@ -47,16 +57,10 @@ pub fn skip_on_copy(name: &str) -> bool {
                 | "libraries"
                 | "assets"
                 | "runtime"
-                | "natives"
                 | "bin"
                 | "cache"
-                | ".cache"
                 | "webcache"
                 | "webcache2"
-                | "logs"
-                | "crash-reports"
-                | ".fabric"
-                | ".quilt"
                 | "treatment_tags.json"
         )
 }

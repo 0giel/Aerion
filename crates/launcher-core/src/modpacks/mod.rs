@@ -79,17 +79,7 @@ pub fn detect_format(path: &Path) -> Result<PackFormat> {
 /// Entries in the game directory that are never exported.
 pub fn excluded_from_export(rel: &str) -> bool {
     let first = rel.split('/').next().unwrap_or(rel);
-    matches!(
-        first,
-        "logs"
-            | "crash-reports"
-            | "screenshots"
-            | ".cache"
-            | "natives"
-            | ".fabric"
-            | ".quilt"
-            | "debug"
-            | "quickPlay"
-    ) || first.starts_with("hs_err_pid")
+    crate::instances::regenerated_by_game(first)
+        || matches!(first, "screenshots" | "debug" | "quickPlay")
         || rel.ends_with(".log")
 }
