@@ -35,6 +35,12 @@ one-click crash fixes · automatic updates.
 - The mod **updates itself** between launcher releases, and launcher updates download in the
   background.
 
+![HUD profiles](docs/screenshots/profiles.png)
+
+![Key bindings on a keyboard, with conflicts shown](docs/screenshots/key-bindings.png)
+
+![Waypoints and the map button](docs/screenshots/waypoints.png)
+
 ## The Aerion mod
 
 Create an instance with **Fabric + Aerion**, or switch the mod on in any Fabric instance. It works
@@ -141,6 +147,10 @@ The launcher can edit the HUD as well:
 ![Performance page](docs/screenshots/performance.png)
 
 ![Skins](docs/screenshots/skins.png)
+
+![Friends](docs/screenshots/friends.png)
+
+![Screenshot gallery of every instance](docs/screenshots/screenshots.png)
 
 ## Make the launcher yours
 

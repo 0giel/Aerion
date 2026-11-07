@@ -201,10 +201,14 @@
   function context(a: string): string {
     // The F3 key is both the debug screen and the modifier for the combinations: one key, by design.
     if (a === "key.debug.modifier") return "modifier";
+    // F3 + C copies the position, and held for six seconds crashes the game: one key by design.
+    if (a === "key.debug.crash") return "debug-hold";
     if (a.startsWith("key.debug.") && a !== "key.debug.overlay") return "debug";
     if (/spectator/i.test(a)) return "spectator";
     return "game";
   }
+
+  const isDebug = (a: string) => context(a).startsWith("debug");
 
   const GROUPS: [string, (a: string) => boolean][] = [
     ["movement", (a) => /^key\.(forward|left|back|right|jump|sneak|sprint)$/.test(a)],
@@ -212,7 +216,7 @@
     ["inventory", (a) => /^key\.(inventory|hotbar\.\d|saveToolbarActivator|loadToolbarActivator)$/.test(a)],
     ["multiplayer", (a) => /^key\.(chat|playerlist|command|socialInteractions)$/.test(a)],
     ["aerion", (a) => a.startsWith("key.aerion.")],
-    ["debug", (a) => context(a) === "debug"],
+    ["debug", (a) => isDebug(a)],
     ["misc", (a) => /^key\.[a-zA-Z]+$/.test(a)],
     ["mods", () => true],
   ];
@@ -225,7 +229,7 @@
     const words = tail.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ");
     const pretty = words.charAt(0).toUpperCase() + words.slice(1);
     if (a.startsWith("key.aerion.")) return `Aerion: ${pretty}`;
-    return context(a) === "debug" ? `F3 + ${pretty}` : pretty;
+    return isDebug(a) ? `F3 + ${pretty}` : pretty;
   }
 
   /** Actions per key; a plain record, rebuilt whenever a binding changes. */

@@ -77,6 +77,8 @@ public final class KeyBoard {
 	public static String context(KeyMapping k) {
 		String a = k.getName();
 		if (a.equals("key.debug.modifier")) return "modifier";
+		// F3 + C copies the position, and held for six seconds crashes the game: one key by design.
+		if (a.equals("key.debug.crash")) return "debug-hold";
 		if (a.startsWith("key.debug.") && !a.equals("key.debug.overlay")) return "debug";
 		if (a.toLowerCase(java.util.Locale.ROOT).contains("spectator")) return "spectator";
 		return "game";

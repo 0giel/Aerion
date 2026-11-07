@@ -788,12 +788,11 @@ public final class AerionMenu implements Page {
 					Profiles.switchTo(cfg, name);
 				});
 			}
-			if (!servers.isEmpty()) {
-				y += ROW - 4;
-				Txt.draw(g, ellipsize(servers, colW - 20), x + 15, y + 5, SMALL, muted);
-				y += 6;
-			}
 			y += ROW;
+			if (!servers.isEmpty()) {
+				Txt.draw(g, ellipsize(servers, colW - 20), x + 15, y + 2, SMALL, muted);
+				y += 8;
+			}
 			endRow();
 		}
 		String add = "+ " + Lang.tr("aerion.profile.addLong");
@@ -1582,7 +1581,7 @@ public final class AerionMenu implements Page {
 		y += ROW;
 		if (!k.isUnbound()) {
 			for (KeyMapping other : Minecraft.getInstance().options.keyMappings) {
-				if (other != k && other.same(k)) {
+				if (other != k && other.same(k) && KeyBoard.context(other).equals(KeyBoard.context(k))) {
 					String who = Component.translatable(other.getName()).getString();
 					Txt.draw(g, Lang.tr("aerion.key.taken").replace("{}", who), bx, y + 3, SMALL, 0xFFFFAA33);
 					y += 9;
