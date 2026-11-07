@@ -80,9 +80,7 @@ pub struct Finished {
 pub async fn keep_summary(paths: &Paths, game: Finished, samples: &[Sample]) -> crate::Result<()> {
     let dir = game.game_dir.clone();
     let (has_sodium, render_distance) =
-        tokio::task::spawn_blocking(move || (has_sodium(&dir), render_distance(&dir)))
-            .await
-            .map_err(|e| crate::Error::Invalid(e.to_string()))?;
+        crate::util::blocking(move || Ok((has_sodium(&dir), render_distance(&dir)))).await?;
     let ctx = Context {
         instance_id: game.instance_id,
         instance_name: game.instance_name,

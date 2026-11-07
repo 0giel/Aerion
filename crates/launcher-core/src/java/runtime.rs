@@ -305,15 +305,14 @@ impl RuntimeManager<'_> {
         let dir = self.adoptium_dir(major);
         let _ = tokio::fs::remove_dir_all(&dir).await;
         let (a, d) = (archive.clone(), dir.clone());
-        tokio::task::spawn_blocking(move || {
+        crate::util::blocking(move || {
             if a.extension().is_some_and(|e| e == "zip") {
                 crate::util::archive::extract_zip(&a, &d, &|_| true).map(|_| ())
             } else {
                 crate::util::archive::extract_tar_gz(&a, &d)
             }
         })
-        .await
-        .map_err(|e| Error::Invalid(e.to_string()))??;
+        .await?;
         let _ = tokio::fs::remove_file(&archive).await;
         atomic_write(dir.join(MARKER), &asset.release_name).await?;
         let java = find_java(&dir).ok_or(Error::JavaNotFound(major))?;

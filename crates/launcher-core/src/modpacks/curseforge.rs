@@ -92,9 +92,7 @@ pub async fn import(
         return Err(Error::CurseForgeKeyMissing);
     }
     let a = archive.to_path_buf();
-    let manifest = tokio::task::spawn_blocking(move || read_manifest(&a))
-        .await
-        .map_err(|e| Error::Invalid(e.to_string()))??;
+    let manifest = crate::util::blocking(move || read_manifest(&a)).await?;
     let primary = manifest
         .minecraft
         .mod_loaders
@@ -181,9 +179,7 @@ pub async fn import(
                 .trim_end_matches('/')
         );
         let (a, g) = (archive.to_path_buf(), game_dir.clone());
-        tokio::task::spawn_blocking(move || extract_zip_prefix(&a, &prefix, &g))
-            .await
-            .map_err(|e| Error::Invalid(e.to_string()))??;
+        crate::util::blocking(move || extract_zip_prefix(&a, &prefix, &g)).await?;
         let info = origin.unwrap_or(ModpackInfo {
             provider: "local".into(),
             project_id: None,

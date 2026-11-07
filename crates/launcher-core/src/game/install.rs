@@ -230,7 +230,7 @@ async fn extract_natives(
         return Ok(());
     }
     let dest = natives_dir.to_path_buf();
-    tokio::task::spawn_blocking(move || -> Result<()> {
+    crate::util::blocking(move || -> Result<()> {
         for (jar, exclude) in natives {
             extract_zip(&jar, &dest, &|name: &str| {
                 !name.ends_with('/') && !exclude.iter().any(|e| name.starts_with(e.as_str()))
@@ -238,8 +238,7 @@ async fn extract_natives(
         }
         Ok(())
     })
-    .await
-    .map_err(|e| Error::Invalid(e.to_string()))??;
+    .await?;
     atomic_write(&marker, signature).await
 }
 

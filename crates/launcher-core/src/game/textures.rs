@@ -63,9 +63,8 @@ impl Textures {
         }
         let jar = self.jar(engine).await?;
         let entry = format!("assets/minecraft/textures/{name}.png");
-        let bytes = tokio::task::spawn_blocking(move || read_zip_entry(&jar, &entry))
-            .await
-            .map_err(|e| Error::Invalid(e.to_string()))??
+        let bytes = crate::util::blocking(move || read_zip_entry(&jar, &entry))
+            .await?
             .filter(|b| png_size(b).is_some())
             .ok_or_else(|| Error::Invalid(format!("texture {name} not found")))?;
         if let Some(dir) = cached.parent() {
@@ -83,9 +82,7 @@ impl Textures {
             return Ok(j.clone());
         }
         let versions = engine.paths.versions_dir();
-        let found = tokio::task::spawn_blocking(move || find_jar(&versions))
-            .await
-            .map_err(|e| Error::Invalid(e.to_string()))?;
+        let found = crate::util::blocking(move || Ok(find_jar(&versions))).await?;
         let path = match found {
             Some(p) => p,
             None => {

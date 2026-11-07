@@ -323,11 +323,14 @@ pub async fn check_mod_health(
 ) -> CmdResult<Vec<launcher_core::mods::health::ModIssue>> {
     let inst = state.instances.get(&instance_id).await?;
     let mods = state.instances.game_dir(&instance_id)?.join("mods");
-    Ok(tokio::task::spawn_blocking(move || {
-        launcher_core::mods::health::check(&mods, &inst.game_version, inst.loader)
+    Ok(launcher_core::util::blocking(move || {
+        Ok(launcher_core::mods::health::check(
+            &mods,
+            &inst.game_version,
+            inst.loader,
+        ))
     })
-    .await
-    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))?)
+    .await?)
 }
 
 #[tauri::command]

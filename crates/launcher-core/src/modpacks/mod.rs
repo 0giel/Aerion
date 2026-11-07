@@ -144,7 +144,7 @@ async fn write_pack(
     include: Vec<String>,
 ) -> Result<()> {
     let dest = dest.to_path_buf();
-    tokio::task::spawn_blocking(move || -> Result<()> {
+    crate::util::blocking(move || -> Result<()> {
         let mut zip = ZipBuilder::create(&dest)?;
         zip.add_bytes(index.0, &index.1)?;
         for (name, path) in files {
@@ -168,7 +168,6 @@ async fn write_pack(
         zip.finish()
     })
     .await
-    .map_err(|e| Error::Invalid(e.to_string()))?
 }
 
 pub fn detect_format(path: &Path) -> Result<PackFormat> {

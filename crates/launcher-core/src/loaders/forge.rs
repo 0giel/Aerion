@@ -209,12 +209,6 @@ struct Processor {
     sides: Option<Vec<String>>,
 }
 
-async fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T> + Send + 'static) -> Result<T> {
-    tokio::task::spawn_blocking(f)
-        .await
-        .map_err(|e| Error::Invalid(e.to_string()))?
-}
-
 /// Install a Forge or NeoForge version and return the launchable version id.
 pub async fn install(
     engine: &Engine,
@@ -253,9 +247,10 @@ pub async fn install(
     ctx.stage("stage.loader", Some(format!("{} {version}", kind.as_str())));
 
     let inst = installer.clone();
-    let profile_bytes = blocking(move || read_zip_entry(&inst, "install_profile.json"))
-        .await?
-        .ok_or_else(|| Error::LoaderInstall("installer has no install_profile.json".into()))?;
+    let profile_bytes =
+        crate::util::blocking(move || read_zip_entry(&inst, "install_profile.json"))
+            .await?
+            .ok_or_else(|| Error::LoaderInstall("installer has no install_profile.json".into()))?;
     let raw: serde_json::Value = serde_json::from_slice(&profile_bytes)
         .map_err(|e| Error::parse("install_profile.json", e))?;
     let libs_dir = engine.paths.libraries_dir();
@@ -277,7 +272,8 @@ pub async fn install(
             .ok_or_else(|| Error::LoaderInstall(format!("bad install.path {coords}")))?;
         let dest = libs_dir.join(coord.path());
         let inst = installer.clone();
-        let found = blocking(move || extract_zip_entry(&inst, &file_path, &dest)).await?;
+        let found =
+            crate::util::blocking(move || extract_zip_entry(&inst, &file_path, &dest)).await?;
         if !found {
             return Err(Error::LoaderInstall(
                 "universal jar missing from installer".into(),
@@ -303,7 +299,7 @@ pub async fn install(
             .clone()
             .unwrap_or_else(|| "/version.json".into());
         let inst = installer.clone();
-        let bytes = blocking(move || read_zip_entry(&inst, &json_name))
+        let bytes = crate::util::blocking(move || read_zip_entry(&inst, &json_name))
             .await?
             .ok_or_else(|| Error::LoaderInstall("installer has no version.json".into()))?;
         let v: VersionJson =
@@ -351,7 +347,7 @@ async fn provide_libraries<'a>(
     ctx: &TaskCtx,
 ) -> Result<()> {
     let inst = installer.to_path_buf();
-    let entries: HashSet<String> = blocking(move || list_zip_entries(&inst))
+    let entries: HashSet<String> = crate::util::blocking(move || list_zip_entries(&inst))
         .await?
         .into_iter()
         .collect();
@@ -372,7 +368,7 @@ async fn provide_libraries<'a>(
                 _ => false,
             };
             if !up_to_date {
-                blocking(move || extract_zip_entry(&inst, &entry, &d)).await?;
+                crate::util::blocking(move || extract_zip_entry(&inst, &entry, &d)).await?;
             }
         } else if let Some(url) = lib.url {
             downloads.push(DownloadItem::new(url, dest).hash(lib.hash).size(lib.size));
@@ -467,7 +463,7 @@ async fn run_processors(
         } else if v.starts_with('/') {
             let out = crate::util::fs::safe_join(&tmp, v.trim_start_matches('/'))?;
             let (inst, name, o) = (installer.to_path_buf(), v.clone(), out.clone());
-            blocking(move || extract_zip_entry(&inst, &name, &o)).await?;
+            crate::util::blocking(move || extract_zip_entry(&inst, &name, &o)).await?;
             display_path(&out)
         } else {
             v.clone()
@@ -519,7 +515,7 @@ async fn run_processors(
             .ok_or_else(|| Error::LoaderInstall(format!("bad processor {}", p.jar)))?;
         let jar = libs.join(jar_coord.local_path());
         let j = jar.clone();
-        let main = blocking(move || main_class(&j)).await?;
+        let main = crate::util::blocking(move || main_class(&j)).await?;
         let mut cp = vec![display_path(&jar)];
         for c in &p.classpath {
             let coord = MavenCoord::parse(c)

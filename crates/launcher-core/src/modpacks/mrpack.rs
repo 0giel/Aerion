@@ -105,9 +105,7 @@ pub async fn import(
     ctx: &TaskCtx,
 ) -> Result<Instance> {
     let a = archive.to_path_buf();
-    let index = tokio::task::spawn_blocking(move || read_index(&a))
-        .await
-        .map_err(|e| Error::Invalid(e.to_string()))??;
+    let index = crate::util::blocking(move || read_index(&a)).await?;
     let game_version = index
         .dependencies
         .get("minecraft")
@@ -164,13 +162,12 @@ async fn install_files(
     engine.downloader.run(items, VerifyMode::Fast, ctx).await?;
 
     let (a, g) = (archive.to_path_buf(), game_dir.clone());
-    tokio::task::spawn_blocking(move || -> Result<()> {
+    crate::util::blocking(move || -> Result<()> {
         extract_zip_prefix(&a, "overrides/", &g)?;
         extract_zip_prefix(&a, "client-overrides/", &g)?;
         Ok(())
     })
     .await
-    .map_err(|e| Error::Invalid(e.to_string()))?
 }
 
 /// Export an instance as `.mrpack`. Files known on Modrinth are referenced by URL; everything

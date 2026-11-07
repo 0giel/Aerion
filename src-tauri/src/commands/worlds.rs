@@ -15,9 +15,7 @@ use crate::state::AppState;
 async fn blocking<T: Send + 'static>(
     f: impl FnOnce() -> launcher_core::Result<T> + Send + 'static,
 ) -> CmdResult<T> {
-    Ok(tokio::task::spawn_blocking(f)
-        .await
-        .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??)
+    Ok(launcher_core::util::blocking(f).await?)
 }
 
 fn not_running(state: &AppState, id: &str) -> CmdResult<()> {
@@ -334,8 +332,6 @@ pub async fn set_key_bindings(
         return Err(launcher_core::Error::AlreadyRunning.into());
     }
     let dir = bindings_dir(&state, instance_id.as_deref()).await?;
-    tokio::task::spawn_blocking(move || options::write_bindings(&dir, &bindings))
-        .await
-        .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+    launcher_core::util::blocking(move || options::write_bindings(&dir, &bindings)).await?;
     Ok(())
 }

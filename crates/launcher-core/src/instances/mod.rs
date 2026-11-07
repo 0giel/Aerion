@@ -274,9 +274,7 @@ impl InstanceManager {
     /// Back up every world (before a change that could break them, like mod updates).
     pub async fn backup_worlds(&self, id: &str) -> Result<Vec<worlds::WorldBackup>> {
         let (dir, game) = (self.dir(id)?, self.game_dir(id)?);
-        tokio::task::spawn_blocking(move || worlds::backup_all(&dir, &game))
-            .await
-            .map_err(|e| Error::Invalid(e.to_string()))?
+        crate::util::blocking(move || worlds::backup_all(&dir, &game)).await
     }
 
     pub async fn list(&self) -> Vec<Instance> {
@@ -354,9 +352,7 @@ impl InstanceManager {
             }
             Some(g) => {
                 let (g, i) = (g.clone(), id.clone());
-                tokio::task::spawn_blocking(move || prepare_external_game_dir(&g, &i))
-                    .await
-                    .map_err(|e| Error::Invalid(e.to_string()))??;
+                crate::util::blocking(move || prepare_external_game_dir(&g, &i)).await?;
                 tokio::fs::create_dir_all(&dir).await.at(&dir)?;
             }
             None => tokio::fs::create_dir_all(dir.join("minecraft"))
@@ -531,7 +527,7 @@ impl InstanceManager {
             return Ok(inst);
         }
         let (f, t, i, external) = (from.clone(), to.clone(), id.to_owned(), target.is_some());
-        tokio::task::spawn_blocking(move || -> Result<()> {
+        crate::util::blocking(move || -> Result<()> {
             if external {
                 prepare_external_game_dir(&t, &i)?;
             } else if t.exists() {
@@ -551,8 +547,7 @@ impl InstanceManager {
             }
             Ok(())
         })
-        .await
-        .map_err(|e| Error::Invalid(e.to_string()))??;
+        .await?;
         let mut inst = inst;
         inst.game_dir = target;
         self.write(&inst).await?;
@@ -569,7 +564,7 @@ impl InstanceManager {
         let to = self.root.join(&new_id);
         // A relocated game folder is copied into the clone's own default folder.
         let external = src.game_dir.clone().map(|g| (g, to.join("minecraft")));
-        tokio::task::spawn_blocking(move || {
+        crate::util::blocking(move || {
             let skip = |p: &Path| {
                 let n = p
                     .file_name()
@@ -585,8 +580,7 @@ impl InstanceManager {
             }
             Ok::<(), Error>(())
         })
-        .await
-        .map_err(|e| Error::Invalid(e.to_string()))??;
+        .await?;
         let inst = Instance {
             id: new_id,
             name,

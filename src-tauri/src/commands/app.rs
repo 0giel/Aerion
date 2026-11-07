@@ -236,11 +236,10 @@ pub async fn export_settings(
 ) -> CmdResult<launcher_core::transfer::TransferSummary> {
     let paths = state.paths.clone();
     let settings = state.settings.read().await.clone();
-    Ok(tokio::task::spawn_blocking(move || {
+    Ok(launcher_core::util::blocking(move || {
         launcher_core::transfer::export(&paths, &settings, std::path::Path::new(&dest))
     })
-    .await
-    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??)
+    .await?)
 }
 
 #[derive(Debug, Clone, Serialize, Type)]
@@ -263,11 +262,10 @@ pub async fn import_settings(
     }
     let paths = state.paths.clone();
     let current = state.settings.read().await.clone();
-    let (settings, summary) = tokio::task::spawn_blocking(move || {
+    let (settings, summary) = launcher_core::util::blocking(move || {
         launcher_core::transfer::import(&paths, std::path::Path::new(&src), &current)
     })
-    .await
-    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+    .await?;
     let settings = save_settings(state, settings).await?;
     Ok(ImportedSettings { settings, summary })
 }

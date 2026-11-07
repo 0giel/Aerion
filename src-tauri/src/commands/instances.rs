@@ -318,9 +318,7 @@ pub async fn list_game_dir(state: State<'_, AppState>, id: String) -> CmdResult<
 #[tauri::command]
 #[specta::specta]
 pub async fn detect_external_instances() -> CmdResult<Vec<ExternalInstance>> {
-    Ok(tokio::task::spawn_blocking(importers::detect)
-        .await
-        .map_err(|e| launcher_core::Error::Invalid(e.to_string()))?)
+    Ok(launcher_core::util::blocking(|| Ok(importers::detect())).await?)
 }
 
 /// Read a folder the user picked as a possible game folder.
@@ -328,9 +326,8 @@ pub async fn detect_external_instances() -> CmdResult<Vec<ExternalInstance>> {
 #[specta::specta]
 pub async fn inspect_external_folder(path: String) -> CmdResult<ExternalInstance> {
     Ok(
-        tokio::task::spawn_blocking(move || importers::inspect_folder(&PathBuf::from(path)))
-            .await
-            .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??,
+        launcher_core::util::blocking(move || importers::inspect_folder(&PathBuf::from(path)))
+            .await?,
     )
 }
 
@@ -377,9 +374,7 @@ pub async fn import_external(
             if !link {
                 ctx.stage("stage.copyFiles", None);
                 let (src, dst) = (ext.game_dir.clone(), state.instances.game_dir(&inst.id)?);
-                tokio::task::spawn_blocking(move || importers::copy_game_dir(&src, &dst))
-                    .await
-                    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+                launcher_core::util::blocking(move || importers::copy_game_dir(&src, &dst)).await?;
             }
             // Recognise mods (for updates); a failure only costs that.
             ctx.stage("stage.identify", None);

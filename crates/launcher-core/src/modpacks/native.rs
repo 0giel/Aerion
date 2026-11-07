@@ -26,7 +26,7 @@ pub async fn export(instances: &InstanceManager, id: &str, dest: &Path) -> Resul
     let game_dir = instances.game_dir(id)?;
     let json = serde_json::to_vec_pretty(&inst).map_err(|e| Error::parse("instance", e))?;
     let dest = dest.to_path_buf();
-    tokio::task::spawn_blocking(move || -> Result<()> {
+    crate::util::blocking(move || -> Result<()> {
         let mut zip = ZipBuilder::create(&dest)?;
         zip.add_bytes(MARKER, &json)?;
         let content = dir.join("content.json");
@@ -44,18 +44,16 @@ pub async fn export(instances: &InstanceManager, id: &str, dest: &Path) -> Resul
         zip.finish()
     })
     .await
-    .map_err(|e| Error::Invalid(e.to_string()))?
 }
 
 pub async fn import(instances: &InstanceManager, archive: &Path) -> Result<Instance> {
     let a = archive.to_path_buf();
-    let src: Instance = tokio::task::spawn_blocking(move || -> Result<Instance> {
+    let src: Instance = crate::util::blocking(move || -> Result<Instance> {
         let bytes =
             read_marker(&a)?.ok_or_else(|| Error::Invalid("not an Aerion archive".into()))?;
         serde_json::from_slice(&bytes).map_err(|e| Error::parse(MARKER, e))
     })
-    .await
-    .map_err(|e| Error::Invalid(e.to_string()))??;
+    .await?;
     let spec = NewInstance {
         icon: src.icon.clone(),
         group: src.group.clone(),
@@ -70,15 +68,14 @@ pub async fn import(instances: &InstanceManager, archive: &Path) -> Result<Insta
         let id = created.id.clone();
         let dir = instances.dir(&id)?;
         let (a, g, d) = (archive.to_path_buf(), instances.game_dir(&id)?, dir.clone());
-        tokio::task::spawn_blocking(move || -> Result<()> {
+        crate::util::blocking(move || -> Result<()> {
             extract_zip_prefix(&a, "minecraft/", &g)?;
             if let Some(c) = read_zip_entry(&a, "content.json")? {
                 crate::util::fs::atomic_write_sync(&d.join("content.json"), &c)?;
             }
             Ok(())
         })
-        .await
-        .map_err(|e| Error::Invalid(e.to_string()))??;
+        .await?;
         // Keep the user's settings but not identity/statistics from another machine.
         let restored = Instance {
             id: id.clone(),
