@@ -35,6 +35,15 @@ public final class Textures {
 		Minecraft.getInstance().getTextureManager().register(id, new SmoothTexture(id::toString, image));
 	}
 
+	/** A picture given as ARGB pixels, row by row, kept pixel-sharp (maps). */
+	public static void registerPixels(Identifier id, int w, int h, int[] argb) {
+		NativeImage image = new NativeImage(w, h, false);
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) image.setPixel(x, y, argb[y * w + x]);
+		}
+		Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(id::toString, image));
+	}
+
 	public static void release(Identifier id) {
 		Minecraft.getInstance().getTextureManager().release(id);
 	}

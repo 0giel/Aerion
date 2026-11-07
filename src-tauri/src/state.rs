@@ -137,4 +137,14 @@ mod tests {
         let bundled: Vec<&str> = super::AERION_MOD_JARS.iter().map(|(v, _)| *v).collect();
         assert_eq!(bundled, launcher_core::aerion_mod::GAME_VERSIONS);
     }
+
+    #[test]
+    fn mod_updates_are_checked_with_the_updater_key() {
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        assert_eq!(
+            conf["plugins"]["updater"]["pubkey"],
+            launcher_core::aerion_mod::update::PUBLIC_KEY
+        );
+    }
 }

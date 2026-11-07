@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Theme for the gallery / Motyw do galerii
+    url: https://github.com/0giel/Aerion/issues/new?title=Theme%3A%20
+    about: Share a theme from the theme editor (Export…). Udostępnij motyw z edytora motywów (Eksportuj…).

@@ -2406,6 +2406,7 @@ dependencies = [
  "hex",
  "keyring",
  "md-5",
+ "minisign-verify",
  "mslnk",
  "regex",
  "reqwest",

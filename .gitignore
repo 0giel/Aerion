@@ -34,3 +34,4 @@ mod/.gradle/
 mod/build/
 mod/run/
 mod/*/build/
+skills-lock.json

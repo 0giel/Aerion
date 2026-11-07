@@ -22,6 +22,7 @@ import pl.aerion.mod.Colors;
 import pl.aerion.mod.Draw;
 import pl.aerion.mod.Icons;
 import pl.aerion.mod.Lang;
+import pl.aerion.mod.MixinGate;
 import pl.aerion.mod.Logo;
 import pl.aerion.mod.Particles;
 import pl.aerion.mod.Theme;
@@ -46,7 +47,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -176,7 +177,7 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	private enum Section { HUD, FEATURES, SOUNDS, WAYPOINTS, KEYS, LOOK }
+	private enum Section { HUD, PROFILES, FEATURES, SOUNDS, WAYPOINTS, KEYS, LOOK }
 
 	private enum Sub { GENERAL, LOOK, KEY }
 
@@ -191,10 +192,15 @@ public final class AerionMenu implements Page {
 	private String expanded;
 	/** The key waiting for its new binding. */
 	private KeyMapping capturing;
+	/** The key picked on the keyboard: the list shows only its actions (null = Aerion's keys). */
+	private static String pickedKey;
 
 	private final List<Hit> hits = new ArrayList<>();
 	private Hit sliding;
 	private boolean changed, clipping, gameOptionsChanged;
+	/** The text field being typed in (its row key), what it holds, and where it goes on Enter. */
+	private String fieldKey, fieldText = "";
+	private Consumer<String> fieldDone;
 	/** The waypoint whose name is being typed. */
 	private Waypoints.Point naming;
 	/** The first key replaces the suggested name. */
@@ -223,6 +229,12 @@ public final class AerionMenu implements Page {
 	private float dt = 0.016f;
 
 	public AerionMenu() {}
+
+	/** Opens on the HUD profiles. */
+	static AerionMenu profiles() {
+		section = Section.PROFILES;
+		return new AerionMenu();
+	}
 
 	/** Opens directly on one module's settings. */
 	public AerionMenu(String module) {
@@ -285,7 +297,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private static boolean enabled(HudConfig cfg, String id) {
-		return HudConfig.bool(item(cfg, id), "enabled", id.equals("zoom"));
+		return HudConfig.bool(item(cfg, id), "enabled", id.equals("zoom") || id.equals("badges"));
 	}
 
 	private void toLayout() {
@@ -307,6 +319,7 @@ public final class AerionMenu implements Page {
 			return false;
 		}
 		if (button != InputConstants.MOUSE_BUTTON_LEFT) return false;
+		commitField();
 		hexRow = null;
 		naming = null;
 		for (Hit h : List.copyOf(hits)) {
@@ -327,6 +340,13 @@ public final class AerionMenu implements Page {
 		if (capturing != null) {
 			if (!escape) bind(key);
 			capturing = null;
+			return true;
+		}
+		if (fieldKey != null) {
+			int k = key.getValue();
+			if (k == InputConstants.KEY_BACKSPACE && !fieldText.isEmpty()) fieldText = fieldText.substring(0, fieldText.length() - 1);
+			else if (k == InputConstants.KEY_RETURN || k == InputConstants.KEY_NUMPADENTER) commitField();
+			else if (escape) fieldKey = null;
 			return true;
 		}
 		if (naming != null) {
@@ -376,6 +396,10 @@ public final class AerionMenu implements Page {
 
 	@Override
 	public boolean charTyped(int codepoint) {
+		if (fieldKey != null) {
+			if (fieldText.length() < 400 && !Character.isISOControl(codepoint)) fieldText += new String(Character.toChars(codepoint));
+			return true;
+		}
 		if (naming != null) {
 			if (namingFresh) naming.name = "";
 			namingFresh = false;
@@ -528,6 +552,7 @@ public final class AerionMenu implements Page {
 			case FEATURES -> tiles(mainX, mainW, found(List.of(FEATURES)));
 			case SOUNDS -> soundsPage();
 			case WAYPOINTS -> waypointsPage();
+			case PROFILES -> profilesPage();
 			case KEYS -> keysPage();
 			case LOOK -> lookPage();
 		}
@@ -550,6 +575,7 @@ public final class AerionMenu implements Page {
 		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + 5;
 		ny = navHead(nx, ny, "aerion.navhead.mods");
 		ny = navItem(nx, ny, Section.HUD, "fps", "aerion.nav.hud");
+		ny = navItem(nx, ny, Section.PROFILES, "packs", "aerion.nav.profiles");
 		ny = navItem(nx, ny, Section.FEATURES, "features", "aerion.nav.features") + 5;
 		ny = navHead(nx, ny, "aerion.navhead.tools");
 		ny = navItem(nx, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
@@ -609,6 +635,7 @@ public final class AerionMenu implements Page {
 	private int listHead(int mx, int my) {
 		String key = switch (section) {
 			case HUD -> "hud";
+			case PROFILES -> "profiles";
 			case FEATURES -> "features";
 			case SOUNDS -> "sounds";
 			case WAYPOINTS -> "waypoints";
@@ -681,7 +708,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private boolean searchable() {
-		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK && section != Section.WAYPOINTS;
+		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK && section != Section.WAYPOINTS && section != Section.PROFILES;
 	}
 
 	/** Typing goes straight here, so there is nothing to click first. */
@@ -710,6 +737,105 @@ public final class AerionMenu implements Page {
 			bx += w + 3;
 		}
 		y += 20;
+	}
+
+	private void commitField() {
+		if (fieldKey == null) return;
+		fieldKey = null;
+		fieldDone.accept(fieldText);
+	}
+
+	/** A text setting: click to type, Enter (or a click elsewhere) keeps it, Esc drops it. */
+	private void textRow(String key, String label, String value, String placeholder, Consumer<String> done) {
+		beginRow("field:" + key);
+		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
+		int bx = controlX(), w = x + colW - bx;
+		boolean typing = key.equals(fieldKey), over = inside(bx, y + 1, w, ROW - 3);
+		Draw.control(g, bx, y + 1, w, ROW - 3, 3, typing ? accent : over ? track : line, typing ? tile : control);
+		String shown = typing ? fieldText + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : "") : value;
+		boolean empty = !typing && value.isEmpty();
+		Txt.draw(g, ellipsize(empty ? placeholder : shown, w - 10), bx + 5, y + 1 + (ROW - 3) / 2f, SMALL, empty ? muted : text);
+		hit(bx, y + 1, w, ROW - 3, f -> {
+			fieldKey = key;
+			fieldText = value;
+			fieldDone = done;
+		}, false);
+		y += ROW;
+		endRow();
+	}
+
+	/** HUD profiles: which one is in use, and the active one's name, servers and removal. */
+	private void profilesPage() {
+		HudConfig cfg = AerionClient.hud();
+		String active = Profiles.active(cfg);
+		List<String> names = Profiles.names(cfg);
+		beginCard(null);
+		for (String name : names) {
+			beginRow("profile:" + name);
+			boolean on = name.equals(active);
+			Icons.draw(g, "packs", x, y + 3, 10, on ? accent : muted);
+			Txt.draw(g, ellipsize(name, colW - 90), x + 15, y + ROW / 2f, TEXT, text);
+			String servers = Profiles.servers(cfg, name);
+			int right = x + colW;
+			if (on) {
+				String inUse = Lang.tr("aerion.profile.inUse");
+				Txt.draw(g, inUse, right - Txt.width(inUse, SMALL), y + ROW / 2f, SMALL, accent);
+			} else {
+				String use = Lang.tr("aerion.profile.use");
+				int w = Math.round(Txt.width(use, SMALL)) + 14;
+				smallButton(right - w, y + 2, w, ROW - 4, use, false, () -> {
+					commitField();
+					Profiles.switchTo(cfg, name);
+				});
+			}
+			if (!servers.isEmpty()) {
+				y += ROW - 4;
+				Txt.draw(g, ellipsize(servers, colW - 20), x + 15, y + 5, SMALL, muted);
+				y += 6;
+			}
+			y += ROW;
+			endRow();
+		}
+		String add = "+ " + Lang.tr("aerion.profile.addLong");
+		button(x, y, Math.round(Txt.width(add, TEXT)) + 20, 15, add, false, () -> {
+			commitField();
+			Profiles.add(cfg);
+		});
+		y += 21;
+		endCard();
+
+		beginCard(Lang.tr("aerion.profile.settings").replace("{}", active));
+		textRow("name", Lang.tr("aerion.profile.name"), active, "", v -> Profiles.rename(cfg, Profiles.active(cfg), v));
+		endCard();
+		beginCard(Lang.tr("aerion.profile.serversLabel"));
+		note(Lang.tr("aerion.profile.serversHint"));
+		for (String srv : Profiles.serverList(cfg, active)) {
+			beginRow("server:" + srv);
+			Icons.draw(g, "play", x, y + 3, 10, muted);
+			Txt.draw(g, ellipsize(srv, colW - 40), x + 15, y + ROW / 2f, TEXT, text);
+			iconButton(x + colW - 15, y + 1, 14, "close", () -> Profiles.removeServer(cfg, active, srv));
+			y += ROW;
+			endRow();
+		}
+		textRow("addServer", "+ " + Lang.tr("aerion.profile.addServer"), "", "pvp.serwer.pl", v -> Profiles.addServers(cfg, Profiles.active(cfg), v));
+		String server = Profiles.server();
+		if (server != null) {
+			toggle(Lang.tr("aerion.profile.thisServer").replace("{}", server), Profiles.onServer(cfg, active, server), v -> Profiles.toggleServer(cfg, active));
+		}
+		endCard();
+		if (names.size() > 1) {
+			String del = Lang.tr("aerion.profile.delete");
+			int w = Math.round(Txt.width(del, SMALL)) + 16;
+			boolean over = inside(x, y, w, 14);
+			Draw.rounded(g, x, y, w, 14, 3, over ? 0xFFE5484D : Colors.mix(control, 0xFFE5484D, 0.35f));
+			Txt.center(g, del, x + w / 2f, y + 7, SMALL, 0xFFFFFFFF);
+			hit(x, y, w, 14, f -> {
+				fieldKey = null;
+				Profiles.delete(cfg, active);
+			}, false);
+			y += 20;
+		}
+		note(Lang.tr("aerion.profile.keyHint"));
 	}
 
 	private void tiles(int left, int w, List<String> all) {
@@ -774,6 +900,7 @@ public final class AerionMenu implements Page {
 		// What the module or feature does, before its settings.
 		String about = sub == Sub.GENERAL ? Lang.get("aerion.desc." + detail) : null;
 		if (about != null) description(about);
+		if (sub == Sub.GENERAL && isFeature(detail) && enabled(cfg, detail) && MixinGate.skipped().contains(detail)) description(Lang.tr("aerion.hint.restart"));
 		if (sub == Sub.KEY) {
 			keyTab();
 		} else if (isFeature(detail)) {
@@ -1095,6 +1222,7 @@ public final class AerionMenu implements Page {
 		HudConfig cfg = AerionClient.hud();
 		JsonObject f = cfg.feature("sounds");
 		toggle(Lang.tr("aerion.sound.enable"), HudConfig.bool(f, "enabled", true), v -> f.addProperty("enabled", v));
+		if (HudConfig.bool(f, "enabled", true) && MixinGate.skipped().contains("sounds")) note(Lang.tr("aerion.hint.restart"));
 		// Groups, wrapping to a second row when the labels don't fit.
 		int bx = x;
 		for (String group : SOUND_GROUPS) {
@@ -1197,27 +1325,37 @@ public final class AerionMenu implements Page {
 		JsonObject f = cfg.feature("waypoints");
 		beginCard(null);
 		toggle(Lang.tr("aerion.waypoint.show"), HudConfig.bool(f, "enabled", false), v -> f.addProperty("enabled", v));
-		for (Option o : List.of(Option.toggle("beam", true), Option.toggle("distance", true), Option.toggle("minimap", true), Option.number("scale", 100, 40, 300))) {
+		if (HudConfig.bool(f, "enabled", false) && MixinGate.skipped().contains("waypoints")) note(Lang.tr("aerion.hint.restart"));
+		for (Option o : List.of(Option.toggle("beam", true), Option.toggle("distance", true), Option.toggle("minimap", true), Option.toggle("death", true), Option.toggle("nether", true), Option.number("scale", 100, 40, 300))) {
 			option(f, o, "waypoints");
 		}
 		endCard();
 		var player = Minecraft.getInstance().player;
 		if (player == null) return;
-		String add = Lang.tr("aerion.waypoint.add");
-		button(x, y, Math.round(Txt.width(add, TEXT)) + 20, 15, add, true, () -> {
+		String add = Lang.tr("aerion.waypoint.add"), open = Lang.tr("aerion.map.open");
+		int addW = Math.round(Txt.width(add, TEXT)) + 20;
+		button(x, y, addW, 15, add, true, () -> {
 			f.addProperty("enabled", true);
 			changed = true;
 			naming = Waypoints.addHere(Lang.tr("aerion.waypoint.default"));
 			namingFresh = true;
 		});
+		button(x + addW + 6, y, Math.round(Txt.width(open, TEXT)) + 20, 15, open, false, () -> Page.go(new MapPage()));
 		y += 19;
 		List<Waypoints.Point> points = Waypoints.all();
 		if (points.isEmpty()) {
 			note(Lang.tr("aerion.waypoint.empty"));
 			return;
 		}
+		// Nearest first; points in other dimensions after them.
+		String here = Waypoints.dimension(player);
+		List<Waypoints.Point> sorted = new ArrayList<>(points);
+		sorted.sort(java.util.Comparator.comparingDouble(w -> {
+			double[] at = Waypoints.position(w, here);
+			return at == null ? Double.MAX_VALUE : player.distanceToSqr(at[0] + 0.5, at[1], at[2] + 0.5);
+		}));
 		beginCard(null);
-		for (Waypoints.Point w : List.copyOf(points)) waypointRow(w, player);
+		for (Waypoints.Point w : sorted) waypointRow(w, player);
 		endCard();
 	}
 
@@ -1229,13 +1367,14 @@ public final class AerionMenu implements Page {
 		hit(x, rowY + 2, 10, 12, f -> expanded = id.equals(expanded) ? null : id, false);
 		boolean editing = naming == w;
 		String shown = editing ? w.name + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : "") : w.name;
-		Txt.draw(g, ellipsize(shown, colW - 140), x + 15, rowY + ROW / 2f, TEXT, w.enabled ? text : muted);
-		hit(x + 15, rowY, colW - 140, ROW, f -> naming = w, false);
-		boolean sameWorld = Waypoints.dimension(player).equals(w.dimension);
-		String where = sameWorld
-				? Math.round(Math.sqrt(player.distanceToSqr(w.x + 0.5, w.y, w.z + 0.5))) + " m"
+		Txt.draw(g, ellipsize(shown, colW - 156), x + 15, rowY + ROW / 2f, TEXT, w.enabled ? text : muted);
+		hit(x + 15, rowY, colW - 156, ROW, f -> naming = w, false);
+		double[] at = Waypoints.position(w, Waypoints.dimension(player));
+		String where = at != null
+				? Math.round(Math.sqrt(player.distanceToSqr(at[0] + 0.5, at[1], at[2] + 0.5))) + " m"
 				: Lang.tr("aerion.waypoint.otherDim");
-		Txt.draw(g, where, right - 36 - Txt.width(where, SMALL), rowY + ROW / 2f, SMALL, muted);
+		Txt.draw(g, where, right - 52 - Txt.width(where, SMALL), rowY + ROW / 2f, SMALL, muted);
+		iconButton(right - 47, rowY + 1, 14, "settings", () -> expanded = id.equals(expanded) ? null : id);
 		iconButton(right - 31, rowY + 1, 14, w.enabled ? "freelook" : "hide", () -> {
 			w.enabled = !w.enabled;
 			Waypoints.save();
@@ -1243,7 +1382,44 @@ public final class AerionMenu implements Page {
 		iconButton(right - 15, rowY + 1, 14, "close", () -> Waypoints.remove(w));
 		y += ROW;
 		endRow();
-		if (id.equals(expanded)) color(id, Lang.tr("aerion.waypoint.color"), new String[] {}, new String[] {}, w.color, v -> w.color = v);
+		if (!id.equals(expanded)) return;
+		color(id, Lang.tr("aerion.waypoint.color"), new String[] {}, new String[] {}, w.color, v -> w.color = v);
+		textRow(id + "x", "X", String.valueOf(w.x), "0", v -> setCoord(w, 0, v));
+		textRow(id + "y", "Y", String.valueOf(w.y), "64", v -> setCoord(w, 1, v));
+		textRow(id + "z", "Z", String.valueOf(w.z), "0", v -> setCoord(w, 2, v));
+		String share = Lang.tr("aerion.waypoint.share"), map = Lang.tr("aerion.waypoint.onMap"), here = Lang.tr("aerion.waypoint.moveHere");
+		int bx = x;
+		for (String[] b : new String[][] {{"share", share}, {"map", map}, {"here", here}}) {
+			int bw = Math.round(Txt.width(b[1], SMALL)) + 14;
+			smallButton(bx, y, bw, 13, b[1], false, () -> {
+				switch (b[0]) {
+					case "share" -> Waypoints.share(w);
+					case "map" -> Page.go(new MapPage(w.x, w.z));
+					default -> {
+						w.x = player.getBlockX();
+						w.y = player.getBlockY();
+						w.z = player.getBlockZ();
+						w.dimension = Waypoints.dimension(player);
+						Waypoints.save();
+					}
+				}
+			});
+			bx += bw + 4;
+		}
+		y += 19;
+	}
+
+	/** A coordinate typed into a waypoint's field; anything but a whole number is ignored. */
+	private static void setCoord(Waypoints.Point w, int axis, String v) {
+		try {
+			int n = Math.max(-30_000_000, Math.min(30_000_000, Integer.parseInt(v.strip())));
+			if (axis == 0) w.x = n;
+			else if (axis == 1) w.y = n;
+			else w.z = n;
+			Waypoints.save();
+		} catch (NumberFormatException e) {
+			// Not a number: the old value stays.
+		}
 	}
 
 	// --- keys --------------------------------------------------------------------------------
@@ -1266,6 +1442,15 @@ public final class AerionMenu implements Page {
 	}
 
 	private void keysPage() {
+		keyboard();
+		if (pickedKey != null) {
+			List<KeyMapping> on = KeyBoard.byKey().getOrDefault(pickedKey, List.of());
+			beginCard(Lang.tr("aerion.key.onKey").replace("{}", keyName(pickedKey)));
+			if (on.isEmpty()) note(Lang.tr("aerion.key.free"));
+			for (KeyMapping k : on) keyRow(Component.translatable(k.getName()).getString(), k);
+			endCard();
+			return;
+		}
 		beginCard(null);
 		keyRow(Lang.tr("aerion.key.menu"), Features.key("menu"));
 		endCard();
@@ -1290,12 +1475,88 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.hitColor"), Features.key("hitColor"));
 		keyRow(Lang.tr("aerion.feature.screens"), Features.key("screens"));
 		keyRow(Lang.tr("aerion.waypoint.add"), Features.key("waypointAdd"));
+		keyRow(Lang.tr("aerion.map.title"), Features.key("map"));
+		keyRow(Lang.tr("key.aerion.profile"), Features.key("profile"));
 		keyRow(Lang.tr("aerion.key.sprint"), Features.key("toggleSprint"));
 		keyRow(Lang.tr("aerion.key.sneak"), Features.key("toggleSneak"));
 		endCard();
 		beginCard(Lang.tr("aerion.key.modules"));
 		for (String id : Features.MODULE_IDS) keyRow(Lang.tr("aerion.module." + id), Features.key(id));
 		endCard();
+	}
+
+	/** A key's name as the game shows it. */
+	private static String keyName(String key) {
+		return InputConstants.getKey(key).getDisplayName().getString();
+	}
+
+	/**
+	 * The keyboard and mouse as in the launcher: bound keys in the accent, keys whose actions clash
+	 * in red. Clicking a key lists its actions; while a binding waits, clicking a key binds it.
+	 */
+	private void keyboard() {
+		Map<String, List<KeyMapping>> byKey = KeyBoard.byKey();
+		int u = Math.max(10, (int) ((colW - 2) / KeyBoard.WIDTH));
+		int top = y + 2, left = x + Math.max(0, (colW - Math.round(u * KeyBoard.WIDTH)) / 2);
+		int conflicts = 0;
+		for (List<KeyMapping> l : byKey.values()) if (KeyBoard.clashes(l)) conflicts++;
+		keyBlock(KeyBoard.MAIN, left, top, u, byKey);
+		keyBlock(KeyBoard.NAV, left + Math.round(15.5f * u), top, u, byKey);
+		y = top + 6 * u + u / 4 + 4;
+		String mouse = Lang.tr("aerion.key.mouse");
+		Txt.draw(g, mouse, left, y + u / 2f, SMALL, muted);
+		float mx = left + Txt.width(mouse, SMALL) + 6;
+		for (KeyBoard.Cap c : KeyBoard.MOUSE) {
+			keyCap(c, Math.round(mx), y, Math.round(c.w() * u) - 1, u - 1, byKey);
+			mx += c.w() * u;
+		}
+		String status = conflicts > 0 ? Lang.tr("aerion.key.conflicts").replace("{}", String.valueOf(conflicts)) : Lang.tr("aerion.key.noConflicts");
+		Txt.draw(g, status, mx + 8, y + u / 2f, SMALL, conflicts > 0 ? 0xFFFF6B6B : muted);
+		if (pickedKey != null) {
+			String all = Lang.tr("aerion.key.showAll");
+			int w = Math.round(Txt.width(all, SMALL)) + 12;
+			smallButton(x + colW - w, y, w, u - 1, all, false, () -> pickedKey = null);
+		}
+		y += u + 6;
+		if (capturing != null) {
+			Txt.draw(g, Lang.tr("aerion.key.pressFor").replace("{}", Component.translatable(capturing.getName()).getString()), x + 2, y + 4, SMALL, accent);
+			y += 11;
+		}
+	}
+
+	private void keyBlock(List<List<KeyBoard.Cap>> rows, int left, int top, int u, Map<String, List<KeyMapping>> byKey) {
+		for (int r = 0; r < rows.size(); r++) {
+			float cx = left;
+			int cy = top + r * u + (r > 0 ? u / 4 : 0);
+			for (KeyBoard.Cap c : rows.get(r)) {
+				if (c.name() != null) keyCap(c, Math.round(cx), cy, Math.round(c.w() * u) - 1, u - 1, byKey);
+				cx += c.w() * u;
+			}
+		}
+	}
+
+	private void keyCap(KeyBoard.Cap c, int cx, int cy, int w, int h, Map<String, List<KeyMapping>> byKey) {
+		List<KeyMapping> on = byKey.get(c.name());
+		boolean clash = KeyBoard.clashes(on), bound = on != null && !on.isEmpty(), over = inside(cx, cy, w, h);
+		int red = 0xFFE5484D;
+		int fill = clash ? Colors.mix(control, red, 0.45f) : bound ? Colors.mix(control, accent, 0.45f) : over ? track : control;
+		int edge = clash ? red : bound || over ? accent : line;
+		Draw.control(g, cx, cy, w, h, 2, edge, fill);
+		if (c.name().equals(pickedKey)) Draw.outline(g, cx - 1, cy - 1, w + 2, h + 2, text);
+		float size = Math.min(SMALL, h * 0.42f);
+		String label = c.label();
+		if (Txt.width(label, size) > w - 2) label = label.substring(0, Math.min(2, label.length()));
+		Txt.center(g, label, cx + w / 2f, cy + h / 2f, size, bound || clash ? text : muted);
+		if (clash) Txt.draw(g, String.valueOf(on.size()), cx + w - 5, cy + 3, 5f, text);
+		hit(cx, cy, w, h, f -> {
+			if (capturing != null) {
+				bind(InputConstants.getKey(c.name()));
+				capturing = null;
+			} else {
+				pickedKey = c.name().equals(pickedKey) ? null : c.name();
+				scroll = 0;
+			}
+		}, false);
 	}
 
 	private void keyRow(String label, KeyMapping k) {

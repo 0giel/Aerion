@@ -125,17 +125,18 @@ pub struct FeatureOptions {
     pub options: BTreeMap<String, String>,
 }
 
-/// The sound editor: enabled unless switched off, volume per sound id in `options`.
+/// A feature that is on unless switched off (the sound editor keeps a volume per sound id in
+/// `options`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase", default)]
-pub struct SoundOptions {
+pub struct OnFeature {
     pub enabled: bool,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub options: BTreeMap<String, String>,
 }
 
-impl Default for SoundOptions {
+impl Default for OnFeature {
     fn default() -> Self {
         Self {
             enabled: true,
@@ -178,7 +179,7 @@ pub struct HudFeatures {
     pub toggle_sneak: Toggle,
     pub hitboxes: FeatureOptions,
     pub overlays: FeatureOptions,
-    pub sounds: SoundOptions,
+    pub sounds: OnFeature,
     pub crosshair: FeatureOptions,
     pub hurt_cam: FeatureOptions,
     pub light_levels: FeatureOptions,
@@ -190,6 +191,22 @@ pub struct HudFeatures {
     pub hit_color: FeatureOptions,
     pub screens: FeatureOptions,
     pub waypoints: FeatureOptions,
+    /// Badges next to players' names ([`super::badges`]); on unless switched off.
+    pub badges: OnFeature,
+}
+
+/// A saved HUD layout (e.g. PvP, building) the player switches to with a key, in the menus, or
+/// by joining one of its servers. The mod does the same switching (`hud/Profiles.java`).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase", default)]
+pub struct HudProfile {
+    pub name: String,
+    pub style: HudStyle,
+    pub modules: BTreeMap<String, HudModule>,
+    /// Server addresses that switch to this profile on joining (`hypixel.net` also matches
+    /// `mc.hypixel.net`); empty for a profile chosen by hand only.
+    pub servers: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -197,9 +214,16 @@ pub struct HudFeatures {
 #[serde(rename_all = "camelCase", default)]
 pub struct HudConfig {
     pub enabled: bool,
+    /// The layout in use (the active profile's, when there are profiles).
     pub style: HudStyle,
     pub modules: BTreeMap<String, HudModule>,
     pub features: HudFeatures,
+    /// Every profile; the active one's own copy is refreshed from `style`/`modules` on switching.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub profiles: Vec<HudProfile>,
+    /// Name of the active profile (none while there are no profiles).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
 }
 
 /// Every module the mod knows: id, on by default, x, y.
@@ -266,6 +290,8 @@ impl Default for HudConfig {
                 })
                 .collect(),
             features: HudFeatures::default(),
+            profiles: Vec::new(),
+            profile: None,
         }
     }
 }
@@ -298,27 +324,104 @@ fn style_ok(s: &HudStyle) -> bool {
             .is_none_or(|f| matches!(f, "game" | "smooth"))
 }
 
+const MAX_PROFILES: usize = 16;
+
+fn layout_ok(style: &HudStyle, modules: &BTreeMap<String, HudModule>) -> bool {
+    style_ok(style)
+        && modules.len() <= 64
+        && modules.iter().all(|(id, m)| {
+            !id.is_empty()
+                && id.len() <= 32
+                && id.bytes().all(|b| b.is_ascii_alphanumeric())
+                && m.x <= 1000
+                && m.y <= 1000
+                && (25..=400).contains(&m.scale)
+                && style_ok(&m.style)
+                && m.options.len() <= 16
+                && m.options
+                    .iter()
+                    .all(|(k, v)| k.len() <= 32 && v.len() <= 200)
+        })
+}
+
+fn profile_name_ok(name: &str) -> bool {
+    !name.trim().is_empty() && name.chars().count() <= 32 && !name.chars().any(char::is_control)
+}
+
+/// A host name, optionally with a port, or a `*.` wildcard in front.
+fn server_ok(s: &str) -> bool {
+    let host = s.strip_prefix("*.").unwrap_or(s);
+    !host.is_empty()
+        && s.len() <= 253
+        && host
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_' | b':'))
+}
+
 impl HudConfig {
+    /// Make `name` the layout in use. The current layout is first kept as the active profile's
+    /// (or, before the first profile exists, as a profile named `current_name`). A new name
+    /// starts as a copy of the current layout.
+    pub fn switch_profile(&mut self, name: &str, current_name: &str) -> Result<()> {
+        if !profile_name_ok(name) || !profile_name_ok(current_name) {
+            return Err(Error::Invalid("invalid profile name".into()));
+        }
+        let active = self
+            .profile
+            .clone()
+            .unwrap_or_else(|| current_name.to_owned());
+        let current = HudProfile {
+            name: active.clone(),
+            style: self.style.clone(),
+            modules: self.modules.clone(),
+            servers: Vec::new(),
+        };
+        match self.profiles.iter_mut().find(|p| p.name == active) {
+            Some(p) => {
+                p.style = current.style;
+                p.modules = current.modules;
+            }
+            None => self.profiles.push(current),
+        }
+        match self.profiles.iter().find(|p| p.name == name) {
+            Some(p) => {
+                self.style = p.style.clone();
+                self.modules = p.modules.clone();
+            }
+            None => {
+                if self.profiles.len() >= MAX_PROFILES {
+                    return Err(Error::Invalid("too many HUD profiles".into()));
+                }
+                self.profiles.push(HudProfile {
+                    name: name.to_owned(),
+                    style: self.style.clone(),
+                    modules: self.modules.clone(),
+                    servers: Vec::new(),
+                });
+            }
+        }
+        self.profile = Some(name.to_owned());
+        Ok(())
+    }
+
     pub fn validate(&self) -> Result<()> {
-        let ok = style_ok(&self.style)
-            && self.modules.len() <= 64
-            && self.modules.iter().all(|(id, m)| {
-                !id.is_empty()
-                    && id.len() <= 32
-                    && id.bytes().all(|b| b.is_ascii_alphanumeric())
-                    && m.x <= 1000
-                    && m.y <= 1000
-                    && (25..=400).contains(&m.scale)
-                    && style_ok(&m.style)
-                    && m.options.len() <= 16
-                    && m.options
-                        .iter()
-                        .all(|(k, v)| k.len() <= 32 && v.len() <= 200)
+        let names: std::collections::BTreeSet<&str> =
+            self.profiles.iter().map(|p| p.name.as_str()).collect();
+        let ok = layout_ok(&self.style, &self.modules)
+            && self.profiles.len() <= MAX_PROFILES
+            && names.len() == self.profiles.len()
+            && self.profiles.iter().all(|p| {
+                profile_name_ok(&p.name)
+                    && layout_ok(&p.style, &p.modules)
+                    && p.servers.len() <= 32
+                    && p.servers.iter().all(|s| server_ok(s))
             })
+            && self.profile.as_deref().is_none_or(|n| names.contains(n))
             && (2..=10).contains(&self.features.zoom.factor)
             && self.features.hitboxes.options.len() <= 32
             && self.features.overlays.options.len() <= 32
             && self.features.sounds.options.len() <= 8192
+            && self.features.badges.options.len() <= 32
             && [
                 &self.features.hitboxes.options,
                 &self.features.overlays.options,
@@ -336,6 +439,7 @@ impl HudConfig {
                 &self.features.screens.options,
                 &self.features.waypoints.options,
                 &self.features.sounds.options,
+                &self.features.badges.options,
             ]
             .iter()
             .all(|o| o.iter().all(|(k, v)| k.len() <= 200 && v.len() <= 64));
@@ -360,8 +464,13 @@ pub async fn load(paths: &Paths) -> HudConfig {
         }),
         Err(_) => HudConfig::default(),
     };
-    for (id, m) in HudConfig::default().modules {
-        cfg.modules.entry(id).or_insert(m);
+    let defaults = HudConfig::default().modules;
+    for modules in
+        std::iter::once(&mut cfg.modules).chain(cfg.profiles.iter_mut().map(|p| &mut p.modules))
+    {
+        for (id, m) in &defaults {
+            modules.entry(id.clone()).or_insert_with(|| m.clone());
+        }
     }
     cfg
 }
@@ -373,6 +482,30 @@ pub async fn save(paths: &Paths, cfg: &HudConfig) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn profiles_keep_their_own_layouts() {
+        let mut c = HudConfig::default();
+        c.modules.get_mut("fps").unwrap().x = 111;
+        c.switch_profile("PvP", "Main").unwrap();
+        // The first switch keeps the old layout as "Main"; a new profile starts as its copy.
+        assert_eq!(c.profiles.len(), 2);
+        assert_eq!(c.profile.as_deref(), Some("PvP"));
+        assert_eq!(c.modules["fps"].x, 111);
+        c.modules.get_mut("fps").unwrap().x = 500;
+        c.switch_profile("Main", "Main").unwrap();
+        assert_eq!(c.modules["fps"].x, 111);
+        c.switch_profile("PvP", "Main").unwrap();
+        assert_eq!(c.modules["fps"].x, 500);
+        c.profiles[1].servers = vec!["hypixel.net".into(), "*.minemen.club".into()];
+        c.validate().unwrap();
+        c.profiles[1].servers.push("bad server/".into());
+        assert!(c.validate().is_err());
+        c.profiles[1].servers.pop();
+        c.profile = Some("Gone".into());
+        assert!(c.validate().is_err());
+        assert!(c.clone().switch_profile(" ", "Main").is_err());
+    }
     use super::*;
 
     #[test]

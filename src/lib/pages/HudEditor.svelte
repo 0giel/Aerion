@@ -152,6 +152,68 @@
     ].join(";");
   }
 
+  // --- profiles: separate layouts, switched here, by a key in the game or by joining a server ---
+  const mainName = () => t("hudEditor.profiles.main");
+  const profileNames = $derived(cfg?.profiles?.length ? cfg.profiles.map((p) => p.name) : [mainName()]);
+  const activeName = $derived(cfg?.profile ?? mainName());
+  const activeProfile = $derived(cfg?.profiles?.find((p) => p.name === activeName));
+
+  async function switchProfile(name: string) {
+    if (!cfg) return;
+    try {
+      cfg = await commands.switchHudProfile($state.snapshot(cfg) as HudConfig, name, mainName());
+      changed();
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
+  function addProfile() {
+    let n = profileNames.length + 1;
+    while (profileNames.includes(t("hudEditor.profiles.newName", { n }))) n++;
+    void switchProfile(t("hudEditor.profiles.newName", { n }));
+  }
+
+  /** The active profile's own entry, created the first time it is edited. */
+  async function ensureProfile() {
+    if (!activeProfile) await switchProfile(activeName);
+    return cfg?.profiles?.find((p) => p.name === activeName);
+  }
+
+  async function renameProfile(value: string) {
+    const name = value.trim().slice(0, 32);
+    if (!cfg || !name || name === activeName || profileNames.includes(name)) return;
+    const p = await ensureProfile();
+    if (!p || !cfg) return;
+    p.name = name;
+    cfg.profile = name;
+    changed();
+  }
+
+  async function setServers(value: string) {
+    const list = value
+      .split(/[,\s]+/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, 32);
+    const p = await ensureProfile();
+    if (!p) return;
+    p.servers = list;
+    changed();
+  }
+
+  async function deleteProfile() {
+    if (!cfg?.profiles || cfg.profiles.length < 2) return;
+    const gone = activeName;
+    const next = cfg.profiles.find((p) => p.name !== gone)?.name;
+    if (!next) return;
+    await switchProfile(next);
+    if (!cfg?.profiles) return;
+    cfg.profiles = cfg.profiles.filter((p) => p.name !== gone);
+    changed();
+    toasts.success(t("hudEditor.profiles.deleted", { name: gone }));
+  }
+
   function applyPreset(name: string) {
     if (!cfg) return;
     // The presets clone what they get, which a reactive proxy doesn't allow.
@@ -180,6 +242,50 @@
         <button class="btn sm" onclick={() => applyPreset(p)}>{t(`hudEditor.presets.${p}`)}</button>
       {/each}
     </div>
+
+    <section class="card col gap-2 profiles">
+      <div class="row wrap gap-2">
+        <span class="small muted">{t("hudEditor.profiles.label")}</span>
+        {#each profileNames as name (name)}
+          <button class="btn sm" class:primary={name === activeName} onclick={() => switchProfile(name)}
+            >{name}</button
+          >
+        {/each}
+        <button class="btn sm ghost" onclick={addProfile}
+          ><Icon name="plus" size={14} />{t("hudEditor.profiles.add")}</button
+        >
+        <span class="grow"></span>
+        {#if (cfg.profiles?.length ?? 0) > 1}
+          <button class="btn sm ghost danger" onclick={deleteProfile}>{t("hudEditor.profiles.delete")}</button
+          >
+        {/if}
+      </div>
+      <div class="row wrap gap-2">
+        <label class="field">
+          <span class="tiny muted">{t("hudEditor.profiles.name")}</span>
+          {#key activeName}
+            <input
+              class="input"
+              maxlength="32"
+              value={activeName}
+              onchange={(e) => renameProfile((e.target as HTMLInputElement).value)}
+            />
+          {/key}
+        </label>
+        <label class="field grow">
+          <span class="tiny muted">{t("hudEditor.profiles.servers")}</span>
+          {#key activeName}
+            <input
+              class="input"
+              placeholder="hypixel.net"
+              value={activeProfile?.servers.join(", ") ?? ""}
+              onchange={(e) => setServers((e.target as HTMLInputElement).value)}
+            />
+          {/key}
+        </label>
+      </div>
+      <span class="tiny muted">{t("hudEditor.profiles.serversHint")} {t("hudEditor.profiles.keyHint")}</span>
+    </section>
 
     <div class="layout">
       <div class="col gap-2">
@@ -455,7 +561,7 @@
             checked={cfg.features.lightLevels.enabled}
             onchange={(v) => cfg && ((cfg.features.lightLevels.enabled = v), changed())}
           />
-          {#each ["blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "waypoints"] as const as key (key)}
+          {#each ["blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "waypoints", "badges"] as const as key (key)}
             <Switch
               label={t(`hudEditor.features.${key}`)}
               hint={t(`hudEditor.features.${key}Hint`)}
@@ -484,6 +590,15 @@
     flex-direction: column;
     gap: var(--sp-3);
     padding-bottom: var(--sp-5);
+  }
+  .profiles .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 12rem;
+  }
+  .danger {
+    color: var(--c-danger);
   }
   .layout {
     display: grid;

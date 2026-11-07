@@ -29,6 +29,58 @@ public final class Waypoints {
 		public String name, dimension, color = "#55aaff";
 		public int x, y, z;
 		public boolean enabled = true;
+		/** "death" for the point left where the player last died; null for the player's own. */
+		public String kind;
+	}
+
+	private static final String OVERWORLD = "minecraft:overworld", NETHER = "minecraft:the_nether";
+
+	/**
+	 * Where a point is in the dimension `here`: its own place there, the matching place across the
+	 * Nether (an eighth of the distance) when the option is on, or null.
+	 */
+	public static double[] position(Point w, String here) {
+		if (here.equals(w.dimension)) return new double[] {w.x, w.y, w.z};
+		if (!acrossNether()) return null;
+		if (w.dimension.equals(OVERWORLD) && here.equals(NETHER)) return new double[] {Math.floor(w.x / 8.0), w.y, Math.floor(w.z / 8.0)};
+		if (w.dimension.equals(NETHER) && here.equals(OVERWORLD)) return new double[] {w.x * 8.0, w.y, w.z * 8.0};
+		return null;
+	}
+
+	private static boolean acrossNether() {
+		HudConfig cfg = AerionClient.hud();
+		return cfg != null && flag(cfg.feature("waypoints"), "nether", true);
+	}
+
+	private static boolean wasDead;
+
+	/** Called every tick: a death leaves a red point there (replacing the previous one). */
+	public static void tick(Minecraft mc) {
+		LocalPlayer p = mc.player;
+		boolean dead = p != null && p.isDeadOrDying();
+		if (dead && !wasDead) {
+			HudConfig cfg = AerionClient.hud();
+			if (cfg != null && flag(cfg.feature("waypoints"), "death", true)) {
+				all();
+				points.removeIf(w -> "death".equals(w.kind));
+				Point w = add(pl.aerion.mod.Lang.tr("aerion.waypoint.death"), p.getBlockX(), p.getBlockY(), p.getBlockZ(), dimension(p));
+				if (w != null) {
+					w.name = pl.aerion.mod.Lang.tr("aerion.waypoint.death");
+					w.kind = "death";
+					w.color = "#ff5555";
+					save();
+				}
+			}
+		}
+		wasDead = dead;
+	}
+
+	/** Post the point in the chat, so others can find it. */
+	public static void share(Point w) {
+		LocalPlayer p = Minecraft.getInstance().player;
+		if (p == null) return;
+		String where = w.dimension.equals(OVERWORLD) ? "" : " (" + w.dimension.replace("minecraft:", "").replace("the_", "") + ")";
+		p.connection.sendChat(w.name + ": " + w.x + ", " + w.y + ", " + w.z + where);
 	}
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -81,13 +133,18 @@ public final class Waypoints {
 	public static Point addHere(String name) {
 		LocalPlayer p = Minecraft.getInstance().player;
 		if (p == null) return null;
+		return add(name, p.getBlockX(), p.getBlockY(), p.getBlockZ(), dimension(p));
+	}
+
+	/** A new point at a place, numbered after the ones already there. */
+	public static Point add(String name, int x, int y, int z, String dimension) {
 		all();
 		Point w = new Point();
 		w.name = name + " " + (points.size() + 1);
-		w.x = p.getBlockX();
-		w.y = p.getBlockY();
-		w.z = p.getBlockZ();
-		w.dimension = dimension(p);
+		w.x = x;
+		w.y = y;
+		w.z = z;
+		w.dimension = dimension;
 		points.add(w);
 		save();
 		return w;
@@ -135,8 +192,9 @@ public final class Waypoints {
 		Vec3 eye = p.getEyePosition(partial);
 		String here = dimension(p);
 		for (Point w : all()) {
-			if (!w.enabled || !here.equals(w.dimension)) continue;
-			Vec3 target = new Vec3(w.x + 0.5, w.y + 1.5, w.z + 0.5);
+			double[] at3 = w.enabled ? position(w, here) : null;
+			if (at3 == null) continue;
+			Vec3 target = new Vec3(at3[0] + 0.5, at3[1] + 1.5, at3[2] + 0.5);
 			Vec3 toward = target.subtract(eye);
 			double distance = toward.length();
 			if (distance < 1.5) continue;
@@ -147,7 +205,7 @@ public final class Waypoints {
 			String text = showDistance ? w.name + "  " + Math.round(distance) + " m" : w.name;
 			Gizmos.billboardText(text, at, TextGizmo.Style.forColorAndCentered(color).withScale(scale)).setAlwaysOnTop();
 			if (beam && distance < LABEL_DISTANCE) {
-				Gizmos.line(new Vec3(w.x + 0.5, w.y, w.z + 0.5), new Vec3(w.x + 0.5, w.y + 24, w.z + 0.5), color, 2f);
+				Gizmos.line(new Vec3(at3[0] + 0.5, at3[1], at3[2] + 0.5), new Vec3(at3[0] + 0.5, at3[1] + 24, at3[2] + 0.5), color, 2f);
 			}
 		}
 	}

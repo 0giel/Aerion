@@ -132,6 +132,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             commands::themes::set_game_theme,
             commands::themes::get_hud_config,
             commands::themes::save_hud_config,
+            commands::themes::switch_hud_profile,
             commands::themes::save_user_theme,
             commands::themes::delete_user_theme,
             commands::themes::add_theme_asset,

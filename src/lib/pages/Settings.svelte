@@ -226,6 +226,12 @@
           checked={s.showConsoleOnLaunch}
           onchange={(v) => save({ showConsoleOnLaunch: v })}
         />
+        <Switch
+          label={t("settings.aerionModUpdates")}
+          hint={t("settings.aerionModUpdatesHint")}
+          checked={s.aerionModUpdates}
+          onchange={(v) => save({ aerionModUpdates: v })}
+        />
         <div class="row wrap gap-2">
           <div class="grow">
             <Switch
@@ -256,6 +262,9 @@
             >
             <button class="btn sm" onclick={() => commands.openFolder({ kind: "themes" })}
               ><Icon name="folder" size={15} />{t("settings.themesFolder")}</button
+            >
+            <button class="btn sm" onclick={() => router.go("themeEditor", { new: "1" })}
+              ><Icon name="plus" size={15} />{t("settings.newTheme")}</button
             >
             <button class="btn sm primary" onclick={() => router.go("themeEditor")}
               ><Icon name="palette" size={15} />{t("settings.editTheme")}</button

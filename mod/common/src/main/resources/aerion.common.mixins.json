@@ -1,6 +1,7 @@
 {
 	"required": true,
 	"package": "pl.aerion.mod.mixin",
+	"plugin": "pl.aerion.mod.MixinGate",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"ClientLanguageMixin",
@@ -10,9 +11,11 @@
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",
+		"NameTagMixin",
 		"OptionInstanceAccessor",
 		"OptionsMixin",
 		"OverlayTextureMixin",
+		"PlayerTabOverlayMixin",
 		"PlayerFovMixin",
 		"SoundEngineMixin",
 		"WeatherMixin"

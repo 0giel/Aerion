@@ -1,0 +1,61 @@
+name: Bug report / Zgłoszenie błędu
+description: Something in the launcher or the Aerion mod doesn't work. Coś w launcherze albo modzie Aerion nie działa.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Players who report bugs that help can get the **Bug hunter** badge in the game.
+        Dzięki za zgłoszenie! Gracze, których zgłoszenia pomogą, mogą dostać odznakę **Łowca błędów** w grze.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Co się stało?
+      description: What did you do, what did you expect, and what happened instead. Co zrobiłeś, czego się spodziewałeś i co się stało.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Jak to powtórzyć
+      placeholder: |
+        1. …
+        2. …
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where? / Gdzie?
+      options:
+        - Launcher
+        - Aerion mod (in the game / w grze)
+        - Both / Oba
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions / Wersje
+      description: Aerion version (Settings → About), Minecraft version, loader. Wersja Aeriona (Ustawienia → O programie), wersja Minecrafta, loader.
+      placeholder: Aerion 1.0.0, Minecraft 26.3, Fabric
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: System
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Logi
+      description: Launcher log (Settings → Launcher logs) or the game's crash report. Never paste access tokens. Log launchera (Ustawienia → Logi launchera) albo raport crasha gry. Nigdy nie wklejaj tokenów.
+      render: text
+  - type: input
+    id: nick
+    attributes:
+      label: Minecraft nick (optional, for the badge) / Nick w Minecraft (opcjonalnie, do odznaki)

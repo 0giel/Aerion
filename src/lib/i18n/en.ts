@@ -651,6 +651,10 @@ const en = {
     lightTheme: "Light theme",
     darkTheme: "Dark theme",
     editTheme: "Theme editor",
+    newTheme: "New theme",
+    aerionModUpdates: "Update the Aerion mod automatically",
+    aerionModUpdatesHint:
+      "Before a game starts, a newer signed version of the mod is downloaded, even between launcher updates.",
     importTheme: "Import theme…",
     themesFolder: "Themes folder",
     defaultMemory: "Default memory",
@@ -759,6 +763,7 @@ const en = {
     customCssHint: "Advanced: any CSS, applied after the theme. Saved as <id>.css next to the theme.",
     saveAs: "Save theme",
     savedAs: "Saved as {name}",
+    newName: "My theme",
     reset: "Reset changes",
     exportFile: "Export…",
     deleteTheme: "Delete theme",
@@ -1184,6 +1189,20 @@ const en = {
     enabled: "Aerion HUD",
     presetsLabel: "Ready layouts:",
     presetApplied: "Layout applied: {name}",
+    profiles: {
+      label: "Profiles:",
+      main: "Main",
+      add: "New profile",
+      newName: "Profile {n}",
+      name: "Name",
+      servers: "Servers",
+      serversHint:
+        "Joining one of these servers switches to this profile, e.g. hypixel.net. Separate with commas.",
+      delete: "Delete profile",
+      deleted: "Profile deleted: {name}",
+      keyHint:
+        "Each profile keeps its own module layout. A key to switch them is set in the game (Aerion → Keys).",
+    },
     presets: {
       minimal: "Minimal",
       pvp: "PvP",
@@ -1472,6 +1491,8 @@ const en = {
       overlaysHint: "Lower fire and removed effects are set in the game's menu.",
       sounds: "Sound editor",
       soundsHint: "Volume of each sound is set in the game's menu.",
+      badges: "Badges",
+      badgesHint: "Icons next to the names of players who got a badge, e.g. for reporting bugs.",
       fullbrightHint: "See in the dark; the key switches it off and on for a moment.",
     },
   },

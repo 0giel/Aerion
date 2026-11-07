@@ -83,11 +83,20 @@
 
   // Running games with the Aerion mod follow the launcher theme (they re-read the file).
   let gameThemeTimer: ReturnType<typeof setTimeout> | undefined;
+  let gameThemeSent = "";
   $effect(() => {
     if (!app.ready || !app.settings) return;
     const theme = toGameTheme(themes.active, app.settings.gameUi);
+    // Only a real change is written: a reload of the same theme mustn't keep postponing it.
+    const json = JSON.stringify(theme);
     clearTimeout(gameThemeTimer);
-    gameThemeTimer = setTimeout(() => void commands.setGameTheme(theme).catch(() => {}), 300);
+    if (json === gameThemeSent) return;
+    gameThemeTimer = setTimeout(() => {
+      commands
+        .setGameTheme(theme)
+        .then(() => (gameThemeSent = json))
+        .catch((e) => console.warn("game theme not saved", e));
+    }, 300);
   });
 
   // Ctrl+1…9 follow the sidebar as the user arranged it.

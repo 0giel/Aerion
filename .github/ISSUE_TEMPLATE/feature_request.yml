@@ -1,0 +1,15 @@
+name: Idea / Pomysł
+description: A new feature or an improvement. Nowa funkcja albo ulepszenie.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like? / Czego brakuje?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why? / Po co?
+      description: What would it make easier? Co by to ułatwiło?

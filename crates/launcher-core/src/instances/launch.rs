@@ -256,6 +256,10 @@ pub async fn plan(
     let mut jvm_args = merge_args(&settings.jvm_args, &inst.jvm_args);
     probe_args(&java.path, &jvm_args).await?;
     if inst.aerion_mod {
+        crate::aerion_mod::badges::refresh(engine).await;
+        if settings.aerion_mod_updates {
+            crate::aerion_mod::update::refresh(engine).await;
+        }
         jvm_args.extend(crate::aerion_mod::jvm_args(
             &engine.paths,
             &inst.id,

@@ -38,6 +38,8 @@ public final class AerionClient implements ClientModInitializer {
 			hudFile = Path.of(hp);
 			reloadHud();
 		}
+		if (!MixinGate.skipped().isEmpty()) LOG.info("Aerion: off at start, so their mixins are left out: {}", MixinGate.skipped());
+		Badges.init();
 		String st = System.getProperty("aerion.status");
 		if (st != null && !st.isBlank()) status = Path.of(st);
 		String p = System.getProperty("aerion.theme");
@@ -97,8 +99,18 @@ public final class AerionClient implements ClientModInitializer {
 		return t != null && t.colors ? t : null;
 	}
 
+	private static boolean keysSorted;
+
 	/** Called every client tick (20 per second, also in menus); checks the file once a second. */
 	public static void tick() {
+		if (!keysSorted && Minecraft.getInstance().options != null) {
+			keysSorted = true;
+			try {
+				Features.sortKeysOnce(Minecraft.getInstance());
+			} catch (RuntimeException e) {
+				warnOnce("keys", e);
+			}
+		}
 		try {
 			Features.tick(Minecraft.getInstance());
 		} catch (RuntimeException e) {
@@ -112,7 +124,28 @@ public final class AerionClient implements ClientModInitializer {
 		if (++ticks % 20 != 0) return;
 		if (file != null) reload();
 		if (hudFile != null) reloadHud();
+		Badges.reload();
+		restartNotice();
+		try {
+			pl.aerion.mod.hud.Profiles.tick(hud);
+		} catch (RuntimeException e) {
+			warnOnce("profiles", e);
+		}
 		if (status != null) writeStatus();
+	}
+
+	private static final java.util.Set<String> TOLD = new java.util.HashSet<>();
+
+	/** A feature whose mixins were left out at start was switched on: it works after a restart. */
+	private static void restartNotice() {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		for (String f : MixinGate.skipped()) {
+			if (TOLD.contains(f) || !HudConfig.bool(hud.feature(f), "enabled", false)) continue;
+			TOLD.add(f);
+			pl.aerion.mod.platform.Game.chat(net.minecraft.network.chat.Component.literal(
+					"[Aerion] " + (Lang.get("aerion.feature." + f) != null ? Lang.tr("aerion.feature." + f) : Lang.tr("aerion.nav." + f)) + ": " + Lang.tr("aerion.hint.restart")));
+		}
 	}
 
 	private static boolean statusFailed;

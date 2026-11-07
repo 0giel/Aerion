@@ -203,6 +203,11 @@ export const commands = {
 	getHudConfig: () => __TAURI_INVOKE<HudConfig_Serialize>("get_hud_config"),
 	/**  Save HUD settings; running games pick them up within a second. */
 	saveHudConfig: (config: HudConfig_Deserialize) => __TAURI_INVOKE<null>("save_hud_config", { config }),
+	/**
+	 *  The settings with another HUD profile in use (`current_name` names the layout in use when no
+	 *  profile exists yet); not saved, the editor saves as usual.
+	 */
+	switchHudProfile: (config: HudConfig_Deserialize, name: string, currentName: string) => __TAURI_INVOKE<HudConfig_Serialize>("switch_hud_profile", { config, name, currentName }),
 	saveUserTheme: (theme: ThemeFile_Deserialize) => __TAURI_INVOKE<null>("save_user_theme", { theme }),
 	deleteUserTheme: (id: string) => __TAURI_INVOKE<null>("delete_user_theme", { id }),
 	/**  Copy an image/video into the themes asset folder; returns the asset name. */
@@ -915,16 +920,26 @@ export type HudConfig = HudConfig_Serialize | HudConfig_Deserialize;
 
 export type HudConfig_Deserialize = {
 	enabled?: boolean,
+	/**  The layout in use (the active profile's, when there are profiles). */
 	style?: HudStyle_Deserialize,
 	modules?: { [key in string]: HudModule_Deserialize },
 	features?: HudFeatures_Deserialize,
+	/**  Every profile; the active one's own copy is refreshed from `style`/`modules` on switching. */
+	profiles?: HudProfile_Deserialize[],
+	/**  Name of the active profile (none while there are no profiles). */
+	profile?: string | null,
 };
 
 export type HudConfig_Serialize = {
 	enabled: boolean,
+	/**  The layout in use (the active profile's, when there are profiles). */
 	style: HudStyle_Serialize,
 	modules: { [key in string]: HudModule_Serialize },
 	features: HudFeatures_Serialize,
+	/**  Every profile; the active one's own copy is refreshed from `style`/`modules` on switching. */
+	profiles?: HudProfile_Serialize[],
+	/**  Name of the active profile (none while there are no profiles). */
+	profile?: string,
 };
 
 export type HudFeatures = HudFeatures_Serialize | HudFeatures_Deserialize;
@@ -940,7 +955,7 @@ export type HudFeatures_Deserialize = {
 	toggleSneak?: Toggle_Deserialize,
 	hitboxes?: FeatureOptions_Deserialize,
 	overlays?: FeatureOptions_Deserialize,
-	sounds?: SoundOptions_Deserialize,
+	sounds?: OnFeature_Deserialize,
 	crosshair?: FeatureOptions_Deserialize,
 	hurtCam?: FeatureOptions_Deserialize,
 	lightLevels?: FeatureOptions_Deserialize,
@@ -952,6 +967,8 @@ export type HudFeatures_Deserialize = {
 	hitColor?: FeatureOptions_Deserialize,
 	screens?: FeatureOptions_Deserialize,
 	waypoints?: FeatureOptions_Deserialize,
+	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
+	badges?: OnFeature_Deserialize,
 };
 
 export type HudFeatures_Serialize = {
@@ -965,7 +982,7 @@ export type HudFeatures_Serialize = {
 	toggleSneak: Toggle_Serialize,
 	hitboxes: FeatureOptions_Serialize,
 	overlays: FeatureOptions_Serialize,
-	sounds: SoundOptions_Serialize,
+	sounds: OnFeature_Serialize,
 	crosshair: FeatureOptions_Serialize,
 	hurtCam: FeatureOptions_Serialize,
 	lightLevels: FeatureOptions_Serialize,
@@ -977,6 +994,8 @@ export type HudFeatures_Serialize = {
 	hitColor: FeatureOptions_Serialize,
 	screens: FeatureOptions_Serialize,
 	waypoints: FeatureOptions_Serialize,
+	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
+	badges: OnFeature_Serialize,
 };
 
 export type HudModule = HudModule_Serialize | HudModule_Deserialize;
@@ -999,6 +1018,42 @@ export type HudModule_Serialize = {
 	style?: HudStyle_Serialize,
 	/**  Module-specific options, as strings (formats, layouts, on/off as "1"/"0"). */
 	options: { [key in string]: string },
+};
+
+/**
+ *  A saved HUD layout (e.g. PvP, building) the player switches to with a key, in the menus, or
+ *  by joining one of its servers. The mod does the same switching (`hud/Profiles.java`).
+ */
+export type HudProfile = HudProfile_Serialize | HudProfile_Deserialize;
+
+/**
+ *  A saved HUD layout (e.g. PvP, building) the player switches to with a key, in the menus, or
+ *  by joining one of its servers. The mod does the same switching (`hud/Profiles.java`).
+ */
+export type HudProfile_Deserialize = {
+	name?: string,
+	style?: HudStyle_Deserialize,
+	modules?: { [key in string]: HudModule_Deserialize },
+	/**
+	 *  Server addresses that switch to this profile on joining (`hypixel.net` also matches
+	 *  `mc.hypixel.net`); empty for a profile chosen by hand only.
+	 */
+	servers?: string[],
+};
+
+/**
+ *  A saved HUD layout (e.g. PvP, building) the player switches to with a key, in the menus, or
+ *  by joining one of its servers. The mod does the same switching (`hud/Profiles.java`).
+ */
+export type HudProfile_Serialize = {
+	name: string,
+	style: HudStyle_Serialize,
+	modules: { [key in string]: HudModule_Serialize },
+	/**
+	 *  Server addresses that switch to this profile on joining (`hypixel.net` also matches
+	 *  `mc.hypixel.net`); empty for a profile chosen by hand only.
+	 */
+	servers: string[],
 };
 
 /**
@@ -1489,6 +1544,30 @@ export type NewInstance_Serialize = {
 	sharedOptions: boolean,
 };
 
+/**
+ *  A feature that is on unless switched off (the sound editor keeps a volume per sound id in
+ *  `options`).
+ */
+export type OnFeature = OnFeature_Serialize | OnFeature_Deserialize;
+
+/**
+ *  A feature that is on unless switched off (the sound editor keeps a volume per sound id in
+ *  `options`).
+ */
+export type OnFeature_Deserialize = {
+	enabled?: boolean,
+	options?: { [key in string]: string },
+};
+
+/**
+ *  A feature that is on unless switched off (the sound editor keeps a volume per sound id in
+ *  `options`).
+ */
+export type OnFeature_Serialize = {
+	enabled: boolean,
+	options?: { [key in string]: string },
+};
+
 export type OptionsTemplate = {
 	/**  Name of the instance it was saved from. */
 	source: string,
@@ -1939,6 +2018,11 @@ export type Settings_Deserialize = {
 	checkUpdates?: boolean,
 	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */
 	checkModUpdates?: boolean,
+	/**
+	 *  Download newer versions of the Aerion mod between launcher releases
+	 *  ([`crate::aerion_mod::update`]).
+	 */
+	aerionModUpdates?: boolean,
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor?: boolean,
 	layout?: LayoutPrefs_Deserialize,
@@ -1995,6 +2079,11 @@ export type Settings_Serialize = {
 	checkUpdates: boolean,
 	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */
 	checkModUpdates: boolean,
+	/**
+	 *  Download newer versions of the Aerion mod between launcher releases
+	 *  ([`crate::aerion_mod::update`]).
+	 */
+	aerionModUpdates: boolean,
 	/**  The player model on the home screen turns its head towards the cursor. */
 	followCursor: boolean,
 	layout: LayoutPrefs_Serialize,
@@ -2041,21 +2130,6 @@ export type Skin_Serialize = {
 };
 
 export type SortOrder = "relevance" | "downloads" | "updated" | "newest";
-
-/**  The sound editor: enabled unless switched off, volume per sound id in `options`. */
-export type SoundOptions = SoundOptions_Serialize | SoundOptions_Deserialize;
-
-/**  The sound editor: enabled unless switched off, volume per sound id in `options`. */
-export type SoundOptions_Deserialize = {
-	enabled?: boolean,
-	options?: { [key in string]: string },
-};
-
-/**  The sound editor: enabled unless switched off, volume per sound id in `options`. */
-export type SoundOptions_Serialize = {
-	enabled: boolean,
-	options?: { [key in string]: string },
-};
 
 export type Stats = Stats_Serialize | Stats_Deserialize;
 

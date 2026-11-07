@@ -39,7 +39,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -67,8 +67,10 @@ public final class Features {
 			hitColor = new KeyMapping("key.aerion.hitColor", InputConstants.UNKNOWN.getValue(), cat);
 			screens = new KeyMapping("key.aerion.screens", InputConstants.UNKNOWN.getValue(), cat);
 			waypointAdd = new KeyMapping("key.aerion.waypointAdd", InputConstants.UNKNOWN.getValue(), cat);
+			map = new KeyMapping("key.aerion.map", InputConstants.KEY_M, cat);
+			profile = new KeyMapping("key.aerion.profile", InputConstants.UNKNOWN.getValue(), cat);
 			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
-					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd));
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -77,6 +79,33 @@ public final class Features {
 			keys = all.toArray(new KeyMapping[0]);
 		}
 		return keys;
+	}
+
+	/**
+	 * Zoom and the game's "Save hotbar" both start on C, so a number pressed while zooming in
+	 * creative overwrote a saved hotbar. Once per game folder, "Save hotbar" moves to B (or is
+	 * cleared when B is taken); a player who later puts both on C keeps that choice.
+	 */
+	public static void sortKeysOnce(Minecraft mc) {
+		Path marker = mc.gameDirectory.toPath().resolve("aerion-keys-sorted");
+		if (Files.exists(marker) || zoom == null) return;
+		KeyMapping save = mc.options.keySaveHotbarActivator;
+		if (!zoom.isUnbound() && zoom.same(save)) {
+			InputConstants.Key b = InputConstants.getKey("key.keyboard.b");
+			boolean free = true;
+			for (KeyMapping k : mc.options.keyMappings) {
+				if (k.saveString().equals(b.getName()) && pl.aerion.mod.hud.KeyBoard.context(k).equals("game")) free = false;
+			}
+			save.setKey(free ? b : InputConstants.UNKNOWN);
+			KeyMapping.resetMapping();
+			mc.options.save();
+			AerionClient.LOG.info("Aerion: \"Save hotbar\" moved off the zoom key to {}", free ? "B" : "none");
+		}
+		try {
+			Files.writeString(marker, "Aerion moved \"Save hotbar\" off the zoom key once; delete to check again.\n");
+		} catch (IOException e) {
+			AerionClient.warnOnce("keys marker", e);
+		}
 	}
 
 	public static boolean isMenuKey(InputConstants.Key key) {
@@ -109,6 +138,8 @@ public final class Features {
 			case "hitColor" -> hitColor;
 			case "screens" -> screens;
 			case "waypointAdd" -> waypointAdd;
+			case "map" -> map;
+			case "profile" -> profile;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -262,15 +293,16 @@ public final class Features {
 		}
 	}
 
-	private static double applied = -1;
-
-	/** Keeps the game's gamma on the chosen level while fullbright is on (it can change any time). */
+	/**
+	 * Keeps the game's gamma on the chosen level while fullbright is on. Other screens change it
+	 * (Video Settings puts it back into the slider's range), so it is checked against the game's
+	 * own value, and put back once no screen is open.
+	 */
 	@SuppressWarnings("unchecked")
 	private static void applyLevel(Minecraft mc) {
+		if (!bright || Game.screen() != null) return;
 		double want = level() / 100.0;
-		if (!bright || want == applied) return;
-		((OptionInstanceAccessor<Double>) (Object) mc.options.gamma()).aerion$setValue(want);
-		applied = want;
+		if (mc.options.gamma().get() != want) ((OptionInstanceAccessor<Double>) (Object) mc.options.gamma()).aerion$setValue(want);
 	}
 
 	/** A key raised or lowered the level: store it and say so above the hotbar. */
@@ -298,10 +330,8 @@ public final class Features {
 			gammaBefore = mc.options.gamma().get();
 			// Past the slider's range on purpose; the game clamps it again when options reload.
 			gamma.aerion$setValue(level() / 100.0);
-			applied = level() / 100.0;
 		} else if (gammaBefore != null) {
 			gamma.aerion$setValue(gammaBefore);
-			applied = -1;
 		}
 		bright = on;
 	}
@@ -391,6 +421,11 @@ public final class Features {
 		toggleOnKey(hitColor, "hitColor", false);
 		toggleOnKey(screens, "screens", false);
 		HitColor.tick();
+		Waypoints.tick(mc);
+		while (profile.consumeClick()) pl.aerion.mod.hud.Profiles.cycle(AerionClient.hud());
+		while (map.consumeClick()) {
+			if (Game.screen() == null && mc.player != null) Game.setScreen(new EditorScreen(new pl.aerion.mod.hud.MapPage(), null));
+		}
 		while (waypointAdd.consumeClick()) {
 			Waypoints.Point w = Waypoints.addHere(Lang.tr("aerion.waypoint.default"));
 			if (w != null) Game.overlayMessage(Component.literal(w.name + " (" + w.x + ", " + w.y + ", " + w.z + ")"));

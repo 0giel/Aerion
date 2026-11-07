@@ -155,13 +155,29 @@ public final class HudEditor implements Page {
 		buttons.add(new Button(bx, by, w, h, () -> Page.go(new AerionMenu())));
 	}
 
+	private int profileChipWidth() {
+		return Math.round(Txt.width(Profiles.active(AerionClient.hud()), 7f)) + 20;
+	}
+
+	/** The HUD profile in use, a small chip next to the tools; a click opens the profiles. */
+	private void profiles(Gfx g, Theme t, int accent, int x, int y, int h, int w, int mx, int my) {
+		int surface = t != null ? t.surface : 0xFF1A1A1A;
+		boolean over = mx >= x && my >= y && mx < x + w && my < y + h;
+		Draw.rounded(g, x, y, w, h, 3, Colors.alpha(over ? Colors.mix(surface, accent, 0.4f) : surface, 0xE0));
+		Icons.draw(g, "packs", x + 2.5f, y + 2.5f, h - 5, 0xFFFFFFFF);
+		Txt.draw(g, Profiles.active(AerionClient.hud()), x + h + 1, y + h / 2f, 7f, 0xFFFFFFFF);
+		buttons.add(new Button(x, y, w, h, () -> Page.go(AerionMenu.profiles())));
+	}
+
 	/** Help, undo and reset under the Mods button, where they can't cover a module in a corner. */
 	private void tools(Gfx g, Theme t, int accent, int mouseX, int mouseY) {
 		int size = 14, count = undo.isEmpty() ? 2 : 3;
-		int y = screenH / 2 + 20, x = (screenW - count * size - (count - 1) * 3) / 2;
+		int chipW = profileChipWidth();
+		int y = screenH / 2 + 20, x = (screenW - count * size - (count - 1) * 3 - 3 - chipW) / 2;
 		x = tool(g, t, accent, x, y, size, "help", help, mouseX, mouseY, () -> help = !help);
 		if (!undo.isEmpty()) x = tool(g, t, accent, x, y, size, "undo", false, mouseX, mouseY, this::undo);
-		tool(g, t, accent, x, y, size, "reset", false, mouseX, mouseY, this::resetLayout);
+		x = tool(g, t, accent, x, y, size, "reset", false, mouseX, mouseY, this::resetLayout);
+		profiles(g, t, accent, x, y, size, chipW, mouseX, mouseY);
 		if (!help) return;
 		int boxW = Math.min(228, screenW - 8);
 		String[] rows = wrap(Lang.tr(Hud.BOUNDS.isEmpty() ? "aerion.editor.empty" : "aerion.editor.hint"), boxW - 8, 7.5f);
@@ -349,9 +365,10 @@ public final class HudEditor implements Page {
 		double top = Math.max(0, Math.min(screenH - b[3], y - grabY));
 		guideX = -1;
 		guideY = -1;
-		// Candidate lines: screen margins and middle, and the edges and middles of other modules.
-		List<Integer> xs = new ArrayList<>(List.of(EDGE, screenW / 2, screenW - EDGE));
-		List<Integer> ys = new ArrayList<>(List.of(EDGE, screenH / 2, screenH - EDGE));
+		// Candidate lines: the screen's edges (first, so a module pushed against an edge stays
+		// there), small margins, the middle, and the edges and middles of other modules.
+		List<Integer> xs = new ArrayList<>(List.of(0, screenW, EDGE, screenW / 2, screenW - EDGE));
+		List<Integer> ys = new ArrayList<>(List.of(0, screenH, EDGE, screenH / 2, screenH - EDGE));
 		for (var e : Hud.BOUNDS.entrySet()) {
 			if (e.getKey().equals(dragging)) continue;
 			int[] o = e.getValue();

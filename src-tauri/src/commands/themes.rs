@@ -355,3 +355,16 @@ pub async fn save_hud_config(
 ) -> CmdResult<()> {
     Ok(launcher_core::aerion_mod::hud::save(&state.paths, &config).await?)
 }
+
+/// The settings with another HUD profile in use (`current_name` names the layout in use when no
+/// profile exists yet); not saved, the editor saves as usual.
+#[tauri::command]
+#[specta::specta]
+pub fn switch_hud_profile(
+    mut config: launcher_core::aerion_mod::hud::HudConfig,
+    name: String,
+    current_name: String,
+) -> CmdResult<launcher_core::aerion_mod::hud::HudConfig> {
+    config.switch_profile(&name, &current_name)?;
+    Ok(config)
+}

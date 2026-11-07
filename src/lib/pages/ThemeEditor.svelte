@@ -13,8 +13,10 @@
   import { commands, errorMessage } from "../api";
   import { t } from "../i18n/index.svelte";
 
-  const base = themes.current;
-  const builtin = themes.isBuiltin(base.id);
+  /** A new theme from scratch (Settings → New theme) instead of a copy of the current one. */
+  const fresh = router.params.new === "1";
+  const base = fresh ? (themes.find("nocturne") ?? themes.current) : themes.current;
+  const builtin = fresh || themes.isBuiltin(base.id);
   const slug = (s: string) =>
     s
       .toLowerCase()
@@ -32,16 +34,34 @@
   }
 
   let draft = $state<Theme>(
-    builtin
+    fresh
       ? {
           ...structuredClone($state.snapshot(base)),
-          name: `${base.name} ✦`,
-          id: uniqueId(`${base.name}-custom`),
+          name: t("themeEditor.newName"),
+          id: uniqueId(t("themeEditor.newName")),
           author: undefined,
+          // A plain start: one background colour, no moving extras; everything is added here.
+          background: {
+            ...structuredClone($state.snapshot(base.background)),
+            type: "color",
+            gradient: null,
+            asset: null,
+            dim: 0,
+            blur: 0,
+            ribbons: false,
+            particles: "none",
+          },
         }
-      : structuredClone($state.snapshot(base)),
+      : builtin
+        ? {
+            ...structuredClone($state.snapshot(base)),
+            name: `${base.name} ✦`,
+            id: uniqueId(`${base.name}-custom`),
+            author: undefined,
+          }
+        : structuredClone($state.snapshot(base)),
   );
-  let css = $state(themes.user.find((u) => u.theme.id === base.id)?.css ?? "");
+  let css = $state(fresh ? "" : (themes.user.find((u) => u.theme.id === base.id)?.css ?? ""));
 
   $effect(() => {
     const theme = $state.snapshot(draft) as Theme;
@@ -165,7 +185,8 @@
       ><Icon name="arrowLeft" /></button
     >
     <h1 class="grow">{t("themeEditor.title")}</h1>
-    {#if builtin}<span class="small muted">{t("themeEditor.basedOn", { name: base.name })}</span>{/if}
+    {#if builtin && !fresh}<span class="small muted">{t("themeEditor.basedOn", { name: base.name })}</span
+      >{/if}
     <button class="btn ghost" onclick={reset}><Icon name="undo" size={16} />{t("themeEditor.reset")}</button>
     <button class="btn" onclick={exportTheme}
       ><Icon name="upload" size={16} />{t("themeEditor.exportFile")}</button

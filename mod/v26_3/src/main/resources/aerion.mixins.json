@@ -1,6 +1,7 @@
 {
 	"required": true,
 	"package": "pl.aerion.mod.mixin.version",
+	"plugin": "pl.aerion.mod.MixinGate",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AbstractButtonMixin",

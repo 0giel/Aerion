@@ -91,6 +91,10 @@ pub fn sha1_hex(data: &[u8]) -> String {
     hex::encode(sha1::Sha1::digest(data))
 }
 
+pub fn sha256_hex(data: &[u8]) -> String {
+    hex::encode(sha2::Sha256::digest(data))
+}
+
 /// CurseForge file fingerprint: MurmurHash2 (seed 1) of the file with all
 /// whitespace bytes (tab, LF, CR, space) removed.
 fn curseforge_fingerprint(data: &[u8]) -> u32 {

@@ -8,7 +8,7 @@
 	"contact": {
 		"homepage": "https://github.com/0giel/Aerion"
 	},
-	"license": "All-Rights-Reserved",
+	"license": "GPL-3.0-only",
 	"icon": "assets/aerion/icon.png",
 	"environment": "client",
 	"entrypoints": {

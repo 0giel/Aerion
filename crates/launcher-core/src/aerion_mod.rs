@@ -2,7 +2,9 @@
 //! the launcher's theme. The launcher keeps the jar and the current theme in `<root>/aerion-mod`
 //! and loads the jar with `-Dfabric.addMods`, so it never appears in the player's mods folder.
 
+pub mod badges;
 pub mod hud;
+pub mod update;
 
 use std::path::PathBuf;
 
@@ -14,6 +16,20 @@ use crate::paths::{Paths, display_path};
 
 /// Game versions the bundled jars are built for (one jar each).
 pub const GAME_VERSIONS: &[&str] = &["26.3", "1.21.11"];
+
+/// Game versions the mod runs on: the bundled ones and any a downloaded update adds.
+pub fn game_versions(paths: &Paths) -> Vec<String> {
+    let mut out: Vec<String> = GAME_VERSIONS.iter().map(|v| (*v).to_owned()).collect();
+    for v in update::installed(paths)
+        .map(|s| s.game_versions)
+        .unwrap_or_default()
+    {
+        if !out.contains(&v) {
+            out.push(v);
+        }
+    }
+    out
+}
 
 fn jar_name(game_version: &str) -> String {
     format!("aerion-ui-{game_version}.jar")
@@ -74,8 +90,8 @@ fn theme_file(paths: &Paths) -> PathBuf {
     paths.aerion_mod_dir().join("theme.json")
 }
 
-fn supports(loader: LoaderKind, game_version: &str) -> bool {
-    loader == LoaderKind::Fabric && GAME_VERSIONS.contains(&game_version)
+fn supports(paths: &Paths, loader: LoaderKind, game_version: &str) -> bool {
+    loader == LoaderKind::Fabric && game_versions(paths).iter().any(|v| v == game_version)
 }
 
 /// Write a bundled jar unless the same bytes are already there.
@@ -109,14 +125,17 @@ pub fn jvm_args(
     loader: LoaderKind,
     game_version: &str,
 ) -> Vec<String> {
-    let jar = paths.aerion_mod_dir().join(jar_name(game_version));
-    if !supports(loader, game_version) || !jar.is_file() {
+    // A newer mod downloaded since this launcher was built wins over the bundled one.
+    let jar = update::jar(paths, game_version)
+        .unwrap_or_else(|| paths.aerion_mod_dir().join(jar_name(game_version)));
+    if !supports(paths, loader, game_version) || !jar.is_file() {
         return Vec::new();
     }
     vec![
         format!("-Dfabric.addMods={}", display_path(&jar)),
         format!("-Daerion.theme={}", display_path(&theme_file(paths))),
         format!("-Daerion.hud={}", display_path(&hud::file(paths))),
+        format!("-Daerion.badges={}", display_path(&badges::file(paths))),
         format!(
             "-Daerion.status={}",
             display_path(&status_file(paths, instance_id))
@@ -195,7 +214,7 @@ mod tests {
         let paths = Paths::at(dir.path().to_path_buf(), false);
         install_jar(&paths, "26.3", b"jar").unwrap();
         let args = jvm_args(&paths, "a", LoaderKind::Fabric, "26.3");
-        assert_eq!(args.len(), 4);
+        assert_eq!(args.len(), 5);
         assert!(
             args[0].starts_with("-Dfabric.addMods=") && args[0].ends_with("aerion-ui-26.3.jar")
         );

@@ -695,6 +695,10 @@ const pl: Dict = {
     lightTheme: "Motyw jasny",
     darkTheme: "Motyw ciemny",
     editTheme: "Edytor motywów",
+    newTheme: "Nowy motyw",
+    aerionModUpdates: "Aktualizuj mod Aerion automatycznie",
+    aerionModUpdatesHint:
+      "Przed startem gry pobiera nowszą, podpisaną wersję moda, także między aktualizacjami launchera.",
     importTheme: "Importuj motyw…",
     themesFolder: "Folder motywów",
     defaultMemory: "Domyślna pamięć",
@@ -806,6 +810,7 @@ const pl: Dict = {
       "Dla zaawansowanych: dowolny CSS nakładany po motywie. Zapisywany jako <id>.css obok motywu.",
     saveAs: "Zapisz motyw",
     savedAs: "Zapisano jako {name}",
+    newName: "Mój motyw",
     reset: "Cofnij zmiany",
     exportFile: "Eksportuj…",
     deleteTheme: "Usuń motyw",
@@ -1241,6 +1246,20 @@ const pl: Dict = {
     enabled: "HUD Aeriona",
     presetsLabel: "Gotowe układy:",
     presetApplied: "Ustawiono układ: {name}",
+    profiles: {
+      label: "Profile:",
+      main: "Główny",
+      add: "Nowy profil",
+      newName: "Profil {n}",
+      name: "Nazwa",
+      servers: "Serwery",
+      serversHint:
+        "Po wejściu na jeden z tych serwerów gra sama przełączy ten profil, np. hypixel.net. Oddziel przecinkami.",
+      delete: "Usuń profil",
+      deleted: "Usunięto profil: {name}",
+      keyHint:
+        "Każdy profil ma własny układ modułów. Klawisz do przełączania ustawisz w grze (Aerion → Klawisze).",
+    },
     presets: {
       minimal: "Minimalny",
       pvp: "PvP",
@@ -1529,6 +1548,8 @@ const pl: Dict = {
       overlaysHint: "Niższy ogień i usuwanie efektów ustawisz w menu w grze.",
       sounds: "Edytor dźwięków",
       soundsHint: "Głośność każdego dźwięku ustawisz w menu w grze.",
+      badges: "Odznaki",
+      badgesHint: "Ikonki przy nickach graczy z odznaką, np. za zgłaszanie błędów.",
       fullbrightHint: "Widzisz w ciemności; klawisz wyłącza i włącza na chwilę.",
     },
   },

@@ -3,9 +3,6 @@ package pl.aerion.mod.hud;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 import pl.aerion.mod.Colors;
 import pl.aerion.mod.features.Waypoints;
 import pl.aerion.mod.platform.Gfx;
@@ -46,29 +43,7 @@ final class Minimap implements Hud.Module {
 	private void sample(Minecraft mc, LocalPlayer player, int n) {
 		ClientLevel level = mc.level;
 		if (level == null) return;
-		int[] out = new int[n * n];
-		int px = player.getBlockX(), pz = player.getBlockZ();
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		int[] prevHeight = new int[n];
-		for (int dz = 0; dz < n; dz++) {
-			for (int dx = 0; dx < n; dx++) {
-				int x = px - n / 2 + dx, z = pz - n / 2 + dz;
-				if (!level.hasChunk(x >> 4, z >> 4)) continue;
-				int h = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-				pos.set(x, h, z);
-				BlockState state = level.getBlockState(pos);
-				int col = state.getMapColor(level, pos).col;
-				if (col == 0) continue;
-				// Brighter towards rising ground, darker towards falling (north to south), like maps.
-				float shade = dz == 0 ? 1f : h > prevHeight[dx] ? 1.1f : h < prevHeight[dx] ? 0.82f : 1f;
-				prevHeight[dx] = h;
-				int r = Math.min(255, Math.round(((col >> 16) & 0xFF) * shade));
-				int g = Math.min(255, Math.round(((col >> 8) & 0xFF) * shade));
-				int b = Math.min(255, Math.round((col & 0xFF) * shade));
-				out[dz * n + dx] = 0xFF000000 | (r << 16) | (g << 8) | b;
-			}
-		}
-		colors = out;
+		colors = MapColors.sample(level, player.getBlockX() - n / 2, player.getBlockZ() - n / 2, n, n, 1);
 		blocks = n;
 	}
 
@@ -96,10 +71,11 @@ final class Minimap implements Hud.Module {
 		if (player != null && Waypoints.showOnMinimap()) {
 			String here = Waypoints.dimension(player);
 			for (Waypoints.Point w : Waypoints.all()) {
-				if (!w.enabled || !here.equals(w.dimension)) continue;
+				double[] at = w.enabled ? Waypoints.position(w, here) : null;
+				if (at == null) continue;
 				// Points beyond the map stay on its edge, in their direction.
-				int wx = Math.max(p + 1, Math.min(p + s - 2, p + s / 2 + (w.x - player.getBlockX()) * z));
-				int wy = Math.max(p + 1, Math.min(p + s - 2, p + s / 2 + (w.z - player.getBlockZ()) * z));
+				int wx = Math.max(p + 1, Math.min(p + s - 2, p + s / 2 + ((int) at[0] - player.getBlockX()) * z));
+				int wy = Math.max(p + 1, Math.min(p + s - 2, p + s / 2 + ((int) at[2] - player.getBlockZ()) * z));
 				g.fill(wx - 2, wy - 2, wx + 2, wy + 2, 0xFF000000);
 				g.fill(wx - 1, wy - 1, wx + 1, wy + 1, Waypoints.color(w));
 			}

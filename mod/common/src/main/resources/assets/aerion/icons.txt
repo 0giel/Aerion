@@ -1,4 +1,4 @@
-64 6 384 640
+64 6 384 704
 fps
 coords
 direction
@@ -34,6 +34,7 @@ toggleSneak
 blockInfo
 fpsGraph
 playerList
+badges
 armor
 clock
 memory

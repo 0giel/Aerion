@@ -62,6 +62,23 @@ pub fn content_type(name: &str) -> &'static str {
     }
 }
 
+/// Whether a file event changes what the folder holds. Reading a file (which the launcher
+/// itself does when it loads the themes) also reports events; reacting to those would reload
+/// the themes in a loop.
+fn changes_files(event: &notify::Result<notify::Event>) -> bool {
+    use notify::EventKind;
+    use notify::event::ModifyKind;
+    match event {
+        Ok(e) => match e.kind {
+            EventKind::Create(_) | EventKind::Remove(_) => true,
+            EventKind::Modify(ModifyKind::Metadata(_)) => false,
+            EventKind::Modify(_) => true,
+            _ => false,
+        },
+        Err(_) => false,
+    }
+}
+
 /// Watch the themes folder and notify the UI (debounced).
 pub fn watch(app: AppHandle, dir: PathBuf) {
     std::thread::Builder::new()
@@ -75,7 +92,10 @@ pub fn watch(app: AppHandle, dir: PathBuf) {
             if let Err(e) = watcher.watch(&dir, RecursiveMode::Recursive) {
                 return tracing::warn!(error = %e, "cannot watch themes folder");
             }
-            while rx.recv().is_ok() {
+            while let Ok(event) = rx.recv() {
+                if !changes_files(&event) {
+                    continue;
+                }
                 let until = Instant::now() + Duration::from_millis(200);
                 while let Some(left) = until.checked_duration_since(Instant::now()) {
                     if rx.recv_timeout(left).is_err() {

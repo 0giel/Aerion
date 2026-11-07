@@ -63,3 +63,18 @@ jobs:
         run: |
           cargo test -p aerion -- --ignored export_bindings
           git diff --exit-code src/lib/bindings.ts
+
+  mod:
+    name: Aerion mod (Fabric, every game version)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.8.2"
+      - run: gradle --no-daemon build
+        working-directory: mod
