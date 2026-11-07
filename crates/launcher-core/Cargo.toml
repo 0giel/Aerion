@@ -41,7 +41,6 @@ keyring = "4.2"
 sysinfo = { version = "0.40.1", default-features = false, features = ["system"] }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_System_SystemInformation"] }
 mslnk = "0.1"
 dunce = "1"
 

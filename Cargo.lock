@@ -2424,7 +2424,6 @@ dependencies = [
  "tokio-util",
  "tracing",
  "uuid",
- "windows-sys 0.61.2",
  "wiremock",
  "zip 9.1.3",
 ]
