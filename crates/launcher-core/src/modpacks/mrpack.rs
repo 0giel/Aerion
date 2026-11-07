@@ -7,10 +7,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::Engine;
 use crate::error::{Error, Result};
-use crate::instances::launch::ensure_version;
-use crate::instances::{Instance, InstanceManager, ModpackInfo, NewInstance};
+use crate::instances::{Instance, InstanceManager, ModpackInfo};
 use crate::loaders::LoaderKind;
-use crate::modpacks::{ExportOptions, excluded_from_export};
+use crate::modpacks::{
+    ExportOptions, excluded_from_export, finish_platform_pack, import_into_new, pack_instance,
+};
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
 use crate::net::download::{DownloadItem, VerifyMode};
@@ -113,41 +114,29 @@ pub async fn import(
         .ok_or_else(|| Error::Invalid("pack has no minecraft version".into()))?;
     let (loader, loader_version) = loader_of(&index.dependencies);
     ctx.stage("stage.modpack", Some(index.name.clone()));
-    let inst = instances
-        .create(NewInstance {
+    let spec = pack_instance(index.name.clone(), game_version, loader, loader_version);
+    import_into_new(instances, spec, |inst| async move {
+        install_files(engine, instances, archive, &index, &inst, ctx).await?;
+        let info = origin.unwrap_or(ModpackInfo {
+            provider: "local".into(),
+            project_id: None,
+            version_id: None,
             name: index.name.clone(),
-            game_version,
-            loader,
-            loader_version,
-            icon: None,
-            group: None,
-            game_dir: None,
-            link_existing: false,
-            aerion_mod: false,
-            shared_options: false,
-        })
-        .await?;
-    let result = install_into(
-        engine, instances, modrinth, archive, &index, &inst, origin, ctx,
-    )
-    .await;
-    if result.is_err() {
-        let _ = instances.delete(&inst.id).await;
-    }
-    result
+            version_name: Some(index.version_id.clone()),
+        });
+        finish_platform_pack(engine, instances, &inst.id, info, modrinth, None, ctx).await
+    })
+    .await
 }
 
-#[allow(clippy::too_many_arguments)]
-async fn install_into(
+async fn install_files(
     engine: &Engine,
     instances: &InstanceManager,
-    modrinth: &Modrinth,
     archive: &Path,
     index: &Index,
     inst: &Instance,
-    origin: Option<ModpackInfo>,
     ctx: &TaskCtx,
-) -> Result<Instance> {
+) -> Result<()> {
     let game_dir = instances.game_dir(&inst.id)?;
     let mut items = Vec::new();
     for f in &index.files {
@@ -180,38 +169,18 @@ async fn install_into(
         Ok(())
     })
     .await
-    .map_err(|e| Error::Invalid(e.to_string()))??;
-
-    let info = origin.unwrap_or(ModpackInfo {
-        provider: "local".into(),
-        project_id: None,
-        version_id: None,
-        name: index.name.clone(),
-        version_name: Some(index.version_id.clone()),
-    });
-    let inst = instances
-        .modify(&inst.id, |i| i.modpack = Some(info))
-        .await?;
-
-    // Record provenance of the downloaded files (one bulk hash lookup).
-    let content = instances.content(&inst.id)?;
-    content.scan().await?;
-    let _ = content.identify(modrinth, None).await;
-    ensure_version(engine, instances, &inst, ctx).await?;
-    instances.get(&inst.id).await
+    .map_err(|e| Error::Invalid(e.to_string()))?
 }
 
 /// Export an instance as `.mrpack`. Files known on Modrinth are referenced by URL; everything
 /// else (and the chosen config folders) goes into `overrides/`.
 pub async fn export(
-    engine: &Engine,
     instances: &InstanceManager,
     modrinth: &Modrinth,
     id: &str,
     dest: &Path,
     opts: &ExportOptions,
 ) -> Result<()> {
-    let _ = engine;
     let inst = instances.get(id).await?;
     let game_dir = instances.game_dir(id)?;
     let content = instances.content(id)?;

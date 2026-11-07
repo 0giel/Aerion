@@ -280,17 +280,9 @@ pub async fn export_instance(
             let dest = PathBuf::from(&path);
             match options.format {
                 PackFormat::Mrpack => {
-                    let engine = state.engine().await;
                     let modrinth = state.modrinth().await;
-                    modpacks::mrpack::export(
-                        &engine,
-                        &state.instances,
-                        &modrinth,
-                        &id,
-                        &dest,
-                        &options,
-                    )
-                    .await?
+                    modpacks::mrpack::export(&state.instances, &modrinth, &id, &dest, &options)
+                        .await?
                 }
                 PackFormat::Curseforge => {
                     modpacks::curseforge::export(&state.instances, &id, &dest, &options).await?

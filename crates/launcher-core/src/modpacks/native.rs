@@ -4,7 +4,7 @@ use std::path::Path;
 
 use crate::error::{Error, Result};
 use crate::instances::{Instance, InstanceManager, NewInstance};
-use crate::modpacks::excluded_from_export;
+use crate::modpacks::{excluded_from_export, import_into_new, pack_instance};
 use crate::util::archive::{ZipBuilder, extract_zip_prefix, read_zip_entry};
 use crate::util::fs::write_json;
 
@@ -56,46 +56,41 @@ pub async fn import(instances: &InstanceManager, archive: &Path) -> Result<Insta
     })
     .await
     .map_err(|e| Error::Invalid(e.to_string()))??;
-    let created = instances
-        .create(NewInstance {
-            name: src.name.clone(),
-            game_version: src.game_version.clone(),
-            loader: src.loader,
-            loader_version: src.loader_version.clone(),
-            icon: src.icon.clone(),
-            group: src.group.clone(),
-            game_dir: None,
-            link_existing: false,
-            aerion_mod: false,
-            shared_options: false,
+    let spec = NewInstance {
+        icon: src.icon.clone(),
+        group: src.group.clone(),
+        ..pack_instance(
+            src.name.clone(),
+            src.game_version.clone(),
+            src.loader,
+            src.loader_version.clone(),
+        )
+    };
+    import_into_new(instances, spec, |created| async move {
+        let id = created.id.clone();
+        let dir = instances.dir(&id)?;
+        let (a, g, d) = (archive.to_path_buf(), instances.game_dir(&id)?, dir.clone());
+        tokio::task::spawn_blocking(move || -> Result<()> {
+            extract_zip_prefix(&a, "minecraft/", &g)?;
+            if let Some(c) = read_zip_entry(&a, "content.json")? {
+                crate::util::fs::atomic_write_sync(&d.join("content.json"), &c)?;
+            }
+            Ok(())
         })
-        .await?;
-    let id = created.id.clone();
-    let dir = instances.dir(&id)?;
-    let (a, g, d) = (archive.to_path_buf(), instances.game_dir(&id)?, dir.clone());
-    let res = tokio::task::spawn_blocking(move || -> Result<()> {
-        extract_zip_prefix(&a, "minecraft/", &g)?;
-        if let Some(c) = read_zip_entry(&a, "content.json")? {
-            crate::util::fs::atomic_write_sync(&d.join("content.json"), &c)?;
-        }
-        Ok(())
+        .await
+        .map_err(|e| Error::Invalid(e.to_string()))??;
+        // Keep the user's settings but not identity/statistics from another machine.
+        let restored = Instance {
+            id: id.clone(),
+            created_at: created.created_at,
+            last_played: None,
+            play_time_secs: 0,
+            version_id: None,
+            java_path: None,
+            ..src
+        };
+        write_json(dir.join("instance.json"), &restored).await?;
+        instances.get(&id).await
     })
     .await
-    .map_err(|e| Error::Invalid(e.to_string()))?;
-    if let Err(e) = res {
-        let _ = instances.delete(&id).await;
-        return Err(e);
-    }
-    // Keep the user's settings but not identity/statistics from another machine.
-    let restored = Instance {
-        id: id.clone(),
-        created_at: created.created_at,
-        last_played: None,
-        play_time_secs: 0,
-        version_id: None,
-        java_path: None,
-        ..src
-    };
-    write_json(dir.join("instance.json"), &restored).await?;
-    instances.get(&id).await
 }

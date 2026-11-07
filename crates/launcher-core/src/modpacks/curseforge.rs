@@ -7,10 +7,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::Engine;
 use crate::error::{Error, Result};
-use crate::instances::launch::ensure_version;
-use crate::instances::{InstanceManager, ModpackInfo, NewInstance};
+use crate::instances::{InstanceManager, ModpackInfo};
 use crate::loaders::LoaderKind;
-use crate::modpacks::{ExportOptions, ImportResult, ManualDownload, excluded_from_export};
+use crate::modpacks::{
+    ExportOptions, ImportResult, ManualDownload, excluded_from_export, finish_platform_pack,
+    import_into_new, pack_instance,
+};
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
@@ -103,22 +105,14 @@ pub async fn import(
         .and_then(|l| loader_from_id(&l.id))
         .map_or((LoaderKind::Vanilla, None), |(k, v)| (k, Some(v)));
     ctx.stage("stage.modpack", Some(manifest.name.clone()));
-    let inst = instances
-        .create(NewInstance {
-            name: manifest.name.clone(),
-            game_version: manifest.minecraft.version.clone(),
-            loader,
-            loader_version,
-            icon: None,
-            group: None,
-            game_dir: None,
-            link_existing: false,
-            aerion_mod: false,
-            shared_options: false,
-        })
-        .await?;
-    let id = inst.id.clone();
-    let result = async {
+    let spec = pack_instance(
+        manifest.name.clone(),
+        manifest.minecraft.version.clone(),
+        loader,
+        loader_version,
+    );
+    import_into_new(instances, spec, |inst| async move {
+        let id = inst.id;
         let game_dir = instances.game_dir(&id)?;
         let file_ids: Vec<u64> = manifest
             .files
@@ -190,9 +184,6 @@ pub async fn import(
         tokio::task::spawn_blocking(move || extract_zip_prefix(&a, &prefix, &g))
             .await
             .map_err(|e| Error::Invalid(e.to_string()))??;
-        content.scan().await?;
-        let _ = content.identify(modrinth, Some(cf)).await;
-
         let info = origin.unwrap_or(ModpackInfo {
             provider: "local".into(),
             project_id: None,
@@ -200,18 +191,14 @@ pub async fn import(
             name: manifest.name.clone(),
             version_name: manifest.version.clone(),
         });
-        let inst = instances.modify(&id, |i| i.modpack = Some(info)).await?;
-        ensure_version(engine, instances, &inst, ctx).await?;
-        Ok::<_, Error>(ImportResult {
-            instance: instances.get(&id).await?,
+        let instance =
+            finish_platform_pack(engine, instances, &id, info, modrinth, Some(cf), ctx).await?;
+        Ok(ImportResult {
+            instance,
             manual_downloads: manual,
         })
-    }
-    .await;
-    if result.is_err() {
-        let _ = instances.delete(&id).await;
-    }
-    result
+    })
+    .await
 }
 
 /// Export as a CurseForge pack: CurseForge-tracked files by id, the rest in `overrides/`.
