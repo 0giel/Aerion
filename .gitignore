@@ -22,7 +22,10 @@ Thumbs.db
 *.swp
 
 # Local launcher data when running portable builds from the repo
-/data/
+/data/*
+# What launchers read from GitHub lives here; it must stay tracked.
+!/data/badges.json
+!/data/mod-latest.json
 portable
 
 # Built release artefacts (scripts/release.sh)

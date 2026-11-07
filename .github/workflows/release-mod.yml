@@ -75,6 +75,6 @@ jobs:
           cp "$tmp"/aerion-ui-*.jar src-tauri/resources/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/mod-latest.json src-tauri/resources/aerion-ui-*.jar
+          git add -f data/mod-latest.json src-tauri/resources/aerion-ui-*.jar
           git commit -m "chore: Aerion mod $VERSION"
           git push

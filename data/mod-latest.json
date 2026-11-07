@@ -1,0 +1,17 @@
+{
+  "version": "1.0.1",
+  "minLauncher": "1.0.0",
+  "notes": "Aerion mod 1.0.1: the menu no longer crashes on features without a key",
+  "jars": {
+    "1.21.11": {
+      "url": "https://github.com/0giel/Aerion/releases/download/mod-v1.0.1/aerion-ui-1.21.11.jar",
+      "sha256": "c7311cbea050fe66adfcb6bc2390a2a1bb93a6cd64da6ede402915546e0ffbc7",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQnZjMmZsVkNseEhtL1pDL0daRzI4dWxiOUVwMkJrbjRUZnJGbDB5OTlpaklJOEJGdTl0VEpOVjRjNFJwSlRhQnVOVlkrc2Fqa3pKZTJQZW15WDcvbm12WnVIdTIrR0FBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MDg0NjgyCWZpbGU6YWVyaW9uLXVpLTEuMjEuMTEuamFyCk9WOTBob1d5T09mMzhyY2hGYkVDd3AvR2ZkTWlZVDZCT2tOM0tvaEpCd1lCa0s5TzlIMEZMeTR3Q2hoRDFBalAvdGRMM1owUlJZQkkxQWx1dXdkTERRPT0K"
+    },
+    "26.3": {
+      "url": "https://github.com/0giel/Aerion/releases/download/mod-v1.0.1/aerion-ui-26.3.jar",
+      "sha256": "0f32943aceae59b112c0cbd9c099fc194cab90b4a09480d10aa3e642922a67d8",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQnZjMmZsVkNseE44dWc2YTVzOFVmT1ZLbUVBaC83R1JFUE85UGRmcDdKZ080U3FVTzdySUNOdmw5QzhGMW5pbFJjT21pMldYeDFNQU11bGFxOEtZSTR5WlVNc3BCUXdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MDg0NjgyCWZpbGU6YWVyaW9uLXVpLTI2LjMuamFyClVrc1dRMnBYeHdBdkJTQ2I4RzlrK3M3Yjh2VW56WVB3eUVMdkdVNU9oM2IyY2V6NUhVSTFCMTN0MlZLdmJWdkZsK0lNMVpxWGJXOVJOY0M0Uk9OZ0N3PT0K"
+    }
+  }
+}

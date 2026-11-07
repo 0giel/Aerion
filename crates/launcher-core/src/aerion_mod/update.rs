@@ -239,6 +239,23 @@ mod tests {
         assert!(!verify(b"jar", &jar), "signed by another key");
     }
 
+    /// Release check: `AERION_VERIFY_JARS=<folder with the published jars> cargo test -p
+    /// launcher-core published_manifest -- --ignored` verifies `data/mod-latest.json` exactly as
+    /// a launcher would (checksum, signature against the built-in key).
+    #[test]
+    #[ignore = "needs the published jars; see the doc comment"]
+    fn published_manifest_verifies() {
+        let dir = std::env::var("AERION_VERIFY_JARS").expect("AERION_VERIFY_JARS");
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../data/mod-latest.json");
+        let m: Manifest = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+        assert!(!m.jars.is_empty());
+        for (game, jar) in &m.jars {
+            let bytes = std::fs::read(format!("{dir}/aerion-ui-{game}.jar")).unwrap();
+            assert!(verify(&bytes, jar), "{game} does not verify");
+            assert!(url_ok(&jar.url), "{game}: url");
+        }
+    }
+
     #[test]
     fn older_downloads_give_way_to_the_bundled_mod() {
         let dir = tempfile::tempdir().unwrap();
