@@ -1,8 +1,9 @@
 # A launcher release: push a tag like v1.0.1 (the version in src-tauri/tauri.conf.json).
 # GitHub builds Linux (.deb, AppImage) and Windows (installer), signs the updates and opens a
 # DRAFT release with latest.json. Check it and press "Publish": installed launchers update then.
-# Secrets (Settings → Secrets and variables → Actions): TAURI_SIGNING_PRIVATE_KEY (contents of
-# updater.key), TAURI_SIGNING_PRIVATE_KEY_PASSWORD (may be empty), LAUNCHER_MSA_CLIENT_ID.
+# Settings → Secrets and variables → Actions: secret TAURI_SIGNING_PRIVATE_KEY (contents of
+# updater.key), secret TAURI_SIGNING_PRIVATE_KEY_PASSWORD only if the key has a password, and
+# LAUNCHER_MSA_CLIENT_ID as a variable or a secret.
 name: Release
 
 on:
@@ -56,7 +57,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          LAUNCHER_MSA_CLIENT_ID: ${{ secrets.LAUNCHER_MSA_CLIENT_ID }}
+          # An identifier, not a secret: a repository variable or a secret both work.
+          LAUNCHER_MSA_CLIENT_ID: ${{ vars.LAUNCHER_MSA_CLIENT_ID || secrets.LAUNCHER_MSA_CLIENT_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Aerion __VERSION__
