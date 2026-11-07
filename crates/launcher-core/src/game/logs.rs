@@ -50,10 +50,6 @@ pub struct LogParser {
     event: Option<String>,
 }
 
-fn now_ms() -> f64 {
-    chrono::Utc::now().timestamp_millis() as f64
-}
-
 fn unescape(s: &str) -> String {
     s.replace("&lt;", "<")
         .replace("&gt;", ">")
@@ -123,7 +119,7 @@ impl LogParser {
         }
         if let Some((level, thread, text)) = parse_pattern_line(line) {
             return Some(LogLine {
-                time: now_ms(),
+                time: crate::util::now_millis() as f64,
                 level,
                 thread: Some(thread),
                 logger: None,
@@ -131,7 +127,7 @@ impl LogParser {
             });
         }
         Some(LogLine {
-            time: now_ms(),
+            time: crate::util::now_millis() as f64,
             level: LogLevel::Raw,
             thread: None,
             logger: None,
@@ -157,7 +153,7 @@ impl LogParser {
         LogLine {
             time: attr(head, "timestamp")
                 .and_then(|t| t.parse().ok())
-                .unwrap_or_else(now_ms),
+                .unwrap_or_else(|| crate::util::now_millis() as f64),
             level: attr(head, "level")
                 .map(|l| LogLevel::parse(&l))
                 .unwrap_or(LogLevel::Raw),

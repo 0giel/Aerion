@@ -119,7 +119,7 @@ impl TaskRegistry {
             progress: ctx.progress.snapshot(),
             error: None,
             result: None,
-            started_at: chrono_now_ms(),
+            started_at: now_ms(),
         };
         self.lock().insert(id.clone(), (info.clone(), ctx.clone()));
         let _ = TaskEvent(info).emit(app);
@@ -180,9 +180,6 @@ impl TaskRegistry {
     }
 }
 
-pub fn chrono_now_ms() -> f64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as f64)
-        .unwrap_or(0.0)
+pub fn now_ms() -> f64 {
+    launcher_core::util::now_millis() as f64
 }

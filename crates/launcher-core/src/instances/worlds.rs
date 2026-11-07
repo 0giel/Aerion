@@ -110,10 +110,7 @@ pub fn list_worlds(game_dir: &Path) -> Vec<WorldInfo> {
                 .and_then(|d| d.get("LastPlayed"))
                 .and_then(nbt::Tag::as_i64)
                 .map(|ms| ms / 1000)
-                .or_else(|| {
-                    let m = meta.modified().ok()?;
-                    Some(m.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs() as i64)
-                })
+                .or_else(|| meta.modified().ok().map(crate::util::unix_secs))
                 .unwrap_or(0);
             Some(WorldInfo {
                 has_icon: path.join("icon.png").is_file(),
@@ -172,7 +169,7 @@ pub fn backup_world(
     }
     let dir = backups_dir(instance_dir);
     std::fs::create_dir_all(&dir).at(&dir)?;
-    let millis = chrono::Utc::now().timestamp_millis();
+    let millis = crate::util::now_millis();
     let name = format!("{folder}__{millis}{}.zip", if auto { "_auto" } else { "" });
     let path = dir.join(&name);
     let tmp = dir.join(format!("{name}.part"));

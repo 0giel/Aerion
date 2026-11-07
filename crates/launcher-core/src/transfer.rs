@@ -112,10 +112,7 @@ pub fn export(paths: &Paths, settings: &Settings, dest: &Path) -> Result<Transfe
     let manifest = Manifest {
         format: FORMAT,
         app_version: env!("CARGO_PKG_VERSION").to_owned(),
-        created: std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0),
+        created: crate::util::now_secs(),
     };
     zip.start_file(MANIFEST, opts)?;
     zip.write_all(&serde_json::to_vec_pretty(&manifest).map_err(inv)?)

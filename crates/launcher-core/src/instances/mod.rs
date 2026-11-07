@@ -486,7 +486,7 @@ impl InstanceManager {
         }
         let bytes = tokio::fs::read(source).await.at(source)?;
         let kind = ImageKind::sniff(&bytes).ok_or(Error::UnsupportedImage)?;
-        let millis = chrono::Utc::now().timestamp_millis();
+        let millis = crate::util::now_millis();
         let name = format!("{ICON_PREFIX}{millis}.{}", kind.ext());
         let path = dir.join(&name);
         tokio::fs::write(&path, &bytes).await.at(&path)?;

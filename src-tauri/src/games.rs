@@ -119,7 +119,7 @@ impl GameRegistry {
 
 fn launcher_line(text: String) -> LogLine {
     LogLine {
-        time: crate::tasks::chrono_now_ms(),
+        time: crate::tasks::now_ms(),
         level: LogLevel::Raw,
         thread: Some("Aerion".into()),
         logger: None,
@@ -150,7 +150,7 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
     let info = RunningGame {
         instance_id: id.clone(),
         name: plan.instance.name.clone(),
-        started_at: crate::tasks::chrono_now_ms(),
+        started_at: crate::tasks::now_ms(),
         java: plan.java.path.display().to_string(),
         command: plan.spec.redacted(),
     };
@@ -323,10 +323,7 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
                 .unwrap_or_else(|e| e.into_inner())
                 .insert(id.clone(), s.logs);
         }
-        let started_secs = started
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0);
+        let started_secs = launcher_core::util::unix_secs(started);
         let _ = state.instances.record_play(&id, started_secs, secs).await;
         if crash.is_none() {
             let dir = game_dir.clone();
@@ -348,10 +345,7 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
                 render_distance,
                 modded,
             };
-            let now = SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .map(|d| d.as_secs() as i64)
-                .unwrap_or(0);
+            let now = launcher_core::util::now_secs();
             if let Some(summary) = launcher_core::sessions::summarize(&ctx, &samples, now)
                 && let Err(e) = launcher_core::sessions::add(&state.paths, summary).await
             {

@@ -193,11 +193,7 @@ impl ContentManager {
                 let enabled = !name.ends_with(DISABLED);
                 let base = name.trim_end_matches(DISABLED).to_owned();
                 let meta = e.metadata().await.at(e.path())?;
-                let modified = meta
-                    .modified()
-                    .ok()
-                    .and_then(|m| m.duration_since(std::time::UNIX_EPOCH).ok())
-                    .map_or(0, |d| d.as_secs() as i64);
+                let modified = meta.modified().map_or(0, crate::util::unix_secs);
                 let known = manifest
                     .entries
                     .iter()
@@ -403,11 +399,7 @@ impl ContentManager {
                     .unwrap_or_default();
             }
             if let Ok(meta) = tokio::fs::metadata(self.folder(e.kind).join(&e.file_name)).await {
-                e.modified = meta
-                    .modified()
-                    .ok()
-                    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-                    .map_or(0, |d| d.as_secs() as i64);
+                e.modified = meta.modified().map_or(0, crate::util::unix_secs);
                 e.size = meta.len();
             }
             m.entries

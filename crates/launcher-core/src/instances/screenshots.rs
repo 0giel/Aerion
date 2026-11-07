@@ -34,12 +34,7 @@ pub fn list(game_dir: &Path) -> Vec<Screenshot> {
             let name = e.file_name().to_str()?.to_owned();
             path(game_dir, &name).ok()?;
             let meta = e.metadata().ok().filter(|m| m.is_file())?;
-            let taken = meta
-                .modified()
-                .ok()?
-                .duration_since(std::time::UNIX_EPOCH)
-                .ok()?
-                .as_secs() as i64;
+            let taken = crate::util::unix_secs(meta.modified().ok()?);
             Some(Screenshot {
                 name,
                 size_bytes: meta.len(),
