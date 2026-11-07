@@ -248,7 +248,7 @@ Newest entries first.
 
 ### Mojang review submitted
 - The owner submitted the Minecraft API review form (new AppID, client ID
-  (kept out of the repository; see CONTRIBUTING.md), website https://github.com/0giel/Aerion — a public page
+  (kept out of the repository), website https://github.com/0giel/Aerion — a public page
   with README and screenshots, no source code). Waiting for Mojang's e-mail; until then sign-in
   ends with `auth.invalidAppRegistration`, which is expected.
 
@@ -278,7 +278,7 @@ Newest entries first.
   portal's "Interaction required" loop and Graph "User was not found"). After the owner created a
   free Azure account (real "Default Directory"), the app registration was created with Azure CLI
   via Microsoft Graph: personal accounts only, public client, redirect `http://localhost`,
-  fallback public client on. Client ID (kept out of the repository; see CONTRIBUTING.md) saved in the
+  fallback public client on. Client ID (kept out of the repository) saved in the
   owner's settings. Mojang review form: owner submits it (repo page without code prepared).
 
 

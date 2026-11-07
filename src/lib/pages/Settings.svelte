@@ -227,6 +227,12 @@
           onchange={(v) => save({ showConsoleOnLaunch: v })}
         />
         <Switch
+          label={t("appUpdate.background")}
+          hint={t("appUpdate.backgroundHint")}
+          checked={s.updateInBackground}
+          onchange={(v) => save({ updateInBackground: v })}
+        />
+        <Switch
           label={t("settings.aerionModUpdates")}
           hint={t("settings.aerionModUpdatesHint")}
           checked={s.aerionModUpdates}

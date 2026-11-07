@@ -1,7 +1,7 @@
 # Mojang's review of the Azure app
 
 Mojang reviews each launcher's Azure client ID before it may use the Minecraft API. Aerion's form
-went in on 2026-10-31 (client ID (kept out of the repository; see CONTRIBUTING.md), site
+went in on 2026-10-31 (client ID (kept out of the repository), site
 <https://github.com/0giel/Aerion>). There is no public status page and no published time limit, so
 this is how to tell where things stand and what to do next. Setup details: [AZURE_SETUP.md](AZURE_SETUP.md).
 

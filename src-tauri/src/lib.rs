@@ -140,6 +140,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             commands::themes::import_theme,
             commands::updates::check_app_update,
             commands::updates::install_app_update,
+            commands::updates::download_app_update,
             commands::themes::gallery_themes,
             commands::themes::install_gallery_theme,
             commands::tasks::list_tasks,
@@ -151,6 +152,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             crate::games::GameStateEvent,
             crate::games::GameLogEvent,
             crate::themes::ThemesChangedEvent,
+            crate::commands::updates::AppUpdateProgressEvent,
             crate::content_watch::ContentUpdatesEvent,
         ])
         .error_handling(ErrorHandlingMode::Throw)
@@ -390,6 +392,8 @@ pub fn run(platform_notes: Vec<String>) {
                 if to_tray {
                     api.prevent_close();
                     let _ = window.hide();
+                } else {
+                    crate::commands::updates::install_on_exit(window.app_handle());
                 }
             }
         })

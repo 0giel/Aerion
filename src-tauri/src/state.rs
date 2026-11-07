@@ -55,6 +55,8 @@ pub struct AppState {
     pub perf: tokio::sync::Mutex<Option<launcher_core::perf::Monitor>>,
     /// Found by `check_app_update`, installed by `install_app_update`.
     pub pending_update: tokio::sync::Mutex<Option<tauri_plugin_updater::Update>>,
+    /// A downloaded launcher update (its version and installer) waiting to be installed.
+    pub downloaded_update: tokio::sync::Mutex<Option<(String, Vec<u8>)>>,
 }
 
 impl AppState {
@@ -111,6 +113,7 @@ impl AppState {
             content_updates: Default::default(),
             perf: tokio::sync::Mutex::new(None),
             pending_update: tokio::sync::Mutex::new(None),
+            downloaded_update: tokio::sync::Mutex::new(None),
             paths,
         })
     }

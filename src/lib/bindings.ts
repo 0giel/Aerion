@@ -217,8 +217,17 @@ export const commands = {
 	/**  Import a theme file (plain theme JSON or an exported bundle). Returns the stored theme. */
 	importTheme: (path: string) => __TAURI_INVOKE<ThemeFile_Serialize>("import_theme", { path }),
 	checkAppUpdate: () => __TAURI_INVOKE<AppUpdate_Serialize | null>("check_app_update"),
-	/**  Download, verify (signature), install and restart. */
+	/**
+	 *  Install (the already downloaded update when there is one) and restart. Refused while a game
+	 *  runs: restarting would cut it off from the launcher.
+	 */
 	installAppUpdate: () => __TAURI_INVOKE<null>("install_app_update"),
+	/**
+	 *  Download the update found by [`check_app_update`] while the launcher is in use; it is
+	 *  installed later ([`install_app_update`] or on closing the launcher). Progress comes as
+	 *  [`AppUpdateProgressEvent`].
+	 */
+	downloadAppUpdate: () => __TAURI_INVOKE<null>("download_app_update"),
 	galleryThemes: () => __TAURI_INVOKE<GalleryTheme_Serialize[]>("gallery_themes"),
 	/**  Download a gallery theme into the user's themes (JSON only: gallery themes carry no CSS). */
 	installGalleryTheme: (id: string) => __TAURI_INVOKE<string>("install_gallery_theme", { id }),
@@ -229,6 +238,7 @@ export const commands = {
 
 /** Events */
 export const events = {
+	appUpdateProgressEvent: makeEvent<AppUpdateProgressEvent_Serialize, AppUpdateProgressEvent_Deserialize>("app-update-progress-event"),
 	contentUpdatesEvent: makeEvent<ContentUpdatesEvent, ContentUpdatesEvent>("content-updates-event"),
 	gameLogEvent: makeEvent<GameLogEvent_Serialize, GameLogEvent_Deserialize>("game-log-event"),
 	gameStateEvent: makeEvent<GameStateEvent_Serialize, GameStateEvent_Deserialize>("game-state-event"),
@@ -340,6 +350,23 @@ export type AppInfo_Serialize = {
 };
 
 export type AppUpdate = AppUpdate_Serialize | AppUpdate_Deserialize;
+
+/**  How far the background download of an update is (bytes; `total` when the server says). */
+export type AppUpdateProgressEvent = AppUpdateProgressEvent_Serialize | AppUpdateProgressEvent_Deserialize;
+
+/**  How far the background download of an update is (bytes; `total` when the server says). */
+export type AppUpdateProgressEvent_Deserialize = {
+	downloaded: number | null,
+	total?: number | null,
+	done: boolean,
+};
+
+/**  How far the background download of an update is (bytes; `total` when the server says). */
+export type AppUpdateProgressEvent_Serialize = {
+	downloaded: number | null,
+	total: number | null,
+	done: boolean,
+};
 
 export type AppUpdate_Deserialize = {
 	version: string,
@@ -2016,6 +2043,8 @@ export type Settings_Deserialize = {
 	lastInstance?: string | null,
 	selectedAccount?: string | null,
 	checkUpdates?: boolean,
+	/**  Download a launcher update in the background as soon as it is found. */
+	updateInBackground?: boolean,
 	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */
 	checkModUpdates?: boolean,
 	/**
@@ -2077,6 +2106,8 @@ export type Settings_Serialize = {
 	lastInstance: string | null,
 	selectedAccount: string | null,
 	checkUpdates: boolean,
+	/**  Download a launcher update in the background as soon as it is found. */
+	updateInBackground: boolean,
 	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */
 	checkModUpdates: boolean,
 	/**

@@ -7,6 +7,8 @@
 #   3. Create a GitHub release tagged mod-v<version>, NOT marked as latest (the launcher's own
 #      updater reads the latest release), and upload the .jar files from release/mod-v<version>/.
 #   4. Commit and push mod-latest.json (and the rebuilt jars in src-tauri/resources).
+# Usually not needed: pushing a tag mod-v<version> does all of this on GitHub
+# (.github/workflows/release-mod.yml).
 #
 # Signs with the launcher's updater key ($AERION_SIGNING_KEY or
 # ~/.config/aerion-signing/updater.key; password in $AERION_SIGNING_PASSWORD), never stored here.
@@ -29,21 +31,7 @@ for jar in src-tauri/resources/aerion-ui-*.jar; do
   pnpm -s tauri signer sign -f "$KEY" -p "${AERION_SIGNING_PASSWORD:-}" "$OUT/$(basename "$jar")" > /dev/null
 done
 
-python3 -I - "$OUT" "$VERSION" "$MIN_LAUNCHER" "$NOTES" <<'PY'
-import hashlib, json, pathlib, sys
-out, version, min_launcher, notes = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4]
-base = f"https://github.com/0giel/Aerion/releases/download/mod-v{version}/"
-jars = {}
-for jar in sorted(out.glob("aerion-ui-*.jar")):
-    game = jar.stem.removeprefix("aerion-ui-")
-    jars[game] = {
-        "url": base + jar.name,
-        "sha256": hashlib.sha256(jar.read_bytes()).hexdigest(),
-        "signature": (out / f"{jar.name}.sig").read_text().strip(),
-    }
-manifest = {"version": version, "minLauncher": min_launcher, "notes": notes, "jars": jars}
-pathlib.Path("mod-latest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-PY
+python3 -I scripts/mod-manifest.py "$OUT" "$VERSION" "$MIN_LAUNCHER" "$NOTES"
 echo "mod $VERSION ready in $OUT; mod-latest.json updated."
 echo "Next: GitHub release 'mod-v$VERSION' (not latest) with the .jar files, then commit and push mod-latest.json."
 ls -la "$OUT"

@@ -15,7 +15,7 @@
 
   /** A new theme from scratch (Settings → New theme) instead of a copy of the current one. */
   const fresh = router.params.new === "1";
-  const base = fresh ? (themes.find("nocturne") ?? themes.current) : themes.current;
+  const base = fresh ? (themes.find("amber") ?? themes.current) : themes.current;
   const builtin = fresh || themes.isBuiltin(base.id);
   const slug = (s: string) =>
     s
@@ -117,7 +117,7 @@
       return;
     await commands.deleteUserTheme(draft.id).catch((e) => toasts.error(errorMessage(e)));
     await themes.loadUser();
-    await app.saveSettings({ theme: "nocturne" });
+    await app.saveSettings({ theme: "amber" });
     themes.setPreview(null);
     router.go("settings");
   }

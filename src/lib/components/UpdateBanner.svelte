@@ -12,10 +12,13 @@
 
   let details = $state(false);
   let installing = $state(false);
+  /** Restarting would cut a running game off from the launcher. */
+  const gameRunning = $derived(Object.keys(app.running).length > 0);
 
   $effect(() => {
     if (!app.ready || !app.settings?.checkUpdates) return;
-    const timer = setTimeout(() => void updates.check(false), 4000);
+    const background = app.settings.updateInBackground;
+    const timer = setTimeout(() => void updates.check(false, background), 4000);
     return () => clearTimeout(timer);
   });
 
@@ -33,8 +36,30 @@
 {#if updates.available && !updates.dismissed}
   <div class="banner card raised" role="status">
     <Icon name="download" size={16} />
-    <span class="small grow">{t("appUpdate.available", { version: updates.available.version })}</span>
-    <button class="btn sm primary" onclick={() => (details = true)}>{t("appUpdate.details")}</button>
+    {#if updates.ready}
+      <span class="small grow">{t("appUpdate.ready", { version: updates.available.version })}</span>
+      <button
+        class="btn sm primary"
+        disabled={installing || gameRunning}
+        title={gameRunning ? t("appUpdate.closeGame") : ""}
+        onclick={install}
+        >{#if installing}<span class="spinner"></span>{:else}<Icon name="refresh" size={14} />{/if}{t(
+          "appUpdate.restart",
+        )}</button
+      >
+      <button class="btn sm ghost" onclick={() => (details = true)}>{t("appUpdate.whatsNew")}</button>
+    {:else if updates.progress !== null}
+      <span class="small grow"
+        >{t("appUpdate.downloading", {
+          version: updates.available.version,
+          percent: Math.round(updates.progress * 100),
+        })}</span
+      >
+      <span class="bar"><span style:width="{Math.round(updates.progress * 100)}%"></span></span>
+    {:else}
+      <span class="small grow">{t("appUpdate.available", { version: updates.available.version })}</span>
+      <button class="btn sm primary" onclick={() => (details = true)}>{t("appUpdate.details")}</button>
+    {/if}
     <button class="icon-btn sm" aria-label={t("common.close")} onclick={() => (updates.dismissed = true)}
       ><Icon name="x" size={14} /></button
     >
@@ -50,11 +75,15 @@
     <p class="small muted">{t("appUpdate.current", { version: app.info?.version ?? "" })}</p>
     {#if updates.available?.notes}<pre class="notes small">{updates.available.notes}</pre>{/if}
     {#if !updates.available?.canInstall}<p class="small">{t("appUpdate.manual")}</p>{/if}
+    {#if updates.available?.canInstall && gameRunning}<p class="small muted">
+        {t("appUpdate.closeGame")}
+      </p>{/if}
+    {#if updates.ready}<p class="small muted">{t("appUpdate.onExit")}</p>{/if}
   </div>
   {#snippet footer()}
     <button class="btn ghost" onclick={() => (details = false)}>{t("appUpdate.later")}</button>
     {#if updates.available?.canInstall}
-      <button class="btn primary" disabled={installing} onclick={install}
+      <button class="btn primary" disabled={installing || gameRunning} onclick={install}
         >{#if installing}<span class="spinner"></span>{t("appUpdate.installing")}{:else}<Icon
             name="refresh"
             size={15}
@@ -69,6 +98,19 @@
 </Modal>
 
 <style>
+  .bar {
+    width: 5rem;
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--c-surface-2);
+    overflow: hidden;
+  }
+  .bar span {
+    display: block;
+    height: 100%;
+    background: var(--c-accent);
+    transition: width var(--dur) var(--ease);
+  }
   .banner {
     position: fixed;
     left: var(--sp-4);

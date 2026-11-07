@@ -171,6 +171,8 @@ pub struct Settings {
     pub last_instance: Option<String>,
     pub selected_account: Option<String>,
     pub check_updates: bool,
+    /// Download a launcher update in the background as soon as it is found.
+    pub update_in_background: bool,
     /// Look for mod updates of every instance in the background (at start, then every 6 h).
     pub check_mod_updates: bool,
     /// Download newer versions of the Aerion mod between launcher releases
@@ -229,10 +231,10 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             language: None,
-            theme: "nocturne".into(),
+            theme: "amber".into(),
             theme_follow_system: false,
             theme_light: "light".into(),
-            theme_dark: "nocturne".into(),
+            theme_dark: "amber".into(),
             data_dir: None,
             java_overrides: BTreeMap::new(),
             java_auto_install: true,
@@ -257,6 +259,7 @@ impl Default for Settings {
             last_instance: None,
             selected_account: None,
             check_updates: true,
+            update_in_background: true,
             check_mod_updates: true,
             aerion_mod_updates: true,
             follow_cursor: true,

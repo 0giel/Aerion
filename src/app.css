@@ -4,7 +4,7 @@
  */
 
 :root {
-  /* Fallback tokens (Nocturne) until the theme engine runs. */
+  /* Fallback tokens (Amber, the default theme) until the theme engine runs. */
   --c-bg: #16171b;
   --c-surface: #1f2026;
   --c-surface-2: #272930;
@@ -13,13 +13,13 @@
   --c-text: #ecebf3;
   --c-text-muted: #a9a8b6;
   --c-text-faint: #74737f;
-  --c-accent: #a395ff;
-  --c-accent-text: #140f2e;
+  --c-accent: #fbbf24;
+  --c-accent-text: #2b1a00;
   --c-success: #4ade80;
   --c-warning: #fbbf24;
   --c-danger: #f87171;
   --c-info: #60a5fa;
-  --c-focus: #c4baff;
+  --c-focus: #fcd34d;
   --r-sm: 6px;
   --r-md: 10px;
   --r-lg: 16px;

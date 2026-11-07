@@ -1,0 +1,80 @@
+# A mod update without a launcher release: raise `version=` in mod/gradle.properties, commit,
+# then push a tag like mod-v1.0.1. GitHub builds the jars, signs them with the updater key,
+# publishes a release mod-v<version> (never marked "latest", which is the launcher's) and
+# commits mod-latest.json and the new jars to main; launchers pick the mod up before the next
+# game launch. Same secrets as release.yml.
+name: Release mod
+
+on:
+  push:
+    tags: ["mod-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag matches the mod version
+        run: |
+          version=$(sed -n 's/^version=//p' mod/gradle.properties | tr -d '[:space:]')
+          [ "mod-v$version" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME, but gradle.properties says $version"; exit 1; }
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.8.2"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the jars (one per Minecraft version)
+        run: |
+          (cd mod && gradle --no-daemon -q build)
+          out="release/mod-v$VERSION"
+          mkdir -p "$out"
+          for dir in mod/v*/; do
+            mc=$(sed -n 's/^minecraft_version=//p' "$dir/gradle.properties")
+            jar=$(ls "$dir"build/libs/aerion-ui-*[0-9].jar | grep -v -- '-sources' | head -1)
+            cp "$jar" "src-tauri/resources/aerion-ui-$mc.jar"
+            cp "$jar" "$out/aerion-ui-$mc.jar"
+          done
+      - name: Sign
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          for jar in release/mod-v$VERSION/*.jar; do pnpm -s tauri signer sign "$jar" > /dev/null; done
+      - name: Manifest
+        run: |
+          launcher=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          python3 -I scripts/mod-manifest.py "release/mod-v$VERSION" "$VERSION" "$launcher" "Aerion mod $VERSION"
+      - name: Publish the release (not "latest")
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/mod-v$VERSION/*.jar \
+            --title "Aerion mod $VERSION" --notes "Installed launchers download this mod before the next game launch." \
+            --latest=false
+      - name: Point launchers at it
+        run: |
+          # Built from the tag; recorded on main, where launchers read mod-latest.json.
+          tmp=$(mktemp -d)
+          cp mod-latest.json src-tauri/resources/aerion-ui-*.jar "$tmp/"
+          git checkout -f main
+          cp "$tmp/mod-latest.json" .
+          cp "$tmp"/aerion-ui-*.jar src-tauri/resources/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mod-latest.json src-tauri/resources/aerion-ui-*.jar
+          git commit -m "chore: Aerion mod $VERSION"
+          git push

@@ -1,0 +1,66 @@
+# A launcher release: push a tag like v1.0.1 (the version in src-tauri/tauri.conf.json).
+# GitHub builds Linux (.deb, AppImage) and Windows (installer), signs the updates and opens a
+# DRAFT release with latest.json. Check it and press "Publish": installed launchers update then.
+# Secrets (Settings → Secrets and variables → Actions): TAURI_SIGNING_PRIVATE_KEY (contents of
+# updater.key), TAURI_SIGNING_PRIVATE_KEY_PASSWORD (may be empty), LAUNCHER_MSA_CLIENT_ID.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    name: Tag matches the version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          version=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME, but tauri.conf.json says $version"; exit 1; }
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-22.04
+            bundles: deb,appimage
+          - name: Windows
+            os: windows-latest
+            bundles: nsis
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          LAUNCHER_MSA_CLIENT_ID: ${{ secrets.LAUNCHER_MSA_CLIENT_ID }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Aerion __VERSION__
+          releaseBody: "What's new: see the launcher's changelog. / Co nowego: lista zmian w launcherze."
+          releaseDraft: true
+          includeUpdaterJson: true
+          args: --bundles ${{ matrix.bundles }}

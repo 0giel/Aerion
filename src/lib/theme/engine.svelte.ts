@@ -8,7 +8,8 @@ const files = import.meta.glob(["../../../themes/*.json", "!../../../themes/them
   import: "default",
 });
 
-const ORDER = ["nocturne", "dark", "light", "amoled", "emerald", "rose", "amber"];
+// Amber is Aerion's own theme: first in the list and the one used when nothing else is chosen.
+const ORDER = ["amber", "nocturne", "dark", "light", "amoled", "emerald", "rose"];
 
 function loadBuiltins(): Theme[] {
   const raw = Object.values(files) as unknown[];
@@ -143,13 +144,7 @@ class ThemeEngine {
 
   private resolve() {
     const p = this.prefs;
-    const id = !p
-      ? "nocturne"
-      : p.themeFollowSystem
-        ? this.systemDark
-          ? p.themeDark
-          : p.themeLight
-        : p.theme;
+    const id = !p ? "amber" : p.themeFollowSystem ? (this.systemDark ? p.themeDark : p.themeLight) : p.theme;
     const theme = this.find(id) ?? this.builtins[0] ?? FALLBACK;
     this.current = theme;
     this.currentCss = this.user.find((u) => u.theme.id === theme.id)?.css ?? null;
