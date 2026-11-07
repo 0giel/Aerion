@@ -67,12 +67,12 @@ fn background_file(paths: &Paths, asset: Option<&str>) -> Option<String> {
     if !PICTURES.contains(&ext.as_str()) {
         return None;
     }
-    let path = crate::util::fs::safe_join(&paths.themes_dir().join("assets"), name).ok()?;
+    let path = crate::util::fs::safe_join(&paths.theme_assets_dir(), name).ok()?;
     path.is_file().then(|| display(&path))
 }
 
-pub fn dir(paths: &Paths) -> PathBuf {
-    paths.root.join("aerion-mod")
+fn theme_file(paths: &Paths) -> PathBuf {
+    paths.aerion_mod_dir().join("theme.json")
 }
 
 pub fn supports(inst: &Instance) -> bool {
@@ -81,7 +81,7 @@ pub fn supports(inst: &Instance) -> bool {
 
 /// Write a bundled jar unless the same bytes are already there.
 pub fn install_jar(paths: &Paths, game_version: &str, bytes: &[u8]) -> Result<PathBuf> {
-    let dir = dir(paths);
+    let dir = paths.aerion_mod_dir();
     std::fs::create_dir_all(&dir).at(&dir)?;
     let name = jar_name(game_version);
     let jar = dir.join(&name);
@@ -100,20 +100,19 @@ pub async fn write_theme(paths: &Paths, theme: &GameTheme) -> Result<()> {
     let mut theme = theme.clone();
     theme.background_file = background_file(paths, theme.background_asset.as_deref());
     theme.background_dim = theme.background_dim.clamp(0.0, 1.0);
-    crate::util::fs::write_json(dir(paths).join("theme.json"), &theme).await
+    crate::util::fs::write_json(theme_file(paths), &theme).await
 }
 
 /// JVM arguments that load the mod, or nothing when the instance doesn't use it.
 pub fn jvm_args(paths: &Paths, inst: &Instance) -> Vec<String> {
-    let dir = dir(paths);
-    let jar = dir.join(jar_name(&inst.game_version));
+    let jar = paths.aerion_mod_dir().join(jar_name(&inst.game_version));
     if !inst.aerion_mod || !supports(inst) || !jar.is_file() {
         return Vec::new();
     }
     vec![
         format!("-Dfabric.addMods={}", display(&jar)),
-        format!("-Daerion.theme={}", display(&dir.join("theme.json"))),
-        format!("-Daerion.hud={}", display(&dir.join("hud.json"))),
+        format!("-Daerion.theme={}", display(&theme_file(paths))),
+        format!("-Daerion.hud={}", display(&hud::file(paths))),
         format!("-Daerion.status={}", display(&status_file(paths, &inst.id))),
     ]
 }
@@ -129,7 +128,8 @@ pub fn status_file(paths: &Paths, instance_id: &str) -> PathBuf {
     let hash = instance_id.bytes().fold(0x811c_9dc5_u32, |h, b| {
         (h ^ u32::from(b)).wrapping_mul(0x0100_0193)
     });
-    dir(paths)
+    paths
+        .aerion_mod_dir()
         .join("status")
         .join(format!("{safe}-{hash:08x}.json"))
 }

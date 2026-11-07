@@ -8,7 +8,7 @@ use tauri::State;
 
 use super::CmdResult;
 use crate::state::AppState;
-use crate::themes::{assets_dir, content_type, valid_asset, valid_id};
+use crate::themes::{content_type, valid_asset, valid_id};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -116,7 +116,7 @@ pub async fn add_theme_asset(state: State<'_, AppState>, path: String) -> CmdRes
         "bg-{}.{ext}",
         &uuid::Uuid::new_v4().simple().to_string()[..12]
     );
-    let dir = assets_dir(&state.paths.themes_dir());
+    let dir = state.paths.theme_assets_dir();
     tokio::fs::create_dir_all(&dir)
         .await
         .map_err(|e| io(&dir, e))?;
@@ -155,7 +155,7 @@ pub async fn export_theme(
         .and_then(|a| a.as_str())
         && valid_asset(asset)
     {
-        let p = assets_dir(&state.paths.themes_dir()).join(asset);
+        let p = state.paths.theme_assets_dir().join(asset);
         if let Ok(bytes) = tokio::fs::read(&p).await {
             let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
             embedded.insert(
@@ -188,7 +188,7 @@ pub async fn import_theme(state: State<'_, AppState>, path: String) -> CmdResult
     let bytes = tokio::fs::read(&src).await.map_err(|e| io(&src, e))?;
     let mut bundle: Bundle = serde_json::from_slice(&bytes).map_err(|e| bad(&e.to_string()))?;
     let themes = state.paths.themes_dir();
-    let assets = assets_dir(&themes);
+    let assets = state.paths.theme_assets_dir();
     for (name, uri) in &bundle.embedded_assets {
         if !valid_asset(name) {
             continue;

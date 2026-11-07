@@ -57,12 +57,7 @@ impl Textures {
         if !valid_texture(name) {
             return Err(Error::Invalid(format!("invalid texture {name:?}")));
         }
-        let cached = engine
-            .paths
-            .data
-            .join("cache")
-            .join("textures")
-            .join(format!("{name}.png"));
+        let cached = engine.paths.texture_cache_dir().join(format!("{name}.png"));
         if let Ok(bytes) = tokio::fs::read(&cached).await {
             return Ok(bytes);
         }

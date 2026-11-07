@@ -79,11 +79,11 @@ impl Paths {
     pub fn accounts_file(&self) -> PathBuf {
         self.root.join("accounts.json")
     }
-    /// Game settings that new instances start with.
     /// Game settings shared by the instances that opt in (see `instances::options`).
     pub fn shared_options_dir(&self) -> PathBuf {
         self.root.join("shared").join("game-options")
     }
+    /// Game settings that new instances start with.
     pub fn options_template_dir(&self) -> PathBuf {
         self.root.join("templates").join("game-options")
     }
@@ -93,6 +93,18 @@ impl Paths {
     pub fn themes_dir(&self) -> PathBuf {
         self.root.join("themes")
     }
+    /// Pictures and videos that themes use as backgrounds.
+    pub fn theme_assets_dir(&self) -> PathBuf {
+        self.themes_dir().join("assets")
+    }
+    /// The Aerion mod's jars and the files it reads (`theme.json`, `hud.json`, status files).
+    pub fn aerion_mod_dir(&self) -> PathBuf {
+        self.root.join("aerion-mod")
+    }
+    /// Summaries of past game sessions (Performance page).
+    pub fn sessions_file(&self) -> PathBuf {
+        self.root.join("perf-sessions.json")
+    }
     pub fn logs_dir(&self) -> PathBuf {
         self.root.join("logs")
     }
@@ -101,6 +113,10 @@ impl Paths {
     }
     pub fn image_cache_dir(&self) -> PathBuf {
         self.data.join("cache").join("images")
+    }
+    /// Item and block pictures taken from a client jar.
+    pub fn texture_cache_dir(&self) -> PathBuf {
+        self.data.join("cache").join("textures")
     }
     /// Private fontconfig cache, used only when the user's cache is unusable (Linux).
     pub fn fontconfig_cache_dir(&self) -> PathBuf {
@@ -135,6 +151,10 @@ impl Paths {
     }
     pub fn installers_dir(&self) -> PathBuf {
         self.data.join("installers")
+    }
+    /// Horizon builds, their prepared resources and the server jar they are prepared from.
+    pub fn horizon_dir(&self) -> PathBuf {
+        self.data.join("horizon")
     }
     pub fn temp_dir(&self) -> PathBuf {
         self.data.join("temp")

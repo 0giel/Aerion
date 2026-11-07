@@ -44,10 +44,6 @@ pub fn install_schema(dir: &Path) {
     }
 }
 
-pub fn assets_dir(themes: &Path) -> PathBuf {
-    themes.join("assets")
-}
-
 pub fn content_type(name: &str) -> &'static str {
     let ext = name.rsplit('.').next().unwrap_or("").to_ascii_lowercase();
     match ext.as_str() {

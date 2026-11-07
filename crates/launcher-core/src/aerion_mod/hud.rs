@@ -348,7 +348,7 @@ impl HudConfig {
 }
 
 pub fn file(paths: &Paths) -> PathBuf {
-    super::dir(paths).join("hud.json")
+    paths.aerion_mod_dir().join("hud.json")
 }
 
 /// The saved settings with every known module present (new modules get their defaults).
@@ -455,7 +455,7 @@ mod tests {
     async fn fills_missing_modules() {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::at(dir.path().to_path_buf(), false);
-        std::fs::create_dir_all(super::super::dir(&paths)).unwrap();
+        std::fs::create_dir_all(paths.aerion_mod_dir()).unwrap();
         std::fs::write(
             file(&paths),
             r#"{"modules":{"fps":{"enabled":false,"x":5,"y":5,"scale":150}}}"#,

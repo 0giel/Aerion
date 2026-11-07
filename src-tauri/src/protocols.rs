@@ -19,7 +19,7 @@ use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{AppHandle, Manager, Runtime, UriSchemeContext, UriSchemeResponder};
 
 use crate::state::AppState;
-use crate::themes::{assets_dir, content_type, valid_asset};
+use crate::themes::{content_type, valid_asset};
 
 const MAX_IMAGE: usize = 15 * 1024 * 1024;
 
@@ -180,7 +180,7 @@ pub fn theme_asset<R: Runtime>(
         if !valid_asset(&name) {
             return responder.respond(empty(StatusCode::BAD_REQUEST));
         }
-        let path = assets_dir(&app.state::<AppState>().paths.themes_dir()).join(&name);
+        let path = app.state::<AppState>().paths.theme_assets_dir().join(&name);
         let Ok(data) = tokio::fs::read(&path).await else {
             return responder.respond(empty(StatusCode::NOT_FOUND));
         };

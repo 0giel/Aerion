@@ -3,7 +3,7 @@
 //! when it exits. The last summaries are kept for the performance page.
 
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -268,13 +268,9 @@ pub fn render_distance(game_dir: &Path) -> Option<u32> {
         .ok()
 }
 
-fn file(paths: &Paths) -> PathBuf {
-    paths.root.join("perf-sessions.json")
-}
-
 /// Newest first.
 pub async fn load(paths: &Paths) -> Vec<SessionSummary> {
-    read_json(file(paths))
+    read_json(paths.sessions_file())
         .await
         .ok()
         .flatten()
@@ -285,11 +281,11 @@ pub async fn add(paths: &Paths, s: SessionSummary) -> crate::Result<()> {
     let mut all = load(paths).await;
     all.insert(0, s);
     all.truncate(KEEP);
-    write_json(file(paths), &all).await
+    write_json(paths.sessions_file(), &all).await
 }
 
 pub async fn clear(paths: &Paths) -> crate::Result<()> {
-    write_json(file(paths), &Vec::<SessionSummary>::new()).await
+    write_json(paths.sessions_file(), &Vec::<SessionSummary>::new()).await
 }
 
 #[cfg(test)]

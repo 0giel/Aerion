@@ -68,24 +68,22 @@ fn exe(name: &str) -> String {
     }
 }
 
-pub fn builds_dir(engine: &Engine) -> PathBuf {
-    engine.paths.data.join("horizon").join("builds")
+fn builds_dir(engine: &Engine) -> PathBuf {
+    engine.paths.horizon_dir().join("builds")
+}
+
+fn prepared_root(engine: &Engine) -> PathBuf {
+    engine.paths.horizon_dir().join("prepared")
 }
 
 fn prepared_dir(engine: &Engine, build: &str) -> PathBuf {
-    engine
-        .paths
-        .data
-        .join("horizon")
-        .join("prepared")
-        .join(build)
+    prepared_root(engine).join(build)
 }
 
 fn server_jar(engine: &Engine) -> PathBuf {
     engine
         .paths
-        .data
-        .join("horizon")
+        .horizon_dir()
         .join(format!("server-{MINECRAFT}.jar"))
 }
 
@@ -295,10 +293,7 @@ pub async fn prune(engine: &Engine, keep: &[String]) -> usize {
     let _no_install = INSTALLING.lock().await;
     let recent = std::time::SystemTime::now() - std::time::Duration::from_secs(600);
     let mut removed = 0;
-    for dir in [
-        builds_dir(engine),
-        engine.paths.data.join("horizon").join("prepared"),
-    ] {
+    for dir in [builds_dir(engine), prepared_root(engine)] {
         let Ok(mut rd) = tokio::fs::read_dir(&dir).await else {
             continue;
         };
