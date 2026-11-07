@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Engine;
 use crate::error::{Error, Result};
-use crate::mojang::library::MavenCoord;
+use crate::mojang::library::{MavenCoord, maven_url};
 use crate::mojang::version::Library;
 use crate::net::client::Http;
 use crate::progress::TaskCtx;
@@ -140,8 +140,7 @@ pub(crate) async fn fill_maven_hashes(http: &Http, libraries: &mut [Library]) {
         .filter_map(|(i, l)| {
             let base = l.url.as_deref().filter(|u| !u.is_empty())?;
             let path = MavenCoord::parse(&l.name)?.path();
-            let sep = if base.ends_with('/') { "" } else { "/" };
-            Some((i, format!("{base}{sep}{path}.sha1")))
+            Some((i, format!("{}.sha1", maven_url(Some(base), &path))))
         })
         .collect();
     let results: Vec<(usize, Option<String>)> = stream::iter(jobs)

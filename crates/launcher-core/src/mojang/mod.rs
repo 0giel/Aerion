@@ -18,6 +18,18 @@ use crate::util::hash::verify_file;
 use manifest::{MANIFEST_URL, VersionManifest};
 use version::VersionJson;
 
+/// The download of a version's client jar into the shared `versions/` folder.
+pub fn client_jar_item(paths: &Paths, version: &VersionJson, id: &str) -> Result<DownloadItem> {
+    let client = version
+        .downloads
+        .as_ref()
+        .and_then(|d| d.client.as_ref())
+        .ok_or_else(|| Error::Invalid(format!("{id} has no client download")))?;
+    Ok(DownloadItem::new(&client.url, paths.client_jar(id))
+        .sha1(client.sha1.as_deref())
+        .size(client.size))
+}
+
 /// Access to Mojang metadata with on-disk caching.
 #[derive(Clone)]
 pub struct Meta {

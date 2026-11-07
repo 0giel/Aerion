@@ -49,17 +49,8 @@ pub async fn prepare(
     let mut items: Vec<DownloadItem> = Vec::new();
 
     // Client jar of the vanilla root version.
-    let client = version
-        .downloads
-        .as_ref()
-        .and_then(|d| d.client.clone())
-        .ok_or_else(|| Error::Invalid(format!("{root_id} has no client download")))?;
     let vanilla_jar = paths.client_jar(&root_id);
-    items.push(
-        DownloadItem::new(&client.url, &vanilla_jar)
-            .sha1(client.sha1.as_deref())
-            .size(client.size),
-    );
+    items.push(crate::mojang::client_jar_item(paths, &version, &root_id)?);
 
     // Libraries.
     let libraries = resolve_libraries(&version.libraries, env);

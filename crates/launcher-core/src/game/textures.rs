@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 
 use crate::engine::Engine;
 use crate::error::{Error, IoContext, Result};
-use crate::net::download::{DownloadItem, VerifyMode};
+use crate::net::download::VerifyMode;
 use crate::progress::TaskCtx;
 use crate::util::archive::read_zip_entry;
 use crate::util::image::png_size;
@@ -92,19 +92,12 @@ impl Textures {
                 let ctx = TaskCtx::new();
                 let id = engine.meta.manifest().await?.latest.release;
                 let version = engine.meta.version_json(&id, &ctx).await?;
-                let client = version
-                    .downloads
-                    .and_then(|d| d.client)
-                    .ok_or_else(|| Error::Invalid(format!("{id} has no client download")))?;
-                let dest = engine.paths.client_jar(&id);
-                let item = DownloadItem::new(&client.url, &dest)
-                    .sha1(client.sha1.as_deref())
-                    .size(client.size);
+                let item = crate::mojang::client_jar_item(&engine.paths, &version, &id)?;
                 engine
                     .downloader
                     .run(vec![item], VerifyMode::Fast, &ctx)
                     .await?;
-                dest
+                engine.paths.client_jar(&id)
             }
         };
         *jar = Some(path.clone());

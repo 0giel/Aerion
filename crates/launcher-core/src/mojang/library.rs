@@ -149,7 +149,8 @@ fn maven_hash(lib: &Library) -> Option<Hash> {
         })
 }
 
-fn maven_url(base: Option<&str>, path: &str) -> String {
+/// `path` in the Maven repository at `base` (Mojang's when unset).
+pub(crate) fn maven_url(base: Option<&str>, path: &str) -> String {
     let base = base.filter(|b| !b.is_empty()).unwrap_or(MOJANG_LIBRARIES);
     if base.ends_with('/') {
         format!("{base}{path}")
