@@ -10,13 +10,14 @@ use crate::error::{Error, Result};
 use crate::instances::{Instance, InstanceManager, ModpackInfo};
 use crate::loaders::LoaderKind;
 use crate::modpacks::{
-    ExportOptions, excluded_from_export, finish_platform_pack, import_into_new, pack_instance,
+    ExportOptions, exported_loader_version, finish_platform_pack, import_into_new, pack_instance,
+    write_pack,
 };
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
 use crate::net::download::{DownloadItem, VerifyMode};
 use crate::progress::TaskCtx;
-use crate::util::archive::{ZipBuilder, extract_zip_prefix, read_zip_entry};
+use crate::util::archive::{extract_zip_prefix, read_zip_entry};
 use crate::util::fs::safe_join;
 use crate::util::hash::{Hash, sha512_file};
 
@@ -186,16 +187,8 @@ pub async fn export(
     let content = instances.content(id)?;
     let entries = content.scan().await?;
     let mut deps = BTreeMap::new();
-    if inst.loader == LoaderKind::Horizon {
-        return Err(Error::Invalid(
-            "Horizon instances can't be shared as this pack format (it has no Horizon)".into(),
-        ));
-    }
     deps.insert("minecraft".to_owned(), inst.game_version.clone());
-    if inst.loader != LoaderKind::Vanilla {
-        let v = inst.loader_version.clone().ok_or_else(|| {
-            Error::Invalid("start the instance once so the loader version is known".into())
-        })?;
+    if let Some(v) = exported_loader_version(&inst)? {
         let key = LOADER_KEYS
             .iter()
             .find(|(_, kind)| *kind == inst.loader)
@@ -256,34 +249,14 @@ pub async fn export(
         dependencies: deps,
     };
     let json = serde_json::to_vec_pretty(&index).map_err(|e| Error::parse("index", e))?;
-    let include = opts.include.clone();
-    let dest = dest.to_path_buf();
-    tokio::task::spawn_blocking(move || -> Result<()> {
-        let mut zip = ZipBuilder::create(&dest)?;
-        zip.add_bytes("modrinth.index.json", &json)?;
-        for (name, path) in overrides {
-            zip.add_file(&name, &path)?;
-        }
-        for rel in include {
-            if excluded_from_export(&rel)
-                || ["mods", "resourcepacks", "shaderpacks", "datapacks"].contains(&rel.as_str())
-            {
-                continue;
-            }
-            let p = safe_join(&game_dir, &rel)?;
-            if p.is_dir() {
-                zip.add_dir(&format!("overrides/{rel}"), &p, &|x| {
-                    x.file_name()
-                        .is_some_and(|n| n.to_string_lossy().ends_with(".log"))
-                })?;
-            } else if p.is_file() {
-                zip.add_file(&format!("overrides/{rel}"), &p)?;
-            }
-        }
-        zip.finish()
-    })
+    write_pack(
+        dest,
+        ("modrinth.index.json", json),
+        overrides,
+        game_dir,
+        opts.include.clone(),
+    )
     .await
-    .map_err(|e| Error::Invalid(e.to_string()))?
 }
 
 #[cfg(test)]

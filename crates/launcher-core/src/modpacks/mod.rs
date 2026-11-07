@@ -10,15 +10,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
 use std::future::Future;
+use std::path::PathBuf;
 
 use crate::Engine;
 use crate::instances::launch::ensure_version;
 use crate::instances::{Instance, InstanceManager, ModpackInfo, NewInstance};
 use crate::loaders::LoaderKind;
 use crate::mods::curseforge::CurseForge;
+use crate::mods::model::ContentKind;
 use crate::mods::modrinth::Modrinth;
 use crate::progress::TaskCtx;
-use crate::util::archive::read_zip_entry;
+use crate::util::archive::{ZipBuilder, read_zip_entry};
+use crate::util::fs::safe_join;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
@@ -116,6 +119,57 @@ async fn finish_platform_pack(
     let inst = instances.modify(id, |i| i.modpack = Some(info)).await?;
     ensure_version(engine, instances, &inst, ctx).await?;
     instances.get(id).await
+}
+
+/// The loader version a platform pack names: `None` for vanilla. Horizon has no place in these
+/// formats, and the version is only known once the loader was installed.
+fn exported_loader_version(inst: &Instance) -> Result<Option<String>> {
+    match inst.loader {
+        LoaderKind::Vanilla => Ok(None),
+        LoaderKind::Horizon => Err(Error::Invalid(
+            "Horizon instances can't be shared as this pack format (it has no Horizon)".into(),
+        )),
+        _ => inst.loader_version.clone().map(Some).ok_or_else(|| {
+            Error::Invalid("start the instance once so the loader version is known".into())
+        }),
+    }
+}
+
+/// Write a platform pack: its index, the content files it can't link to, and the folders the
+/// player chose to include, all under `overrides/`.
+async fn write_pack(
+    dest: &Path,
+    index: (&'static str, Vec<u8>),
+    files: Vec<(String, PathBuf)>,
+    game_dir: PathBuf,
+    include: Vec<String>,
+) -> Result<()> {
+    let dest = dest.to_path_buf();
+    tokio::task::spawn_blocking(move || -> Result<()> {
+        let mut zip = ZipBuilder::create(&dest)?;
+        zip.add_bytes(index.0, &index.1)?;
+        for (name, path) in files {
+            zip.add_file(&name, &path)?;
+        }
+        for rel in include {
+            let content_folder = ContentKind::INSTALLABLE.iter().any(|k| k.folder() == rel);
+            if excluded_from_export(&rel) || content_folder {
+                continue;
+            }
+            let p = safe_join(&game_dir, &rel)?;
+            if p.is_dir() {
+                zip.add_dir(&format!("overrides/{rel}"), &p, &|x| {
+                    x.file_name()
+                        .is_some_and(|n| n.to_string_lossy().ends_with(".log"))
+                })?;
+            } else if p.is_file() {
+                zip.add_file(&format!("overrides/{rel}"), &p)?;
+            }
+        }
+        zip.finish()
+    })
+    .await
+    .map_err(|e| Error::Invalid(e.to_string()))?
 }
 
 pub fn detect_format(path: &Path) -> Result<PackFormat> {

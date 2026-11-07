@@ -10,16 +10,16 @@ use crate::error::{Error, Result};
 use crate::instances::{InstanceManager, ModpackInfo};
 use crate::loaders::LoaderKind;
 use crate::modpacks::{
-    ExportOptions, ImportResult, ManualDownload, excluded_from_export, finish_platform_pack,
-    import_into_new, pack_instance,
+    ExportOptions, ImportResult, ManualDownload, exported_loader_version, finish_platform_pack,
+    import_into_new, pack_instance, write_pack,
 };
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
 use crate::mods::resolve::{InstallPlan, PlannedFile};
 use crate::progress::TaskCtx;
-use crate::util::archive::{ZipBuilder, extract_zip_prefix, read_zip_entry};
-use crate::util::fs::{safe_file_name, safe_join};
+use crate::util::archive::{extract_zip_prefix, read_zip_entry};
+use crate::util::fs::safe_file_name;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -230,23 +230,13 @@ pub async fn export(
             )),
         }
     }
-    if inst.loader == LoaderKind::Horizon {
-        return Err(Error::Invalid(
-            "Horizon instances can't be shared as this pack format (it has no Horizon)".into(),
-        ));
-    }
-    let mod_loaders = match (inst.loader, &inst.loader_version) {
-        (LoaderKind::Vanilla, _) => vec![],
-        (k, Some(v)) => vec![ModLoader {
-            id: format!("{}-{v}", k.as_str()),
+    let mod_loaders = exported_loader_version(&inst)?
+        .map(|v| ModLoader {
+            id: format!("{}-{v}", inst.loader.as_str()),
             primary: true,
-        }],
-        (_, None) => {
-            return Err(Error::Invalid(
-                "start the instance once so the loader version is known".into(),
-            ));
-        }
-    };
+        })
+        .into_iter()
+        .collect();
     let manifest = Manifest {
         minecraft: Minecraft {
             version: inst.game_version.clone(),
@@ -261,31 +251,14 @@ pub async fn export(
         overrides: Some("overrides".into()),
     };
     let json = serde_json::to_vec_pretty(&manifest).map_err(|e| Error::parse("manifest", e))?;
-    let include = opts.include.clone();
-    let dest = dest.to_path_buf();
-    tokio::task::spawn_blocking(move || -> Result<()> {
-        let mut zip = ZipBuilder::create(&dest)?;
-        zip.add_bytes("manifest.json", &json)?;
-        for (name, path) in overrides {
-            zip.add_file(&name, &path)?;
-        }
-        for rel in include {
-            if excluded_from_export(&rel)
-                || ["mods", "resourcepacks", "shaderpacks", "datapacks"].contains(&rel.as_str())
-            {
-                continue;
-            }
-            let p = safe_join(&game_dir, &rel)?;
-            if p.is_dir() {
-                zip.add_dir(&format!("overrides/{rel}"), &p, &|_| false)?;
-            } else if p.is_file() {
-                zip.add_file(&format!("overrides/{rel}"), &p)?;
-            }
-        }
-        zip.finish()
-    })
+    write_pack(
+        dest,
+        ("manifest.json", json),
+        overrides,
+        game_dir,
+        opts.include.clone(),
+    )
     .await
-    .map_err(|e| Error::Invalid(e.to_string()))?
 }
 
 #[cfg(test)]
