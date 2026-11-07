@@ -6,9 +6,7 @@ use launcher_core::accounts::SecretStore;
 use launcher_core::instances::ModpackInfo;
 use launcher_core::loaders::LoaderKind;
 use launcher_core::modpacks::{self, ImportResult};
-use launcher_core::mods::content::{
-    BackupInfo, ContentEntry, ContentRef, UpdateInfo, UpgradePlan, safe_file_name,
-};
+use launcher_core::mods::content::{BackupInfo, ContentEntry, ContentRef, UpdateInfo, UpgradePlan};
 use launcher_core::mods::curseforge::CurseForge;
 use launcher_core::mods::merge_pages;
 use launcher_core::mods::model::*;
@@ -17,7 +15,7 @@ use launcher_core::mods::resolve::{InstallPlan, Target, plan};
 use launcher_core::mods::select::{best_version, loaders_for};
 use launcher_core::net::download::{DownloadItem, VerifyMode};
 use launcher_core::settings::ModSource;
-use launcher_core::util::hash::Hash;
+use launcher_core::util::fs::safe_file_name;
 use serde::Serialize;
 use specta::Type;
 use tauri::{AppHandle, Manager, State};
@@ -592,11 +590,7 @@ pub async fn install_modpack(
             };
             safe_file_name(&file.filename)?;
             let dest = engine.paths.temp_dir().join(&file.filename);
-            let hash = file
-                .sha512
-                .clone()
-                .map(Hash::Sha512)
-                .or_else(|| file.sha1.clone().map(Hash::Sha1));
+            let hash = file.hash();
             ctx.stage("stage.download", Some(file.filename.clone()));
             engine
                 .downloader

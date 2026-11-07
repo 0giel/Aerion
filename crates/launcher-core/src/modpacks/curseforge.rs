@@ -11,14 +11,13 @@ use crate::instances::launch::ensure_version;
 use crate::instances::{InstanceManager, ModpackInfo, NewInstance};
 use crate::loaders::LoaderKind;
 use crate::modpacks::{ExportOptions, ImportResult, ManualDownload, excluded_from_export};
-use crate::mods::content::{entry_path, safe_file_name};
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
 use crate::mods::resolve::{InstallPlan, PlannedFile};
 use crate::progress::TaskCtx;
 use crate::util::archive::{ZipBuilder, extract_zip_prefix, read_zip_entry};
-use crate::util::fs::safe_join;
+use crate::util::fs::{safe_file_name, safe_join};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -240,7 +239,7 @@ pub async fn export(
             }),
             _ => overrides.push((
                 format!("overrides/{}/{}", e.kind.folder(), e.file_name),
-                entry_path(&game_dir, e),
+                e.path(&game_dir),
             )),
         }
     }

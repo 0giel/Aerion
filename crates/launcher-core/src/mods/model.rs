@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
 use crate::loaders::LoaderKind;
+use crate::util::hash::Hash;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
@@ -182,6 +183,16 @@ pub struct VersionFile {
     pub sha1: Option<String>,
     pub sha512: Option<String>,
     pub primary: bool,
+}
+
+impl VersionFile {
+    /// The strongest hash the platform gave.
+    pub fn hash(&self) -> Option<Hash> {
+        self.sha512
+            .clone()
+            .map(Hash::Sha512)
+            .or_else(|| self.sha1.clone().map(Hash::Sha1))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

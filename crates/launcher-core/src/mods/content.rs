@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Error, IoContext, Result};
+use crate::error::{IoContext, Result};
 use crate::loaders::LoaderKind;
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::*;
@@ -15,8 +15,8 @@ use crate::mods::resolve::InstallPlan;
 use crate::mods::select::{best_version, loaders_for};
 use crate::net::download::{DownloadItem, Downloader, VerifyMode};
 use crate::progress::TaskCtx;
-use crate::util::fs::{read_json, write_json};
-use crate::util::hash::{Hash, curseforge_fingerprint_file, sha1_file};
+use crate::util::fs::{read_json, safe_file_name, write_json};
+use crate::util::hash::{curseforge_fingerprint_file, sha1_file};
 use crate::util::now_secs;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -47,6 +47,18 @@ pub struct ContentEntry {
     /// Kept at this version: update checks skip it (e.g. after choosing an older version).
     #[serde(default)]
     pub pinned: bool,
+}
+
+impl ContentEntry {
+    /// The file on disk (`.disabled` appended while switched off).
+    pub fn path(&self, game_dir: &Path) -> PathBuf {
+        let name = if self.enabled {
+            self.file_name.clone()
+        } else {
+            format!("{}{DISABLED}", self.file_name)
+        };
+        game_dir.join(self.kind.folder()).join(name)
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -110,30 +122,13 @@ fn accepts(kind: ContentKind, name: &str) -> bool {
     }
 }
 
-pub fn safe_file_name(name: &str) -> Result<()> {
-    if name.is_empty()
-        || name.contains(['/', '\\', '\0'])
-        || name.starts_with('.')
-        || name.contains("..")
-    {
-        return Err(Error::UnsafePath(name.to_owned()));
-    }
-    Ok(())
-}
-
 pub struct ContentManager {
     instance_dir: PathBuf,
     game_dir: PathBuf,
 }
 
 impl ContentManager {
-    pub fn new(instance_dir: PathBuf) -> Self {
-        let game_dir = instance_dir.join("minecraft");
-        Self::with_game_dir(instance_dir, game_dir)
-    }
-
-    /// For instances whose game folder lives elsewhere.
-    pub fn with_game_dir(instance_dir: PathBuf, game_dir: PathBuf) -> Self {
+    pub fn new(instance_dir: PathBuf, game_dir: PathBuf) -> Self {
         Self {
             instance_dir,
             game_dir,
@@ -163,15 +158,6 @@ impl ContentManager {
 
     pub fn folder(&self, kind: ContentKind) -> PathBuf {
         self.game_dir.join(kind.folder())
-    }
-
-    fn file_path(&self, e: &ContentEntry) -> PathBuf {
-        let name = if e.enabled {
-            e.file_name.clone()
-        } else {
-            format!("{}{DISABLED}", e.file_name)
-        };
-        self.folder(e.kind).join(name)
     }
 
     /// Reconcile `content.json` with what is actually on disk.
@@ -341,11 +327,7 @@ impl ContentManager {
             safe_file_name(&file.filename)?;
             let k = kind;
             let dest = self.folder(k).join(&file.filename);
-            let hash = file
-                .sha512
-                .clone()
-                .map(Hash::Sha512)
-                .or_else(|| file.sha1.clone().map(Hash::Sha1));
+            let hash = file.hash();
             items.push(
                 DownloadItem::new(url, dest)
                     .hash(hash)
@@ -388,7 +370,7 @@ impl ContentManager {
                 .cloned()
                 .collect();
             for o in old {
-                let _ = tokio::fs::remove_file(self.file_path(&o)).await;
+                let _ = tokio::fs::remove_file(o.path(&self.game_dir)).await;
                 m.entries
                     .retain(|x| x.file_name != o.file_name || x.kind != o.kind);
             }
@@ -425,7 +407,7 @@ impl ContentManager {
         let mut files = Vec::new();
         for e in &unknown {
             let fingerprint = match curseforge.filter(|c| c.has_key()) {
-                Some(_) => curseforge_fingerprint_file(&self.file_path(e))
+                Some(_) => curseforge_fingerprint_file(&e.path(&self.game_dir))
                     .await
                     .unwrap_or(0),
                 None => 0,
@@ -650,11 +632,7 @@ impl ContentManager {
             };
             let Some(url) = &file.url else { continue };
             safe_file_name(&file.filename)?;
-            let hash = file
-                .sha512
-                .clone()
-                .map(Hash::Sha512)
-                .or_else(|| file.sha1.clone().map(Hash::Sha1));
+            let hash = file.hash();
             items.push(
                 DownloadItem::new(url, self.folder(u.kind).join(&file.filename))
                     .hash(hash)
@@ -671,7 +649,7 @@ impl ContentManager {
             let Some(file) = u.version.primary_file() else {
                 continue;
             };
-            let src = self.file_path(&old);
+            let src = old.path(&self.game_dir);
             let backup = dir
                 .join(old.kind.folder())
                 .join(src.file_name().unwrap_or_default());
@@ -747,7 +725,7 @@ impl ContentManager {
                 .iter()
                 .any(|o| o.kind == e.kind && o.file_name == e.file_name)
             {
-                let _ = tokio::fs::remove_file(self.file_path(e)).await;
+                let _ = tokio::fs::remove_file(e.path(&self.game_dir)).await;
             }
         }
         for kind in ContentKind::INSTALLABLE {
@@ -767,15 +745,6 @@ impl ContentManager {
 }
 
 /// Paths of every content file, for exports.
-pub fn entry_path(game_dir: &Path, e: &ContentEntry) -> PathBuf {
-    let name = if e.enabled {
-        e.file_name.clone()
-    } else {
-        format!("{}{DISABLED}", e.file_name)
-    };
-    game_dir.join(e.kind.folder()).join(name)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -791,7 +760,7 @@ mod tests {
         std::fs::write(mods.join("notes.txt"), b"x").unwrap();
         std::fs::create_dir_all(inst.join("minecraft/resourcepacks")).unwrap();
         std::fs::write(inst.join("minecraft/resourcepacks/Faithful.zip"), b"pk").unwrap();
-        let m = ContentManager::new(inst.clone());
+        let m = ContentManager::new(inst.clone(), inst.join("minecraft"));
         let entries = m.scan().await.unwrap();
         assert_eq!(entries.len(), 3);
         let old = entries.iter().find(|e| e.file_name == "old.jar").unwrap();
@@ -882,7 +851,7 @@ mod tests {
             pinned: false,
         };
         let dir = tempfile::tempdir().unwrap();
-        let m = ContentManager::new(dir.path().to_path_buf());
+        let m = ContentManager::new(dir.path().to_path_buf(), dir.path().join("minecraft"));
         let mr = Some(Provider::Modrinth);
         m.save(&Manifest {
             entries: vec![
@@ -972,7 +941,7 @@ mod tests {
             pinned: false,
         };
         let dir = tempfile::tempdir().unwrap();
-        let m = ContentManager::new(dir.path().to_path_buf());
+        let m = ContentManager::new(dir.path().to_path_buf(), dir.path().join("minecraft"));
         m.save(&Manifest {
             entries: vec![
                 // An older release written before channels were recorded.

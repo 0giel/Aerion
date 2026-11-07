@@ -269,7 +269,7 @@ impl InstanceManager {
 
     /// Mods, packs and their manifest for an instance.
     pub fn content(&self, id: &str) -> Result<crate::mods::content::ContentManager> {
-        Ok(crate::mods::content::ContentManager::with_game_dir(
+        Ok(crate::mods::content::ContentManager::new(
             self.dir(id)?,
             self.game_dir(id)?,
         ))

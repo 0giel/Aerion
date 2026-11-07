@@ -11,7 +11,6 @@ use crate::instances::launch::ensure_version;
 use crate::instances::{Instance, InstanceManager, ModpackInfo, NewInstance};
 use crate::loaders::LoaderKind;
 use crate::modpacks::{ExportOptions, excluded_from_export};
-use crate::mods::content::entry_path;
 use crate::mods::model::{ModProvider, Provider};
 use crate::mods::modrinth::Modrinth;
 use crate::net::download::{DownloadItem, VerifyMode};
@@ -259,7 +258,7 @@ pub async fn export(
             Some(f) => {
                 let sha512 = match &f.sha512 {
                     Some(h) => h.clone(),
-                    None => sha512_file(&entry_path(&game_dir, e)).await?,
+                    None => sha512_file(&e.path(&game_dir)).await?,
                 };
                 let mut hashes = BTreeMap::new();
                 hashes.insert("sha1".to_owned(), e.sha1.clone());
@@ -275,7 +274,7 @@ pub async fn export(
                     file_size: e.size,
                 });
             }
-            None => overrides.push((format!("overrides/{rel}"), entry_path(&game_dir, e))),
+            None => overrides.push((format!("overrides/{rel}"), e.path(&game_dir))),
         }
     }
     let index = Index {
