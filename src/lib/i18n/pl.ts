@@ -9,6 +9,7 @@ const pl: Dict = {
   },
   nav: {
     github: "Aerion na GitHubie",
+    discord: "Aerion na Discordzie",
     home: "Start",
     instances: "Instancje",
     mods: "Mody",
@@ -745,6 +746,7 @@ const pl: Dict = {
       "Aerion to launcher Minecraft: Java Edition stawiający na niezawodność, szybkość i personalizację.",
     github: "GitHub",
     githubHint: "Kod, zgłoszenia i wydania",
+    discord: "Discord",
     reportIssue: "Zgłoś problem",
     thirdParty:
       "Wykorzystuje Tauri, Svelte, biblioteki Rust oraz ikony zaadaptowane z Lucide (ISC). Pliki gry są pobierane z serwerów Mojang.",

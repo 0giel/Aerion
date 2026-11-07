@@ -19,6 +19,8 @@ one-click crash fixes · automatic updates.
 > **Unofficial product.** Aerion is not approved by or associated with Mojang or Microsoft.
 > "Minecraft" is a trademark of Mojang Synergies AB.
 
+**[Join the Discord / Dołącz do Discorda](https://discord.gg/AuqDh2Hkgu)** · [Releases](https://github.com/0giel/Aerion/releases/latest) · [Issues](https://github.com/0giel/Aerion/issues)
+
 ![Home screen](docs/screenshots/home.png)
 
 ## New in 1.0.0

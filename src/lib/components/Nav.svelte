@@ -1,6 +1,6 @@
 <script lang="ts">
   import { openUrl } from "@tauri-apps/plugin-opener";
-  import { REPO_URL } from "../links";
+  import { DISCORD_URL, REPO_URL } from "../links";
   import Icon from "./Icon.svelte";
   import SkinFace from "./SkinFace.svelte";
   import { DEFAULT_SKIN } from "../api";
@@ -129,6 +129,12 @@
       onclick={() => openUrl(REPO_URL)}
       aria-label={t("nav.github")}
       title={t("nav.github")}><Icon name="github" size={16} /></button
+    >
+    <button
+      class="icon-btn discord"
+      onclick={() => openUrl(DISCORD_URL)}
+      aria-label={t("nav.discord")}
+      title={t("nav.discord")}><Icon name="chat" size={16} /></button
     >
     <button
       class="icon-btn customize"

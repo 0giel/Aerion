@@ -2,7 +2,7 @@
   import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import KeybindEditor from "../components/KeybindEditor.svelte";
-  import { ISSUES_URL, REPO_URL } from "../links";
+  import { DISCORD_URL, ISSUES_URL, REPO_URL } from "../links";
   import Icon from "../components/Icon.svelte";
   import { dashboards } from "../stores/dashboards.svelte";
   import { dialogs } from "../stores/dialogs.svelte";
@@ -773,6 +773,9 @@
         <div class="row gap-2 wrap">
           <button class="btn" onclick={() => openUrl(REPO_URL)} title={REPO_URL}>
             <Icon name="github" size={16} />{t("settings.github")}
+          </button>
+          <button class="btn" onclick={() => openUrl(DISCORD_URL)} title={DISCORD_URL}>
+            <Icon name="chat" size={16} />{t("settings.discord")}
           </button>
           <button class="btn ghost" onclick={() => openUrl(ISSUES_URL)}>
             <Icon name="bug" size={16} />{t("settings.reportIssue")}

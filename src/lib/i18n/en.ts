@@ -9,6 +9,7 @@ const en = {
   },
   nav: {
     github: "Aerion on GitHub",
+    discord: "Aerion on Discord",
     home: "Home",
     instances: "Instances",
     mods: "Mods",
@@ -699,6 +700,7 @@ const en = {
     about: "Aerion is a Minecraft: Java Edition launcher focused on reliability, speed and customization.",
     github: "GitHub",
     githubHint: "Source, issues and releases",
+    discord: "Discord",
     reportIssue: "Report a problem",
     thirdParty:
       "Uses Tauri, Svelte, Rust crates and icons adapted from Lucide (ISC). Game files are downloaded from Mojang's servers.",

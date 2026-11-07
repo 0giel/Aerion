@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Help and chat on Discord / Pomoc i rozmowy na Discordzie
+    url: https://discord.gg/AuqDh2Hkgu
+    about: Ask a question, show your setup, talk to other players. Zadaj pytanie, pokaż swoje ustawienia, porozmawiaj z graczami.
   - name: Theme for the gallery / Motyw do galerii
     url: https://github.com/0giel/Aerion/issues/new?title=Theme%3A%20
     about: Share a theme from the theme editor (Export…). Udostępnij motyw z edytora motywów (Eksportuj…).
