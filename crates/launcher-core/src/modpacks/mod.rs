@@ -114,7 +114,6 @@ async fn finish_platform_pack(
     ctx: &TaskCtx,
 ) -> Result<Instance> {
     let content = instances.content(id)?;
-    content.scan().await?;
     let _ = content.identify(modrinth, curseforge).await;
     let inst = instances.modify(id, |i| i.modpack = Some(info)).await?;
     ensure_version(engine, instances, &inst, ctx).await?;

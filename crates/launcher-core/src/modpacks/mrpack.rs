@@ -192,7 +192,8 @@ pub async fn export(
         let key = LOADER_KEYS
             .iter()
             .find(|(_, kind)| *kind == inst.loader)
-            .map_or("neoforge", |(key, _)| key);
+            .map(|(key, _)| *key)
+            .ok_or_else(|| Error::Invalid(format!("{:?} has no pack loader key", inst.loader)))?;
         deps.insert(key.to_owned(), v);
     }
 

@@ -517,7 +517,7 @@ impl ModProvider for CurseForge {
         if let Some(v) = game_version.filter(|v| !v.is_empty()) {
             path.push_str(&format!(
                 "&gameVersion={}",
-                crate::mods::modrinth::urlencode(v)
+                crate::net::client::urlencode(v)
             ));
         }
         let files = self.get::<Vec<CfFile>>(&path).await?.data;

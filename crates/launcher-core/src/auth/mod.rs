@@ -10,7 +10,6 @@ use crate::net::client::{Http, check};
 use crate::util::jwt;
 use crate::util::now_secs;
 
-/// Base URLs (overridable for tests).
 /// Who the game runs as.
 #[derive(Debug, Clone)]
 pub struct AuthInfo {
@@ -22,6 +21,7 @@ pub struct AuthInfo {
     pub user_type: String,
 }
 
+/// Base URLs (overridable for tests).
 #[derive(Debug, Clone)]
 pub struct Endpoints {
     /// `https://login.microsoftonline.com/consumers/oauth2/v2.0`

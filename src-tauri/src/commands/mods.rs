@@ -286,7 +286,6 @@ pub async fn remove_content(
 #[specta::specta]
 pub async fn identify_content(state: State<'_, AppState>, instance_id: String) -> CmdResult<u32> {
     let content = state.instances.content(&instance_id)?;
-    content.scan().await?;
     let cf = state.curseforge().await;
     let n = content.identify(&state.modrinth().await, Some(&cf)).await?;
     Ok(n as u32)
@@ -301,7 +300,6 @@ pub async fn check_content_updates(
 ) -> CmdResult<Vec<UpdateInfo>> {
     let inst = state.instances.get(&instance_id).await?;
     let content = state.instances.content(&instance_id)?;
-    content.scan().await?;
     let cf = state.curseforge().await;
     let updates = content
         .check_updates(
@@ -519,7 +517,6 @@ pub async fn add_content_files(
             .map_err(|e| launcher_core::Error::io(&src, e))?;
         n += 1;
     }
-    content.scan().await?;
     let cf = state.curseforge().await;
     let _ = content.identify(&state.modrinth().await, Some(&cf)).await;
     Ok(n)
@@ -725,7 +722,6 @@ pub async fn instance_upgrade_plan(
 ) -> CmdResult<UpgradeCheck> {
     let inst = state.instances.get(&instance_id).await?;
     let content = state.instances.content(&instance_id)?;
-    content.scan().await?;
     let cf = state.curseforge().await;
     let plan = content
         .upgrade_plan(&state.modrinth().await, Some(&cf), &target, inst.loader)

@@ -384,7 +384,6 @@ pub async fn import_external(
             // Recognise mods (for updates); a failure only costs that.
             ctx.stage("stage.identify", None);
             if let Ok(content) = state.instances.content(&inst.id) {
-                let _ = content.scan().await;
                 let cf = state.curseforge().await;
                 let _ = content.identify(&state.modrinth().await, Some(&cf)).await;
             }

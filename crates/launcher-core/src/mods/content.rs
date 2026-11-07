@@ -398,6 +398,7 @@ impl ContentManager {
         modrinth: &Modrinth,
         curseforge: Option<&CurseForge>,
     ) -> Result<usize> {
+        self.scan().await?;
         let mut m = self.load().await;
         let unknown: Vec<&ContentEntry> =
             m.entries.iter().filter(|e| e.provider.is_none()).collect();
@@ -455,7 +456,7 @@ impl ContentManager {
         game_version: &str,
         loader: LoaderKind,
     ) -> Result<Vec<UpdateInfo>> {
-        let entries = self.load().await.entries;
+        let entries = self.scan().await?;
         let mut out = Vec::new();
         for kind in ContentKind::INSTALLABLE {
             let loaders = loaders_for(kind, loader, game_version);
@@ -797,6 +798,17 @@ mod tests {
         assert!(m.remove(ContentKind::Mod, "../x").await.is_err());
     }
 
+    /// The files a test manifest describes, as `scan` finds them unchanged (1 byte, mtime 0).
+    async fn place_files(m: &ContentManager) {
+        for e in m.entries().await {
+            let path = e.path(&m.game_dir);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            let f = std::fs::File::create(&path).unwrap();
+            f.set_len(1).unwrap();
+            f.set_modified(std::time::UNIX_EPOCH).unwrap();
+        }
+    }
+
     #[tokio::test]
     async fn upgrade_plan_sorts_content() {
         use crate::loaders::LoaderKind;
@@ -868,6 +880,7 @@ mod tests {
         })
         .await
         .unwrap();
+        place_files(&m).await;
         let plan = m
             .upgrade_plan(&modrinth, None, "26.3", LoaderKind::Fabric)
             .await
@@ -959,6 +972,7 @@ mod tests {
         })
         .await
         .unwrap();
+        place_files(&m).await;
 
         let updates = m
             .check_updates(&modrinth, None, "26.3", LoaderKind::Fabric)
