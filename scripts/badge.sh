@@ -2,7 +2,7 @@
 # Give a player a badge, or take it away. Badges show next to names in the game (Aerion mod).
 #   scripts/badge.sh <nick> <creator|bugHunter|tester|contributor>
 #   scripts/badge.sh <nick> remove
-# Edits data/badges.json; commit and push it, and launchers pick it up within an hour.
+# Edits data/badges.json; commit and push it, and launchers pick it up within about five minutes.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [ $# -eq 2 ] || { sed -n 3,5p "$0"; exit 1; }

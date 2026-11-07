@@ -1,6 +1,6 @@
 //! Badges next to players' names in the game (bug hunters, testers…). The list is `data/badges.json`
 //! in the Aerion repository, edited by hand (`scripts/badge.sh`); there is no server. The launcher
-//! fetches it before a launch (cached for an hour, the last copy is used offline) and writes the
+//! fetches it before a launch (cached for five minutes, so a new badge shows within minutes; the last copy is used offline) and writes the
 //! players the mod should mark to `<root>/aerion-mod/badges.json`.
 
 use std::collections::BTreeMap;
@@ -10,7 +10,7 @@ use std::time::Duration;
 use serde::Deserialize;
 
 use crate::engine::Engine;
-use crate::net::cache::HOUR;
+use crate::net::cache::MINUTE;
 use crate::paths::Paths;
 
 const URL: &str = "https://raw.githubusercontent.com/0giel/Aerion/main/data/badges.json";
@@ -56,7 +56,7 @@ fn parse(bytes: &[u8]) -> Option<BTreeMap<String, String>> {
 
 /// Bring the mod's copy up to date; on any failure the previous copy stays.
 pub async fn refresh(engine: &Engine) {
-    let fetched = tokio::time::timeout(WAIT, engine.cache.get(URL, HOUR)).await;
+    let fetched = tokio::time::timeout(WAIT, engine.cache.get(URL, 5 * MINUTE)).await;
     let Ok(Ok(bytes)) = fetched else {
         tracing::debug!("badges: list not available, keeping the last copy");
         return;
