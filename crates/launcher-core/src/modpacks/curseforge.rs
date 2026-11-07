@@ -73,7 +73,7 @@ fn loader_from_id(id: &str) -> Option<(LoaderKind, String)> {
     Some((kind, version.to_owned()))
 }
 
-pub fn read_manifest(archive: &Path) -> Result<Manifest> {
+fn read_manifest(archive: &Path) -> Result<Manifest> {
     let bytes = read_zip_entry(archive, "manifest.json")?
         .ok_or_else(|| Error::Invalid("missing manifest.json".into()))?;
     serde_json::from_slice(&bytes).map_err(|e| Error::parse("manifest.json", e))

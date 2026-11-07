@@ -41,10 +41,6 @@ impl HttpCache {
         Self { dir, http }
     }
 
-    pub fn http(&self) -> &Http {
-        &self.http
-    }
-
     fn paths(&self, url: &str) -> (PathBuf, PathBuf) {
         let key = sha1_hex(url.as_bytes());
         let sub = self.dir.join(&key[..2]);
@@ -143,13 +139,6 @@ impl HttpCache {
     pub async fn get_json<T: DeserializeOwned>(&self, url: &str, ttl: i64) -> Result<T> {
         let bytes = self.get(url, ttl).await?;
         serde_json::from_slice(&bytes).map_err(|e| Error::parse(redact_url(url), e))
-    }
-
-    /// Drop a cached entry (e.g. after a parse error, to force a refetch).
-    pub async fn invalidate(&self, url: &str) {
-        let (b, m) = self.paths(url);
-        let _ = tokio::fs::remove_file(b).await;
-        let _ = tokio::fs::remove_file(m).await;
     }
 }
 

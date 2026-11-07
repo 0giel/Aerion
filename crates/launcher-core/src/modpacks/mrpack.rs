@@ -22,7 +22,7 @@ use crate::util::fs::safe_join;
 use crate::util::hash::{Hash, sha512_file};
 
 /// Hosts the specification allows downloads from.
-pub const ALLOWED_HOSTS: &[&str] = &[
+const ALLOWED_HOSTS: &[&str] = &[
     "cdn.modrinth.com",
     "github.com",
     "raw.githubusercontent.com",
@@ -75,14 +75,14 @@ const LOADER_KEYS: [(&str, LoaderKind); 4] = [
     ("forge", LoaderKind::Forge),
 ];
 
-pub fn loader_of(deps: &BTreeMap<String, String>) -> (LoaderKind, Option<String>) {
+fn loader_of(deps: &BTreeMap<String, String>) -> (LoaderKind, Option<String>) {
     LOADER_KEYS
         .iter()
         .find_map(|(key, kind)| Some((*kind, Some(deps.get(*key)?.clone()))))
         .unwrap_or((LoaderKind::Vanilla, None))
 }
 
-pub fn read_index(archive: &Path) -> Result<Index> {
+fn read_index(archive: &Path) -> Result<Index> {
     let bytes = read_zip_entry(archive, "modrinth.index.json")?
         .ok_or_else(|| Error::Invalid("missing modrinth.index.json".into()))?;
     let index: Index =

@@ -16,7 +16,7 @@ use crate::util::fs::{atomic_write, safe_join};
 use crate::util::hash::Hash;
 use crate::util::sys::{Arch, Os};
 
-pub const MOJANG_RUNTIMES: &str = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
+const MOJANG_RUNTIMES: &str = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
 const MARKER: &str = ".luncher-runtime";
 
 type RuntimeIndex = BTreeMap<String, BTreeMap<String, Vec<RuntimeEntry>>>;
@@ -69,7 +69,7 @@ struct RawDownload {
 
 /// Mojang platform keys to try, best first. ARM Windows and Apple Silicon fall back to x64
 /// runtimes, which run under the OS's emulation (needed for e.g. Java 8 on Apple Silicon).
-pub fn mojang_platforms(os: Os, arch: Arch) -> Vec<&'static str> {
+fn mojang_platforms(os: Os, arch: Arch) -> Vec<&'static str> {
     match (os, arch) {
         (Os::Windows, Arch::X64) => vec!["windows-x64"],
         (Os::Windows, Arch::X86) => vec!["windows-x86"],

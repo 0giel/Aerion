@@ -201,7 +201,7 @@ struct CachedToken {
 }
 
 /// `UUID.nameUUIDFromBytes("OfflinePlayer:" + name)` — what servers in offline mode expect.
-pub fn offline_uuid(name: &str) -> String {
+fn offline_uuid(name: &str) -> String {
     let digest = md5::Md5::digest(format!("OfflinePlayer:{name}").as_bytes());
     let mut bytes = [0u8; 16];
     bytes.copy_from_slice(&digest);
@@ -211,7 +211,7 @@ pub fn offline_uuid(name: &str) -> String {
         .to_string()
 }
 
-pub fn validate_offline_name(name: &str) -> Result<()> {
+fn validate_offline_name(name: &str) -> Result<()> {
     let ok = (3..=16).contains(&name.len())
         && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
     if ok {

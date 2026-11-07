@@ -43,7 +43,7 @@ fn normalise(s: &str) -> String {
 }
 
 /// Curated successors for a mod, by slug or title.
-pub fn known_successors(slug: Option<&str>, title: &str) -> &'static [&'static str] {
+fn known_successors(slug: Option<&str>, title: &str) -> &'static [&'static str] {
     let keys = [slug.map(normalise), Some(normalise(title))];
     KNOWN
         .iter()

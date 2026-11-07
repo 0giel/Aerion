@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 use crate::error::{Error, Result};
 
-pub const PORTABLE_MARKER: &str = "portable";
+const PORTABLE_MARKER: &str = "portable";
 
 #[derive(Debug, Clone)]
 pub struct Paths {
@@ -122,7 +122,7 @@ impl Paths {
     pub fn fontconfig_cache_dir(&self) -> PathBuf {
         self.data.join("cache").join("fontconfig")
     }
-    pub fn meta_dir(&self) -> PathBuf {
+    fn meta_dir(&self) -> PathBuf {
         self.data.join("meta")
     }
     pub fn version_json(&self, id: &str) -> PathBuf {

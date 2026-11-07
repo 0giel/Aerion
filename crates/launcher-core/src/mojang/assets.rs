@@ -9,7 +9,7 @@ use crate::error::{IoContext, Result};
 use crate::net::download::DownloadItem;
 use crate::util::fs::safe_join;
 
-pub const RESOURCES_URL: &str = "https://resources.download.minecraft.net";
+const RESOURCES_URL: &str = "https://resources.download.minecraft.net";
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AssetIndex {
@@ -29,14 +29,14 @@ pub struct AssetObject {
     pub size: u64,
 }
 
-pub fn object_path(assets_dir: &Path, hash: &str) -> PathBuf {
+fn object_path(assets_dir: &Path, hash: &str) -> PathBuf {
     assets_dir
         .join("objects")
         .join(&hash[..2.min(hash.len())])
         .join(hash)
 }
 
-pub fn object_url(hash: &str) -> String {
+fn object_url(hash: &str) -> String {
     format!("{RESOURCES_URL}/{}/{hash}", &hash[..2.min(hash.len())])
 }
 
@@ -51,10 +51,6 @@ impl AssetIndex {
                     .size(Some(o.size))
             })
             .collect()
-    }
-
-    pub fn total_size(&self) -> u64 {
-        self.objects.values().map(|o| o.size).sum()
     }
 
     /// Copy objects to their legacy, path-based layout (virtual assets / resources dir).

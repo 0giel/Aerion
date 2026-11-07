@@ -49,7 +49,7 @@ fn sort_desc(list: &mut [LoaderVersion]) {
 }
 
 /// `<version>` entries of a Maven metadata file.
-pub fn parse_maven_versions(xml: &str) -> Vec<String> {
+fn parse_maven_versions(xml: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut rest = xml;
     while let Some(s) = rest.find("<version>") {

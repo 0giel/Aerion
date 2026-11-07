@@ -55,7 +55,7 @@ impl Hasher {
 }
 
 /// Hash a file on a blocking thread.
-pub async fn hash_file(path: &Path, algo: &Hash) -> Result<String> {
+async fn hash_file(path: &Path, algo: &Hash) -> Result<String> {
     let path = path.to_path_buf();
     let mut hasher = algo.hasher();
     tokio::task::spawn_blocking(move || {
@@ -93,7 +93,7 @@ pub fn sha1_hex(data: &[u8]) -> String {
 
 /// CurseForge file fingerprint: MurmurHash2 (seed 1) of the file with all
 /// whitespace bytes (tab, LF, CR, space) removed.
-pub fn curseforge_fingerprint(data: &[u8]) -> u32 {
+fn curseforge_fingerprint(data: &[u8]) -> u32 {
     let normalized: Vec<u8> = data
         .iter()
         .copied()
@@ -110,7 +110,7 @@ pub async fn curseforge_fingerprint_file(path: &Path) -> Result<u32> {
 }
 
 /// 32-bit MurmurHash2 (Austin Appleby), little-endian block reads.
-pub fn murmur2(data: &[u8], seed: u32) -> u32 {
+fn murmur2(data: &[u8], seed: u32) -> u32 {
     const M: u32 = 0x5bd1_e995;
     const R: u32 = 24;
     let len = data.len();

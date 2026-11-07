@@ -10,7 +10,7 @@ use serde::Deserialize;
 use crate::error::{Error, IoContext, Result};
 use crate::net::client::Http;
 
-pub const MCLOGS_API: &str = "https://api.mclo.gs/1/log";
+const MCLOGS_API: &str = "https://api.mclo.gs/1/log";
 
 /// mclo.gs keeps at most this many lines; the end of a log is where a crash is.
 const MAX_LINES: usize = 25_000;

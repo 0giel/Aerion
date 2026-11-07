@@ -166,7 +166,7 @@ struct FingerprintMatch {
     file: CfFile,
 }
 
-pub fn class_id(kind: ContentKind) -> u32 {
+fn class_id(kind: ContentKind) -> u32 {
     match kind {
         ContentKind::Mod => 6,
         ContentKind::Modpack => 4471,
@@ -186,7 +186,7 @@ fn kind_of(class: Option<u32>) -> ContentKind {
     }
 }
 
-pub fn loader_type(loader: &str) -> Option<u8> {
+fn loader_type(loader: &str) -> Option<u8> {
     match loader {
         "forge" => Some(1),
         "fabric" => Some(4),
@@ -195,13 +195,6 @@ pub fn loader_type(loader: &str) -> Option<u8> {
         _ => None,
     }
 }
-
-const LOADER_NAMES: &[(&str, &str)] = &[
-    ("forge", "forge"),
-    ("fabric", "fabric"),
-    ("quilt", "quilt"),
-    ("neoforge", "neoforge"),
-];
 
 fn page_of(m: &CfMod) -> String {
     m.links
@@ -247,8 +240,8 @@ fn to_version(f: CfFile, page: Option<&str>) -> ProjectVersion {
     let mut loaders = Vec::new();
     for gv in &f.game_versions {
         let lower = gv.to_ascii_lowercase();
-        if let Some((_, l)) = LOADER_NAMES.iter().find(|(name, _)| *name == lower) {
-            loaders.push((*l).to_owned());
+        if loader_type(&lower).is_some() {
+            loaders.push(lower);
         } else if gv.starts_with(|c: char| c.is_ascii_digit()) {
             game_versions.push(gv.clone());
         }

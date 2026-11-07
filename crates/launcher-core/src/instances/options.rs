@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Error, IoContext, Result};
 
 /// Vanilla options, OptiFine's and the shader settings.
-pub const FILES: [&str; 3] = ["options.txt", "optionsof.txt", "optionsshaders.txt"];
+const FILES: [&str; 3] = ["options.txt", "optionsof.txt", "optionsshaders.txt"];
 const META: &str = "template.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -144,7 +144,7 @@ fn read(path: &Path) -> String {
 
 /// Whether a game version reads key bindings by name (1.13 and newer, and the year-numbered
 /// releases); older ones store numbers and must never get named keys.
-pub fn names_keys(game_version: &str) -> bool {
+fn names_keys(game_version: &str) -> bool {
     let v = game_version.trim();
     if let Some(rest) = v.strip_prefix("1.") {
         return rest

@@ -122,11 +122,7 @@ fn user_hash(r: &XboxResponse) -> Result<String> {
         .ok_or_else(|| Error::parse("Xbox response", "missing user hash"))
 }
 
-pub async fn xbox_live(
-    http: &Http,
-    ep: &Endpoints,
-    ms_access_token: &str,
-) -> Result<(String, String)> {
+async fn xbox_live(http: &Http, ep: &Endpoints, ms_access_token: &str) -> Result<(String, String)> {
     let url = format!("{}/user/authenticate", ep.xbl);
     let body = json!({
         "Properties": {
@@ -190,7 +186,7 @@ struct McLogin {
     expires_in: Option<i64>,
 }
 
-pub async fn login_with_xbox(
+async fn login_with_xbox(
     http: &Http,
     ep: &Endpoints,
     uhs: &str,
@@ -232,7 +228,7 @@ struct Entitlement {
     name: String,
 }
 
-pub async fn owns_java_edition(http: &Http, ep: &Endpoints, mc_token: &str) -> Result<bool> {
+async fn owns_java_edition(http: &Http, ep: &Endpoints, mc_token: &str) -> Result<bool> {
     let url = format!("{}/entitlements/mcstore", ep.minecraft);
     let resp = check(http.send(|c| c.get(&url).bearer_auth(mc_token)).await?).await?;
     let bytes = resp.bytes().await?;

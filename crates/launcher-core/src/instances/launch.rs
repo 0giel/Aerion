@@ -118,7 +118,7 @@ fn quick_play(
 
 /// The Horizon build an instance starts with: its own, or the newest (installed and remembered
 /// on first use).
-pub async fn horizon_build(
+async fn horizon_build(
     engine: &Engine,
     instances: &InstanceManager,
     inst: &Instance,
@@ -187,7 +187,7 @@ pub async fn verify(
     Ok(())
 }
 
-pub async fn pick_java(
+async fn pick_java(
     engine: &Engine,
     settings: &Settings,
     inst: &Instance,

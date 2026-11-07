@@ -10,7 +10,7 @@ use crate::util::fs::write_json;
 
 pub const MARKER: &str = "aerion-instance.json";
 /// Archives exported before the launcher was renamed from "Luncher".
-pub const LEGACY_MARKER: &str = "luncher-instance.json";
+const LEGACY_MARKER: &str = "luncher-instance.json";
 
 /// The instance settings stored in an archive, under the current or the legacy name.
 pub fn read_marker(archive: &Path) -> Result<Option<Vec<u8>>> {

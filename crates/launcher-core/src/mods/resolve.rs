@@ -47,17 +47,6 @@ pub struct InstallPlan {
     pub unavailable: Vec<ProjectNote>,
 }
 
-/// What the instance already has (provider project ids).
-pub trait Installed {
-    fn has(&self, provider: Provider, project_id: &str) -> bool;
-}
-
-impl Installed for HashSet<(Provider, String)> {
-    fn has(&self, provider: Provider, project_id: &str) -> bool {
-        self.contains(&(provider, project_id.to_owned()))
-    }
-}
-
 pub struct Target<'a> {
     pub game_version: &'a str,
     pub loaders: &'a [&'a str],
@@ -68,7 +57,7 @@ pub async fn plan<P: ModProvider>(
     project_id: &str,
     version_id: Option<&str>,
     target: &Target<'_>,
-    installed: &(dyn Installed + Sync),
+    installed: &HashSet<(Provider, String)>,
 ) -> Result<InstallPlan> {
     let p = provider.provider();
     let mut plan = InstallPlan {
@@ -85,7 +74,7 @@ pub async fn plan<P: ModProvider>(
         if !seen.insert(pid.clone()) {
             continue;
         }
-        if required_by.is_some() && installed.has(p, &pid) {
+        if required_by.is_some() && installed.contains(&(p, pid.clone())) {
             continue;
         }
         let version = match &vid {
@@ -149,7 +138,7 @@ pub async fn plan<P: ModProvider>(
                     queue.push_back((dep_pid, dep.version_id.clone(), Some(pid.clone())))
                 }
                 DependencyKind::Optional => {
-                    if !installed.has(p, &dep_pid) {
+                    if !installed.contains(&(p, dep_pid.clone())) {
                         optional.push((dep_pid, pid.clone()));
                     }
                 }
@@ -180,7 +169,7 @@ pub async fn plan<P: ModProvider>(
         .collect();
     plan.incompatible = incompatible
         .into_iter()
-        .filter(|(id, _)| planned.contains(id) || installed.has(p, id))
+        .filter(|(id, _)| planned.contains(id) || installed.contains(&(p, id.clone())))
         .map(|(id, by)| ProjectNote {
             project_id: id,
             title: String::new(),

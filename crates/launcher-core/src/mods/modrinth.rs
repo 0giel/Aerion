@@ -356,10 +356,7 @@ impl Modrinth {
     }
 
     /// `sha1 → version` for files with known hashes (modpack indexes, local files).
-    pub async fn versions_by_hash(
-        &self,
-        sha1s: &[String],
-    ) -> Result<HashMap<String, ProjectVersion>> {
+    async fn versions_by_hash(&self, sha1s: &[String]) -> Result<HashMap<String, ProjectVersion>> {
         if sha1s.is_empty() {
             return Ok(HashMap::new());
         }
@@ -367,12 +364,6 @@ impl Modrinth {
         let map: HashMap<String, MrVersion> = self.post("/version_files", &body).await?;
         Ok(map.into_iter().map(|(k, v)| (k, v.into())).collect())
     }
-}
-
-/// Modrinth's loader facet for an instance loader; Quilt also accepts Fabric mods and
-/// NeoForge on 1.20.1 accepts Forge mods.
-pub fn loader_facet(loaders: &[&str]) -> Vec<String> {
-    loaders.iter().map(|l| format!("categories:{l}")).collect()
 }
 
 impl ModProvider for Modrinth {
@@ -394,7 +385,7 @@ impl ModProvider for Modrinth {
                 q.game_version.as_deref().unwrap_or(""),
             );
             if !loaders.is_empty() {
-                facets.push(loader_facet(&loaders));
+                facets.push(loaders.iter().map(|l| format!("categories:{l}")).collect());
             }
         }
         for c in &q.categories {

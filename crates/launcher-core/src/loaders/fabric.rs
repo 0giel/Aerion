@@ -37,11 +37,6 @@ struct Info {
     stable: Option<bool>,
 }
 
-#[derive(Deserialize)]
-struct GameEntry {
-    version: String,
-}
-
 fn not_available(flavor: &Flavor, version: &str, game: &str) -> Error {
     Error::LoaderUnavailable {
         loader: flavor.kind.as_str().into(),
@@ -69,13 +64,6 @@ pub async fn versions(engine: &Engine, flavor: &Flavor, game: &str) -> Result<Ve
             version: e.loader.version,
         })
         .collect())
-}
-
-/// Game versions the loader supports (for the instance wizard).
-pub async fn game_versions(engine: &Engine, flavor: &Flavor) -> Result<Vec<String>> {
-    let url = format!("{}/versions/game", flavor.meta);
-    let list: Vec<GameEntry> = engine.cache.get_json(&url, 30 * MINUTE).await?;
-    Ok(list.into_iter().map(|g| g.version).collect())
 }
 
 pub async fn install(

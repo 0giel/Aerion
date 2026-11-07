@@ -16,7 +16,7 @@ use crate::paths::Paths;
 /// Game versions the bundled jars are built for (one jar each).
 pub const GAME_VERSIONS: &[&str] = &["26.3", "1.21.11"];
 
-pub fn jar_name(game_version: &str) -> String {
+fn jar_name(game_version: &str) -> String {
     format!("aerion-ui-{game_version}.jar")
 }
 
@@ -118,7 +118,7 @@ pub fn jvm_args(paths: &Paths, inst: &Instance) -> Vec<String> {
 }
 
 /// Where the mod reports the game's FPS for an instance (ids may hold any characters).
-pub fn status_file(paths: &Paths, instance_id: &str) -> PathBuf {
+fn status_file(paths: &Paths, instance_id: &str) -> PathBuf {
     let safe: String = instance_id
         .chars()
         .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })

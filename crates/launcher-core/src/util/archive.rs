@@ -76,16 +76,6 @@ pub fn extract_zip_prefix(archive: &Path, prefix: &str, dest: &Path) -> Result<u
     Ok(count)
 }
 
-pub async fn extract_zip_async(
-    archive: PathBuf,
-    dest: PathBuf,
-    filter: impl Fn(&str) -> bool + Send + 'static,
-) -> Result<Vec<PathBuf>> {
-    tokio::task::spawn_blocking(move || extract_zip(&archive, &dest, &filter))
-        .await
-        .map_err(|e| Error::Invalid(format!("extract task failed: {e}")))?
-}
-
 /// Read a single entry into memory (`None` if absent).
 pub fn read_zip_entry(archive: &Path, name: &str) -> Result<Option<Vec<u8>>> {
     let file = std::fs::File::open(archive).at(archive)?;

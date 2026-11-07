@@ -111,7 +111,7 @@ fn packet(id: i32, body: &[u8]) -> Vec<u8> {
 }
 
 /// Plain text of a chat component (string, `{text, extra}` or array), without `§x` codes.
-pub fn plain_text(v: &serde_json::Value) -> String {
+fn plain_text(v: &serde_json::Value) -> String {
     fn walk(v: &serde_json::Value, out: &mut String) {
         match v {
             serde_json::Value::String(s) => out.push_str(s),

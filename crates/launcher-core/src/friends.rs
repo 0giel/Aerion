@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Error, Result};
 use crate::net::client::Http;
 
-pub const MAX_FRIENDS: usize = 200;
+const MAX_FRIENDS: usize = 200;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
@@ -35,7 +35,7 @@ pub struct PlayerProfile {
 }
 
 /// Java Edition names: 1–16 letters, digits and underscores (old accounts have short ones).
-pub fn valid_name(name: &str) -> bool {
+fn valid_name(name: &str) -> bool {
     (1..=16).contains(&name.len()) && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
 }
 

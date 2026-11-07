@@ -100,7 +100,7 @@ impl Downloader {
     }
 
     /// Whether `item` must be (re)downloaded.
-    pub async fn is_needed(item: &DownloadItem, mode: VerifyMode) -> bool {
+    async fn is_needed(item: &DownloadItem, mode: VerifyMode) -> bool {
         let Ok(meta) = tokio::fs::metadata(&item.dest).await else {
             return true;
         };

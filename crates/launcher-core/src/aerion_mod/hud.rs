@@ -203,7 +203,7 @@ pub struct HudConfig {
 }
 
 /// Every module the mod knows: id, on by default, x, y.
-pub const MODULES: &[(&str, bool, u16, u16)] = &[
+const MODULES: &[(&str, bool, u16, u16)] = &[
     ("fps", true, 8, 10),
     ("coords", true, 8, 110),
     ("potions", true, 992, 480),

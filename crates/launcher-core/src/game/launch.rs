@@ -65,7 +65,7 @@ impl CommandSpec {
     }
 }
 
-pub fn mask(text: &str, secrets: &[String]) -> String {
+fn mask(text: &str, secrets: &[String]) -> String {
     let mut out = text.to_owned();
     for s in secrets.iter().filter(|s| s.len() >= 8) {
         if out.contains(s.as_str()) {

@@ -67,7 +67,7 @@ fn skip_on_copy(name: &str) -> bool {
 
 /// Version ids of the official launcher / SKlauncher: `fabric-loader-0.16.5-1.21.1`,
 /// `quilt-loader-0.26.0-1.21.1`, `1.20.1-forge-47.2.0`, `neoforge-21.1.77`, `1.21.1`.
-pub fn parse_version_id(id: &str) -> (Option<String>, LoaderKind, Option<String>) {
+fn parse_version_id(id: &str) -> (Option<String>, LoaderKind, Option<String>) {
     let id = id.trim();
     for (prefix, kind) in [
         ("fabric-loader-", LoaderKind::Fabric),
@@ -108,7 +108,7 @@ pub fn parse_version_id(id: &str) -> (Option<String>, LoaderKind, Option<String>
 
 /// Game version and loader from the start of `logs/latest.log`, for launchers that keep their
 /// metadata where we can't read it.
-pub fn detect_from_log(game_dir: &Path) -> Option<(String, LoaderKind, Option<String>)> {
+fn detect_from_log(game_dir: &Path) -> Option<(String, LoaderKind, Option<String>)> {
     let text = std::fs::read(game_dir.join("logs").join("latest.log")).ok()?;
     let text = String::from_utf8_lossy(&text[..text.len().min(256 * 1024)]);
     let word_after = |hay: &str, needle: &str| -> Option<String> {

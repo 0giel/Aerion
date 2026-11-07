@@ -206,7 +206,7 @@ fn prepare_external_game_dir(dir: &Path, id: &str) -> Result<()> {
 
 /// `mc:<texture>` (a Minecraft item/block texture, e.g. `mc:item/diamond`),
 /// `file:icon-<millis>.<ext>`, or an older built-in key (`grass`, `diamond`, …).
-pub fn validate_icon(icon: &str) -> Result<()> {
+fn validate_icon(icon: &str) -> Result<()> {
     let ok = match icon.strip_prefix("file:") {
         Some(file) => is_icon_file(file),
         None if icon.starts_with("mc:") => crate::game::textures::valid_texture(&icon[3..]),
@@ -226,7 +226,7 @@ pub fn validate_icon(icon: &str) -> Result<()> {
 }
 
 /// `icon-<digits>.<png|jpg|webp|gif>`.
-pub fn is_icon_file(name: &str) -> bool {
+fn is_icon_file(name: &str) -> bool {
     name.strip_prefix(ICON_PREFIX)
         .and_then(|rest| rest.split_once('.'))
         .is_some_and(|(stamp, ext)| {
@@ -242,10 +242,6 @@ impl InstanceManager {
             root,
             lock: Mutex::new(()),
         }
-    }
-
-    pub fn root(&self) -> &Path {
-        &self.root
     }
 
     pub fn dir(&self, id: &str) -> Result<PathBuf> {

@@ -15,7 +15,7 @@ use crate::error::{AuthError, Error, Result};
 use crate::net::client::Http;
 use crate::util::now_secs;
 
-pub const SCOPE: &str = "XboxLive.signin offline_access";
+const SCOPE: &str = "XboxLive.signin offline_access";
 
 #[derive(Debug, Clone)]
 pub struct MsaTokens {
@@ -51,7 +51,7 @@ fn random_b64(n: usize) -> String {
 }
 
 /// PKCE verifier (43 chars, RFC 7636) and its S256 challenge.
-pub fn pkce_pair() -> (String, String) {
+fn pkce_pair() -> (String, String) {
     let verifier = random_b64(32);
     let challenge = b64url(&sha2::Sha256::digest(verifier.as_bytes()));
     (verifier, challenge)

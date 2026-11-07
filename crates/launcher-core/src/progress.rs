@@ -36,7 +36,7 @@ pub struct ProgressSnapshot {
 }
 
 impl Progress {
-    pub fn set_stage(&self, key: &str, detail: Option<String>) {
+    fn set_stage(&self, key: &str, detail: Option<String>) {
         *self.stage.lock().unwrap_or_else(|e| e.into_inner()) = (key.to_owned(), detail);
     }
 
@@ -63,18 +63,6 @@ impl Progress {
 
     pub fn item_done(&self) {
         self.done_items.fetch_add(1, Ordering::Relaxed);
-    }
-
-    /// Reset counters when a new phase starts (stage text is kept).
-    pub fn reset_counters(&self) {
-        for c in [
-            &self.total_bytes,
-            &self.done_bytes,
-            &self.total_items,
-            &self.done_items,
-        ] {
-            c.store(0, Ordering::Relaxed);
-        }
     }
 
     pub fn snapshot(&self) -> ProgressSnapshot {

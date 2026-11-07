@@ -8,7 +8,7 @@ use crate::error::{Error, Result};
 use crate::instances::Instance;
 use crate::util::names::folder_name;
 
-pub fn desktop_dir() -> Result<PathBuf> {
+fn desktop_dir() -> Result<PathBuf> {
     directories::UserDirs::new()
         .and_then(|d| d.desktop_dir().map(Path::to_path_buf))
         .ok_or_else(|| Error::Invalid("no desktop folder".into()))

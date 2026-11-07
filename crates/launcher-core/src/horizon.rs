@@ -49,7 +49,7 @@ fn err(kind: &'static str, detail: impl Into<String>) -> Error {
 }
 
 /// The game archive for this computer, as Horizon's own launcher picks it.
-pub fn asset_name(os: Os, arch: Arch) -> Option<&'static str> {
+fn asset_name(os: Os, arch: Arch) -> Option<&'static str> {
     Some(match (os, arch) {
         (Os::Linux, Arch::X64) => "horizon-linux-x86_64.tar.gz",
         (Os::Macos, Arch::Arm64) => "horizon-macos-arm64.zip",

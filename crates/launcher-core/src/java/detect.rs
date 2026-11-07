@@ -43,7 +43,7 @@ pub async fn inspect(java: &Path, source: JavaSource) -> Result<JavaInstall> {
 }
 
 /// Run `java -XshowSettings:properties -version` and parse the properties it prints.
-pub async fn probe(java: &Path, source: JavaSource) -> Result<JavaInstall> {
+async fn probe(java: &Path, source: JavaSource) -> Result<JavaInstall> {
     let out = super::run(
         java,
         &["-XshowSettings:properties".as_ref(), "-version".as_ref()],
@@ -102,7 +102,7 @@ fn children(dir: &Path) -> Vec<PathBuf> {
 }
 
 /// Candidate executables, in rough priority order.
-pub fn candidates() -> Vec<PathBuf> {
+fn candidates() -> Vec<PathBuf> {
     let mut out = Vec::new();
     if let Some(home) = std::env::var_os("JAVA_HOME") {
         push_bins(&mut out, Path::new(&home));

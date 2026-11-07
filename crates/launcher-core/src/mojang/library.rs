@@ -6,7 +6,7 @@ use crate::mojang::rules::{Environment, rules_allow};
 use crate::mojang::version::{Artifact, Library};
 use crate::util::hash::Hash;
 
-pub const MOJANG_LIBRARIES: &str = "https://libraries.minecraft.net/";
+const MOJANG_LIBRARIES: &str = "https://libraries.minecraft.net/";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MavenCoord {
@@ -80,7 +80,7 @@ impl MavenCoord {
         }
     }
 
-    pub fn with_classifier(&self, classifier: &str) -> Self {
+    fn with_classifier(&self, classifier: &str) -> Self {
         Self {
             classifier: Some(classifier.to_owned()),
             ..self.clone()

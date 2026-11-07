@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 
 use crate::error::{Error, IoContext, Result};
 
-pub async fn ensure_dir(path: impl AsRef<Path>) -> Result<()> {
+async fn ensure_dir(path: impl AsRef<Path>) -> Result<()> {
     let path = path.as_ref();
     tokio::fs::create_dir_all(path).await.at(path)
 }
