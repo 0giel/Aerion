@@ -550,7 +550,6 @@ mod tests {
             ("1.21.1", LoaderKind::Neoforge, Some("21.1.248"))
         );
 
-        // Prism layout.
         let p = dir.path().join("prism/Inst");
         std::fs::create_dir_all(p.join(".minecraft")).unwrap();
         std::fs::write(

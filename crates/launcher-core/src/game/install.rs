@@ -48,11 +48,9 @@ pub async fn prepare(
 
     let mut items: Vec<DownloadItem> = Vec::new();
 
-    // Client jar of the vanilla root version.
     let vanilla_jar = paths.client_jar(&root_id);
     items.push(crate::mojang::client_jar_item(paths, &version, &root_id)?);
 
-    // Libraries.
     let libraries = resolve_libraries(&version.libraries, env);
     let libs_dir = paths.libraries_dir();
     let mut missing_local = Vec::new();
@@ -75,7 +73,6 @@ pub async fn prepare(
         )));
     }
 
-    // Assets.
     let assets_root = paths.assets_dir();
     let index_ref = version.asset_index.clone();
     let asset_index_id = version
@@ -95,7 +92,6 @@ pub async fn prepare(
         index = Some(parsed);
     }
 
-    // Logging configuration.
     let mut logging_arg = None;
     if let Some(cfg) = version.logging.as_ref().and_then(|l| l.client.as_ref())
         && !cfg.file.id.contains(['/', '\\'])
@@ -127,7 +123,6 @@ pub async fn prepare(
         tokio::fs::create_dir_all(&d).await.at(&d)?;
     }
 
-    // Old asset layouts.
     let mut game_assets = assets_root.clone();
     let mut resources_index = None;
     if let Some(idx) = index {

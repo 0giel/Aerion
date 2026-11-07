@@ -179,7 +179,6 @@ pub async fn plan<P: ModProvider>(
         .collect();
     plan.optional.dedup_by(|a, b| a.project_id == b.project_id);
 
-    // One bulk request for titles and icons.
     let mut ids: Vec<String> = planned.iter().cloned().collect();
     for n in plan
         .optional

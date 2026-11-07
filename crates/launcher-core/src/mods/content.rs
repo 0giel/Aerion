@@ -358,7 +358,6 @@ impl ContentManager {
 
         let mut m = self.load().await;
         for e in &new_entries {
-            // Replace older files of the same project.
             let old: Vec<ContentEntry> = m
                 .entries
                 .iter()
@@ -719,7 +718,6 @@ impl ContentManager {
             .await?
             .unwrap_or_default();
         let current = self.load().await;
-        // Remove files that the update introduced.
         for e in &current.entries {
             if !old
                 .entries

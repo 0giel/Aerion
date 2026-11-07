@@ -128,8 +128,6 @@ pub fn installed_build(engine: &Engine, id: &str) -> Option<Build> {
     build.installed().then_some(build)
 }
 
-// --- finding and checking a build --------------------------------------------------------------
-
 #[derive(Debug, Deserialize)]
 struct Release {
     tag_name: String,
@@ -351,8 +349,6 @@ async fn make_executable(dir: &Path) {
     let _ = dir;
 }
 
-// --- preparing the resources ---------------------------------------------------------------
-
 /// One line of `horizon-prepare --progress json`.
 #[derive(Debug, Default, Deserialize)]
 struct PrepareLine {
@@ -510,8 +506,6 @@ async fn check(build: &Build, out: &Path) -> bool {
         .stderr(Stdio::null());
     matches!(cmd.status().await, Ok(s) if s.success())
 }
-
-// --- starting the game -----------------------------------------------------------------------
 
 #[derive(Debug, Clone)]
 pub struct StartOptions {

@@ -82,8 +82,6 @@ pub fn apply_template(template_dir: &Path, to_game: &Path) -> Result<bool> {
     Ok(copy(template_dir, to_game)? > 0)
 }
 
-// --- shared settings ---------------------------------------------------------------------------
-
 /// Keys that stay with each instance: its own packs, servers, onboarding and the file's version.
 const LOCAL: &[&str] = &[
     "version",
@@ -240,8 +238,6 @@ pub fn push_shared(game_dir: &Path, shared_dir: &Path) -> Result<bool> {
     crate::util::fs::atomic_write_sync(&path, merged.as_bytes())?;
     Ok(true)
 }
-
-// --- key bindings ------------------------------------------------------------------------------
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]

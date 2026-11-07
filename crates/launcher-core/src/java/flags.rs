@@ -90,7 +90,6 @@ pub fn preset_args(preset: JvmPreset, major: u32, max_mb: u32) -> Vec<String> {
     a
 }
 
-/// Memory arguments for a heap of `max_mb`.
 pub fn memory_args(preset: JvmPreset, min_mb: Option<u32>, max_mb: u32) -> Vec<String> {
     let min = min_mb.unwrap_or(match preset {
         JvmPreset::Performance => max_mb / 2,
