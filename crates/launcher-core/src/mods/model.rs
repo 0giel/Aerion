@@ -6,7 +6,7 @@ use std::future::Future;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]

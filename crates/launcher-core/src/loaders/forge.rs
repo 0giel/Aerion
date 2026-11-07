@@ -14,7 +14,7 @@ use serde::Deserialize;
 use crate::Engine;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::prepare;
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 use crate::loaders::{LoaderVersion, is_prerelease, safe_version_id};
 use crate::mojang::library::{MavenCoord, resolve_libraries};
 use crate::mojang::version::{Library, VersionJson};

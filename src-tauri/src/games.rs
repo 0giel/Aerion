@@ -249,7 +249,7 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
         ));
         let (name, modded) = (
             plan.instance.name.clone(),
-            plan.instance.loader != launcher_core::instances::LoaderKind::Vanilla,
+            plan.instance.loader != launcher_core::loaders::LoaderKind::Vanilla,
         );
         let result = run(plan.spec, tx, stop, move |pid| {
             let _ = pid_tx.send(pid);

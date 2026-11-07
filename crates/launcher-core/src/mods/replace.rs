@@ -9,7 +9,7 @@ use super::model::{ContentKind, ModProvider, ProjectSummary, SearchQuery, SortOr
 use super::modrinth::Modrinth;
 use super::select::loaders_for;
 use crate::error::Result;
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 
 #[derive(Debug, Clone, Serialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]

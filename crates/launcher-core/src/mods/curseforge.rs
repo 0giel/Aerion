@@ -431,7 +431,7 @@ impl ModProvider for CurseForge {
                     && matches!(q.kind, ContentKind::Mod | ContentKind::Modpack)
                 {
                     // Quilt runs Fabric mods, which are rarely tagged Quilt on CurseForge.
-                    let name = if l == crate::instances::LoaderKind::Quilt {
+                    let name = if l == crate::loaders::LoaderKind::Quilt {
                         "fabric"
                     } else {
                         l.as_str()
@@ -667,7 +667,7 @@ mod tests {
                 query: "jei".into(),
                 kind: ContentKind::Mod,
                 game_version: Some("1.21.11".into()),
-                loader: Some(crate::instances::LoaderKind::Quilt),
+                loader: Some(crate::loaders::LoaderKind::Quilt),
                 categories: vec![],
                 sort: SortOrder::Relevance,
                 offset: 0,

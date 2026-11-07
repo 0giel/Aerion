@@ -1,6 +1,6 @@
 //! Choosing the best file for an instance.
 
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 use crate::mods::model::{ContentKind, ProjectVersion, ReleaseKind};
 
 /// Loader tags a mod may carry to run on `loader`, in order of preference.

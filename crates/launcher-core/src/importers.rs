@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
@@ -91,7 +91,7 @@ pub fn parse_version_id(id: &str) -> (Option<String>, LoaderKind, Option<String>
     }
     if let Some(v) = id.strip_prefix("neoforge-") {
         return (
-            neoforge_game_version(v),
+            crate::loaders::forge::neoforge_game_version(v),
             LoaderKind::Neoforge,
             Some(v.to_owned()),
         );
@@ -100,21 +100,6 @@ pub fn parse_version_id(id: &str) -> (Option<String>, LoaderKind, Option<String>
         "" | "latest-release" | "latest-snapshot" => (None, LoaderKind::Vanilla, None),
         _ => (Some(id.to_owned()), LoaderKind::Vanilla, None),
     }
-}
-
-/// NeoForge numbers releases after the game: `21.1.77` → 1.21.1, `21.0.x` → 1.21, and since
-/// 2026 `26.3.0.100` → 26.3.
-fn neoforge_game_version(v: &str) -> Option<String> {
-    let mut parts = v.split('.');
-    let major: u32 = parts.next()?.parse().ok()?;
-    let minor: u32 = parts.next()?.parse().ok()?;
-    Some(if major >= 26 {
-        format!("{major}.{minor}")
-    } else if minor == 0 {
-        format!("1.{major}")
-    } else {
-        format!("1.{major}.{minor}")
-    })
 }
 
 /// Game version and loader from the start of `logs/latest.log`, for launchers that keep their

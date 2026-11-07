@@ -4,15 +4,52 @@ pub mod fabric;
 pub mod forge;
 
 use futures_util::{StreamExt, stream};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::Engine;
 use crate::error::{Error, Result};
-use crate::instances::LoaderKind;
 use crate::mojang::library::MavenCoord;
 use crate::mojang::version::Library;
 use crate::net::client::Http;
 use crate::progress::TaskCtx;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "lowercase")]
+pub enum LoaderKind {
+    Vanilla,
+    Fabric,
+    Quilt,
+    Forge,
+    Neoforge,
+    /// Horizon: Minecraft 26.3 rewritten in Rust (see [`crate::horizon`]); no Java, no Java mods.
+    Horizon,
+}
+
+impl LoaderKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            LoaderKind::Vanilla => "vanilla",
+            LoaderKind::Fabric => "fabric",
+            LoaderKind::Quilt => "quilt",
+            LoaderKind::Forge => "forge",
+            LoaderKind::Neoforge => "neoforge",
+            LoaderKind::Horizon => "horizon",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.to_ascii_lowercase().as_str() {
+            "vanilla" | "minecraft" => Some(Self::Vanilla),
+            "fabric" | "fabric-loader" => Some(Self::Fabric),
+            "quilt" | "quilt-loader" => Some(Self::Quilt),
+            "forge" => Some(Self::Forge),
+            "neoforge" | "neo-forge" => Some(Self::Neoforge),
+            "horizon" => Some(Self::Horizon),
+            _ => None,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]

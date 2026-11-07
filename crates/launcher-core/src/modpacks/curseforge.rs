@@ -8,9 +8,10 @@ use serde::{Deserialize, Serialize};
 use crate::Engine;
 use crate::error::{Error, Result};
 use crate::instances::launch::ensure_version;
-use crate::instances::{InstanceManager, LoaderKind, ModpackInfo, NewInstance};
+use crate::instances::{InstanceManager, ModpackInfo, NewInstance};
+use crate::loaders::LoaderKind;
 use crate::modpacks::{
-    ExportOptions, ImportResult, ManualDownload, excluded_from_export, loader_from_id,
+    ExportOptions, ImportResult, ManualDownload, excluded_from_export,
 };
 use crate::mods::content::{entry_path, safe_file_name};
 use crate::mods::curseforge::CurseForge;
@@ -64,6 +65,13 @@ pub struct FileRef {
 
 fn yes() -> bool {
     true
+}
+
+/// `forge-47.2.0`, `fabric-0.15.3` → (kind, version).
+fn loader_from_id(id: &str) -> Option<(LoaderKind, String)> {
+    let (name, version) = id.split_once('-')?;
+    let kind = LoaderKind::parse(name)?;
+    Some((kind, version.to_owned()))
 }
 
 pub fn read_manifest(archive: &Path) -> Result<Manifest> {

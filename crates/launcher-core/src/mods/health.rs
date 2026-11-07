@@ -9,7 +9,7 @@ use serde::Serialize;
 
 use super::meta::{self, Family, ModMeta, Requirement};
 use super::ranges;
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]

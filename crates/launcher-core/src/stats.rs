@@ -5,7 +5,8 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
-use crate::instances::{Instance, InstanceManager, LoaderKind};
+use crate::instances::{Instance, InstanceManager};
+use crate::loaders::LoaderKind;
 
 #[derive(Debug, Clone, Serialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]

@@ -636,7 +636,7 @@ pub fn urlencode(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::instances::LoaderKind;
+    use crate::loaders::LoaderKind;
     use crate::net::client::NetConfig;
     use wiremock::matchers::{method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};

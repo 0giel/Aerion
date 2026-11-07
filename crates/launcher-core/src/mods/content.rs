@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, IoContext, Result};
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::*;
 use crate::mods::modrinth::Modrinth;
@@ -830,7 +830,7 @@ mod tests {
 
     #[tokio::test]
     async fn upgrade_plan_sorts_content() {
-        use crate::instances::LoaderKind;
+        use crate::loaders::LoaderKind;
         use crate::net::{cache::HttpCache, client::Http, client::NetConfig};
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -915,7 +915,7 @@ mod tests {
     /// must only be offered stable updates.
     #[tokio::test]
     async fn updates_keep_the_release_channel() {
-        use crate::instances::LoaderKind;
+        use crate::loaders::LoaderKind;
         use crate::net::{cache::HttpCache, client::Http, client::NetConfig};
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};

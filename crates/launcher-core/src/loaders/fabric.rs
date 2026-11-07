@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::Engine;
 use crate::error::{Error, Result};
-use crate::instances::LoaderKind;
+use crate::loaders::LoaderKind;
 use crate::loaders::{LoaderVersion, fill_maven_hashes, is_prerelease, safe_version_id};
 use crate::mojang::version::VersionJson;
 use crate::net::cache::MINUTE;

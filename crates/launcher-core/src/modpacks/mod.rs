@@ -9,7 +9,8 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
-use crate::instances::{Instance, LoaderKind};
+use crate::instances::Instance;
+use crate::loaders::LoaderKind;
 use crate::util::archive::read_zip_entry;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -74,13 +75,6 @@ pub fn detect_format(path: &Path) -> Result<PackFormat> {
     Err(Error::Invalid(
         "not a supported modpack (.mrpack, CurseForge zip or Aerion archive)".into(),
     ))
-}
-
-/// `fabric-loader` → Fabric, `forge-47.2.0` style ids → (kind, version).
-pub fn loader_from_id(id: &str) -> Option<(LoaderKind, String)> {
-    let (name, version) = id.split_once('-')?;
-    let kind = LoaderKind::parse(name)?;
-    Some((kind, version.to_owned()))
 }
 
 /// Entries in the game directory that are never exported.

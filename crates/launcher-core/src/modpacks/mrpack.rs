@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::Engine;
 use crate::error::{Error, Result};
 use crate::instances::launch::ensure_version;
-use crate::instances::{Instance, InstanceManager, LoaderKind, ModpackInfo, NewInstance};
+use crate::instances::{Instance, InstanceManager, ModpackInfo, NewInstance};
+use crate::loaders::LoaderKind;
 use crate::modpacks::{ExportOptions, excluded_from_export};
 use crate::mods::content::entry_path;
 use crate::mods::model::{ModProvider, Provider};
@@ -65,18 +66,19 @@ fn allowed(url: &str) -> bool {
         .is_some_and(|h| ALLOWED_HOSTS.contains(&h.as_str()))
 }
 
+/// The `dependencies` key of each loader in `modrinth.index.json`.
+const LOADER_KEYS: [(&str, LoaderKind); 4] = [
+    ("fabric-loader", LoaderKind::Fabric),
+    ("quilt-loader", LoaderKind::Quilt),
+    ("neoforge", LoaderKind::Neoforge),
+    ("forge", LoaderKind::Forge),
+];
+
 pub fn loader_of(deps: &BTreeMap<String, String>) -> (LoaderKind, Option<String>) {
-    for (key, kind) in [
-        ("fabric-loader", LoaderKind::Fabric),
-        ("quilt-loader", LoaderKind::Quilt),
-        ("neoforge", LoaderKind::Neoforge),
-        ("forge", LoaderKind::Forge),
-    ] {
-        if let Some(v) = deps.get(key) {
-            return (kind, Some(v.clone()));
-        }
-    }
-    (LoaderKind::Vanilla, None)
+    LOADER_KEYS
+        .iter()
+        .find_map(|(key, kind)| Some((*kind, Some(deps.get(*key)?.clone()))))
+        .unwrap_or((LoaderKind::Vanilla, None))
 }
 
 pub fn read_index(archive: &Path) -> Result<Index> {
@@ -226,12 +228,10 @@ pub async fn export(
         let v = inst.loader_version.clone().ok_or_else(|| {
             Error::Invalid("start the instance once so the loader version is known".into())
         })?;
-        let key = match inst.loader {
-            LoaderKind::Fabric => "fabric-loader",
-            LoaderKind::Quilt => "quilt-loader",
-            LoaderKind::Forge => "forge",
-            _ => "neoforge",
-        };
+        let key = LOADER_KEYS
+            .iter()
+            .find(|(_, kind)| *kind == inst.loader)
+            .map_or("neoforge", |(key, _)| key);
         deps.insert(key.to_owned(), v);
     }
 

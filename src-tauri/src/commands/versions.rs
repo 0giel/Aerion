@@ -1,4 +1,4 @@
-use launcher_core::instances::LoaderKind;
+use launcher_core::loaders::LoaderKind;
 use launcher_core::java::JavaInstall;
 use launcher_core::java::detect::detect_system;
 use launcher_core::java::flags::probe_args;

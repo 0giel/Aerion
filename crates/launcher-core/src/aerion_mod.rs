@@ -9,7 +9,8 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{IoContext, Result};
-use crate::instances::{Instance, LoaderKind};
+use crate::instances::Instance;
+use crate::loaders::LoaderKind;
 use crate::paths::Paths;
 
 /// Game versions the bundled jars are built for (one jar each).

@@ -8,7 +8,8 @@ use crate::game::install::{Prepared, prepare};
 use crate::game::launch::{
     AuthInfo, CommandSpec, LaunchOptions, build_command, default_env, prepare_game_dir,
 };
-use crate::instances::{Instance, InstanceManager, LoaderKind};
+use crate::instances::{Instance, InstanceManager};
+use crate::loaders::LoaderKind;
 use crate::java::detect::{detect_system, inspect};
 use crate::java::flags::{default_max_memory_mb, probe_args};
 use crate::java::{JavaInstall, JavaSource};

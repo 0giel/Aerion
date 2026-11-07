@@ -3,7 +3,8 @@ use std::path::PathBuf;
 
 use launcher_core::ErrorInfo;
 use launcher_core::accounts::SecretStore;
-use launcher_core::instances::{LoaderKind, ModpackInfo};
+use launcher_core::instances::ModpackInfo;
+use launcher_core::loaders::LoaderKind;
 use launcher_core::modpacks::{self, ImportResult};
 use launcher_core::mods::content::{
     BackupInfo, ContentEntry, ContentRef, UpdateInfo, UpgradePlan, safe_file_name,
