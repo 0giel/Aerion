@@ -3,13 +3,14 @@
 //! when it exits. The last summaries are kept for the performance page.
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System};
 use tokio_util::sync::CancellationToken;
 
+use crate::loaders::LoaderKind;
 use crate::paths::Paths;
 use crate::util::fs::{read_json, write_json};
 
@@ -63,8 +64,43 @@ pub struct SessionSummary {
     pub hints: Vec<Hint>,
 }
 
+/// A game that just ended normally.
+pub struct Finished {
+    pub instance_id: String,
+    pub instance_name: String,
+    pub game_dir: PathBuf,
+    pub loader: LoaderKind,
+    pub play_secs: u64,
+    /// `-Xmx`, 0 when unknown (Horizon).
+    pub max_memory_mb: u32,
+}
+
+/// Summarize a finished game's samples and keep the summary (sessions too short to tell
+/// anything are skipped).
+pub async fn keep_summary(paths: &Paths, game: Finished, samples: &[Sample]) -> crate::Result<()> {
+    let dir = game.game_dir.clone();
+    let (has_sodium, render_distance) =
+        tokio::task::spawn_blocking(move || (has_sodium(&dir), render_distance(&dir)))
+            .await
+            .map_err(|e| crate::Error::Invalid(e.to_string()))?;
+    let ctx = Context {
+        instance_id: game.instance_id,
+        instance_name: game.instance_name,
+        play_secs: game.play_secs,
+        max_memory_mb: game.max_memory_mb,
+        system_total_mb: crate::util::sys::total_memory_mb() as u32,
+        has_sodium,
+        render_distance,
+        modded: game.loader.is_modded(),
+    };
+    match summarize(&ctx, samples, crate::util::now_secs()) {
+        Some(summary) => add(paths, summary).await,
+        None => Ok(()),
+    }
+}
+
 /// What the summary needs to know besides the samples.
-pub struct Context {
+struct Context {
     pub instance_id: String,
     pub instance_name: String,
     pub play_secs: u64,
@@ -97,7 +133,7 @@ fn avg(v: &[u32]) -> Option<u32> {
     (!v.is_empty()).then(|| (v.iter().map(|&x| u64::from(x)).sum::<u64>() / v.len() as u64) as u32)
 }
 
-pub fn summarize(ctx: &Context, samples: &[Sample], ended: i64) -> Option<SessionSummary> {
+fn summarize(ctx: &Context, samples: &[Sample], ended: i64) -> Option<SessionSummary> {
     if samples.is_empty() || ctx.play_secs < MIN_SECS {
         return None;
     }
@@ -249,7 +285,7 @@ pub async fn record(
 }
 
 /// Sodium or one of its forks in the instance's mods folder.
-pub fn has_sodium(game_dir: &Path) -> bool {
+fn has_sodium(game_dir: &Path) -> bool {
     std::fs::read_dir(game_dir.join("mods"))
         .into_iter()
         .flatten()
@@ -258,11 +294,8 @@ pub fn has_sodium(game_dir: &Path) -> bool {
         .any(|n| n.ends_with(".jar") && (n.contains("sodium") || n.contains("embeddium")))
 }
 
-pub fn render_distance(game_dir: &Path) -> Option<u32> {
-    std::fs::read_to_string(game_dir.join("options.txt"))
-        .ok()?
-        .lines()
-        .find_map(|l| l.strip_prefix("renderDistance:"))?
+fn render_distance(game_dir: &Path) -> Option<u32> {
+    crate::instances::options::value(game_dir, "renderDistance")?
         .trim()
         .parse()
         .ok()
@@ -277,7 +310,7 @@ pub async fn load(paths: &Paths) -> Vec<SessionSummary> {
         .unwrap_or_default()
 }
 
-pub async fn add(paths: &Paths, s: SessionSummary) -> crate::Result<()> {
+async fn add(paths: &Paths, s: SessionSummary) -> crate::Result<()> {
     let mut all = load(paths).await;
     all.insert(0, s);
     all.truncate(KEEP);

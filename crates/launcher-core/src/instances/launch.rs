@@ -262,11 +262,10 @@ pub async fn plan(
     {
         game_args.push("--fullscreen".into());
     }
-    let modded = inst.loader != LoaderKind::Vanilla;
     let max_memory_mb = inst
         .max_memory_mb
         .or(settings.max_memory_mb)
-        .unwrap_or_else(|| default_max_memory_mb(total_memory_mb(), modded));
+        .unwrap_or_else(|| default_max_memory_mb(total_memory_mb(), inst.loader.is_modded()));
     let game_dir = instances.game_dir(&inst.id)?;
     prepare_game_dir(&prepared, &game_dir).await?;
     let mut share_back = false;

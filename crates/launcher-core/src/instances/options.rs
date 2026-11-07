@@ -138,6 +138,13 @@ fn merge(from: &str, into: &str, bindings: bool, version: bool) -> String {
     text
 }
 
+/// One value of the game's own `options.txt`.
+pub fn value(game_dir: &Path, key: &str) -> Option<String> {
+    lines(&read(&game_dir.join("options.txt")))
+        .into_iter()
+        .find_map(|(k, v)| (k == key).then_some(v))
+}
+
 fn read(path: &Path) -> String {
     std::fs::read_to_string(path).unwrap_or_default()
 }

@@ -247,10 +247,7 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
             pid_rx,
             sampling.clone(),
         ));
-        let (name, modded) = (
-            plan.instance.name.clone(),
-            plan.instance.loader != launcher_core::loaders::LoaderKind::Vanilla,
-        );
+        let (name, loader) = (plan.instance.name.clone(), plan.instance.loader);
         let result = run(plan.spec, tx, stop, move |pid| {
             let _ = pid_tx.send(pid);
             if let Some(s) = pid_registry.lock().get_mut(&pid_id) {
@@ -326,28 +323,16 @@ pub fn start(app: AppHandle, plan: LaunchPlan, after_launch: AfterLaunch) {
         let started_secs = launcher_core::util::unix_secs(started);
         let _ = state.instances.record_play(&id, started_secs, secs).await;
         if crash.is_none() {
-            let dir = game_dir.clone();
-            let (has_sodium, render_distance) = tokio::task::spawn_blocking(move || {
-                (
-                    launcher_core::sessions::has_sodium(&dir),
-                    launcher_core::sessions::render_distance(&dir),
-                )
-            })
-            .await
-            .unwrap_or((true, None));
-            let ctx = launcher_core::sessions::Context {
+            let finished = launcher_core::sessions::Finished {
                 instance_id: id.clone(),
                 instance_name: name,
+                game_dir: game_dir.clone(),
+                loader,
                 play_secs: secs,
                 max_memory_mb: max_mb,
-                system_total_mb: launcher_core::util::sys::total_memory_mb() as u32,
-                has_sodium,
-                render_distance,
-                modded,
             };
-            let now = launcher_core::util::now_secs();
-            if let Some(summary) = launcher_core::sessions::summarize(&ctx, &samples, now)
-                && let Err(e) = launcher_core::sessions::add(&state.paths, summary).await
+            if let Err(e) =
+                launcher_core::sessions::keep_summary(&state.paths, finished, &samples).await
             {
                 tracing::warn!(error = %e, "couldn't keep the game's performance summary");
             }

@@ -38,6 +38,11 @@ impl LoaderKind {
         }
     }
 
+    /// Anything but the plain game (which gets less memory by default).
+    pub fn is_modded(self) -> bool {
+        self != LoaderKind::Vanilla
+    }
+
     pub fn parse(s: &str) -> Option<Self> {
         match s.to_ascii_lowercase().as_str() {
             "vanilla" | "minecraft" => Some(Self::Vanilla),
