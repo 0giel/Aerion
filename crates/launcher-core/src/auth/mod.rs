@@ -11,6 +11,17 @@ use crate::util::jwt;
 use crate::util::now_secs;
 
 /// Base URLs (overridable for tests).
+/// Who the game runs as.
+#[derive(Debug, Clone)]
+pub struct AuthInfo {
+    pub name: String,
+    pub uuid: String,
+    pub access_token: String,
+    pub xuid: String,
+    /// `msa` for Microsoft accounts, `legacy` for offline ones (removed from 26.x arguments).
+    pub user_type: String,
+}
+
 #[derive(Debug, Clone)]
 pub struct Endpoints {
     /// `https://login.microsoftonline.com/consumers/oauth2/v2.0`

@@ -3,18 +3,19 @@
 use std::path::PathBuf;
 
 use crate::Engine;
+use crate::auth::AuthInfo;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::{Prepared, prepare};
 use crate::game::launch::{
-    AuthInfo, CommandSpec, LaunchOptions, build_command, default_env, prepare_game_dir,
+    CommandSpec, LaunchOptions, build_command, default_env, prepare_game_dir,
 };
+use crate::horizon;
 use crate::instances::{Instance, InstanceManager};
-use crate::loaders::LoaderKind;
 use crate::java::detect::{detect_system, inspect};
 use crate::java::flags::{default_max_memory_mb, probe_args};
 use crate::java::{JavaInstall, JavaSource};
-use crate::horizon;
 use crate::loaders;
+use crate::loaders::LoaderKind;
 use crate::mojang::version::JavaVersionReq;
 use crate::net::download::VerifyMode;
 use crate::progress::TaskCtx;

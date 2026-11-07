@@ -8,6 +8,7 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
+use crate::auth::AuthInfo;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::Prepared;
 use crate::game::logs::{LogLevel, LogLine, LogParser};
@@ -16,16 +17,6 @@ use crate::mojang::args::{Vars, game_args, jvm_args, supports_quick_play};
 use crate::mojang::rules::Environment;
 use crate::paths::{Paths, display_path};
 use crate::util::sys::Os;
-
-#[derive(Debug, Clone)]
-pub struct AuthInfo {
-    pub name: String,
-    pub uuid: String,
-    pub access_token: String,
-    pub xuid: String,
-    /// `msa` for Microsoft accounts, `legacy` for offline ones (removed from 26.x arguments).
-    pub user_type: String,
-}
 
 #[derive(Debug, Clone)]
 pub struct LaunchOptions {

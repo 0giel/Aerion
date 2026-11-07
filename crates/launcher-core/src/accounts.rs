@@ -7,9 +7,8 @@ use md5::Digest;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
-use crate::auth::{Endpoints, McSession, minecraft_session, msa};
+use crate::auth::{AuthInfo, Endpoints, McSession, Profile, minecraft_session, msa};
 use crate::error::{AuthError, Error, Result};
-use crate::game::launch::AuthInfo;
 use crate::net::client::Http;
 use crate::util::fs::{read_json, write_json};
 use crate::util::now_secs;
@@ -40,6 +39,17 @@ pub struct Account {
     pub owns_game: bool,
     /// The refresh token was rejected; the user must sign in again.
     pub needs_relogin: bool,
+}
+
+impl Account {
+    /// Take the name, skin and cape Minecraft services report for this player.
+    fn mirror(&mut self, profile: &Profile) {
+        let skin = profile.active_skin();
+        self.username = profile.name.clone();
+        self.skin_url = skin.map(|s| s.url.clone());
+        self.skin_variant = skin.map(|s| s.variant.to_ascii_lowercase());
+        self.cape_url = profile.active_cape().map(|c| c.url.clone());
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -218,6 +228,16 @@ pub fn dev_offline_override() -> bool {
     cfg!(debug_assertions) && std::env::var("LAUNCHER_DEV_OFFLINE").is_ok_and(|v| v == "1")
 }
 
+/// Keyring entry of a Microsoft account's refresh token.
+fn refresh_key(id: &str) -> String {
+    format!("msa-refresh:{id}")
+}
+
+/// Keyring entry of a Microsoft account's cached Minecraft token ([`CachedToken`]).
+fn token_key(id: &str) -> String {
+    format!("mc-token:{id}")
+}
+
 pub struct Accounts {
     file: PathBuf,
     secrets: Arc<dyn SecretStore>,
@@ -241,6 +261,10 @@ impl Accounts {
             .unwrap_or_default()
     }
 
+    pub async fn get(&self, id: &str) -> Option<Account> {
+        self.state().await.accounts.into_iter().find(|a| a.id == id)
+    }
+
     async fn save(&self, s: &AccountsState) -> Result<()> {
         write_json(&self.file, s).await
     }
@@ -260,17 +284,16 @@ impl Accounts {
         let _g = self.lock.lock().await;
         let id = session.profile.id.replace('-', "");
         self.secrets
-            .set(&format!("msa-refresh:{id}"), &session.ms_refresh_token)?;
+            .set(&refresh_key(&id), &session.ms_refresh_token)?;
         self.store_token(&id, session)?;
         let mut s = self.state().await;
-        let skin = session.profile.active_skin();
-        let account = Account {
+        let mut account = Account {
             id: id.clone(),
             kind: AccountKind::Microsoft,
-            username: session.profile.name.clone(),
-            skin_url: skin.map(|s| s.url.clone()),
-            skin_variant: skin.map(|s| s.variant.to_ascii_lowercase()),
-            cape_url: session.profile.active_cape().map(|c| c.url.clone()),
+            username: String::new(),
+            skin_url: None,
+            skin_variant: None,
+            cape_url: None,
             added_at: s
                 .accounts
                 .iter()
@@ -280,6 +303,7 @@ impl Accounts {
             owns_game: true,
             needs_relogin: false,
         };
+        account.mirror(&session.profile);
         s.accounts.retain(|a| a.id != id);
         s.accounts.push(account.clone());
         s.selected = Some(id);
@@ -294,7 +318,7 @@ impl Accounts {
             xuid: session.xuid.clone(),
         };
         let json = serde_json::to_string(&cached).map_err(|e| Error::parse("token", e))?;
-        self.secrets.set(&format!("mc-token:{id}"), &json)
+        self.secrets.set(&token_key(id), &json)
     }
 
     pub async fn add_offline(&self, name: &str) -> Result<Account> {
@@ -334,8 +358,8 @@ impl Accounts {
             s.selected = s.accounts.first().map(|a| a.id.clone());
         }
         self.save(&s).await?;
-        let _ = self.secrets.delete(&format!("msa-refresh:{id}"));
-        let _ = self.secrets.delete(&format!("mc-token:{id}"));
+        let _ = self.secrets.delete(&refresh_key(id));
+        let _ = self.secrets.delete(&token_key(id));
         Ok(())
     }
 
@@ -365,14 +389,7 @@ impl Accounts {
         ep: &Endpoints,
         client_id: Option<&str>,
     ) -> Result<String> {
-        let kind = self
-            .state()
-            .await
-            .accounts
-            .iter()
-            .find(|a| a.id == id)
-            .map(|a| a.kind)
-            .ok_or(AuthError::NoAccount)?;
+        let kind = self.get(id).await.ok_or(AuthError::NoAccount)?.kind;
         if kind != AccountKind::Microsoft {
             return Err(Error::SkinNeedsMicrosoft);
         }
@@ -384,16 +401,9 @@ impl Accounts {
     }
 
     /// Mirror a profile returned by Minecraft services (after a skin or cape change).
-    pub async fn apply_profile(&self, id: &str, profile: &crate::auth::Profile) -> Result<()> {
+    pub async fn apply_profile(&self, id: &str, profile: &Profile) -> Result<()> {
         let _g = self.lock.lock().await;
-        let skin = profile.active_skin().cloned();
-        let cape = profile.active_cape().map(|c| c.url.clone());
-        self.update(id, |a| {
-            a.skin_url = skin.as_ref().map(|s| s.url.clone());
-            a.skin_variant = skin.as_ref().map(|s| s.variant.to_ascii_lowercase());
-            a.cape_url = cape;
-        })
-        .await
+        self.update(id, |a| a.mirror(profile)).await
     }
 
     /// Credentials for launching: cached token if still valid for 10 minutes, otherwise a
@@ -407,11 +417,8 @@ impl Accounts {
     ) -> Result<(Account, AuthInfo)> {
         let _g = self.lock.lock().await;
         let account = self
-            .state()
+            .get(id)
             .await
-            .accounts
-            .into_iter()
-            .find(|a| a.id == id)
             .ok_or_else(|| Error::Invalid(format!("unknown account {id}")))?;
         match account.kind {
             AccountKind::Offline => {
@@ -432,7 +439,7 @@ impl Accounts {
             AccountKind::Microsoft => {
                 let cached: Option<CachedToken> = self
                     .secrets
-                    .get(&format!("mc-token:{id}"))?
+                    .get(&token_key(id))?
                     .and_then(|j| serde_json::from_str(&j).ok());
                 let (token, xuid) = match cached {
                     Some(c) if c.expires_at - now_secs() > 600 => (c.token, c.xuid),
@@ -440,7 +447,7 @@ impl Accounts {
                         let client_id = client_id.ok_or(AuthError::ClientIdMissing)?;
                         let refresh = self
                             .secrets
-                            .get(&format!("msa-refresh:{id}"))?
+                            .get(&refresh_key(id))?
                             .ok_or(AuthError::SessionExpired)?;
                         let ms = match msa::refresh(http, ep, client_id, &refresh).await {
                             Ok(t) => t,
@@ -450,16 +457,11 @@ impl Accounts {
                             }
                             Err(e) => return Err(e),
                         };
-                        self.secrets
-                            .set(&format!("msa-refresh:{id}"), &ms.refresh_token)?;
+                        self.secrets.set(&refresh_key(id), &ms.refresh_token)?;
                         let session = minecraft_session(http, ep, &ms).await?;
                         self.store_token(id, &session)?;
-                        let skin = session.profile.active_skin().cloned();
-                        let name = session.profile.name.clone();
                         self.update(id, |a| {
-                            a.username = name;
-                            a.skin_url = skin.as_ref().map(|s| s.url.clone());
-                            a.skin_variant = skin.as_ref().map(|s| s.variant.to_ascii_lowercase());
+                            a.mirror(&session.profile);
                             a.needs_relogin = false;
                         })
                         .await?;
@@ -467,13 +469,7 @@ impl Accounts {
                     }
                 };
                 self.update(id, |a| a.last_used = Some(now_secs())).await?;
-                let account = self
-                    .state()
-                    .await
-                    .accounts
-                    .into_iter()
-                    .find(|a| a.id == id)
-                    .unwrap_or(account);
+                let account = self.get(id).await.unwrap_or(account);
                 let info = AuthInfo {
                     name: account.username.clone(),
                     uuid: account.id.clone(),

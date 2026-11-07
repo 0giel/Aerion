@@ -386,8 +386,8 @@ pub async fn import_external(
                 ctx.stage("stage.copyFiles", None);
                 let (src, dst) = (ext.game_dir.clone(), state.instances.game_dir(&inst.id)?);
                 tokio::task::spawn_blocking(move || importers::copy_game_dir(&src, &dst))
-                .await
-                .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+                    .await
+                    .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
             }
             // Recognise mods (for updates); a failure only costs that.
             ctx.stage("stage.identify", None);

@@ -10,9 +10,7 @@ use crate::error::{Error, Result};
 use crate::instances::launch::ensure_version;
 use crate::instances::{InstanceManager, ModpackInfo, NewInstance};
 use crate::loaders::LoaderKind;
-use crate::modpacks::{
-    ExportOptions, ImportResult, ManualDownload, excluded_from_export,
-};
+use crate::modpacks::{ExportOptions, ImportResult, ManualDownload, excluded_from_export};
 use crate::mods::content::{entry_path, safe_file_name};
 use crate::mods::curseforge::CurseForge;
 use crate::mods::model::{ModProvider, Provider};

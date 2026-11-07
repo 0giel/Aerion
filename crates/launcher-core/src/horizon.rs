@@ -19,9 +19,10 @@ use serde::Deserialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 
 use crate::Engine;
+use crate::auth::AuthInfo;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::{Prepared, prepare};
-use crate::game::launch::{AuthInfo, CommandSpec};
+use crate::game::launch::CommandSpec;
 use crate::java::JavaInstall;
 use crate::net::download::{DownloadItem, VerifyMode};
 use crate::progress::TaskCtx;
@@ -542,11 +543,7 @@ fn session_json(auth: &AuthInfo) -> String {
 }
 
 /// Horizon starts only for a signed-in Microsoft account (which Aerion has checked owns the game).
-pub fn command(
-    build: &Build,
-    auth: &AuthInfo,
-    o: &StartOptions,
-) -> Result<CommandSpec> {
+pub fn command(build: &Build, auth: &AuthInfo, o: &StartOptions) -> Result<CommandSpec> {
     if auth.user_type != "msa" || auth.access_token.is_empty() {
         return Err(err("needsOwner", ""));
     }

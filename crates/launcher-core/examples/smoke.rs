@@ -9,8 +9,9 @@
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
+use launcher_core::auth::AuthInfo;
 use launcher_core::game::install::prepare;
-use launcher_core::game::launch::{AuthInfo, LaunchOptions, build_command, prepare_game_dir, run};
+use launcher_core::game::launch::{LaunchOptions, build_command, prepare_game_dir, run};
 use launcher_core::java::flags::JvmPreset;
 use launcher_core::net::download::VerifyMode;
 use launcher_core::paths::Paths;

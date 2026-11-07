@@ -30,11 +30,8 @@ async fn token(state: &AppState, account_id: &str) -> launcher_core::Result<Stri
 async fn account(state: &AppState, id: &str) -> launcher_core::Result<Account> {
     state
         .accounts
-        .state()
+        .get(id)
         .await
-        .accounts
-        .into_iter()
-        .find(|a| a.id == id)
         .ok_or_else(|| AuthError::NoAccount.into())
 }
 
