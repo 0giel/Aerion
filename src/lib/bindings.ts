@@ -1750,6 +1750,7 @@ export type Replacement_Serialize = {
 	known: boolean,
 };
 
+/**  A game window size. */
 export type Resolution = {
 	width: number,
 	height: number,
