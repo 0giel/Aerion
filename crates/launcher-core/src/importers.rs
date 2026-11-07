@@ -72,7 +72,7 @@ pub async fn import(
         .create_with(spec, |inst| async move {
             if !link {
                 ctx.stage("stage.copyFiles", None);
-                let (src, dst) = (ext.game_dir, instances.game_dir(&inst.id)?);
+                let (src, dst) = (ext.game_dir, instances.game_dir_of(&inst)?);
                 crate::util::blocking(move || copy_game_dir(&src, &dst)).await?;
             }
             ctx.stage("stage.identify", None);

@@ -136,7 +136,7 @@ async fn install_files(
     inst: &Instance,
     ctx: &TaskCtx,
 ) -> Result<()> {
-    let game_dir = instances.game_dir(&inst.id)?;
+    let game_dir = instances.game_dir_of(inst)?;
     let mut items = Vec::new();
     for f in &index.files {
         if f.env.as_ref().is_some_and(|e| e.client == "unsupported") {

@@ -252,9 +252,19 @@ impl InstanceManager {
         let custom = std::fs::read(dir.join(FILE))
             .ok()
             .and_then(|b| serde_json::from_slice::<Instance>(&b).ok())
-            .and_then(|i| i.game_dir)
-            .filter(|p| p.is_absolute());
-        Ok(custom.unwrap_or_else(|| dir.join("minecraft")))
+            .and_then(|i| i.game_dir);
+        Self::game_dir_in(dir, custom)
+    }
+
+    /// [`Self::game_dir`] of an instance just read.
+    pub fn game_dir_of(&self, inst: &Instance) -> Result<PathBuf> {
+        Self::game_dir_in(self.dir(&inst.id)?, inst.game_dir.clone())
+    }
+
+    fn game_dir_in(dir: PathBuf, custom: Option<PathBuf>) -> Result<PathBuf> {
+        Ok(custom
+            .filter(|p| p.is_absolute())
+            .unwrap_or_else(|| dir.join("minecraft")))
     }
 
     /// Mods, packs and their manifest for an instance.

@@ -30,7 +30,7 @@ pub async fn create_instance(state: State<'_, AppState>, spec: NewInstance) -> C
     // New instances start with the saved game settings, if any (a failure only costs that).
     let (tpl, game) = (
         state.paths.options_template_dir(),
-        state.instances.game_dir(&inst.id)?,
+        state.instances.game_dir_of(&inst)?,
     );
     let _ = tokio::task::spawn_blocking(move || {
         launcher_core::instances::options::apply_template(&tpl, &game)

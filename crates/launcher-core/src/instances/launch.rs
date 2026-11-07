@@ -273,7 +273,7 @@ pub async fn plan(
         .max_memory_mb
         .or(settings.max_memory_mb)
         .unwrap_or_else(|| default_max_memory_mb(total_memory_mb(), inst.loader.is_modded()));
-    let game_dir = instances.game_dir(&inst.id)?;
+    let game_dir = instances.game_dir_of(&inst)?;
     prepare_game_dir(&prepared, &game_dir).await?;
     let mut share_back = false;
     if inst.shared_options {
@@ -342,7 +342,7 @@ async fn plan_horizon(
 ) -> Result<LaunchPlan> {
     let build = horizon_build(engine, instances, &inst, ctx).await?;
     let (resources, prepared, java) = horizon::ensure_resources(engine, &build, ctx).await?;
-    let game_dir = instances.game_dir(&inst.id)?;
+    let game_dir = instances.game_dir_of(&inst)?;
     tokio::fs::create_dir_all(&game_dir).await.at(&game_dir)?;
     let (world, server) = quick_play(&inst, &game_dir, join_server);
     let spec = horizon::command(

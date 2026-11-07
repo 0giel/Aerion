@@ -138,7 +138,7 @@ pub async fn save_screenshot_copy(
 pub async fn all_screenshots(state: State<'_, AppState>) -> CmdResult<Vec<GalleryShot>> {
     let mut dirs = Vec::new();
     for i in state.instances.list().await {
-        if let Ok(dir) = state.instances.game_dir(&i.id) {
+        if let Ok(dir) = state.instances.game_dir_of(&i) {
             dirs.push((i.id, i.name, dir));
         }
     }

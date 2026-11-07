@@ -92,7 +92,7 @@ pub async fn compute(manager: &InstanceManager) -> Stats {
     let mut mods: HashMap<String, ModStat> = HashMap::new();
     let (mut worlds, mut shots, mut mod_count) = (0, 0, 0);
     for inst in &instances {
-        if let Ok(game) = manager.game_dir(&inst.id) {
+        if let Ok(game) = manager.game_dir_of(inst) {
             let g = game.clone();
             let (w, s) = tokio::task::spawn_blocking(move || {
                 (
