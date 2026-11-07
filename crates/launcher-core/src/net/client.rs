@@ -162,3 +162,11 @@ pub fn urlencode(s: &str) -> String {
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn query_values_are_percent_encoded() {
+        assert_eq!(super::urlencode(r#"["a b"]"#), "%5B%22a%20b%22%5D");
+    }
+}

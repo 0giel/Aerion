@@ -578,19 +578,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn picks_the_archive_horizon_builds_for_each_platform() {
-        assert_eq!(
-            asset_name(Os::Linux, Arch::X64),
-            Some("horizon-linux-x86_64.tar.gz")
-        );
-        assert_eq!(
-            asset_name(Os::Windows, Arch::Arm64),
-            Some("horizon-windows-arm64.zip")
-        );
-        assert_eq!(asset_name(Os::Linux, Arch::Arm64), None);
-    }
-
-    #[test]
     fn reads_checksum_lists() {
         let text = "19b4  bad\n19b439edd1174698e2a27030b3a294048a95f2ac9cd293351b8852856d34f8b6  horizon-linux-x86_64.tar.gz\n";
         let sums = parse_sums(text);

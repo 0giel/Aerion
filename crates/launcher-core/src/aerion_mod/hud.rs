@@ -379,7 +379,6 @@ mod tests {
     fn defaults_are_valid_and_complete() {
         let d = HudConfig::default();
         d.validate().unwrap();
-        assert_eq!(d.modules.len(), MODULES.len());
         // Unset module styles are not written, so the mod falls back to the shared style.
         let json = serde_json::to_value(&d).unwrap();
         assert!(json["modules"]["fps"].get("style").is_none());

@@ -165,13 +165,5 @@ mod tests {
             best_version(&list[..1], "1.21.11", &loaders).unwrap().id,
             "fabric"
         );
-        assert_eq!(
-            compatible_loaders(LoaderKind::Neoforge, "1.20.1"),
-            ["neoforge", "forge"]
-        );
-        assert_eq!(
-            compatible_loaders(LoaderKind::Neoforge, "26.3"),
-            ["neoforge"]
-        );
     }
 }

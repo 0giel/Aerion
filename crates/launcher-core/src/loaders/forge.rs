@@ -209,6 +209,15 @@ struct Processor {
     sides: Option<Vec<String>>,
 }
 
+impl Processor {
+    /// Processors without sides run everywhere; server-only ones are skipped.
+    fn runs_on_client(&self) -> bool {
+        self.sides
+            .as_ref()
+            .is_none_or(|s| s.iter().any(|x| x == "client"))
+    }
+}
+
 /// Install a Forge or NeoForge version and return the launchable version id.
 pub async fn install(
     engine: &Engine,
@@ -475,11 +484,7 @@ async fn run_processors(
     let client: Vec<&Processor> = profile
         .processors
         .iter()
-        .filter(|p| {
-            p.sides
-                .as_ref()
-                .is_none_or(|s| s.iter().any(|x| x == "client"))
-        })
+        .filter(|p| p.runs_on_client())
         .collect();
     let total = client.len();
     for (i, p) in client.into_iter().enumerate() {
@@ -656,16 +661,8 @@ mod tests {
             &std::fs::read_to_string(format!("{dir}/neoforge-26.3-install_profile.json")).unwrap(),
         )
         .unwrap();
-        let client: Vec<_> = neo
-            .processors
-            .iter()
-            .filter(|p| {
-                p.sides
-                    .as_ref()
-                    .is_none_or(|s| s.contains(&"client".to_owned()))
-            })
-            .collect();
-        assert_eq!(client.len(), 1, "26.x needs a single client processor");
+        let client = neo.processors.iter().filter(|p| p.runs_on_client());
+        assert_eq!(client.count(), 1, "26.x needs a single client processor");
         let forge: InstallProfile = serde_json::from_str(
             &std::fs::read_to_string(format!("{dir}/forge-1.20.1-install_profile.json")).unwrap(),
         )
@@ -674,10 +671,7 @@ mod tests {
             forge
                 .processors
                 .iter()
-                .filter(|p| p
-                    .sides
-                    .as_ref()
-                    .is_none_or(|s| s.contains(&"client".to_owned())))
+                .filter(|p| p.runs_on_client())
                 .count(),
             6
         );

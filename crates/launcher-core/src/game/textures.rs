@@ -131,8 +131,14 @@ mod tests {
         };
         assert_eq!(find_jar(dir.path()), None);
         jar("1.21.11", PROBE);
-        std::thread::sleep(std::time::Duration::from_millis(20));
         jar("1.8.9", "assets/minecraft/textures/items/diamond.png");
+        let newer = std::time::SystemTime::now() + std::time::Duration::from_secs(60);
+        std::fs::File::options()
+            .write(true)
+            .open(dir.path().join("1.8.9/1.8.9.jar"))
+            .unwrap()
+            .set_modified(newer)
+            .unwrap();
         assert_eq!(
             find_jar(dir.path()),
             Some(dir.path().join("1.21.11/1.21.11.jar")),

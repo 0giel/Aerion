@@ -713,9 +713,4 @@ mod tests {
         let file = versions[0].primary_file().unwrap();
         assert!(file.sha1.is_some() && file.sha512.is_some() && file.url.is_some());
     }
-
-    #[test]
-    fn encoding() {
-        assert_eq!(urlencode(r#"["a b"]"#), "%5B%22a%20b%22%5D");
-    }
 }

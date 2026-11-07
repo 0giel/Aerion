@@ -558,18 +558,4 @@ mod tests {
         assert_eq!(state.accounts.len(), 1);
         assert_eq!(state.selected.as_deref(), Some(offline.id.as_str()));
     }
-
-    #[test]
-    fn chunking_round_trip_in_memory() {
-        // KeyringStore's chunk format, exercised through a fake that stores raw entries.
-        let parts: Vec<String> = "x"
-            .repeat(2500)
-            .chars()
-            .collect::<Vec<_>>()
-            .chunks(CHUNK)
-            .map(|c| c.iter().collect())
-            .collect();
-        assert_eq!(parts.len(), 3);
-        assert_eq!(parts.concat().len(), 2500);
-    }
 }

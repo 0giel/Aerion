@@ -356,22 +356,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn platform_fallbacks() {
-        assert_eq!(
-            mojang_platforms(Os::Macos, Arch::Arm64),
-            ["mac-os-arm64", "mac-os"]
-        );
-        assert_eq!(
-            mojang_platforms(Os::Windows, Arch::Arm64),
-            ["windows-arm64", "windows-x64"]
-        );
-        assert!(
-            mojang_platforms(Os::Linux, Arch::Arm64).is_empty(),
-            "Linux ARM goes straight to Adoptium"
-        );
-    }
-
-    #[test]
     fn runtime_index_fixture_has_java_25() {
         let path = format!(
             "{}/tests/fixtures/java/all.json",

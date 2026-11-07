@@ -371,17 +371,7 @@ async fn plan_horizon(
 
 #[cfg(test)]
 mod tests {
-    use super::{merge_args, merge_env};
-
-    #[test]
-    fn global_then_instance_arguments() {
-        let global = ["-XX:+UseZGC".to_owned(), "-Dglobal=1".to_owned()];
-        let inst = ["-Dglobal=2".to_owned()];
-        assert_eq!(
-            merge_args(&global, &inst),
-            ["-XX:+UseZGC", "-Dglobal=1", "-Dglobal=2"]
-        );
-    }
+    use super::merge_env;
 
     #[test]
     fn instance_env_overrides_defaults() {

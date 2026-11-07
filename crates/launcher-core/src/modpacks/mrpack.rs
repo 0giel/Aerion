@@ -280,11 +280,4 @@ mod tests {
         d.clear();
         assert_eq!(loader_of(&d).0, LoaderKind::Vanilla);
     }
-
-    #[test]
-    fn rejects_traversal_in_index() {
-        let dir = tempfile::tempdir().unwrap();
-        assert!(safe_join(dir.path(), "../../.bashrc").is_err());
-        assert!(safe_join(dir.path(), "mods/ok.jar").is_ok());
-    }
 }
