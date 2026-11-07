@@ -11,7 +11,6 @@ use tokio_util::sync::CancellationToken;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::Prepared;
 use crate::game::logs::{LogLevel, LogLine, LogParser};
-use crate::game::process::hide_console;
 use crate::java::flags::{JvmPreset, memory_args, preset_args};
 use crate::mojang::args::{Vars, game_args, jvm_args, supports_quick_play};
 use crate::mojang::rules::Environment;
@@ -239,10 +238,7 @@ pub async fn run(
     on_spawn: impl FnOnce(Option<u32>) + Send,
 ) -> Result<GameExit> {
     tokio::fs::create_dir_all(&spec.cwd).await.at(&spec.cwd)?;
-    let mut cmd = tokio::process::Command::new(&spec.program);
-    for var in crate::util::sys::private_env() {
-        cmd.env_remove(var);
-    }
+    let mut cmd = crate::util::process::command(&spec.program);
     cmd.args(&spec.args)
         .current_dir(&spec.cwd)
         .envs(spec.env.iter().cloned())
@@ -253,7 +249,6 @@ pub async fn run(
         })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    hide_console(&mut cmd);
     let started = SystemTime::now();
     let t0 = Instant::now();
     let mut child = cmd.spawn().map_err(|e| Error::JavaInvalid {

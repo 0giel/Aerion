@@ -22,7 +22,6 @@ use crate::Engine;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::{Prepared, prepare};
 use crate::game::launch::{AuthInfo, CommandSpec, default_env};
-use crate::game::process::hide_console;
 use crate::java::JavaInstall;
 use crate::net::download::{DownloadItem, VerifyMode};
 use crate::progress::TaskCtx;
@@ -438,17 +437,13 @@ pub async fn ensure_resources(
         "--progress".into(),
         "json".into(),
     ];
-    let mut cmd = tokio::process::Command::new(build.preparer());
+    let mut cmd = crate::util::process::command(build.preparer());
     cmd.args(&args)
         .current_dir(&build.dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
-    for var in crate::util::sys::private_env() {
-        cmd.env_remove(var);
-    }
-    hide_console(&mut cmd);
     let mut child = cmd.spawn().map_err(|e| err("prepare", e.to_string()))?;
     let stderr = child.stderr.take();
     let stderr_task = tokio::spawn(async move {
@@ -514,14 +509,13 @@ async fn check(build: &Build, out: &Path) -> bool {
     if !out.is_dir() {
         return false;
     }
-    let mut cmd = tokio::process::Command::new(build.preparer());
+    let mut cmd = crate::util::process::command(build.preparer());
     cmd.args(["--check", "--output"])
         .arg(out)
         .current_dir(&build.dir)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
-    hide_console(&mut cmd);
     matches!(cmd.status().await, Ok(s) if s.success())
 }
 

@@ -5,6 +5,7 @@ pub mod image;
 pub mod jwt;
 pub mod names;
 pub mod nbt;
+pub mod process;
 pub mod sys;
 
 /// Current UNIX time in seconds.

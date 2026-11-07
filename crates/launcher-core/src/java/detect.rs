@@ -44,20 +44,12 @@ pub async fn inspect(java: &Path, source: JavaSource) -> Result<JavaInstall> {
 
 /// Run `java -XshowSettings:properties -version` and parse the properties it prints.
 pub async fn probe(java: &Path, source: JavaSource) -> Result<JavaInstall> {
-    let mut cmd = tokio::process::Command::new(java);
-    cmd.args(["-XshowSettings:properties", "-version"])
-        .kill_on_drop(true);
-    crate::game::process::hide_console(&mut cmd);
-    let out = tokio::time::timeout(Duration::from_secs(10), cmd.output())
-        .await
-        .map_err(|_| Error::JavaInvalid {
-            path: java.to_path_buf(),
-            reason: "timed out".into(),
-        })?
-        .map_err(|e| Error::JavaInvalid {
-            path: java.to_path_buf(),
-            reason: e.to_string(),
-        })?;
+    let out = super::run(
+        java,
+        &["-XshowSettings:properties".as_ref(), "-version".as_ref()],
+        Duration::from_secs(10),
+    )
+    .await?;
     let text = String::from_utf8_lossy(&out.stderr);
     let prop = |key: &str| {
         text.lines().find_map(|l| {

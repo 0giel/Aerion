@@ -237,12 +237,11 @@ fn parse_nvidia_smi(out: &str) -> Option<GpuInfo> {
 }
 
 async fn nvidia() -> Option<GpuInfo> {
-    let mut cmd = tokio::process::Command::new("nvidia-smi");
+    let mut cmd = crate::util::process::command("nvidia-smi");
     cmd.args([
         "--query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu",
         "--format=csv,noheader,nounits",
     ]);
-    crate::game::process::hide_console(&mut cmd);
     let out = tokio::time::timeout(Duration::from_secs(2), cmd.output())
         .await
         .ok()?

@@ -31,7 +31,7 @@ pub fn prepare_env() -> Vec<String> {
         }
         notes.extend(fontconfig::apply());
     }
-    launcher_core::util::sys::set_private_env(private);
+    launcher_core::util::process::set_private_env(private);
     notes
 }
 

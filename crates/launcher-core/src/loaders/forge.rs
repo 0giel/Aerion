@@ -14,7 +14,6 @@ use serde::Deserialize;
 use crate::Engine;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::prepare;
-use crate::game::process::hide_console;
 use crate::instances::LoaderKind;
 use crate::loaders::{LoaderVersion, is_prerelease, safe_version_id};
 use crate::mojang::library::{MavenCoord, resolve_libraries};
@@ -524,14 +523,13 @@ async fn run_processors(
             cp.push(display_path(&libs.join(coord.local_path())));
         }
         let args: Vec<String> = p.args.iter().map(|a| substitute(a, &data, &libs)).collect();
-        let mut cmd = tokio::process::Command::new(java);
+        let mut cmd = crate::util::process::command(java);
         cmd.arg("-cp")
             .arg(cp.join(sep))
             .arg(&main)
             .args(&args)
             .current_dir(&tmp)
             .kill_on_drop(true);
-        hide_console(&mut cmd);
         tracing::info!(processor = %p.jar, "running loader processor");
         let out = tokio::select! {
             _ = ctx.cancel.cancelled() => return Err(Error::Cancelled),

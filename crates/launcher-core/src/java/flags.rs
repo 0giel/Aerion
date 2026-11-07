@@ -150,19 +150,12 @@ pub async fn probe_args(java: &Path, args: &[String]) -> Result<()> {
     {
         return cached.map_or(Ok(()), |e| Err(Error::InvalidJvmArgs(e)));
     }
-    let mut cmd = tokio::process::Command::new(java);
-    cmd.args(args).arg("-version").kill_on_drop(true);
-    crate::game::process::hide_console(&mut cmd);
-    let out = tokio::time::timeout(Duration::from_secs(15), cmd.output())
-        .await
-        .map_err(|_| Error::JavaInvalid {
-            path: java.to_path_buf(),
-            reason: "timed out".into(),
-        })?
-        .map_err(|e| Error::JavaInvalid {
-            path: java.to_path_buf(),
-            reason: e.to_string(),
-        })?;
+    let argv: Vec<&std::ffi::OsStr> = args
+        .iter()
+        .map(|a| a.as_ref())
+        .chain(["-version".as_ref()])
+        .collect();
+    let out = super::run(java, &argv, Duration::from_secs(15)).await?;
     let verdict = if out.status.success() {
         None
     } else {
