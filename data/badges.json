@@ -1,9 +1,8 @@
 {
   "players": [
-    {
-      "name": "0giel",
-      "uuid": "b2813a7bbba34b00ae624a6bdad17a91",
-      "badge": "creator"
-    }
+    { "name": "0giel", "uuid": "b2813a7bbba34b00ae624a6bdad17a91", "badge": "creator" },
+    { "name": "JuniSeven", "uuid": "c26fe31ae9784241a8bcf49c238a3995", "badge": "creator" },
+    { "name": "Rixonek", "uuid": "a7adb934d6e6439bbe6315146c60f833", "badge": "tester" },
+    { "name": "SaandwichEnjoyer", "uuid": "2627d1c2da314bafbfbcfae90b5a3243", "badge": "tester" }
   ]
 }
