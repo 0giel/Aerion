@@ -9,7 +9,6 @@ use crate::net::client::{Http, NetConfig};
 use crate::net::download::Downloader;
 use crate::paths::Paths;
 use crate::settings::Settings;
-use crate::util::sys::{current_arch, current_os};
 
 /// Cheap to rebuild when network settings change.
 #[derive(Clone)]
@@ -49,8 +48,8 @@ impl Engine {
             paths: &self.paths,
             cache: &self.cache,
             downloader: &self.downloader,
-            os: current_os(),
-            arch: current_arch(),
+            os: self.env.os,
+            arch: self.env.arch,
         }
     }
 }

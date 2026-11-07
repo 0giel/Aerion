@@ -6,24 +6,27 @@ use std::path::{Path, PathBuf};
 use crate::error::{Error, IoContext, Result};
 use crate::util::fs::safe_join;
 
-/// Extract entries of a zip archive whose names pass `filter`, returning written files.
-///
-/// Every entry name goes through [`safe_join`], so `../` and absolute paths are rejected.
-pub fn extract_zip(
+/// Extract the entries `target` maps to a relative path (others are skipped), returning the
+/// written files. Every path goes through [`safe_join`], so `../` and absolute paths are rejected.
+fn extract(
     archive: &Path,
     dest: &Path,
-    filter: &dyn Fn(&str) -> bool,
+    target: &dyn Fn(&str) -> Option<String>,
 ) -> Result<Vec<PathBuf>> {
     let file = std::fs::File::open(archive).at(archive)?;
     let mut zip = zip::ZipArchive::new(std::io::BufReader::new(file))?;
     let mut written = Vec::new();
     for i in 0..zip.len() {
         let mut entry = zip.by_index(i)?;
-        let name = entry.name()?.into_owned();
-        if !filter(&name) {
+        let name = entry.name()?.replace('\\', "/");
+        let Some(rel) = target(&name) else {
+            continue;
+        };
+        let rel = rel.trim_end_matches('/');
+        if rel.is_empty() {
             continue;
         }
-        let out = safe_join(dest, name.trim_end_matches('/'))?;
+        let out = safe_join(dest, rel)?;
         if entry.is_dir() {
             std::fs::create_dir_all(&out).at(&out)?;
             continue;
@@ -46,34 +49,21 @@ pub fn extract_zip(
     Ok(written)
 }
 
+/// Extract the entries whose names pass `filter`, returning the written files.
+pub fn extract_zip(
+    archive: &Path,
+    dest: &Path,
+    filter: &dyn Fn(&str) -> bool,
+) -> Result<Vec<PathBuf>> {
+    extract(archive, dest, &|name| filter(name).then(|| name.to_owned()))
+}
+
 /// Extract everything under `prefix` (e.g. `overrides/`) into `dest`, stripping the prefix.
 pub fn extract_zip_prefix(archive: &Path, prefix: &str, dest: &Path) -> Result<usize> {
-    let file = std::fs::File::open(archive).at(archive)?;
-    let mut zip = zip::ZipArchive::new(std::io::BufReader::new(file))?;
-    let mut count = 0;
-    for i in 0..zip.len() {
-        let mut entry = zip.by_index(i)?;
-        let name = entry.name()?.replace('\\', "/");
-        let Some(rel) = name.strip_prefix(prefix) else {
-            continue;
-        };
-        let rel = rel.trim_end_matches('/');
-        if rel.is_empty() {
-            continue;
-        }
-        let out = safe_join(dest, rel)?;
-        if entry.is_dir() {
-            std::fs::create_dir_all(&out).at(&out)?;
-            continue;
-        }
-        if let Some(parent) = out.parent() {
-            std::fs::create_dir_all(parent).at(parent)?;
-        }
-        let mut f = std::fs::File::create(&out).at(&out)?;
-        std::io::copy(&mut entry, &mut f).at(&out)?;
-        count += 1;
-    }
-    Ok(count)
+    let written = extract(archive, dest, &|name| {
+        name.strip_prefix(prefix).map(str::to_owned)
+    })?;
+    Ok(written.len())
 }
 
 /// Read a single entry into memory (`None` if absent).
