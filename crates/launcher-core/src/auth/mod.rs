@@ -145,7 +145,7 @@ async fn xbox_live(http: &Http, ep: &Endpoints, ms_access_token: &str) -> Result
     Ok((r.token, uhs))
 }
 
-pub async fn xsts(http: &Http, ep: &Endpoints, xbl_token: &str) -> Result<(String, String)> {
+async fn xsts(http: &Http, ep: &Endpoints, xbl_token: &str) -> Result<(String, String)> {
     let url = format!("{}/xsts/authorize", ep.xsts);
     let body = json!({
         "Properties": { "SandboxId": "RETAIL", "UserTokens": [xbl_token] },
@@ -297,7 +297,6 @@ mod tests {
         MsaTokens {
             access_token: "ms-access".into(),
             refresh_token: "ms-refresh".into(),
-            expires_at: 0,
         }
     }
 

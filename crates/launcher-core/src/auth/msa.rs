@@ -21,7 +21,6 @@ const SCOPE: &str = "XboxLive.signin offline_access";
 pub struct MsaTokens {
     pub access_token: String,
     pub refresh_token: String,
-    pub expires_at: i64,
 }
 
 #[derive(Deserialize)]
@@ -29,8 +28,6 @@ struct TokenResponse {
     access_token: String,
     #[serde(default)]
     refresh_token: Option<String>,
-    #[serde(default)]
-    expires_in: Option<i64>,
 }
 
 #[derive(Deserialize)]
@@ -85,7 +82,6 @@ async fn token_request(http: &Http, ep: &Endpoints, form: &[(&str, &str)]) -> Re
     Ok(MsaTokens {
         access_token: t.access_token,
         refresh_token: t.refresh_token.unwrap_or_default(),
-        expires_at: now_secs() + t.expires_in.unwrap_or(3600),
     })
 }
 

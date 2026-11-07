@@ -422,7 +422,6 @@ impl Accounts {
             .ok_or_else(|| Error::Invalid(format!("unknown account {id}")))?;
         match account.kind {
             AccountKind::Offline => {
-                drop(_g);
                 if !self.offline_allowed().await {
                     return Err(AuthError::OfflineNotAllowed.into());
                 }
