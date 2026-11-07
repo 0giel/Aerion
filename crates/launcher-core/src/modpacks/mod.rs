@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
 use crate::instances::Instance;
-use crate::loaders::LoaderKind;
 use crate::util::archive::read_zip_entry;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

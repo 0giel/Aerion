@@ -80,10 +80,9 @@ fn suspected_mods(report: &str) -> Vec<String> {
 
 /// Loaders and libraries that show up as "mods" but are never the one to switch off.
 fn is_builtin(id: &str) -> bool {
-    matches!(
-        id,
-        "minecraft" | "java" | "fabricloader" | "fabric" | "neoforge" | "forge" | "quilt_loader"
-    ) || id.starts_with("fabric-")
+    crate::mods::meta::provided_by_loader(id)
+        || id == "fabric"
+        || id.starts_with("fabric-")
         || id.starts_with("quilted_fabric")
 }
 
@@ -266,8 +265,7 @@ fn culprit(
         .map(|c| c[1].to_owned())
         .find(|f| mods.join(f).is_file())
     {
-        let name = crate::mods::meta::read(&mods.join(&file))
-            .and_then(|m| m.name.or_else(|| m.ids.first().cloned()));
+        let name = crate::mods::meta::read(&mods.join(&file)).map(|m| m.display_name());
         return (Some(file), name);
     }
     let ids = params

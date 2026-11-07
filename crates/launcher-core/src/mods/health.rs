@@ -45,23 +45,6 @@ pub struct ModIssue {
     pub required: Option<String>,
 }
 
-/// Provided by the loader or the game, never by a jar in `mods/`.
-fn builtin(id: &str) -> bool {
-    matches!(
-        id,
-        "minecraft"
-            | "java"
-            | "fabricloader"
-            | "fabric-loader"
-            | "quilt_loader"
-            | "forge"
-            | "neoforge"
-            | "javafml"
-            | "lowcodefml"
-            | "mixinextras"
-    )
-}
-
 fn loads(loader: LoaderKind, family: Family) -> bool {
     match loader {
         LoaderKind::Fabric => family == Family::Fabric,
@@ -72,10 +55,6 @@ fn loads(loader: LoaderKind, family: Family) -> bool {
         // No Java at all: neither Java mods nor a mod loader.
         LoaderKind::Vanilla | LoaderKind::Horizon => false,
     }
-}
-
-fn display(m: &ModMeta) -> String {
-    m.name.clone().unwrap_or_else(|| m.ids[0].clone())
 }
 
 /// Check the enabled jars of `mods_dir` for an instance of `game_version` with `loader`.
@@ -99,7 +78,7 @@ pub fn check(mods_dir: &Path, game_version: &str, loader: LoaderKind) -> Vec<Mod
     let issue = |kind, file: &str, m: &ModMeta| ModIssue {
         kind,
         file: file.to_owned(),
-        name: display(m),
+        name: m.display_name(),
         other: None,
         other_file: None,
         required: None,
@@ -134,7 +113,7 @@ pub fn check(mods_dir: &Path, game_version: &str, loader: LoaderKind) -> Vec<Mod
         for &o in &owners[1..] {
             let (file, m) = &usable[o];
             issues.push(ModIssue {
-                other: Some(display(fm)),
+                other: Some(fm.display_name()),
                 other_file: Some(first.clone()),
                 ..issue(IssueKind::Duplicate, file, m)
             });
@@ -156,7 +135,7 @@ pub fn check(mods_dir: &Path, game_version: &str, loader: LoaderKind) -> Vec<Mod
                 }
                 continue;
             }
-            if builtin(&dep.id) {
+            if meta::provided_by_loader(&dep.id) {
                 continue;
             }
             match provided.get(&dep.id) {
@@ -177,7 +156,7 @@ pub fn check(mods_dir: &Path, game_version: &str, loader: LoaderKind) -> Vec<Mod
                         && ranges::satisfies(&v, &dep.versions) == Some(false)
                     {
                         issues.push(ModIssue {
-                            other: Some(display(other)),
+                            other: Some(other.display_name()),
                             other_file: Some(other_file.clone()),
                             required: req_text(dep),
                             ..issue(IssueKind::DependencyVersion, file, m)
@@ -205,7 +184,7 @@ pub fn check(mods_dir: &Path, game_version: &str, loader: LoaderKind) -> Vec<Mod
             };
             if matches == Some(true) {
                 issues.push(ModIssue {
-                    other: Some(display(other)),
+                    other: Some(other.display_name()),
                     other_file: Some(other_file.clone()),
                     required: req_text(br),
                     ..issue(IssueKind::Conflict, file, m)

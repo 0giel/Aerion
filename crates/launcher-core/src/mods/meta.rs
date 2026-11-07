@@ -41,6 +41,13 @@ pub struct ModMeta {
     pub nested_ids: Vec<String>,
 }
 
+impl ModMeta {
+    /// The name players know it by: its display name, else its first id.
+    pub fn display_name(&self) -> String {
+        self.name.clone().unwrap_or_else(|| self.ids[0].clone())
+    }
+}
+
 static TOML_MOD_ID: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(?m)^\s*modId\s*=\s*"([^"]+)""#).expect("static regex"));
 static TOML_NAME: LazyLock<Regex> =
@@ -328,8 +335,25 @@ pub fn find(mods_dir: &Path, id: &str) -> Option<(String, String)> {
                 let base = base.trim_end_matches(".json");
                 base == format!("{id}.mixins") || base == format!("{id}.mixin")
             });
-        hit.then(|| (file, meta.name.unwrap_or_else(|| meta.ids[0].clone())))
+        hit.then(|| (file, meta.display_name()))
     })
+}
+
+/// Provided by the loader or the game, never by a jar in `mods/`.
+pub fn provided_by_loader(id: &str) -> bool {
+    matches!(
+        id,
+        "minecraft"
+            | "java"
+            | "fabricloader"
+            | "fabric-loader"
+            | "quilt_loader"
+            | "forge"
+            | "neoforge"
+            | "javafml"
+            | "lowcodefml"
+            | "mixinextras"
+    )
 }
 
 #[cfg(test)]
