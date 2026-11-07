@@ -392,6 +392,7 @@ impl ContentManager {
     }
 
     /// Fill in provenance of files added by hand: Modrinth by SHA-1, CurseForge by fingerprint.
+    /// A platform that can't be reached only leaves files unrecognised; errors are disk errors.
     pub async fn identify(
         &self,
         modrinth: &Modrinth,
@@ -743,7 +744,6 @@ impl ContentManager {
     }
 }
 
-/// Paths of every content file, for exports.
 #[cfg(test)]
 mod tests {
     use super::*;

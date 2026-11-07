@@ -521,7 +521,7 @@ pub async fn add_content_files(
         n += 1;
     }
     let cf = state.curseforge().await;
-    let _ = content.identify(&state.modrinth().await, Some(&cf)).await;
+    content.identify(&state.modrinth().await, Some(&cf)).await?;
     Ok(n)
 }
 

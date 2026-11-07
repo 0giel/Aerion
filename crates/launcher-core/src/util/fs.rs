@@ -65,10 +65,6 @@ pub async fn write_json<T: Serialize>(path: impl AsRef<Path>, value: &T) -> Resu
     atomic_write(path, bytes).await
 }
 
-/// Join an untrusted relative path (from an archive, a modpack index, …) onto `base`.
-///
-/// Rejects absolute paths, drive prefixes, `..`, and empty paths, which is the zip-slip guard
-/// used everywhere archives or remote file lists are written to disk.
 /// A file name from an API or the UI: one plain segment, never hidden or a parent reference.
 pub fn safe_file_name(name: &str) -> Result<()> {
     if name.is_empty()
@@ -81,6 +77,10 @@ pub fn safe_file_name(name: &str) -> Result<()> {
     Ok(())
 }
 
+/// Join an untrusted relative path (from an archive, a modpack index, …) onto `base`.
+///
+/// Rejects absolute paths, drive prefixes, `..`, and empty paths, which is the zip-slip guard
+/// used everywhere archives or remote file lists are written to disk.
 pub fn safe_join(base: &Path, relative: &str) -> Result<PathBuf> {
     let normalized = relative.replace('\\', "/");
     if normalized.is_empty() || normalized.starts_with('/') || normalized.contains('\0') {

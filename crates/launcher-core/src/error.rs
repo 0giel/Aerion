@@ -359,7 +359,6 @@ impl AuthError {
     }
 }
 
-/// Attach a path to `std::io::Result`s.
 /// What went wrong with Horizon; each has its own explanation in the UI.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HorizonFailure {
@@ -401,6 +400,7 @@ impl HorizonFailure {
     }
 }
 
+/// Attach a path to `std::io::Result`s.
 pub trait IoContext<T> {
     fn at(self, path: impl AsRef<Path>) -> Result<T>;
 }
