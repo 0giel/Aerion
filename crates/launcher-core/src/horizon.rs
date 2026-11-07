@@ -21,7 +21,7 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use crate::Engine;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::{Prepared, prepare};
-use crate::game::launch::{AuthInfo, CommandSpec, default_env};
+use crate::game::launch::{AuthInfo, CommandSpec};
 use crate::java::JavaInstall;
 use crate::net::download::{DownloadItem, VerifyMode};
 use crate::progress::TaskCtx;
@@ -375,22 +375,16 @@ struct PrepareLine {
 pub async fn ensure_resources(
     engine: &Engine,
     build: &Build,
-    java: Option<JavaInstall>,
     ctx: &TaskCtx,
 ) -> Result<(PathBuf, Prepared, JavaInstall)> {
     let out = prepared_dir(engine, &build.id);
     // The game files are needed for the launch record either way; they are cached after once.
     let prepared = prepare(&engine.meta, &engine.env, MINECRAFT, VerifyMode::Fast, ctx).await?;
-    let java = match java {
-        Some(j) => j,
-        None => {
-            ctx.stage("stage.java", None);
-            engine
-                .runtimes()
-                .ensure(&prepared.java.component, prepared.java.major_version, ctx)
-                .await?
-        }
-    };
+    ctx.stage("stage.java", None);
+    let java = engine
+        .runtimes()
+        .ensure(&prepared.java.component, prepared.java.major_version, ctx)
+        .await?;
     if check(build, &out).await {
         return Ok((out, prepared, java));
     }
@@ -529,6 +523,7 @@ pub struct StartOptions {
     pub fullscreen: bool,
     pub world: Option<String>,
     pub server: Option<String>,
+    /// The whole environment to add, defaults included.
     pub env: Vec<(String, String)>,
 }
 
@@ -548,7 +543,6 @@ fn session_json(auth: &AuthInfo) -> String {
 
 /// Horizon starts only for a signed-in Microsoft account (which Aerion has checked owns the game).
 pub fn command(
-    engine: &Engine,
     build: &Build,
     auth: &AuthInfo,
     o: &StartOptions,
@@ -581,13 +575,11 @@ pub fn command(
         args.extend(["--quickPlaySingleplayer".into(), world.clone()]);
     }
     args.push("--session-stdin".into());
-    let mut env = default_env(engine.env.os);
-    env.extend(o.env.iter().cloned());
     Ok(CommandSpec {
         program: build.client(),
         args,
         cwd: o.game_dir.clone(),
-        env,
+        env: o.env.clone(),
         secrets: vec![auth.access_token.clone()],
         stdin: Some(session_json(auth)),
     })
@@ -642,8 +634,6 @@ d099e4688d8d8b740f60dd7a0e31fdbd7911be140861c8cad003631b2e0a4c7f  horizon-window
     #[test]
     fn session_goes_to_stdin_never_argv() {
         let dir = tempfile::tempdir().unwrap();
-        let paths = crate::paths::Paths::at(dir.path().to_path_buf(), false);
-        let engine = Engine::new(paths, &crate::settings::Settings::default()).unwrap();
         let build = Build {
             id: "nightly-2026-11-05-19b439ed".into(),
             dir: dir.path().join("b"),
@@ -664,7 +654,7 @@ d099e4688d8d8b740f60dd7a0e31fdbd7911be140861c8cad003631b2e0a4c7f  horizon-window
             server: Some("example.org".into()),
             env: vec![],
         };
-        let spec = command(&engine, &build, &auth, &o).unwrap();
+        let spec = command(&build, &auth, &o).unwrap();
         assert!(spec.args.iter().all(|a| !a.contains("secret-token")));
         assert!(spec.args.contains(&"--session-stdin".to_owned()));
         assert!(spec.args.contains(&"--quickPlayMultiplayer".to_owned()));
@@ -677,7 +667,7 @@ d099e4688d8d8b740f60dd7a0e31fdbd7911be140861c8cad003631b2e0a4c7f  horizon-window
             user_type: "legacy".into(),
             ..auth
         };
-        assert!(command(&engine, &build, &offline, &o).is_err());
+        assert!(command(&build, &offline, &o).is_err());
     }
 
     #[test]

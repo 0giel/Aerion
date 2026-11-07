@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use crate::Engine;
-use crate::error::{Error, Result};
+use crate::error::{Error, IoContext, Result};
 use crate::game::install::{Prepared, prepare};
 use crate::game::launch::{
     AuthInfo, CommandSpec, LaunchOptions, build_command, default_env, prepare_game_dir,
@@ -13,6 +13,7 @@ use crate::loaders::LoaderKind;
 use crate::java::detect::{detect_system, inspect};
 use crate::java::flags::{default_max_memory_mb, probe_args};
 use crate::java::{JavaInstall, JavaSource};
+use crate::horizon;
 use crate::loaders;
 use crate::mojang::version::JavaVersionReq;
 use crate::net::download::VerifyMode;
@@ -80,6 +81,109 @@ fn merge_env(
 /// Global arguments first, then the instance's own (later JVM flags win).
 fn merge_args(global: &[String], instance: &[String]) -> Vec<String> {
     global.iter().chain(instance).cloned().collect()
+}
+
+/// The game's environment: launcher defaults, then the global variables, then the instance's.
+fn launch_env(engine: &Engine, settings: &Settings, inst: &Instance) -> Vec<(String, String)> {
+    merge_env(
+        merge_env(default_env(engine.env.os), &settings.env_vars),
+        &inst.env_vars,
+    )
+}
+
+fn resolution(settings: &Settings, inst: &Instance) -> Option<(u32, u32)> {
+    inst.resolution
+        .or(settings.resolution)
+        .map(|r| (r.width, r.height))
+}
+
+/// Where Quick Play goes, as (world, server): a server asked for right now wins; otherwise the
+/// instance's world, then its server.
+fn quick_play(
+    inst: &Instance,
+    game_dir: &std::path::Path,
+    join_server: Option<String>,
+) -> (Option<String>, Option<String>) {
+    let world = if join_server.is_some() {
+        None
+    } else {
+        super::worlds::resolve_join_world(game_dir, inst.join_world.as_deref())
+    };
+    let server = join_server
+        .or_else(|| world.is_none().then(|| inst.join_server.clone()).flatten())
+        .filter(|s| !s.trim().is_empty());
+    (world, server)
+}
+
+/// The Horizon build an instance starts with: its own, or the newest (installed and remembered
+/// on first use).
+pub async fn horizon_build(
+    engine: &Engine,
+    instances: &InstanceManager,
+    inst: &Instance,
+    ctx: &TaskCtx,
+) -> Result<horizon::Build> {
+    if let Some(b) = inst
+        .loader_version
+        .as_deref()
+        .and_then(|id| horizon::installed_build(engine, id))
+    {
+        return Ok(b);
+    }
+    let b = horizon::install_latest(engine, ctx).await?;
+    let id = b.id.clone();
+    instances
+        .modify(&inst.id, move |i| i.loader_version = Some(id))
+        .await?;
+    Ok(b)
+}
+
+/// Switch a Horizon instance to the newest build, prepared, and return its id. Builds no
+/// instance uses go; this instance's previous one stays as a fallback until the next update, as
+/// Horizon advises.
+pub async fn update_horizon_build(
+    engine: &Engine,
+    instances: &InstanceManager,
+    instance_id: &str,
+    ctx: &TaskCtx,
+) -> Result<String> {
+    let previous = instances.get(instance_id).await?.loader_version;
+    let build = horizon::install_latest(engine, ctx).await?;
+    horizon::ensure_resources(engine, &build, ctx).await?;
+    let id = build.id.clone();
+    instances
+        .modify(instance_id, move |i| i.loader_version = Some(id))
+        .await?;
+    let mut keep: Vec<String> = instances
+        .list()
+        .await
+        .into_iter()
+        .filter(|i| i.loader == LoaderKind::Horizon)
+        .filter_map(|i| i.loader_version)
+        .collect();
+    keep.extend(previous);
+    horizon::prune(engine, &keep).await;
+    Ok(build.id)
+}
+
+/// "Verify files": everything a start needs, with every file fully re-hashed and repaired.
+pub async fn verify(
+    engine: &Engine,
+    settings: &Settings,
+    instances: &InstanceManager,
+    instance_id: &str,
+    ctx: &TaskCtx,
+) -> Result<()> {
+    let inst = instances.get(instance_id).await?;
+    if inst.loader == LoaderKind::Horizon {
+        let build = horizon_build(engine, instances, &inst, ctx).await?;
+        horizon::ensure_resources(engine, &build, ctx).await?;
+        return Ok(());
+    }
+    let version = ensure_version(engine, instances, &inst, ctx).await?;
+    let prepared = prepare(&engine.meta, &engine.env, &version, VerifyMode::Full, ctx).await?;
+    pick_java(engine, settings, &inst, &prepared.java, ctx).await?;
+    Ok(())
 }
 
 pub async fn pick_java(
@@ -185,11 +289,7 @@ pub async fn plan(
             Err(e) => tracing::warn!(error = %e, "couldn't apply the shared game settings"),
         }
     }
-    let quick_world = if join_server.is_some() {
-        None
-    } else {
-        super::worlds::resolve_join_world(&game_dir, inst.join_world.as_deref())
-    };
+    let (quick_play_world, quick_play_server) = quick_play(&inst, &game_dir, join_server);
     let opts = LaunchOptions {
         game_dir: game_dir.clone(),
         java: java.path.clone(),
@@ -199,24 +299,10 @@ pub async fn plan(
         preset: inst.jvm_preset.unwrap_or(settings.jvm_preset),
         extra_jvm_args: jvm_args,
         extra_game_args: game_args,
-        resolution: inst
-            .resolution
-            .or(settings.resolution)
-            .map(|r| (r.width, r.height)),
-        // A server asked for right now wins; otherwise the instance's world, then its server.
-        quick_play_world: quick_world.clone(),
-        quick_play_server: join_server
-            .or_else(|| {
-                quick_world
-                    .is_none()
-                    .then(|| inst.join_server.clone())
-                    .flatten()
-            })
-            .filter(|s| !s.trim().is_empty()),
-        env: merge_env(
-            merge_env(default_env(engine.env.os), &settings.env_vars),
-            &inst.env_vars,
-        ),
+        resolution: resolution(settings, &inst),
+        quick_play_world,
+        quick_play_server,
+        env: launch_env(engine, settings, &inst),
         wrapper: inst
             .wrapper
             .as_deref()
@@ -249,53 +335,22 @@ async fn plan_horizon(
     join_server: Option<String>,
     ctx: &TaskCtx,
 ) -> Result<LaunchPlan> {
-    use crate::horizon;
-    let build = match inst
-        .loader_version
-        .as_deref()
-        .and_then(|id| horizon::installed_build(engine, id))
-    {
-        Some(b) => b,
-        None => {
-            let b = horizon::install_latest(engine, ctx).await?;
-            let id = b.id.clone();
-            instances
-                .modify(&inst.id, move |i| i.loader_version = Some(id))
-                .await?;
-            b
-        }
-    };
-    let (resources, prepared, java) = horizon::ensure_resources(engine, &build, None, ctx).await?;
+    let build = horizon_build(engine, instances, &inst, ctx).await?;
+    let (resources, prepared, java) = horizon::ensure_resources(engine, &build, ctx).await?;
     let game_dir = instances.game_dir(&inst.id)?;
-    tokio::fs::create_dir_all(&game_dir)
-        .await
-        .map_err(|e| Error::Invalid(format!("{}: {e}", game_dir.display())))?;
-    let world = if join_server.is_some() {
-        None
-    } else {
-        super::worlds::resolve_join_world(&game_dir, inst.join_world.as_deref())
-    };
-    let server = join_server
-        .or_else(|| world.is_none().then(|| inst.join_server.clone()).flatten())
-        .filter(|s| !s.trim().is_empty());
+    tokio::fs::create_dir_all(&game_dir).await.at(&game_dir)?;
+    let (world, server) = quick_play(&inst, &game_dir, join_server);
     let spec = horizon::command(
-        engine,
         &build,
         &auth,
         &horizon::StartOptions {
             game_dir: game_dir.clone(),
             resources,
-            resolution: inst
-                .resolution
-                .or(settings.resolution)
-                .map(|r| (r.width, r.height)),
+            resolution: resolution(settings, &inst),
             fullscreen: inst.fullscreen.unwrap_or(settings.fullscreen),
             world,
             server,
-            env: merge_env(
-                settings.env_vars.clone().into_iter().collect(),
-                &inst.env_vars,
-            ),
+            env: launch_env(engine, settings, &inst),
         },
     )?;
     Ok(LaunchPlan {

@@ -1,14 +1,11 @@
 use std::path::PathBuf;
 
 use launcher_core::ErrorInfo;
-use launcher_core::game::install::prepare;
-use launcher_core::horizon;
 use launcher_core::importers::{self, ExternalInstance};
-use launcher_core::instances::launch::{ensure_version, pick_java};
+use launcher_core::instances::launch::{update_horizon_build, verify};
 use launcher_core::instances::{Instance, NewInstance, shortcut};
 use launcher_core::loaders::LoaderKind;
 use launcher_core::modpacks::{self, ExportOptions, ImportResult, PackFormat};
-use launcher_core::net::download::VerifyMode;
 use tauri::{AppHandle, Manager, State};
 
 use super::CmdResult;
@@ -162,43 +159,10 @@ pub async fn verify_instance(
             let state = app2.state::<AppState>();
             let engine = state.engine().await;
             let settings = state.settings.read().await.clone();
-            let inst = state.instances.get(&id).await?;
-            if inst.loader == LoaderKind::Horizon {
-                // Its own files: the build, and the resources prepared from the 26.3 files.
-                let build = match inst
-                    .loader_version
-                    .as_deref()
-                    .and_then(|b| horizon::installed_build(&engine, b))
-                {
-                    Some(b) => b,
-                    None => install_horizon(&state, &engine, &id, &ctx).await?,
-                };
-                horizon::ensure_resources(&engine, &build, None, &ctx).await?;
-                return Ok(None);
-            }
-            let version = ensure_version(&engine, &state.instances, &inst, &ctx).await?;
-            let prepared =
-                prepare(&engine.meta, &engine.env, &version, VerifyMode::Full, &ctx).await?;
-            pick_java(&engine, &settings, &inst, &prepared.java, &ctx).await?;
+            verify(&engine, &settings, &state.instances, &id, &ctx).await?;
             Ok(None)
         },
     ))
-}
-
-/// Install the newest Horizon build for an instance and switch the instance to it.
-async fn install_horizon(
-    state: &AppState,
-    engine: &launcher_core::Engine,
-    id: &str,
-    ctx: &launcher_core::progress::TaskCtx,
-) -> launcher_core::error::Result<horizon::Build> {
-    let build = horizon::install_latest(engine, ctx).await?;
-    let b = build.id.clone();
-    state
-        .instances
-        .modify(id, move |i| i.loader_version = Some(b))
-        .await?;
-    Ok(build)
 }
 
 /// Download the newest Horizon build (if there is a newer one) and prepare it, so the next start
@@ -225,27 +189,8 @@ pub async fn update_horizon(
             use tauri::Manager;
             let state = app2.state::<AppState>();
             let engine = state.engine().await;
-            let previous = state.instances.get(&id).await?.loader_version;
-            let build = horizon::install_latest(&engine, &ctx).await?;
-            horizon::ensure_resources(&engine, &build, None, &ctx).await?;
-            let b = build.id.clone();
-            state
-                .instances
-                .modify(&id, move |i| i.loader_version = Some(b))
-                .await?;
-            // Builds no instance uses go; this instance's previous one stays as a fallback
-            // until the next update, as Horizon advises.
-            let mut keep: Vec<String> = state
-                .instances
-                .list()
-                .await
-                .into_iter()
-                .filter(|i| i.loader == LoaderKind::Horizon)
-                .filter_map(|i| i.loader_version)
-                .collect();
-            keep.extend(previous);
-            horizon::prune(&engine, &keep).await;
-            Ok(Some(build.id))
+            let build = update_horizon_build(&engine, &state.instances, &id, &ctx).await?;
+            Ok(Some(build))
         },
     ))
 }
