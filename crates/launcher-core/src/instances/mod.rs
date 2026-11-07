@@ -271,6 +271,14 @@ impl InstanceManager {
         ))
     }
 
+    /// Back up every world (before a change that could break them, like mod updates).
+    pub async fn backup_worlds(&self, id: &str) -> Result<Vec<worlds::WorldBackup>> {
+        let (dir, game) = (self.dir(id)?, self.game_dir(id)?);
+        tokio::task::spawn_blocking(move || worlds::backup_all(&dir, &game))
+            .await
+            .map_err(|e| Error::Invalid(e.to_string()))?
+    }
+
     pub async fn list(&self) -> Vec<Instance> {
         let mut out = Vec::new();
         let Ok(mut rd) = tokio::fs::read_dir(&self.root).await else {

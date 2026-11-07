@@ -432,15 +432,7 @@ pub async fn apply_content_updates(
             let content = state.instances.content(&instance_id)?;
             // Worlds first: a broken mod update can corrupt them on the next launch.
             ctx.stage("stage.worldBackup", None);
-            let (dir, game) = (
-                state.instances.dir(&instance_id)?,
-                state.instances.game_dir(&instance_id)?,
-            );
-            tokio::task::spawn_blocking(move || {
-                launcher_core::instances::worlds::backup_all(&dir, &game)
-            })
-            .await
-            .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+            state.instances.backup_worlds(&instance_id).await?;
             let engine = state.engine().await;
             let backup: BackupInfo = content
                 .apply_updates(&engine.downloader, &updates, &ctx)
@@ -788,12 +780,7 @@ pub async fn upgrade_instance(
                 None => instance_id,
             };
             ctx.stage("stage.worldBackup", None);
-            let (dir, game) = (state.instances.dir(&id)?, state.instances.game_dir(&id)?);
-            tokio::task::spawn_blocking(move || {
-                launcher_core::instances::worlds::backup_all(&dir, &game)
-            })
-            .await
-            .map_err(|e| launcher_core::Error::Invalid(e.to_string()))??;
+            state.instances.backup_worlds(&id).await?;
             let content = state.instances.content(&id)?;
             if !updates.is_empty() {
                 let engine = state.engine().await;
