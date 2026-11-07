@@ -30,7 +30,13 @@ public final class EditorScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-		page.render(new Gfx(g), mouseX, mouseY);
+		try {
+			page.render(new Gfx(g), mouseX, mouseY);
+		} catch (RuntimeException e) {
+			// A fault in a page must not take the game down: say so once and close the screen.
+			pl.aerion.mod.AerionClient.warnOnce("menu", e);
+			net.minecraft.client.Minecraft.getInstance().execute(this::onClose);
+		}
 	}
 
 	@Override

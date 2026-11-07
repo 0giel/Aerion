@@ -56,8 +56,8 @@ jobs:
           for jar in release/mod-v$VERSION/*.jar; do pnpm -s tauri signer sign "$jar" > /dev/null; done
       - name: Manifest
         run: |
-          launcher=$(node -p "require('./src-tauri/tauri.conf.json').version")
-          python3 -I scripts/mod-manifest.py "release/mod-v$VERSION" "$VERSION" "$launcher" "Aerion mod $VERSION"
+          launcher=$(sed -n 's/^min_launcher=//p' mod/gradle.properties | tr -d '[:space:]')
+          python3 -I scripts/mod-manifest.py "release/mod-v$VERSION" "$VERSION" "${launcher:-1.0.0}" "Aerion mod $VERSION"
       - name: Publish the release (not "latest")
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -21,7 +21,8 @@ source scripts/env.sh
 VERSION=$(sed -n 's/^version=//p' mod/gradle.properties | tr -d '[:space:]')
 LAUNCHER=$(node -p "require('./src-tauri/tauri.conf.json').version")
 NOTES=${1:-"Aerion mod $VERSION"}
-MIN_LAUNCHER=${2:-$LAUNCHER}
+MIN_LAUNCHER=${2:-$(sed -n 's/^min_launcher=//p' mod/gradle.properties | tr -d '[:space:]')}
+MIN_LAUNCHER=${MIN_LAUNCHER:-$LAUNCHER}
 
 scripts/build-mod.sh
 OUT="release/mod-v$VERSION"

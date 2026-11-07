@@ -673,7 +673,9 @@ public final class AerionMenu implements Page {
 		int tx = mx;
 		tx = subTab(tx, my + 19, "aerion.tab.general", Sub.GENERAL);
 		if (!isFeature(id)) tx = subTab(tx, my + 19, "aerion.tab.look", Sub.LOOK);
-		subTab(tx, my + 19, "aerion.tab.key", Sub.KEY);
+		// Some items (badges) have no key of their own.
+		if (Features.key(id) != null) subTab(tx, my + 19, "aerion.tab.key", Sub.KEY);
+		else if (sub == Sub.KEY) sub = Sub.GENERAL;
 		Draw.hline(g, mx, my + 33, w + 18, line);
 		return 42;
 	}
@@ -969,7 +971,7 @@ public final class AerionMenu implements Page {
 		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(f, o);
 		if (detail.equals("hurtCam")) note(Lang.tr("aerion.hint.hurtCam"));
 		if (detail.equals("chat")) chatOpacity();
-		if (y == cardTop) note(Lang.tr("aerion.hint.noOptions"));
+		if (y == cardTop) note(Lang.tr(Features.key(detail) != null ? "aerion.hint.noOptions" : "aerion.hint.noOptionsSwitch"));
 		endCard();
 		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) note(Lang.tr("aerion.panel.serverWarning"));
 	}
@@ -1424,6 +1426,10 @@ public final class AerionMenu implements Page {
 	// --- keys --------------------------------------------------------------------------------
 	private void keyTab() {
 		KeyMapping k = Features.key(detail);
+		if (k == null) {
+			note(Lang.tr("aerion.key.none.feature"));
+			return;
+		}
 		String label = switch (detail) {
 			case "zoom", "freelook", "perspective", "fovKey" -> Lang.tr("aerion.key.hold");
 			case "toggleSprint" -> Lang.tr("aerion.key.sprint");
@@ -1559,6 +1565,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private void keyRow(String label, KeyMapping k) {
+		if (k == null) return;
 		beginRow("key:" + label);
 		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
 		int bx = controlX(), w = x + colW - bx - 15;
