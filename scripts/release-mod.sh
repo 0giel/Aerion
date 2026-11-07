@@ -6,7 +6,7 @@
 #   2. scripts/release-mod.sh ["notes"] [oldest launcher, default: this launcher's version]
 #   3. Create a GitHub release tagged mod-v<version>, NOT marked as latest (the launcher's own
 #      updater reads the latest release), and upload the .jar files from release/mod-v<version>/.
-#   4. Commit and push mod-latest.json (and the rebuilt jars in src-tauri/resources).
+#   4. Commit and push data/mod-latest.json (and the rebuilt jars in src-tauri/resources).
 # Usually not needed: pushing a tag mod-v<version> does all of this on GitHub
 # (.github/workflows/release-mod.yml).
 #
@@ -32,6 +32,6 @@ for jar in src-tauri/resources/aerion-ui-*.jar; do
 done
 
 python3 -I scripts/mod-manifest.py "$OUT" "$VERSION" "$MIN_LAUNCHER" "$NOTES"
-echo "mod $VERSION ready in $OUT; mod-latest.json updated."
-echo "Next: GitHub release 'mod-v$VERSION' (not latest) with the .jar files, then commit and push mod-latest.json."
+echo "mod $VERSION ready in $OUT; data/mod-latest.json updated."
+echo "Next: GitHub release 'mod-v$VERSION' (not latest) with the .jar files, then commit and push data/mod-latest.json."
 ls -la "$OUT"

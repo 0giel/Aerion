@@ -1,5 +1,5 @@
 //! The Aerion mod updates on its own, between launcher releases. `scripts/release-mod.sh` builds
-//! the jars, signs each with the launcher's updater key and writes `mod-latest.json` (kept in the
+//! the jars, signs each with the launcher's updater key and writes `data/mod-latest.json` (kept in the
 //! repository, pointing at the jars of a `mod-v<version>` GitHub release). Before a launch the
 //! launcher reads it (cached for an hour, never waiting long) and, when it lists a newer mod this
 //! launcher can run, downloads the jars into `<root>/aerion-mod/updates`, checking each one's
@@ -17,7 +17,7 @@ use crate::engine::Engine;
 use crate::net::cache::HOUR;
 use crate::paths::Paths;
 
-const MANIFEST: &str = "https://raw.githubusercontent.com/0giel/Aerion/main/mod-latest.json";
+const MANIFEST: &str = "https://raw.githubusercontent.com/0giel/Aerion/main/data/mod-latest.json";
 /// The updater public key from `src-tauri/tauri.conf.json` (`plugins.updater.pubkey`); a test in
 /// src-tauri checks that the two stay the same.
 pub const PUBLIC_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM0QTU1MDk1OUZDREJEMDEKUldRQnZjMmZsVkNseE9jZVFaNXNwTStyQWRjZ3dZUFc4MWY0UG9GMlRWWXBYZUZxT2tuN1MzcTQK";

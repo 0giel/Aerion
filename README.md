@@ -220,7 +220,7 @@ prefix and `source scripts/env.sh` points the build at it (see [CONTRIBUTING.md]
 | `AERION_HOME` | Put all launcher data in this folder (old name `LUNCHER_HOME` also accepted) |
 | `LAUNCHER_DEV_OFFLINE=1` | Debug builds only: offline accounts without a Microsoft account |
 
-See `.env.example`. Never commit a `.env` file.
+Put them in a `.env` file (never commit it) or set them in the shell.
 
 **Data folder**: Windows `%LOCALAPPDATA%\Aerion`, Linux `~/.local/share/aerion`, macOS
 `~/Library/Application Support/Aerion`. **Portable mode**: create an empty file named `portable`

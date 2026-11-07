@@ -1,7 +1,7 @@
 # A mod update without a launcher release: raise `version=` in mod/gradle.properties, commit,
 # then push a tag like mod-v1.0.1. GitHub builds the jars, signs them with the updater key,
 # publishes a release mod-v<version> (never marked "latest", which is the launcher's) and
-# commits mod-latest.json and the new jars to main; launchers pick the mod up before the next
+# commits data/mod-latest.json and the new jars to main; launchers pick the mod up before the next
 # game launch. Same secrets as release.yml.
 name: Release mod
 
@@ -67,14 +67,14 @@ jobs:
             --latest=false
       - name: Point launchers at it
         run: |
-          # Built from the tag; recorded on main, where launchers read mod-latest.json.
+          # Built from the tag; recorded on main, where launchers read data/mod-latest.json.
           tmp=$(mktemp -d)
-          cp mod-latest.json src-tauri/resources/aerion-ui-*.jar "$tmp/"
+          cp data/mod-latest.json src-tauri/resources/aerion-ui-*.jar "$tmp/"
           git checkout -f main
-          cp "$tmp/mod-latest.json" .
+          mkdir -p data && cp "$tmp/mod-latest.json" data/
           cp "$tmp"/aerion-ui-*.jar src-tauri/resources/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add mod-latest.json src-tauri/resources/aerion-ui-*.jar
+          git add data/mod-latest.json src-tauri/resources/aerion-ui-*.jar
           git commit -m "chore: Aerion mod $VERSION"
           git push

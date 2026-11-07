@@ -45,7 +45,7 @@ Any one of these, highest priority first:
 | *Settings → Accounts → Azure client ID* (or the notice on the Accounts page) | personal use |
 
 The client ID is an identifier, not a secret, but keep secrets (none are needed here) out of the
-repository — see `.env.example`.
+repository — see the Configuration table in the README.
 
 ## 4. Sign in
 

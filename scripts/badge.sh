@@ -2,7 +2,7 @@
 # Give a player a badge, or take it away. Badges show next to names in the game (Aerion mod).
 #   scripts/badge.sh <nick> <creator|bugHunter|tester|contributor>
 #   scripts/badge.sh <nick> remove
-# Edits badges.json; commit and push it, and launchers pick it up within an hour.
+# Edits data/badges.json; commit and push it, and launchers pick it up within an hour.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [ $# -eq 2 ] || { sed -n 3,5p "$0"; exit 1; }
@@ -19,12 +19,12 @@ except Exception:
     profile = None
 if not profile:
     sys.exit(f"No Minecraft account named '{name}'")
-data = json.load(open("badges.json"))
+data = json.load(open("data/badges.json"))
 players = [p for p in data["players"] if p["uuid"] != profile["id"]]
 if badge != "remove":
     players.append({"name": profile["name"], "uuid": profile["id"], "badge": badge})
 data["players"] = sorted(players, key=lambda p: p["name"].lower())
-with open("badges.json", "w") as f:
+with open("data/badges.json", "w") as f:
     f.write(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 print(f"{profile['name']}: {badge}")
 PY

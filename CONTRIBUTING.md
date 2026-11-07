@@ -11,7 +11,7 @@ Plan: `docs/PLAN.md` · decisions: `docs/DECISIONS.md` · theming: `docs/THEMING
 | Install JS deps | `pnpm install` |
 | Run the app (dev, hot reload) | `pnpm tauri dev` |
 | Release (usual way) | push a tag `v<version>` (= `src-tauri/tauri.conf.json` version): `.github/workflows/release.yml` builds Linux + Windows, signs, opens a DRAFT release with `latest.json`; publish it by hand. Needs repo secrets `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, `LAUNCHER_MSA_CLIENT_ID` |
-| Mod update (usual way) | raise `version=` in `mod/gradle.properties`, commit, push a tag `mod-v<version>`: `.github/workflows/release-mod.yml` builds, signs, publishes a non-latest release and commits `mod-latest.json` to main |
+| Mod update (usual way) | raise `version=` in `mod/gradle.properties`, commit, push a tag `mod-v<version>`: `.github/workflows/release-mod.yml` builds, signs, publishes a non-latest release and commits `data/mod-latest.json` to main |
 | Release build + installers | `scripts/release.sh "notes"` → `release/v<version>/` (signed .deb, AppImage, Windows setup, latest.json for GitHub Releases). Bundling needs the updater key (`~/.config/aerion-signing/updater.key`, never in the repo) and the Azure client ID (`$LAUNCHER_MSA_CLIENT_ID` or `msa-client-id` next to the key) |
 | Rust tests | `cargo test --workspace` |
 | Rust lint | `cargo clippy --workspace --all-targets -- -D warnings` and `cargo fmt --all --check` |
@@ -21,7 +21,7 @@ Plan: `docs/PLAN.md` · decisions: `docs/DECISIONS.md` · theming: `docs/THEMING
 | Regenerate IPC bindings | `cargo test -p aerion -- --ignored export_bindings` (debug runs also regenerate `src/lib/bindings.ts`) |
 | End-to-end vanilla smoke test | `cargo run -p launcher-core --example smoke -- 26.3 [game-dir]` |
 | Build the Aerion mod (Fabric, `mod/`) | once `scripts/build-mod.sh setup` (private JDK 25 + Gradle), then `scripts/build-mod.sh` → `src-tauri/resources/aerion-ui-<mc>.jar`, one per game version (embedded in the launcher; commit them) |
-| Release a mod update without a launcher release | raise `version=` in `mod/gradle.properties`, then `scripts/release-mod.sh "notes"` → `release/mod-v<version>/` (signed jars) + `mod-latest.json`; upload the jars to a GitHub release `mod-v<version>` (not "latest"), commit and push `mod-latest.json` |
+| Release a mod update without a launcher release | raise `version=` in `mod/gradle.properties`, then `scripts/release-mod.sh "notes"` → `release/mod-v<version>/` (signed jars) + `data/mod-latest.json`; upload the jars to a GitHub release `mod-v<version>` (not "latest"), commit and push `data/mod-latest.json` |
 | Portable developer builds for own tests (never publish) | `scripts/export-dev.sh` → `~/Desktop/aerion-testy/{linux,windows}` |
 | Regenerate the mod's font and icon images | `python3 scripts/build-mod-assets.py` (commit the results) |
 | Windows build on Linux (once: `scripts/windows-cross.sh`) | `scripts/windows-cross.sh build` → `target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe` |

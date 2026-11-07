@@ -147,7 +147,7 @@ crates/launcher-core/{src,tests/fixtures}
 src-tauri/{src,capabilities,icons,tauri.conf.json}
 src/{App.svelte,main.ts,lib/{bindings.ts,i18n,theme,stores,components,icons},pages}
 themes/*.json (built-in themes, embedded at build time)
-docs/{PLAN,DECISIONS,THEMING,PERFORMANCE,AZURE_SETUP}.md · .github/workflows/ci.yml · .env.example
+docs/{PLAN,DECISIONS,THEMING,PERFORMANCE,AZURE_SETUP}.md · .github/workflows/ci.yml
 ```
 
 ### Data on disk (default root: `%LOCALAPPDATA%\Aerion`, `~/.local/share/aerion`,

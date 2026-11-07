@@ -23,5 +23,5 @@ for jar in sorted(out.glob("aerion-ui-*.jar")):
 if not jars:
     sys.exit(f"no jars in {out}")
 manifest = {"version": version, "minLauncher": min_launcher, "notes": notes, "jars": jars}
-pathlib.Path("mod-latest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-print(f"mod-latest.json: {version}, {', '.join(jars)}")
+pathlib.Path("data/mod-latest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+print(f"data/mod-latest.json: {version}, {', '.join(jars)}")

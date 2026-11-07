@@ -1,4 +1,4 @@
-//! Badges next to players' names in the game (bug hunters, testers…). The list is `badges.json`
+//! Badges next to players' names in the game (bug hunters, testers…). The list is `data/badges.json`
 //! in the Aerion repository, edited by hand (`scripts/badge.sh`); there is no server. The launcher
 //! fetches it before a launch (cached for an hour, the last copy is used offline) and writes the
 //! players the mod should mark to `<root>/aerion-mod/badges.json`.
@@ -13,7 +13,7 @@ use crate::engine::Engine;
 use crate::net::cache::HOUR;
 use crate::paths::Paths;
 
-const URL: &str = "https://raw.githubusercontent.com/0giel/Aerion/main/badges.json";
+const URL: &str = "https://raw.githubusercontent.com/0giel/Aerion/main/data/badges.json";
 /// A launch never waits longer than this for the list.
 const WAIT: Duration = Duration::from_secs(3);
 const MAX_PLAYERS: usize = 10_000;
