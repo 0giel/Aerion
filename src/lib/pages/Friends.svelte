@@ -65,6 +65,15 @@
     }
   }
 
+  /** The "more" menu closes on a click anywhere but its own button (and after choosing an item). */
+  function closeMenus(e: MouseEvent) {
+    const target = e.target as Element | null;
+    for (const d of document.querySelectorAll<HTMLDetailsElement>("details.more[open]")) {
+      const onItsButton = !!target?.closest("summary") && d.contains(target);
+      if (!onItsButton) d.open = false;
+    }
+  }
+
   async function remove(f: Friend) {
     const ok = await dialogs.confirm({
       title: t("friends.removeTitle", { name: f.name }),
@@ -149,6 +158,8 @@
     }),
   );
 </script>
+
+<svelte:window onclick={closeMenus} />
 
 <div class="page friends">
   <header class="page-header">
@@ -282,12 +293,17 @@
     gap: var(--sp-2);
   }
   .friend {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--sp-3);
     flex-wrap: wrap;
     transition: border-color var(--dur) var(--ease);
+  }
+  /* A card with its menu open stands above the cards under it; otherwise they paint over the menu. */
+  .friend:has(details[open]) {
+    z-index: 10;
   }
   .friend.online {
     border-color: color-mix(in srgb, var(--c-success) 45%, var(--c-border));
@@ -352,6 +368,9 @@
     gap: 2px;
     padding: var(--sp-1);
     min-width: 12rem;
+    /* A solid panel: the row underneath must not show through. */
+    background: var(--c-surface-2);
+    backdrop-filter: none;
     box-shadow: var(--shadow-md);
   }
   .menu .btn {
