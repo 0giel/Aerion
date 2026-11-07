@@ -1,6 +1,6 @@
 //! Choosing the best file for an instance.
 
-use crate::loaders::LoaderKind;
+use crate::loaders::{LoaderKind, NEOFORGE_FORGE_FORK};
 use crate::mods::model::{ContentKind, ProjectVersion, ReleaseKind};
 
 /// Loader tags a mod may carry to run on `loader`, in order of preference.
@@ -12,8 +12,7 @@ pub fn compatible_loaders(loader: LoaderKind, game_version: &str) -> Vec<&'stati
         // Quilt loads Fabric mods.
         LoaderKind::Quilt => vec!["quilt", "fabric"],
         LoaderKind::Forge => vec!["forge"],
-        // NeoForge for 1.20.1 is a Forge 47 fork and still loads Forge mods.
-        LoaderKind::Neoforge if game_version == "1.20.1" => vec!["neoforge", "forge"],
+        LoaderKind::Neoforge if game_version == NEOFORGE_FORGE_FORK => vec!["neoforge", "forge"],
         LoaderKind::Neoforge => vec!["neoforge"],
     }
 }

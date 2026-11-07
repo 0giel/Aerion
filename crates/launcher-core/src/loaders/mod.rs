@@ -13,6 +13,10 @@ use crate::mojang::version::Library;
 use crate::net::client::Http;
 use crate::progress::TaskCtx;
 
+/// The game version whose NeoForge is a fork of Forge 47: its own version list and installer
+/// coordinates, and it still loads Forge mods.
+pub const NEOFORGE_FORGE_FORK: &str = "1.20.1";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "lowercase")]

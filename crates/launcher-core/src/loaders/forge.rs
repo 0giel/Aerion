@@ -14,7 +14,7 @@ use serde::Deserialize;
 use crate::Engine;
 use crate::error::{Error, IoContext, Result};
 use crate::game::install::prepare;
-use crate::loaders::LoaderKind;
+use crate::loaders::{LoaderKind, NEOFORGE_FORGE_FORK};
 use crate::loaders::{LoaderVersion, is_prerelease, safe_version_id};
 use crate::mojang::library::{MavenCoord, resolve_libraries};
 use crate::mojang::version::{Library, VersionJson};
@@ -118,11 +118,15 @@ struct NeoVersions {
 }
 
 pub async fn neoforge_versions(engine: &Engine, game: &str) -> Result<Vec<LoaderVersion>> {
-    let mut list: Vec<LoaderVersion> = if game == "1.20.1" {
+    let mut list: Vec<LoaderVersion> = if game == NEOFORGE_FORGE_FORK {
         let v: NeoVersions = engine.cache.get_json(NEO_LEGACY_VERSIONS, HOUR).await?;
         v.versions
             .into_iter()
-            .filter_map(|v| v.strip_prefix("1.20.1-").map(str::to_owned))
+            .filter_map(|v| {
+                v.strip_prefix(NEOFORGE_FORGE_FORK)?
+                    .strip_prefix('-')
+                    .map(str::to_owned)
+            })
             .map(|v| LoaderVersion {
                 stable: !is_prerelease(&v),
                 version: v,
@@ -156,8 +160,8 @@ fn installer_url(kind: LoaderKind, game: &str, version: &str) -> Result<(String,
                 name,
             )
         }
-        LoaderKind::Neoforge if game == "1.20.1" => {
-            let full = format!("1.20.1-{version}");
+        LoaderKind::Neoforge if game == NEOFORGE_FORGE_FORK => {
+            let full = format!("{NEOFORGE_FORGE_FORK}-{version}");
             let name = format!("forge-{full}-installer.jar");
             (
                 format!("{NEO_MAVEN}/net/neoforged/forge/{full}/{name}"),

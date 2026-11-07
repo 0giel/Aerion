@@ -211,7 +211,7 @@ pub async fn perf_snapshot(
         .processes()
         .into_iter()
         .map(|(id, pid, max)| launcher_core::perf::GameProcess {
-            fps: launcher_core::aerion_mod::read_fps(&state.paths, &id),
+            fps: launcher_core::aerion_mod::read_status(&state.paths, &id).map(|s| s.fps),
             instance_id: id,
             pid,
             max_memory_mb: max,

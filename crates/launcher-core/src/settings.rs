@@ -326,7 +326,6 @@ impl Settings {
         write_json(paths.settings_file(), self).await
     }
 
-    /// Client ID from the environment (or build) first, then settings.
     /// These settings with `other`'s values for what belongs to one computer (folders, Java
     /// paths, this install's id, the last account and instance used).
     pub fn with_machine_values_of(mut self, other: &Settings) -> Settings {
@@ -339,6 +338,7 @@ impl Settings {
         self
     }
 
+    /// Client ID from the environment (or build) first, then settings.
     pub fn effective_client_id(&self) -> Option<String> {
         std::env::var("LAUNCHER_MSA_CLIENT_ID")
             .ok()

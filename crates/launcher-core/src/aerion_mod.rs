@@ -4,14 +4,14 @@
 
 pub mod hud;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
 use crate::error::{IoContext, Result};
 use crate::instances::Instance;
 use crate::loaders::LoaderKind;
-use crate::paths::Paths;
+use crate::paths::{Paths, display_path};
 
 /// Game versions the bundled jars are built for (one jar each).
 pub const GAME_VERSIONS: &[&str] = &["26.3", "1.21.11"];
@@ -68,7 +68,7 @@ fn background_file(paths: &Paths, asset: Option<&str>) -> Option<String> {
         return None;
     }
     let path = crate::util::fs::safe_join(&paths.theme_assets_dir(), name).ok()?;
-    path.is_file().then(|| display(&path))
+    path.is_file().then(|| display_path(&path))
 }
 
 fn theme_file(paths: &Paths) -> PathBuf {
@@ -110,10 +110,13 @@ pub fn jvm_args(paths: &Paths, inst: &Instance) -> Vec<String> {
         return Vec::new();
     }
     vec![
-        format!("-Dfabric.addMods={}", display(&jar)),
-        format!("-Daerion.theme={}", display(&theme_file(paths))),
-        format!("-Daerion.hud={}", display(&hud::file(paths))),
-        format!("-Daerion.status={}", display(&status_file(paths, &inst.id))),
+        format!("-Dfabric.addMods={}", display_path(&jar)),
+        format!("-Daerion.theme={}", display_path(&theme_file(paths))),
+        format!("-Daerion.hud={}", display_path(&hud::file(paths))),
+        format!(
+            "-Daerion.status={}",
+            display_path(&status_file(paths, &inst.id))
+        ),
     ]
 }
 
@@ -154,15 +157,6 @@ pub fn read_status(paths: &Paths, instance_id: &str) -> Option<Status> {
         serde_json::from_slice(&std::fs::read(status_file(paths, instance_id)).ok()?).ok()?;
     let age = crate::util::now_millis().saturating_sub(s.time);
     (age < 3_000).then_some(s)
-}
-
-/// The FPS the mod reported in the last few seconds, if any.
-pub fn read_fps(paths: &Paths, instance_id: &str) -> Option<u32> {
-    read_status(paths, instance_id).map(|s| s.fps)
-}
-
-fn display(p: &Path) -> String {
-    p.to_string_lossy().into_owned()
 }
 
 #[cfg(test)]
@@ -231,8 +225,8 @@ mod tests {
         std::fs::create_dir_all(f.parent().unwrap()).unwrap();
         let now = crate::util::now_millis();
         std::fs::write(&f, format!(r#"{{"fps":144,"time":{now}}}"#)).unwrap();
-        assert_eq!(read_fps(&paths, "Mój świat"), Some(144));
+        assert_eq!(read_status(&paths, "Mój świat").map(|s| s.fps), Some(144));
         std::fs::write(&f, format!(r#"{{"fps":144,"time":{}}}"#, now - 10_000)).unwrap();
-        assert_eq!(read_fps(&paths, "Mój świat"), None);
+        assert_eq!(read_status(&paths, "Mój świat").map(|s| s.fps), None);
     }
 }

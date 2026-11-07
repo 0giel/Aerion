@@ -25,6 +25,7 @@ use crate::game::install::{Prepared, prepare};
 use crate::game::launch::CommandSpec;
 use crate::java::JavaInstall;
 use crate::net::download::{DownloadItem, VerifyMode};
+use crate::paths::display_path;
 use crate::progress::TaskCtx;
 use crate::util::hash::Hash;
 use crate::util::sys::{Arch, Os};
@@ -285,14 +286,12 @@ pub async fn install_latest(engine: &Engine, ctx: &TaskCtx) -> Result<Build> {
     Ok(Build { id, dir: dest })
 }
 
-/// Remove builds (and their prepared resources) that no instance uses and that aren't in `keep`.
-/// Returns how many builds were removed.
-pub async fn prune(engine: &Engine, keep: &[String]) -> usize {
+/// Remove builds (and their prepared resources) that aren't in `keep`.
+pub async fn prune(engine: &Engine, keep: &[String]) {
     // Not while a build is being installed, and never anything touched in the last minutes: another
     // instance may have installed it a moment ago and not recorded it yet.
     let _no_install = INSTALLING.lock().await;
     let recent = std::time::SystemTime::now() - std::time::Duration::from_secs(600);
-    let mut removed = 0;
     for dir in [builds_dir(engine), prepared_root(engine)] {
         let Ok(mut rd) = tokio::fs::read_dir(&dir).await else {
             continue;
@@ -307,18 +306,14 @@ pub async fn prune(engine: &Engine, keep: &[String]) -> usize {
                 .is_ok_and(|t| t > recent);
             if (valid_build_id(&name) || name.starts_with('.')) && !keep.contains(&name) && !fresh {
                 let p = e.path();
-                let gone = if p.is_dir() {
+                let _ = if p.is_dir() {
                     tokio::fs::remove_dir_all(&p).await
                 } else {
                     tokio::fs::remove_file(&p).await
                 };
-                if gone.is_ok() && dir == builds_dir(engine) {
-                    removed += 1;
-                }
             }
         }
     }
-    removed
 }
 
 /// The folder with `horizon-client`: the archive's top folder, or the unpacked folder itself.
@@ -415,19 +410,19 @@ pub async fn ensure_resources(
     let args: Vec<String> = vec![
         "--prepare".into(),
         "--version-json".into(),
-        p.version_json(MINECRAFT).display().to_string(),
+        display_path(&p.version_json(MINECRAFT)),
         "--client-jar".into(),
-        p.client_jar(MINECRAFT).display().to_string(),
+        display_path(&p.client_jar(MINECRAFT)),
         "--libraries-dir".into(),
-        p.libraries_dir().display().to_string(),
+        display_path(&p.libraries_dir()),
         "--assets-dir".into(),
-        p.assets_dir().display().to_string(),
+        display_path(&p.assets_dir()),
         "--server-jar".into(),
-        jar.display().to_string(),
+        display_path(&jar),
         "--java-home".into(),
-        java_home.display().to_string(),
+        display_path(&java_home),
         "--output".into(),
-        out.display().to_string(),
+        display_path(&out),
         "--complete".into(),
         "--progress".into(),
         "json".into(),
@@ -551,11 +546,11 @@ pub fn command(build: &Build, auth: &AuthInfo, o: &StartOptions) -> Result<Comma
     }
     let mut args = vec![
         "--resources".to_owned(),
-        o.resources.display().to_string(),
+        display_path(&o.resources),
         "--game-dir".to_owned(),
-        o.game_dir.display().to_string(),
+        display_path(&o.game_dir),
         "--home".to_owned(),
-        o.game_dir.display().to_string(),
+        display_path(&o.game_dir),
     ];
     if let Some((w, h)) = o.resolution {
         args.extend([
