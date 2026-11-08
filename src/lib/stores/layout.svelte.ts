@@ -1,6 +1,7 @@
 // The user's arrangement of the sidebar and the home screen (saved in settings.layout).
 import type { Page } from "./router.svelte";
 import { app } from "./app.svelte";
+import { themes } from "../theme/engine.svelte";
 import type { LayoutItem } from "../bindings";
 
 export interface NavDef {
@@ -82,24 +83,45 @@ class Layout {
     return (app.settings?.layout.homePlayer as PlayerSide) ?? "right";
   }
 
-  /** Where the menu sits; "theme" means whatever the theme says. */
+  // Each menu option is the player's own choice, or "theme": whatever the active theme says.
+  /** The player's choice for where the menu sits ("theme" follows the theme). */
   get navSide(): NavSide {
     const v = app.settings?.layout.navSide;
     return NAV_SIDES.includes(v as NavSide) ? (v as NavSide) : "theme";
   }
-  get navMode(): NavMode {
+  /** Where the menu actually sits. */
+  get side(): Exclude<NavSide, "theme"> {
+    return this.navSide === "theme" ? themes.active.layout.sidebar : this.navSide;
+  }
+  get navMode(): NavMode | "theme" {
     const v = app.settings?.layout.navMode;
-    return NAV_MODES.includes(v as NavMode) ? (v as NavMode) : "fixed";
+    return NAV_MODES.includes(v as NavMode) ? (v as NavMode) : "theme";
   }
+  get mode(): NavMode {
+    return this.navMode === "theme" ? themes.active.layout.navMode : this.navMode;
+  }
+  /** The player's icon size; 0 follows the theme. */
   get navIconSize(): number {
-    const v = app.settings?.layout.navIconSize ?? 19;
-    return Math.min(26, Math.max(15, v));
+    const v = app.settings?.layout.navIconSize ?? 0;
+    return v === 0 ? 0 : Math.min(26, Math.max(15, v));
   }
-  get navGaps(): string[] {
-    return app.settings?.layout.navGaps ?? [];
+  get iconSize(): number {
+    return this.navIconSize || themes.active.layout.navIconSize;
   }
+  /** The player's dividers, or null to follow the theme. */
+  get navGaps(): string[] | null {
+    return app.settings?.layout.navGaps ?? null;
+  }
+  get gaps(): string[] {
+    return this.navGaps ?? themes.active.layout.navGaps;
+  }
+  get effectsPref(): "theme" | "on" | "off" {
+    const v = app.settings?.layout.effects;
+    return v === "on" || v === "off" ? v : "theme";
+  }
+  /** Springy animations and the other effects are on (before reduced motion is considered). */
   get springy(): boolean {
-    return app.settings?.layout.springy ?? true;
+    return this.effectsPref === "theme" ? themes.active.motion.effects : this.effectsPref === "on";
   }
 
   private async save(patch: Partial<NonNullable<typeof app.settings>["layout"]>) {
@@ -123,26 +145,27 @@ class Layout {
   setNavSide(v: NavSide) {
     return this.save({ navSide: v });
   }
-  setNavMode(v: NavMode) {
+  setNavMode(v: NavMode | "theme") {
     return this.save({ navMode: v });
   }
   setNavIconSize(v: number) {
     return this.save({ navIconSize: Math.round(v) });
   }
-  setNavGaps(ids: string[]) {
+  setNavGaps(ids: string[] | undefined) {
     return this.save({ navGaps: ids });
   }
-  setSpringy(on: boolean) {
-    return this.save({ springy: on });
+  setEffects(v: "theme" | "on" | "off") {
+    return this.save({ effects: v });
   }
   resetNav() {
     return this.save({
       nav: [],
       navFavorites: true,
       navSide: "theme",
-      navMode: "fixed",
-      navIconSize: 19,
-      navGaps: [],
+      navMode: "theme",
+      navIconSize: 0,
+      navGaps: undefined,
+      effects: "theme",
     });
   }
   resetHome() {

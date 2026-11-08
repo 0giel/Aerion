@@ -669,8 +669,10 @@ const pl: Dict = {
       navSide: "Położenie menu",
       sides: { theme: "Z motywu", left: "Lewo", right: "Prawo", top: "Góra", bottom: "Dół" },
       navMode: "Styl menu",
-      modes: { fixed: "Pełne", hover: "Rozwija się po najechaniu", icons: "Same ikony" },
+      modes: { theme: "Z motywu", fixed: "Pełne", hover: "Rozwija się po najechaniu", icons: "Same ikony" },
       iconSize: "Rozmiar ikon w menu",
+      effects: { theme: "Z motywu", on: "Wł.", off: "Wył." },
+      iconSizeTheme: "Z motywu",
       springy: "Animacje i efekty",
       springyHint:
         "Sprężyste kliknięcia i wskakiwanie, przesuwające się podświetlenie menu, fale po kliknięciu, przechylane karty i iskry. Wyłączone przy ograniczonym ruchu.",
@@ -798,6 +800,11 @@ const pl: Dict = {
     comfortable: "Wygodna",
     compact: "Kompaktowa",
     sidebar: "Nawigacja",
+    navMode: "Styl menu",
+    navGaps: "Separatory po",
+    motionEffects: "Efekty",
+    motionEffectsHint:
+      "Sprężyste kliknięcia, przejścia stron, przesuwające się podświetlenie, przechylane karty, iskry",
     sidebar_left: "Lewo",
     sidebar_right: "Prawo",
     sidebar_top: "Góra",

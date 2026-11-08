@@ -31,9 +31,22 @@ export interface Theme {
   radius: { sm: number; md: number; lg: number; xl: number };
   font: { family: string; mono: string; size: number };
   density: "comfortable" | "compact";
-  layout: { sidebar: "left" | "right" | "top" | "bottom"; scale: number };
+  layout: {
+    sidebar: "left" | "right" | "top" | "bottom";
+    scale: number;
+    /** `fixed`, `hover` (a slim rail that opens under the cursor) or `icons` (icons only). */
+    navMode: "fixed" | "hover" | "icons";
+    navIconSize: number;
+    /** Ids of menu items with a divider after them. */
+    navGaps: string[];
+  };
   effects: { blur: number; glass: number; shadow: number };
-  motion: { enabled: boolean; speed: number };
+  motion: {
+    enabled: boolean;
+    speed: number;
+    /** Springy clicks, page transitions, sliding highlight, tilting cards, sparks. */
+    effects: boolean;
+  };
   background: {
     type: BackgroundType;
     color: string;
@@ -126,6 +139,15 @@ export function normalizeTheme(raw: unknown, fallback: Theme): Theme {
         ? (layout.sidebar as Theme["layout"]["sidebar"])
         : fallback.layout.sidebar,
       scale: clamp(layout.scale, 0.75, 1.5, fallback.layout.scale),
+      navMode: ["fixed", "hover", "icons"].includes(layout.navMode as string)
+        ? (layout.navMode as Theme["layout"]["navMode"])
+        : fallback.layout.navMode,
+      navIconSize: clamp(layout.navIconSize, 15, 26, fallback.layout.navIconSize),
+      navGaps: Array.isArray(layout.navGaps)
+        ? layout.navGaps
+            .filter((g): g is string => typeof g === "string" && /^[a-z]{1,24}$/i.test(g))
+            .slice(0, 24)
+        : fallback.layout.navGaps,
     },
     effects: {
       blur: clamp(effects.blur, 0, 40, fallback.effects.blur),
@@ -135,6 +157,7 @@ export function normalizeTheme(raw: unknown, fallback: Theme): Theme {
     motion: {
       enabled: typeof motion.enabled === "boolean" ? motion.enabled : fallback.motion.enabled,
       speed: clamp(motion.speed, 0.25, 3, fallback.motion.speed),
+      effects: typeof motion.effects === "boolean" ? motion.effects : fallback.motion.effects,
     },
     background: {
       type: bgType,

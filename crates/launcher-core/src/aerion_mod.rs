@@ -60,6 +60,10 @@ pub struct GameTheme {
     pub colors: bool,
     pub particles: String,
     pub logo: bool,
+    /// Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
+    /// `animations` overrides it.
+    #[serde(default = "yes")]
+    pub animations: bool,
     /// The theme's background picture for the menus: a theme asset's file name (PNG, JPEG or
     /// GIF, animated or not), or none for the gradient.
     #[serde(default)]
@@ -70,6 +74,10 @@ pub struct GameTheme {
     /// Absolute path of that picture for the mod; set by [`write_theme`], ignored from callers.
     #[serde(default)]
     pub background_file: Option<String>,
+}
+
+fn yes() -> bool {
+    true
 }
 
 /// Picture formats the mod can read (Java's own decoders); videos and WebP keep the gradient.

@@ -20,9 +20,9 @@
   const items = $derived(layout.nav.filter((i) => i.visible));
   const favorites = $derived(layout.navFavorites ? app.instances.filter((i) => i.favorite).slice(0, 6) : []);
 
-  const side = $derived(layout.navSide === "theme" ? themes.active.layout.sidebar : layout.navSide);
+  const side = $derived(layout.side);
   const horizontal = $derived(side === "top" || side === "bottom");
-  const mode = $derived(horizontal ? "fixed" : layout.navMode);
+  const mode = $derived(horizontal ? "fixed" : layout.mode);
   const spring = $derived(layout.springy && themes.active.motion.enabled && !themes.reducedMotion);
   let hovered = $state(false);
   let itemsEl = $state<HTMLElement>();
@@ -44,8 +44,8 @@
       items.length,
       shut,
       side,
-      layout.navIconSize,
-      layout.navGaps,
+      layout.iconSize,
+      layout.gaps,
       dashboards.pages.length,
     ];
     void tick().then(measure);
@@ -95,7 +95,7 @@
     class:collapsed={shut}
     class:open={mode === "hover" && !shut}
     class:sliding={spring}
-    style:--nav-icon="{layout.navIconSize}px"
+    style:--nav-icon="{layout.iconSize}px"
     aria-label="Main"
   >
     <div class="brand">
@@ -120,12 +120,12 @@
           title={shut ? t(item.key) : undefined}
           onclick={() => router.go(item.page)}
         >
-          <Icon name={item.icon} size={layout.navIconSize} />
+          <Icon name={item.icon} size={layout.iconSize} />
           <span class="label">{t(item.key)}</span>
           {#if item.page === "console" && runningCount > 0}<span class="dot" aria-label={t("console.running")}
             ></span>{/if}
         </button>
-        {#if layout.navGaps.includes(item.id)}<span class="gap" aria-hidden="true"></span>{/if}
+        {#if layout.gaps.includes(item.id)}<span class="gap" aria-hidden="true"></span>{/if}
       {/each}
       {#each dashboards.pages as d (d.id)}
         <button
@@ -134,7 +134,7 @@
           title={shut ? d.name : undefined}
           onclick={() => router.go("dashboard", { id: d.id })}
         >
-          <Icon name={d.icon} size={layout.navIconSize} />
+          <Icon name={d.icon} size={layout.iconSize} />
           <span class="label">{d.name}</span>
         </button>
       {/each}

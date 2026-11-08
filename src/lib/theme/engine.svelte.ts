@@ -43,9 +43,9 @@ const FALLBACK: Theme = {
   radius: { sm: 6, md: 10, lg: 16, xl: 22 },
   font: { family: "system", mono: "system-mono", size: 14 },
   density: "comfortable",
-  layout: { sidebar: "left", scale: 1 },
+  layout: { sidebar: "left", scale: 1, navMode: "fixed", navIconSize: 19, navGaps: [] },
   effects: { blur: 18, glass: 0.72, shadow: 0.45 },
-  motion: { enabled: true, speed: 1 },
+  motion: { enabled: true, speed: 1, effects: true },
   background: {
     type: "gradient",
     color: "#16171b",

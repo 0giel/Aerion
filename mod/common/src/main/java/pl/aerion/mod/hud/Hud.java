@@ -804,7 +804,7 @@ public final class Hud {
 			int body = down ? Colors.alpha(accent, 0xCC) : (s.background() != 0 ? s.background() : 0x66000000);
 			// Presses fade in and out and sink a pixel, rather than switching.
 			String id = x + "," + y + label;
-			float t = c.flag("animate", true) ? PRESS.merge(id, 0f, (old, z) -> old) : down ? 1f : 0f;
+			float t = c.flag("animate", true) && AerionMenu.animationsOn() ? PRESS.merge(id, 0f, (old, z) -> old) : down ? 1f : 0f;
 			t += ((down ? 1f : 0f) - t) * Math.min(1f, Hud.dt * 18f);
 			if (Math.abs((down ? 1f : 0f) - t) < 0.02f) t = down ? 1f : 0f;
 			PRESS.put(id, t);
@@ -1128,7 +1128,7 @@ public final class Hud {
 				// Fades in and out when a situation shows or hides it (the editor always shows it).
 				Anim a = ANIMS.computeIfAbsent(e.getKey(), k -> new Anim());
 				boolean want = preview || wanted(a, m, mc);
-				boolean animate = c.flag("animate", true);
+				boolean animate = c.flag("animate", true) && AerionMenu.animationsOn();
 				// How long a fade takes (ms): 50 to 1500.
 				float rate = 1000f / numOpt(m, "fade", 170, 50, 1500);
 				if (a.grade < 0 && a.vis == 0 && want) a.vis = 1;

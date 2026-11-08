@@ -25,6 +25,8 @@ public final class Theme {
 	/** `sparkles`, `dust`, `snow` or `none`. */
 	public final String particles;
 	public final boolean logo;
+	/** Springy menus and fading modules (the theme's `motion.effects`); hud.json may override. */
+	public final boolean animations;
 	/** The launcher background's picture (absolute path, PNG/JPEG/GIF) for the menus, or null. */
 	public final String backgroundFile;
 	/** How much that picture is darkened, 0–1. */
@@ -50,6 +52,7 @@ public final class Theme {
 		// CSS pixels on a ~3× scaled GUI.
 		radius = Math.max(1, Math.round((o.has("radius") ? o.get("radius").getAsInt() : 10) / 3.5f));
 		colors = bool(o, "colors");
+		animations = bool(o, "animations");
 		particles = str(o, "particles", "none");
 		logo = bool(o, "logo");
 		backgroundFile = str(o, "backgroundFile", null);

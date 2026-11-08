@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NAV } from "../stores/layout.svelte";
   import { onDestroy, untrack } from "svelte";
   import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
   import Icon from "../components/Icon.svelte";
@@ -299,6 +300,42 @@
             bind:value={draft.layout.scale}
           />
         </div>
+        <div class="field">
+          <span class="label">{t("themeEditor.navMode")}</span>
+          <div class="segmented" role="group">
+            {#each ["fixed", "hover", "icons"] as const as m (m)}
+              <button aria-pressed={draft.layout.navMode === m} onclick={() => (draft.layout.navMode = m)}
+                >{t(`settings.ui.modes.${m}`)}</button
+              >
+            {/each}
+          </div>
+        </div>
+        <div class="field">
+          <label for="navicon">{t("settings.ui.iconSize")}: {draft.layout.navIconSize}px</label><input
+            id="navicon"
+            type="range"
+            min="15"
+            max="26"
+            step="1"
+            bind:value={draft.layout.navIconSize}
+          />
+        </div>
+        <div class="field">
+          <span class="label">{t("themeEditor.navGaps")}</span>
+          <div class="row wrap gap-2">
+            {#each NAV as n (n.id)}
+              <button
+                class="btn sm"
+                class:primary={draft.layout.navGaps.includes(n.id)}
+                aria-pressed={draft.layout.navGaps.includes(n.id)}
+                onclick={() =>
+                  (draft.layout.navGaps = draft.layout.navGaps.includes(n.id)
+                    ? draft.layout.navGaps.filter((g) => g !== n.id)
+                    : [...draft.layout.navGaps, n.id])}>{t(n.key)}</button
+              >
+            {/each}
+          </div>
+        </div>
         <div class="row gap-3">
           <div class="field grow">
             <label for="font">{t("themeEditor.font")}</label>
@@ -350,6 +387,11 @@
           ><input id="shadow" type="range" min="0" max="1" step="0.05" bind:value={draft.effects.shadow} />
         </div>
         <Switch label={t("themeEditor.animations")} bind:checked={draft.motion.enabled} />
+        <Switch
+          label={t("themeEditor.motionEffects")}
+          hint={t("themeEditor.motionEffectsHint")}
+          bind:checked={draft.motion.effects}
+        />
         {#if themes.reducedMotion}<span class="hint">{t("themeEditor.reducedMotion")}</span>{/if}
         <div class="field">
           <label for="speed">{t("themeEditor.animationSpeed")}: {draft.motion.speed}×</label><input

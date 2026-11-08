@@ -5,7 +5,7 @@
   import Icon from "./Icon.svelte";
   import Switch from "./Switch.svelte";
   import { ui } from "../stores/ui.svelte";
-  import { layout, NAV_MODES, NAV_SIDES, type PlayerSide } from "../stores/layout.svelte";
+  import { layout, NAV_MODES, NAV_SIDES, type NavMode, type PlayerSide } from "../stores/layout.svelte";
   import { toasts } from "../stores/toasts.svelte";
   import { errorMessage } from "../api";
   import { t } from "../i18n/index.svelte";
@@ -51,7 +51,7 @@
   }
 
   function toggleGap(id: string) {
-    const gaps = layout.navGaps;
+    const gaps = layout.gaps;
     void run(layout.setNavGaps(gaps.includes(id) ? gaps.filter((g) => g !== id) : [...gaps, id]));
   }
 
@@ -118,8 +118,8 @@
           {#if mode === "nav"}
             <button
               class="icon-btn sm"
-              aria-pressed={layout.navGaps.includes(it.id)}
-              class:on={layout.navGaps.includes(it.id)}
+              aria-pressed={layout.gaps.includes(it.id)}
+              class:on={layout.gaps.includes(it.id)}
               aria-label={t("layout.gap", { name: t(it.key) })}
               title={t("layout.gap", { name: t(it.key) })}
               onclick={() => toggleGap(it.id)}><Icon name="divider" size={15} /></button
@@ -152,26 +152,32 @@
       <div class="field">
         <span class="label">{t("settings.ui.navMode")}</span>
         <div class="segmented" role="group" aria-label={t("settings.ui.navMode")}>
-          {#each NAV_MODES as v (v)}
+          {#each ["theme", ...NAV_MODES] as v (v)}
             <button
               type="button"
               aria-pressed={layout.navMode === v}
-              onclick={() => void run(layout.setNavMode(v))}>{t(`settings.ui.modes.${v}`)}</button
+              onclick={() => void run(layout.setNavMode(v as NavMode | "theme"))}
+              >{t(`settings.ui.modes.${v}`)}</button
             >
           {/each}
         </div>
       </div>
       <div class="field">
-        <label for="navicon">{t("settings.ui.iconSize")}: {layout.navIconSize}px</label>
+        <label for="navicon">{t("settings.ui.iconSize")}: {layout.iconSize}px</label>
         <input
           id="navicon"
           type="range"
           min="15"
           max="26"
           step="1"
-          value={layout.navIconSize}
+          value={layout.iconSize}
           oninput={(e) => void run(layout.setNavIconSize(+(e.target as HTMLInputElement).value))}
         />
+        {#if layout.navIconSize}
+          <button class="btn sm ghost" onclick={() => void run(layout.setNavIconSize(0))}
+            >{t("settings.ui.iconSizeTheme")}</button
+          >
+        {/if}
       </div>
       <Switch
         label={t("layout.navFavorites")}

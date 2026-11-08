@@ -810,6 +810,11 @@ export type GameTheme_Deserialize = {
 	particles: string,
 	logo: boolean,
 	/**
+	 *  Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
+	 *  `animations` overrides it.
+	 */
+	animations?: boolean,
+	/**
 	 *  The theme's background picture for the menus: a theme asset's file name (PNG, JPEG or
 	 *  GIF, animated or not), or none for the gradient.
 	 */
@@ -844,6 +849,11 @@ export type GameTheme_Serialize = {
 	colors: boolean,
 	particles: string,
 	logo: boolean,
+	/**
+	 *  Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
+	 *  `animations` overrides it.
+	 */
+	animations: boolean,
 	/**
 	 *  The theme's background picture for the menus: a theme asset's file name (PNG, JPEG or
 	 *  GIF, animated or not), or none for the gradient.
@@ -955,8 +965,8 @@ export type HudConfig_Deserialize = {
 	profiles?: HudProfile_Deserialize[],
 	/**  Name of the active profile (none while there are no profiles). */
 	profile?: string | null,
-	/**  Springy menus and fading modules; modules can opt out one by one. */
-	animations?: boolean,
+	/**  Springy menus and fading modules; modules can opt out one by one. Unset follows the theme. */
+	animations?: boolean | null,
 };
 
 export type HudConfig_Serialize = {
@@ -969,8 +979,8 @@ export type HudConfig_Serialize = {
 	profiles?: HudProfile_Serialize[],
 	/**  Name of the active profile (none while there are no profiles). */
 	profile?: string,
-	/**  Springy menus and fading modules; modules can opt out one by one. */
-	animations: boolean,
+	/**  Springy menus and fading modules; modules can opt out one by one. Unset follows the theme. */
+	animations?: boolean,
 };
 
 export type HudFeatures = HudFeatures_Serialize | HudFeatures_Deserialize;
@@ -1415,14 +1425,17 @@ export type LayoutPrefs_Deserialize = {
 	homePlayer?: string,
 	/**  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`. */
 	navSide?: string,
-	/**  `fixed`, `hover` (a slim rail that opens under the cursor) or `icons` (icons only). */
+	/**
+	 *  `theme` (what the theme says), `fixed`, `hover` (a slim rail that opens under the cursor)
+	 *  or `icons` (icons only).
+	 */
 	navMode?: string,
-	/**  Menu icon size in pixels. */
+	/**  Menu icon size in pixels; 0 follows the theme. */
 	navIconSize?: number,
-	/**  Ids of menu items that have a divider after them (groups of buttons). */
-	navGaps?: string[],
-	/**  Springy clicks, entrances and a sliding highlight in the menu. */
-	springy?: boolean,
+	/**  Ids of menu items that have a divider after them (groups of buttons); none follows the theme. */
+	navGaps?: string[] | null,
+	/**  Springy clicks, entrances, a sliding highlight and the other effects: `theme`, `on` or `off`. */
+	effects?: string,
 };
 
 /**
@@ -1438,14 +1451,17 @@ export type LayoutPrefs_Serialize = {
 	homePlayer: string,
 	/**  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`. */
 	navSide: string,
-	/**  `fixed`, `hover` (a slim rail that opens under the cursor) or `icons` (icons only). */
+	/**
+	 *  `theme` (what the theme says), `fixed`, `hover` (a slim rail that opens under the cursor)
+	 *  or `icons` (icons only).
+	 */
 	navMode: string,
-	/**  Menu icon size in pixels. */
+	/**  Menu icon size in pixels; 0 follows the theme. */
 	navIconSize: number,
-	/**  Ids of menu items that have a divider after them (groups of buttons). */
-	navGaps: string[],
-	/**  Springy clicks, entrances and a sliding highlight in the menu. */
-	springy: boolean,
+	/**  Ids of menu items that have a divider after them (groups of buttons); none follows the theme. */
+	navGaps?: string[],
+	/**  Springy clicks, entrances, a sliding highlight and the other effects: `theme`, `on` or `off`. */
+	effects: string,
 };
 
 export type License = License_Serialize | License_Deserialize;

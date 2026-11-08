@@ -43,9 +43,11 @@ launcher without touching code. Changes apply live — no restart.
   "radius": { "sm": 6, "md": 10, "lg": 16, "xl": 22 },          // px
   "font": { "family": "system", "mono": "system-mono", "size": 14 },
   "density": "comfortable",                                     // or "compact"
-  "layout": { "sidebar": "left", "scale": 1 },                  // "left" | "top", 0.75–1.5
+  "layout": { "sidebar": "left", "scale": 1,                    // "left" | "right" | "top" | "bottom", 0.75–1.5
+             "navMode": "fixed", "navIconSize": 19,           // "fixed" | "hover" | "icons", 15–26
+             "navGaps": ["home"] },                           // menu items with a divider after them
   "effects": { "blur": 18, "glass": 0.72, "shadow": 0.45 },
-  "motion": { "enabled": true, "speed": 1 },
+  "motion": { "enabled": true, "speed": 1, "effects": true },  // effects: springy clicks, page transitions, tilting cards, sparks
   "background": {
     "type": "gradient",          // "color" | "gradient" | "image" | "video"
     "color": "#101218",
@@ -93,7 +95,7 @@ Only `name`, `base` and `colors` are needed; everything missing is taken from No
 | `--bg-dim`, `--bg-blur` | `background.dim/blur` | image/video backgrounds |
 
 Layout switches are data attributes on `<html>`: `data-base` (`dark`/`light`), `data-density`,
-`data-sidebar` (`left`/`top`), `data-motion` (`on`/`off`).
+`data-sidebar` (`left`/`right`/`top`/`bottom`), `data-motion` (`on`/`off`).
 
 ## Custom CSS
 
@@ -133,3 +135,9 @@ themes whenever the OS changes its colour scheme.
 - Keep `focus` clearly distinct from `accent` — it marks keyboard focus.
 - Animations stop automatically when the OS requests reduced motion, whatever the theme says.
 - `layout.scale` and `font.size` let low-vision users enlarge the whole UI.
+
+## What the player can override
+Menu position, style, icon size, dividers and the effects switch are theme settings that the player
+may override in Settings → Appearance ("From theme" is the default for each). The mod follows the
+theme's `motion.effects` for its springy menu and fading HUD modules unless the HUD file sets its own
+`animations`.

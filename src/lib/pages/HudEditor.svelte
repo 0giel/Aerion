@@ -10,6 +10,7 @@
   import { toasts } from "../stores/toasts.svelte";
   import { commands, errorMessage, type HudConfig, type HudModule, type HudStyle } from "../api";
   import { t } from "../i18n/index.svelte";
+  import { themes } from "../theme/engine.svelte";
 
   let cfg = $state<HudConfig | null>(null);
   let selected = $state<string>("fps");
@@ -352,7 +353,7 @@
       />
       <Switch
         label={t("hudEditor.animations")}
-        checked={cfg.animations ?? true}
+        checked={cfg.animations ?? (themes.active.motion.enabled && themes.active.motion.effects)}
         onchange={(v) => cfg && ((cfg.animations = v), changed())}
       />
       <span class="grow"></span>

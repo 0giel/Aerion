@@ -4,7 +4,7 @@
   import KeybindEditor from "../components/KeybindEditor.svelte";
   import { DISCORD_URL, ISSUES_URL, REPO_URL } from "../links";
   import Icon from "../components/Icon.svelte";
-  import { layout, NAV_MODES, NAV_SIDES } from "../stores/layout.svelte";
+  import { layout, NAV_MODES, NAV_SIDES, type NavMode } from "../stores/layout.svelte";
   import { dashboards } from "../stores/dashboards.svelte";
   import { dialogs } from "../stores/dialogs.svelte";
   import Advanced from "../components/Advanced.svelte";
@@ -371,22 +371,30 @@
           <div class="field">
             <span class="label">{t("settings.ui.navMode")}</span>
             <div class="segmented" role="group" aria-label={t("settings.ui.navMode")}>
-              {#each NAV_MODES as v (v)}
+              {#each ["theme", ...NAV_MODES] as v (v)}
                 <button
                   type="button"
                   aria-pressed={layout.navMode === v}
-                  onclick={() => void layout.setNavMode(v)}>{t(`settings.ui.modes.${v}`)}</button
+                  onclick={() => void layout.setNavMode(v as NavMode | "theme")}
+                  >{t(`settings.ui.modes.${v}`)}</button
                 >
               {/each}
             </div>
           </div>
         </div>
-        <Switch
-          label={t("settings.ui.springy")}
-          hint={t("settings.ui.springyHint")}
-          checked={layout.springy}
-          onchange={(v) => void layout.setSpringy(v)}
-        />
+        <div class="field">
+          <span class="label">{t("settings.ui.springy")}</span>
+          <span class="small muted">{t("settings.ui.springyHint")}</span>
+          <div class="segmented" role="group" aria-label={t("settings.ui.springy")}>
+            {#each ["theme", "on", "off"] as const as v (v)}
+              <button
+                type="button"
+                aria-pressed={layout.effectsPref === v}
+                onclick={() => void layout.setEffects(v)}>{t(`settings.ui.effects.${v}`)}</button
+              >
+            {/each}
+          </div>
+        </div>
         <Switch
           label={t("settings.followCursor")}
           hint={t("settings.followCursorHint")}

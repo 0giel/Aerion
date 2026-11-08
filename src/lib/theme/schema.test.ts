@@ -89,9 +89,28 @@ describe("design tokens", () => {
     expect(css["--dur"]).toBe("180ms");
   });
 
+  it("reads the menu and effects settings and clamps them", () => {
+    const t = normalizeTheme(
+      {
+        layout: { sidebar: "bottom", navMode: "icons", navIconSize: 99, navGaps: ["home", 7, "x y"] },
+        motion: { effects: false },
+      },
+      nocturne,
+    );
+    expect(t.layout.sidebar).toBe("bottom");
+    expect(t.layout.navMode).toBe("icons");
+    expect(t.layout.navIconSize).toBe(26);
+    expect(t.layout.navGaps).toEqual(["home"]);
+    expect(t.motion.effects).toBe(false);
+  });
+
   it("turns animations off for reduced motion or a disabled theme setting", () => {
     expect(themeToCss(nocturne, true)["--dur"]).toBe("0ms");
-    expect(themeToCss({ ...nocturne, motion: { enabled: false, speed: 1 } }, false)["--dur"]).toBe("0ms");
-    expect(themeToCss({ ...nocturne, motion: { enabled: true, speed: 2 } }, false)["--dur"]).toBe("90ms");
+    expect(
+      themeToCss({ ...nocturne, motion: { enabled: false, speed: 1, effects: true } }, false)["--dur"],
+    ).toBe("0ms");
+    expect(
+      themeToCss({ ...nocturne, motion: { enabled: true, speed: 2, effects: true } }, false)["--dur"],
+    ).toBe("90ms");
   });
 });

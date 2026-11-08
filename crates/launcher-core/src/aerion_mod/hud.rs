@@ -233,8 +233,9 @@ pub struct HudConfig {
     /// Name of the active profile (none while there are no profiles).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile: Option<String>,
-    /// Springy menus and fading modules; modules can opt out one by one.
-    pub animations: bool,
+    /// Springy menus and fading modules; modules can opt out one by one. Unset follows the theme.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub animations: Option<bool>,
 }
 
 /// Every module the mod knows: id, on by default, x, y.
@@ -306,7 +307,7 @@ impl Default for HudConfig {
             features: HudFeatures::default(),
             profiles: Vec::new(),
             profile: None,
-            animations: true,
+            animations: None,
         }
     }
 }
