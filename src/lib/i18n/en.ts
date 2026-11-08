@@ -628,8 +628,9 @@ const en = {
       navMode: "Menu style",
       modes: { fixed: "Full", hover: "Opens on hover", icons: "Icons only" },
       iconSize: "Menu icon size",
-      springy: "Springy animations",
-      springyHint: "Buttons press in, cards pop in and the menu highlight slides. Off with reduced motion.",
+      springy: "Animations and effects",
+      springyHint:
+        "Springy clicks and pop-ins, a sliding menu highlight, cursor glow, click rings, tilting cards and sparks. Off with reduced motion.",
     },
     advancedHint: "For experienced users: network, Microsoft sign-in and other rarely changed options.",
     javaAdvancedHint: "JVM preset, automatic Java, Java per version",

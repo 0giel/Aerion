@@ -25,6 +25,7 @@
   import { t } from "./lib/i18n/index.svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { themes } from "./lib/theme/engine.svelte";
+  import { initFx } from "./lib/fx";
   import { toGameTheme } from "./lib/theme/gameTheme";
 
   // Everything except Home is code-split and loaded on first visit.
@@ -50,6 +51,7 @@
   let dragging = $state(false);
 
   onMount(() => {
+    const stopFx = initFx();
     void (async () => {
       await app.init();
       void commands.frontendLog("info", `UI ready (${app.fatal ? `failed: ${app.fatal}` : "ok"})`);
@@ -66,7 +68,10 @@
         void handleDrop(p.paths);
       }
     });
-    return () => void unlisten.then((f) => f());
+    return () => {
+      stopFx();
+      void unlisten.then((f) => f());
+    };
   });
 
   async function handleDrop(paths: string[]) {

@@ -657,6 +657,55 @@ kbd,
     color var(--dur) var(--ease),
     transform var(--dur-slow) var(--spring);
 }
+/* Effects (see lib/fx.ts): a ring where you click, a sheen over primary buttons. */
+.fx-ring {
+  position: fixed;
+  z-index: 999;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid var(--c-accent);
+  pointer-events: none;
+  animation: fx-ring 520ms var(--ease) forwards;
+}
+@keyframes fx-ring {
+  to {
+    transform: scale(4.2);
+    opacity: 0;
+  }
+}
+[data-spring="on"] .btn.primary:hover:not(:disabled) {
+  background-image: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.28) 50%, transparent 70%);
+  background-size: 260% 100%;
+  animation: sheen 0.9s var(--ease);
+}
+@keyframes sheen {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
+/* Windows and toasts spring in. */
+[data-spring="on"] .dialog.dialog {
+  animation: pop-in var(--dur-slow) var(--spring);
+}
+[data-spring="on"] .toast.toast {
+  animation: toast-in var(--dur-slow) var(--spring);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Pages slide in when you switch to them. */
 @keyframes page-in {
   from {
@@ -673,7 +722,8 @@ kbd,
   animation: page-in var(--dur-slow) var(--spring) both;
 }
 [data-spring="on"] .content .card:nth-child(-n + 8) {
-  animation: pop-in var(--dur-slow) var(--spring) both;
+  /* "backwards", not "both": a held end state would override tilt and hover transforms. */
+  animation: pop-in var(--dur-slow) var(--spring) backwards;
 }
 [data-spring="on"] .content .card:nth-child(2) {
   animation-delay: 40ms;

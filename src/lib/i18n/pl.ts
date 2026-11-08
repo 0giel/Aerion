@@ -671,9 +671,9 @@ const pl: Dict = {
       navMode: "Styl menu",
       modes: { fixed: "Pełne", hover: "Rozwija się po najechaniu", icons: "Same ikony" },
       iconSize: "Rozmiar ikon w menu",
-      springy: "Sprężyste animacje",
+      springy: "Animacje i efekty",
       springyHint:
-        "Przyciski się wciskają, karty wskakują, a podświetlenie w menu się przesuwa. Wyłączone przy ograniczonym ruchu.",
+        "Sprężyste kliknięcia i wskakiwanie, przesuwające się podświetlenie menu, poświata za kursorem, fale po kliknięciu, przechylane karty i iskry. Wyłączone przy ograniczonym ruchu.",
     },
     advancedHint: "Dla doświadczonych: sieć, logowanie Microsoft i inne rzadko zmieniane opcje.",
     javaAdvancedHint: "Preset JVM, automatyczna Java, własna Java dla wersji",

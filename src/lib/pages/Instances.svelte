@@ -117,7 +117,7 @@
       {#each list as inst (inst.id)}
         {@const running = !!app.running[inst.id]}
         {@const busy = app.isBusy(inst.id)}
-        <article class="tile card" class:running>
+        <article class="tile card" class:running data-tilt>
           <button class="open" onclick={() => router.go("instance", { id: inst.id })} aria-label={inst.name}
           ></button>
           <button

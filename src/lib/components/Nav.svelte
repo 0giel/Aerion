@@ -250,6 +250,12 @@
     width: 100%;
     height: 100%;
   }
+  :global([data-spring="on"]) .logo {
+    transition: transform var(--dur-slow) var(--spring);
+  }
+  :global([data-spring="on"]) .brand:hover .logo {
+    transform: rotate(-12deg) scale(1.18);
+  }
   .items {
     display: flex;
     flex-direction: column;

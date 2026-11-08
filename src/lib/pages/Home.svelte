@@ -37,6 +37,29 @@
     { key: "home.actions.stats", icon: "chart", run: () => router.go("stats") },
   ];
 
+  // The Play button leans towards the cursor, and a burst of sparks marks the game starting.
+  let lean = $state({ x: 0, y: 0 });
+  let sparks = $state(0);
+  let wasRunning = false;
+  $effect(() => {
+    const now = running;
+    if (now && !wasRunning && document.documentElement.dataset.spring === "on") {
+      sparks++;
+      const id = setTimeout(() => (sparks = 0), 1200);
+      wasRunning = now;
+      return () => clearTimeout(id);
+    }
+    wasRunning = now;
+  });
+  function onLean(e: PointerEvent) {
+    if (document.documentElement.dataset.spring !== "on") return;
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    lean = {
+      x: Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (r.width / 2))) * 6,
+      y: Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (r.height / 2))) * 4,
+    };
+  }
+
   function play() {
     if (!current) {
       ui.newInstanceOpen = true;
@@ -79,8 +102,13 @@
           </p>
         </div>
       {:else if b.id === "play"}
-        <div class="play-block">
-          <div class="play-row">
+        <div
+          class="play-block"
+          onpointermove={onLean}
+          onpointerleave={() => (lean = { x: 0, y: 0 })}
+          role="presentation"
+        >
+          <div class="play-row" style:transform="translate({lean.x}px, {lean.y}px)">
             <button
               class="item play"
               class:running
@@ -111,6 +139,16 @@
                 aria-label={t("home.chooseInstance")}
                 title={t("home.chooseInstance")}><Icon name="chevronDown" size={18} /></button
               >
+            {/if}
+            {#if sparks}
+              {#key sparks}
+                <span class="burst" aria-hidden="true">
+                  {#each Array.from({ length: 18 }, (_, i) => i) as n (n)}
+                    <i style:--a="{n * 20}deg" style:--d="{70 + (n % 3) * 26}px" style:--s="{4 + (n % 4)}px"
+                    ></i>
+                  {/each}
+                </span>
+              {/key}
             {/if}
             {#if pickerOpen}
               <div class="picker card raised" role="listbox" aria-label={t("home.chooseInstance")}>
@@ -363,6 +401,34 @@
     align-items: stretch;
     gap: 0.4rem;
     width: min(26rem, 100%);
+  }
+  :global([data-spring="on"]) .play-row {
+    transition: transform var(--dur-slow) var(--spring);
+  }
+  .burst {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  .burst i {
+    position: absolute;
+    left: calc(var(--s) / -2);
+    top: calc(var(--s) / -2);
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    background: var(--c-accent);
+    box-shadow: 0 0 8px var(--c-accent);
+    animation: spark 900ms var(--ease) forwards;
+  }
+  @keyframes spark {
+    to {
+      transform: rotate(var(--a)) translateX(var(--d)) scale(0.2);
+      opacity: 0;
+    }
   }
   .play-row {
     position: relative;

@@ -70,6 +70,12 @@
   .switch[aria-checked="true"] {
     background: var(--c-accent);
   }
+  :global([data-spring="on"]) .knob {
+    transition: left var(--dur-slow) var(--spring);
+  }
+  :global([data-spring="on"]) .switch:active .knob {
+    transform: scaleX(1.25);
+  }
   .knob {
     position: absolute;
     top: 50%;

@@ -71,6 +71,7 @@
   {#if bg.particles !== "none"}
     <Particles kind={bg.particles} {animate} />
   {/if}
+  <div id="fx-glow" class="fx-glow"></div>
   <div class="dim" style:opacity={bg.dim}></div>
   <div class="vignette"></div>
 </div>
@@ -101,6 +102,25 @@
   }
   .dim {
     background: #000;
+  }
+  /* A soft light that follows the cursor and shows through the glass (see lib/fx.ts). */
+  .fx-glow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--c-accent) 22%, transparent),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 400ms var(--ease);
+  }
+  :global([data-spring="off"]) .fx-glow {
+    display: none;
   }
   .vignette {
     background: radial-gradient(
