@@ -13,6 +13,7 @@
 
   /** Whole looks in one click; each replaces every look field. */
   const PRESETS: Record<string, HudStyle> = {
+    default: {},
     minimal: { background: "none", border: "none", outline: true, shadow: false, padding: 2 },
     glass: {
       background: "theme",
@@ -87,7 +88,8 @@
             class="btn sm"
             class:primary={active === p}
             aria-pressed={active === p}
-            onclick={() => applyPreset(p)}>{t(`hudEditor.style.presetNames.${p}`)}</button
+            onclick={() => applyPreset(active === p && p !== "default" ? "default" : p)}
+            >{t(`hudEditor.style.presetNames.${p}`)}</button
           >
         {/each}
         {#if !active}<span class="small muted">{t("hudEditor.style.presetCustom")}</span>{/if}

@@ -1168,7 +1168,8 @@ public final class AerionMenu implements Page {
 			String label = Lang.tr("aerion.preset." + id);
 			int w = Math.round(Txt.width(label, SMALL)) + 14;
 			smallButton(bx, by, w, ROW - 4, label, id.equals(active), () -> {
-				applyPreset(cfg.style(), id);
+				// Picking the active look again takes it off: back to the default one.
+				applyPreset(cfg.style(), id.equals(active) && !id.equals("default") ? "default" : id);
 				changed = true;
 			});
 			bx += w + 3;
@@ -1181,7 +1182,7 @@ public final class AerionMenu implements Page {
 		lookFields(new Look(cfg.style(), null));
 	}
 
-	private static final String[] PRESETS = {"minimal", "glass", "neon", "retro"};
+	private static final String[] PRESETS = {"default", "minimal", "glass", "neon", "retro"};
 
 	/** What an unset look value means. */
 	private static final Map<String, String> LOOK_DEFAULTS = Map.ofEntries(

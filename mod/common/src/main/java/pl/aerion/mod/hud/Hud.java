@@ -172,12 +172,28 @@ public final class Hud {
 			return 0;
 		}
 
+		/** Width the text never goes under, so a value that changes length doesn't resize the box. */
+		int minWidth(Ctx c) {
+			return 0;
+		}
+
+		private int stableW;
+		private double stableAt;
+
 		@Override
 		public int[] size(Ctx c) {
 			List<String> l = lines(c);
 			if (l.isEmpty()) return new int[] {0, 0};
-			int w = 0;
+			int w = minWidth(c);
 			for (String s : l) w = Math.max(w, Hud.width(c, s));
+			// A box only grows while a value is changing (and shrinks back after a while), so the
+			// neighbour placed against it keeps its gap instead of being overlapped now and again.
+			double now = seconds();
+			if (w >= stableW || now - stableAt > 30) {
+				stableW = w;
+				stableAt = now;
+			}
+			w = stableW;
 			int p = c.style().padding();
 			return new int[] {w + swatchSpace(c, l) + 2 * p, l.size() * LINE - 1 + 2 * p};
 		}
@@ -256,6 +272,22 @@ public final class Hud {
 			}
 		});
 		MODULES.put("direction", new Lines() {
+			private int widest = -1;
+			private boolean widestDegrees, widestSmooth;
+
+			@Override
+			int minWidth(Ctx c) {
+				boolean degrees = c.flag("degrees", true), smooth = c.style().smooth();
+				if (widest < 0 || degrees != widestDegrees || smooth != widestSmooth) {
+					int w = 0;
+					for (int yaw = 0; yaw < 360; yaw += 15) w = Math.max(w, width(c, Compass.label(yaw, degrees)));
+					widest = w;
+					widestDegrees = degrees;
+					widestSmooth = smooth;
+				}
+				return widest;
+			}
+
 			List<String> lines(Ctx c) {
 				return List.of(Compass.label(c.player() == null ? 0 : c.player().getYRot(), c.flag("degrees", true)));
 			}
@@ -319,6 +351,12 @@ public final class Hud {
 		});
 		MODULES.put("potions", new Effects());
 		MODULES.put("speed", new Lines() {
+			@Override
+			int minWidth(Ctx c) {
+				// As wide as the widest speed one is likely to reach (elytra and boats: two digits).
+				return width(c, format(c.opt("format", "{speed} m/s"), "speed", c.flag("decimals", true) ? "88.88" : "88"));
+			}
+
 			List<String> lines(Ctx c) {
 				LocalPlayer p = c.player();
 				double dx = p == null ? 0.2 : p.getX() - p.xo, dy = p == null ? 0 : p.getY() - p.yo, dz = p == null ? 0.1 : p.getZ() - p.zo;

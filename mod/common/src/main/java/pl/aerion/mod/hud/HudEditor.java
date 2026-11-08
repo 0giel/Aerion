@@ -47,6 +47,13 @@ public final class HudEditor implements Page {
 		if (panel == null) panel = AerionMenu.docked(id, this::closePanel);
 		else panel.show(id);
 		selected = id;
+		sidePanel(id);
+	}
+
+	/** The panel goes to the side away from the module, right when it opens (not only after a drag). */
+	private void sidePanel(String id) {
+		int[] b = Hud.BOUNDS.get(id);
+		if (panel != null && b != null) panel.dockLeft(b[0] + b[2] / 2 > screenW / 2);
 	}
 
 	private void closePanel() {
@@ -314,6 +321,7 @@ public final class HudEditor implements Page {
 		if (c < 0) return false;
 		if (panel != null) panel.show(id);
 		selected = id;
+		sidePanel(id);
 		dragging = id;
 		corner = c;
 		int[] fixed = cornerPoint(b, 3 - c);

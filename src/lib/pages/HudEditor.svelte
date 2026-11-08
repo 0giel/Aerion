@@ -97,6 +97,28 @@
   /** Canvas pixels per GUI pixel (a 1280×720 window at GUI scale 3 is 427 GUI pixels wide). */
   const k = $derived(canvasW / 427);
 
+  /** Guide lines shown while a module snaps to the screen's or another module's edge or middle. */
+  let guides = $state<{ x: number | null; y: number | null }>({ x: null, y: null });
+  const SNAP = 6;
+
+  /** `pos` moved to the nearest line by the box's start, middle or end; returns it and the line. */
+  function snap(pos: number, size: number, lines: number[]): [number, number | null] {
+    let best = SNAP + 1;
+    let result = pos;
+    let guide: number | null = null;
+    for (const line of lines) {
+      for (const off of [0, size / 2, size]) {
+        const d = line - (pos + off);
+        if (Math.abs(d) < best) {
+          best = Math.abs(d);
+          result = pos + d;
+          guide = line;
+        }
+      }
+    }
+    return [result, guide];
+  }
+
   function startDrag(e: PointerEvent, id: string) {
     const m = mod(id);
     if (!m || !canvas || e.button !== 0) return;
@@ -107,16 +129,43 @@
     const b = el.getBoundingClientRect();
     const [x0, y0] = [e.clientX, e.clientY];
     const [left0, top0] = [b.left - c.left, b.top - c.top];
+    // Where the other modules are, so this one can sit flush against them.
+    const others = [...canvas.querySelectorAll<HTMLElement>(".box")]
+      .filter((o) => o !== el)
+      .map((o) => o.getBoundingClientRect());
+    const xs = [
+      0,
+      c.width / 2,
+      c.width,
+      ...others.flatMap((o) => [o.left - c.left, o.right - c.left, (o.left + o.right) / 2 - c.left]),
+    ];
+    const ys = [
+      0,
+      c.height / 2,
+      c.height,
+      ...others.flatMap((o) => [o.top - c.top, o.bottom - c.top, (o.top + o.bottom) / 2 - c.top]),
+    ];
     const move = (ev: PointerEvent) => {
       if (m.options.anchor && m.options.anchor !== "free") m.options = { ...m.options, anchor: "free" };
       const freeW = Math.max(1, c.width - b.width);
       const freeH = Math.max(1, c.height - b.height);
-      m.x = Math.round(Math.min(1, Math.max(0, (left0 + ev.clientX - x0) / freeW)) * 1000);
-      m.y = Math.round(Math.min(1, Math.max(0, (top0 + ev.clientY - y0) / freeH)) * 1000);
+      let left = left0 + ev.clientX - x0;
+      let top = top0 + ev.clientY - y0;
+      // Alt turns snapping off for fine placement.
+      if (ev.altKey) {
+        guides = { x: null, y: null };
+      } else {
+        const [sx, gx] = snap(left, b.width, xs);
+        const [sy, gy] = snap(top, b.height, ys);
+        [left, top, guides] = [sx, sy, { x: gx, y: gy }];
+      }
+      m.x = Math.round(Math.min(1, Math.max(0, left / freeW)) * 1000);
+      m.y = Math.round(Math.min(1, Math.max(0, top / freeH)) * 1000);
     };
     const up = () => {
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
+      guides = { x: null, y: null };
       changed();
     };
     el.addEventListener("pointermove", move);
@@ -359,6 +408,8 @@
     <div class="layout">
       <div class="col gap-2">
         <div class="screen" bind:this={canvas} bind:clientWidth={canvasW} class:off={!cfg.enabled}>
+          {#if guides.x !== null}<div class="guide v" style:left="{guides.x}px"></div>{/if}
+          {#if guides.y !== null}<div class="guide h" style:top="{guides.y}px"></div>{/if}
           <div class="crosshair"></div>
           <div class="hotbar"></div>
           {#each MODULE_IDS as id (id)}
@@ -748,6 +799,22 @@
 </div>
 
 <style>
+  .guide {
+    position: absolute;
+    z-index: 5;
+    background: var(--c-accent);
+    pointer-events: none;
+  }
+  .guide.v {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+  }
+  .guide.h {
+    left: 0;
+    right: 0;
+    height: 1px;
+  }
   .grid2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
