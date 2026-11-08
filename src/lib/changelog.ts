@@ -9,6 +9,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.2",
+    notes: {
+      pl: [
+        "Menu launchera ustawisz po swojemu: z lewej, prawej, góry lub dołu, rozwijane po najechaniu albo same ikony, z własnym rozmiarem ikon i separatorami między grupami. Pozycje przeciągniesz myszką. Wszystko można ustawić w motywie, a w Ustawieniach nadpisać („Z motywu”).",
+        "Animacje i efekty: przejścia między stronami, przesuwające się podświetlenie w menu, przechylane karty instancji, magnetyczny przycisk Graj z postępem startu i iskrami, sprężyste okna i powiadomienia. Jeden przełącznik wyłącza wszystko.",
+        "Przy każdym modzie w przeglądarce jest przycisk szybkiej instalacji: jedno kliknięcie dodaje najnowszą zgodną wersję z zależnościami.",
+        "HUD w grze: nowe style (Minimal, Szkło, Neon, Retro), gradient tła, pasek akcentu i obrys tekstu, kotwice do rogów, auto-ukrywanie zależne od sytuacji (walka, pod ziemią, mało zdrowia i inne) z czasem pokazywania, opóźnieniem i płynnym zanikaniem oraz animacje menu w grze.",
+        "Możesz mieć kilka odznak i wybrać, którą widzisz przy własnym nicku.",
+        "Poprawki: menu znajomych nie jest już przycinane, moduły prędkości i kierunku mają stałą szerokość, panel edytora HUD w grze nie zasłania modułu po prawej, a edytor w launcherze przyciąga moduły do krawędzi innych.",
+        "Link do serwera Discord w menu i w Ustawieniach.",
+      ],
+      en: [
+        'Arrange the launcher menu your way: left, right, top or bottom, opening on hover or icons only, with your own icon size and dividers between groups. Drag items to reorder. A theme can set all of it, and Settings can override it ("From theme").',
+        "Animations and effects: page transitions, a sliding menu highlight, tilting instance cards, a magnetic Play button with launch progress and sparks, springy windows and toasts. One switch turns everything off.",
+        "Every mod in the browser has a quick-install button: one click adds the newest compatible version with its dependencies.",
+        "The in-game HUD: new looks (Minimal, Glass, Neon, Retro), a background gradient, an accent bar and text outline, corner anchors, auto-hide by situation (combat, underground, low health and more) with a show time, a delay and smooth fading, and animated in-game menus.",
+        "You can have several badges and choose which one you see next to your own name.",
+        "Fixes: the Friends menu is no longer clipped, the speed and direction modules keep a steady width, the in-game HUD editor panel no longer covers a module on the right, and the launcher editor snaps modules to each other's edges.",
+        "A link to the Discord server in the menu and in Settings.",
+      ],
+    },
+  },
+  {
     version: "1.0.1",
     notes: {
       pl: [
