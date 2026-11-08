@@ -632,7 +632,7 @@ const en = {
       iconSizeTheme: "From theme",
       springy: "Animations and effects",
       springyHint:
-        "Springy clicks and pop-ins, a sliding menu highlight, click rings, tilting cards and sparks. Off with reduced motion.",
+        "Springy clicks and pop-ins, a sliding menu highlight, click rings, tilting cards and sparks. ‘From theme’ respects a system request for fewer animations (on Windows: Settings → Accessibility → Visual effects); ‘On’ turns them on regardless.",
     },
     advancedHint: "For experienced users: network, Microsoft sign-in and other rarely changed options.",
     javaAdvancedHint: "JVM preset, automatic Java, Java per version",
@@ -772,7 +772,8 @@ const en = {
     shadow: "Shadows",
     animations: "Animations",
     animationSpeed: "Animation speed",
-    reducedMotion: "Your system asks for reduced motion — animations stay minimal.",
+    reducedMotion:
+      'Your system asks for reduced motion — animations are off. Set Effects to "On" in Settings → Appearance → Interface to turn them on anyway.',
     background: "Background",
     bgType: "Type",
     bgTypes: { color: "Color", gradient: "Gradient", image: "Image", video: "Video" },

@@ -675,7 +675,7 @@ const pl: Dict = {
       iconSizeTheme: "Z motywu",
       springy: "Animacje i efekty",
       springyHint:
-        "Sprężyste kliknięcia i wskakiwanie, przesuwające się podświetlenie menu, fale po kliknięciu, przechylane karty i iskry. Wyłączone przy ograniczonym ruchu.",
+        "Sprężyste kliknięcia i wskakiwanie, przesuwające się podświetlenie menu, fale po kliknięciu, przechylane karty i iskry. „Z motywu” słucha prośby systemu o mniej animacji (w Windowsie: Ustawienia → Ułatwienia dostępu → Efekty wizualne → Efekty animacji); „Wł.” włącza je mimo to.",
     },
     advancedHint: "Dla doświadczonych: sieć, logowanie Microsoft i inne rzadko zmieniane opcje.",
     javaAdvancedHint: "Preset JVM, automatyczna Java, własna Java dla wersji",
@@ -819,7 +819,8 @@ const pl: Dict = {
     shadow: "Cienie",
     animations: "Animacje",
     animationSpeed: "Szybkość animacji",
-    reducedMotion: "System prosi o ograniczenie ruchu — animacje pozostaną minimalne.",
+    reducedMotion:
+      "System prosi o ograniczenie ruchu — animacje są wyłączone. W Ustawieniach → Wygląd → Interfejs ustaw Efekty na „Wł.”, by je włączyć mimo to.",
     background: "Tło",
     bgType: "Rodzaj",
     bgTypes: { color: "Kolor", gradient: "Gradient", image: "Obraz", video: "Wideo" },

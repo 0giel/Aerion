@@ -92,9 +92,8 @@
     display: grid;
     place-items: center;
     padding: 2rem;
-    background: rgb(0 0 0 / 0.5);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    /* A plain dark scrim: a blur over the whole window, animated, is costly on weak GPUs. */
+    background: rgb(0 0 0 / 0.58);
     animation: fade var(--dur) var(--ease);
   }
   .dialog {

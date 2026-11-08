@@ -93,6 +93,8 @@
   $effect(() => {
     const side = layout.navSide;
     themes.sideOverride = side === "theme" ? null : side;
+    // "On" in Settings means on, even when the system (e.g. Windows) asks for no animations.
+    themes.forceMotion = layout.effectsPref === "on";
     themes.apply();
     document.documentElement.dataset.spring =
       layout.springy && themes.active.motion.enabled && !themes.reducedMotion ? "on" : "off";

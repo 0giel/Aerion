@@ -451,6 +451,7 @@
     border-radius: var(--r-md);
     background: var(--c-accent-soft);
     pointer-events: none;
+    will-change: transform;
     transition:
       transform var(--dur-slow) var(--spring),
       width var(--dur-slow) var(--spring),

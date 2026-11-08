@@ -79,7 +79,14 @@ class ThemeEngine {
   preview = $state.raw<Theme | null>(null);
   previewCss = $state<string | null>(null);
   systemDark = $state(true);
-  reducedMotion = $state(false);
+  /** The system asks for reduced motion (on Windows: "Show animations" is off, also in VMs and
+   *  remote desktops). */
+  systemReducedMotion = $state(false);
+  /** The player turned effects on by hand: that beats the system request. */
+  forceMotion = $state(false);
+  get reducedMotion(): boolean {
+    return this.systemReducedMotion && !this.forceMotion;
+  }
   private prefs: ThemePrefs | null = null;
   private styleEl: HTMLStyleElement | null = null;
 
@@ -103,13 +110,13 @@ class ThemeEngine {
     const dark = matchMedia("(prefers-color-scheme: dark)");
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     this.systemDark = dark.matches;
-    this.reducedMotion = motion.matches;
+    this.systemReducedMotion = motion.matches;
     dark.addEventListener("change", (e) => {
       this.systemDark = e.matches;
       this.resolve();
     });
     motion.addEventListener("change", (e) => {
-      this.reducedMotion = e.matches;
+      this.systemReducedMotion = e.matches;
       this.apply();
     });
     await this.loadUser();

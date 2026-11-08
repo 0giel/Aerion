@@ -251,16 +251,16 @@ textarea {
 
 /* ---------- Surfaces ---------- */
 .card {
+  /* No backdrop blur on cards: dozens of them blurring a moving backdrop is what made the
+     launcher lag on Windows (WebView2). Only the menu and dialogs blur; the glass level still
+     sets how see-through a card is, and the wallpaper is already blurred by the theme. */
   background: var(--c-glass);
-  -webkit-backdrop-filter: blur(var(--blur));
-  backdrop-filter: blur(var(--blur));
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   padding: var(--sp-4);
 }
 .card.flat {
   background: var(--c-surface);
-  backdrop-filter: none;
 }
 .card.raised {
   box-shadow: var(--shadow-md);
