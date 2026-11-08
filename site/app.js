@@ -2,8 +2,8 @@
 (function () {
   const EN = {
     "nav.skip": "Skip to content", "nav.hud": "HUD", "nav.themes": "Themes", "nav.mods": "Mods", "nav.features": "Features", "nav.faq": "FAQ", "nav.get": "Download",
-    "hero.title": "Minecraft, arranged<br>your way",
-    "hero.lead": "A launcher and a mod in one. A HUD you arrange with the mouse, themes in the game menus too, mods from Modrinth and CurseForge. Open source, no tracking.",
+    "hero.title": "Your game,<br>arranged your way",
+    "hero.lead": "A launcher for Minecraft: Java Edition and a mod in one. A HUD you arrange with the mouse, themes in the game menus too, mods from Modrinth and CurseForge. Open source, no tracking.",
     "hero.download": "Download", "hero.discord": "Discord",
     "hero.need": 'Free · Windows and Linux · <span id="version-line">Version <span id="version"></span></span> · Needs Minecraft: Java Edition',
     "tt.1": "Home", "tt.2": "In-game HUD", "tt.3": "Arranging the HUD", "tt.4": "Mod menu", "tt.5": "Instances",
