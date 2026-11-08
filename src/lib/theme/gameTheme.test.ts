@@ -34,5 +34,7 @@ describe("game theme", () => {
     const g = toGameTheme(nocturne, { colors: false, particles: false, logo: true });
     expect([g.colors, g.particles, g.logo]).toEqual([false, "none", true]);
     expect(toGameTheme(nocturne, prefs).particles).toBe(nocturne.background.particles);
+    // Lite mode takes the particles (and the aurora) out of the game's menus.
+    expect(toGameTheme(nocturne, prefs, true).particles).toBe("none");
   });
 });

@@ -192,6 +192,11 @@ pub struct Settings {
     pub last_instance: Option<String>,
     pub selected_account: Option<String>,
     pub check_updates: bool,
+    /// Lite mode: no blurs, background particles, moving wallpapers or tilting cards, and no
+    /// particles in the game's menus, for computers that struggle with the effects.
+    pub lite_mode: bool,
+    /// The launcher already suggested lite mode (it asks once).
+    pub lite_prompted: bool,
     /// Download a launcher update in the background as soon as it is found.
     pub update_in_background: bool,
     /// Look for mod updates of every instance in the background (at start, then every 6 h).
@@ -281,6 +286,8 @@ impl Default for Settings {
             last_instance: None,
             selected_account: None,
             check_updates: true,
+            lite_mode: false,
+            lite_prompted: false,
             update_in_background: true,
             check_mod_updates: true,
             aerion_mod_updates: true,

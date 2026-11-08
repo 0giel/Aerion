@@ -755,3 +755,20 @@ kbd,
   margin-bottom: var(--sp-4);
   min-height: var(--control-h);
 }
+
+/* Lite mode (Settings → Appearance): the costly effects go, the cheap transitions stay. The
+   !important beats a theme's own CSS, and a higher glass level keeps panels readable without
+   their blur. */
+[data-lite="on"] {
+  --glass: 0.94 !important;
+}
+[data-lite="on"] *,
+[data-lite="on"] *::before,
+[data-lite="on"] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+[data-lite="on"] .skeleton,
+[data-lite="on"] .content .card {
+  animation: none !important;
+}

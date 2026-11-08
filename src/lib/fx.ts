@@ -3,6 +3,8 @@
 // "animations and effects" setting is on (`<html data-spring="on">`) and does nothing otherwise.
 
 const on = () => document.documentElement.dataset.spring === "on";
+/** Lite mode keeps the click ring but drops the tilting cards (they re-render under the pointer). */
+const lite = () => document.documentElement.dataset.lite === "on";
 
 /** Elements a click ring appears for. */
 const CLICKABLE = "button, a, [role=button], .btn, .item";
@@ -36,7 +38,7 @@ export function initFx(): () => void {
   };
 
   const move = (e: PointerEvent) => {
-    if (!on() || e.pointerType === "touch") return;
+    if (!on() || lite() || e.pointerType === "touch") return;
     px = e.clientX;
     py = e.clientY;
     if (!frame) frame = requestAnimationFrame(paint);

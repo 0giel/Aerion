@@ -180,6 +180,12 @@ const pl: Dict = {
     summaryMods:
       "Automatycznie: {mb} MB, ustawienia „{preset}” ({mods} modów, {cores} rdzeni, {ram} GB RAM).",
   },
+  lite: {
+    label: "Tryb lekki",
+    hint: "Wyłącza rozmycia, cząsteczki i ruchome tło w launcherze i cząsteczki w menu gry. Przyciski i proste przejścia zostają. Pomaga na słabszych komputerach.",
+    suggest: "Launcher działa tu wolno. Włączyć tryb lekki? Wyłączy najcięższe efekty.",
+    enable: "Włącz",
+  },
   updateAll: {
     title: "Aktualizacje modów",
     button: "Zaktualizuj wszystko ({n})",

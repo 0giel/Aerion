@@ -373,7 +373,7 @@
   let dragging = false;
   let lastX = 0;
   const motion = $derived(themes.active.motion.enabled && !themes.reducedMotion);
-  const animate = $derived(motion && ambient.active);
+  const animate = $derived(motion && ambient.active && !themes.lite);
   // Sway clock in ms; it only advances while animating, so pausing and resuming doesn't jump.
   let clock = 0;
   const PITCH = -12;

@@ -26,6 +26,7 @@
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { themes } from "./lib/theme/engine.svelte";
   import { initFx } from "./lib/fx";
+  import { measureFrames, SLOW_MS } from "./lib/perfProbe";
   import { toGameTheme } from "./lib/theme/gameTheme";
 
   // Everything except Home is code-split and loaded on first visit.
@@ -97,13 +98,15 @@
     // "On" in Settings means on, even when the system (e.g. Windows) asks for no animations.
     themes.forceMotion = layout.effectsPref === "on";
     themes.apply();
+    themes.lite = app.settings?.liteMode === true;
+    document.documentElement.dataset.lite = themes.lite ? "on" : "off";
     document.documentElement.dataset.spring =
       layout.springy && themes.active.motion.enabled && !themes.reducedMotion ? "on" : "off";
   });
 
   $effect(() => {
     if (!app.ready || !app.settings) return;
-    const theme = toGameTheme(themes.active, app.settings.gameUi);
+    const theme = toGameTheme(themes.active, app.settings.gameUi, app.settings.liteMode);
     // Only a real change is written: a reload of the same theme mustn't keep postponing it.
     const json = JSON.stringify(theme);
     clearTimeout(gameThemeTimer);
@@ -114,6 +117,34 @@
         .then(() => (gameThemeSent = json))
         .catch((e) => console.warn("game theme not saved", e));
     }, 300);
+  });
+
+  // Once, a few seconds after start: if the effects run slowly here, suggest lite mode.
+  let probed = false;
+  $effect(() => {
+    if (!app.ready || !app.settings || probed) return;
+    if (app.settings.liteMode || app.settings.litePrompted) return;
+    probed = true;
+    setTimeout(async () => {
+      let slow = false;
+      try {
+        // A test hook: localStorage "aerion.probe" = "slow" shows the suggestion at once.
+        slow = localStorage.getItem("aerion.probe") === "slow";
+      } catch {
+        /* storage unavailable */
+      }
+      if (!slow) {
+        const ms = await measureFrames();
+        slow = ms !== null && ms >= SLOW_MS;
+      }
+      if (!slow || !app.settings || app.settings.liteMode) return;
+      await app.saveSettings({ litePrompted: true });
+      toasts.info(
+        t("lite.suggest"),
+        { label: t("lite.enable"), run: () => void app.saveSettings({ liteMode: true }) },
+        20000,
+      );
+    }, 6000);
   });
 
   // Ctrl+1…9 follow the sidebar as the user arranged it.

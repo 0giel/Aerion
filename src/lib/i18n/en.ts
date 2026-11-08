@@ -169,6 +169,12 @@ const en = {
     summary: "Now: {mb} MB, the “{preset}” preset ({cores} cores, {ram} GB RAM).",
     summaryMods: "Automatic: {mb} MB, the “{preset}” preset ({mods} mods, {cores} cores, {ram} GB RAM).",
   },
+  lite: {
+    label: "Lite mode",
+    hint: "Turns off blurs, particles and the moving background in the launcher, and the particles in the game's menus. Buttons and simple transitions stay. Helps on weaker computers.",
+    suggest: "The launcher runs slowly here. Turn on lite mode? It switches off the heaviest effects.",
+    enable: "Turn on",
+  },
   updateAll: {
     title: "Mod updates",
     button: "Update everything ({n})",

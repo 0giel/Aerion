@@ -5,7 +5,8 @@ import type { Theme } from "./schema";
 
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b/gi;
 
-export function toGameTheme(t: Theme, prefs: GameUiPrefs): GameTheme {
+/** `lite`: the game's menus drop their particles (and the aurora with them), the costly part. */
+export function toGameTheme(t: Theme, prefs: GameUiPrefs, lite = false): GameTheme {
   const c = t.colors;
   const b = t.background;
   const gradient =
@@ -26,7 +27,7 @@ export function toGameTheme(t: Theme, prefs: GameUiPrefs): GameTheme {
     gradient: gradient.length ? gradient : [c.bg],
     radius: Math.round(t.radius.md),
     colors: prefs.colors,
-    particles: prefs.particles ? b.particles : "none",
+    particles: prefs.particles && !lite ? b.particles : "none",
     logo: prefs.logo,
     animations: t.motion.enabled && t.motion.effects,
     // A picture (or GIF) background shows in the game's menus too; the launcher checks the file

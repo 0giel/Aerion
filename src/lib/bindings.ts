@@ -2159,6 +2159,13 @@ export type Settings_Deserialize = {
 	lastInstance?: string | null,
 	selectedAccount?: string | null,
 	checkUpdates?: boolean,
+	/**
+	 *  Lite mode: no blurs, background particles, moving wallpapers or tilting cards, and no
+	 *  particles in the game's menus, for computers that struggle with the effects.
+	 */
+	liteMode?: boolean,
+	/**  The launcher already suggested lite mode (it asks once). */
+	litePrompted?: boolean,
 	/**  Download a launcher update in the background as soon as it is found. */
 	updateInBackground?: boolean,
 	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */
@@ -2228,6 +2235,13 @@ export type Settings_Serialize = {
 	lastInstance: string | null,
 	selectedAccount: string | null,
 	checkUpdates: boolean,
+	/**
+	 *  Lite mode: no blurs, background particles, moving wallpapers or tilting cards, and no
+	 *  particles in the game's menus, for computers that struggle with the effects.
+	 */
+	liteMode: boolean,
+	/**  The launcher already suggested lite mode (it asks once). */
+	litePrompted: boolean,
 	/**  Download a launcher update in the background as soon as it is found. */
 	updateInBackground: boolean,
 	/**  Look for mod updates of every instance in the background (at start, then every 6 h). */

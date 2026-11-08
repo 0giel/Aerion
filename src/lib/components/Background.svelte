@@ -7,7 +7,7 @@
   const bg = $derived(themes.active.background);
   const motion = $derived(themes.active.motion.enabled && !themes.reducedMotion);
   // Animate only while someone is using the launcher (see stores/ambient).
-  const animate = $derived(motion && ambient.active);
+  const animate = $derived(motion && ambient.active && !themes.lite);
   const assetUrl = $derived(bg.asset ? themeAssetUrl(bg.asset) : null);
 
   let video: HTMLVideoElement | undefined = $state();
@@ -27,7 +27,12 @@
     style:background-image={bg.type === "gradient" && bg.gradient ? bg.gradient : undefined}
   ></div>
   {#if bg.type === "image" && assetUrl}
-    <img class="media" src={assetUrl} alt="" style:filter={bg.blur ? `blur(${bg.blur}px)` : undefined} />
+    <img
+      class="media"
+      src={assetUrl}
+      alt=""
+      style:filter={bg.blur && !themes.lite ? `blur(${bg.blur}px)` : undefined}
+    />
   {:else if bg.type === "video" && assetUrl}
     <video
       bind:this={video}
@@ -36,10 +41,10 @@
       muted
       loop
       playsinline
-      style:filter={bg.blur ? `blur(${bg.blur}px)` : undefined}
+      style:filter={bg.blur && !themes.lite ? `blur(${bg.blur}px)` : undefined}
     ></video>
   {/if}
-  {#if bg.ribbons}
+  {#if bg.ribbons && !themes.lite}
     <svg class="ribbons" viewBox="0 0 400 1000" preserveAspectRatio="none">
       <defs>
         <linearGradient id="rib" x1="0" y1="0" x2="1" y2="0">
@@ -68,7 +73,7 @@
       >
     </svg>
   {/if}
-  {#if bg.particles !== "none"}
+  {#if bg.particles !== "none" && !themes.lite}
     <Particles kind={bg.particles} {animate} />
   {/if}
   <div class="dim" style:opacity={bg.dim}></div>

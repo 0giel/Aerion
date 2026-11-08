@@ -408,6 +408,12 @@
           </div>
         </div>
         <Switch
+          label={t("lite.label")}
+          hint={t("lite.hint")}
+          checked={s.liteMode}
+          onchange={(v) => save({ liteMode: v })}
+        />
+        <Switch
           label={t("settings.followCursor")}
           hint={t("settings.followCursorHint")}
           checked={s.followCursor}

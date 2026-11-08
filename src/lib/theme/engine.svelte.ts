@@ -82,6 +82,8 @@ class ThemeEngine {
   /** The system asks for reduced motion (on Windows: "Show animations" is off, also in VMs and
    *  remote desktops). */
   systemReducedMotion = $state(false);
+  /** Lite mode (Settings → Appearance): the costly effects are off. */
+  lite = $state(false);
   /** The player turned effects on by hand: that beats the system request. */
   forceMotion = $state(false);
   get reducedMotion(): boolean {
