@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from "../components/Skeleton.svelte";
   // HUD modules and game features of the Aerion mod. The preview stands for the game screen:
   // modules are dragged into place there; everything else is set on the right. Changes are saved
   // as they are made and a running game picks them up within a second.
@@ -794,7 +795,7 @@
       </aside>
     </div>
   {:else}
-    <span class="muted small">{t("common.loading")}</span>
+    <Skeleton rows={4} height="3rem" />
   {/if}
 </div>
 

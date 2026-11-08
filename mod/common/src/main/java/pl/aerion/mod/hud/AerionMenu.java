@@ -229,6 +229,10 @@ public final class AerionMenu implements Page {
 	private float dt = 0.016f;
 
 	private final long openedAt = System.nanoTime();
+	/** The sidebar's highlight slides to the open section; and the page slides in when it changes. */
+	private float navY = -1, navTargetY = -1;
+	private String pageKey = "";
+	private long pageAt;
 
 	public AerionMenu() {}
 
@@ -553,6 +557,15 @@ public final class AerionMenu implements Page {
 		colW = mainW;
 		y = viewTop + 2 - scroll;
 		int start = y;
+		// A new page slides in from the side with a little overshoot.
+		String key = section + "/" + detail + "/" + sub;
+		if (!key.equals(pageKey)) {
+			pageKey = key;
+			pageAt = System.nanoTime();
+		}
+		float slideIn = animationsOn() ? Hud.spring(Math.min(1f, (System.nanoTime() - pageAt) / 2.8e8f)) : 1f;
+		g.push();
+		g.translate((1f - slideIn) * 14f, 0);
 		if (detail != null) detailBody();
 		else switch (section) {
 			case HUD -> tiles(mainX, mainW, found(List.of(Features.MODULE_IDS)));
@@ -563,6 +576,7 @@ public final class AerionMenu implements Page {
 			case KEYS -> keysPage();
 			case LOOK -> lookPage();
 		}
+		g.pop();
 		contentHeight = y - start + 6;
 		g.endScissor();
 		clipping = false;
@@ -579,6 +593,11 @@ public final class AerionMenu implements Page {
 		g.fill(left + SIDE - 6, top, left + SIDE, top + h, sidebar);
 		Logo.draw(g, AerionClient.theme(), left + 9, top + 8, 13);
 		int nx = left + 5, ny = top + 30;
+		if (animationsOn() && navTargetY >= 0) {
+			navY = navY < 0 ? navTargetY : navY + (navTargetY - navY) * Math.min(1f, dt * 14f);
+			if (Math.abs(navTargetY - navY) < 0.3f) navY = navTargetY;
+			Draw.rounded(g, nx, Math.round(navY), SIDE - 10, 16, 3, accent);
+		}
 		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + 5;
 		ny = navHead(nx, ny, "aerion.navhead.mods");
 		ny = navItem(nx, ny, Section.HUD, "fps", "aerion.nav.hud");
@@ -623,11 +642,15 @@ public final class AerionMenu implements Page {
 		int w = SIDE - 10, h = 16;
 		boolean on = section == which, over = inside(nx, ny, w, h);
 		float glow = ease("nav" + which, over ? 1 : 0);
-		// The open section is filled with the accent, the others light up under the pointer.
-		if (on) Draw.rounded(g, nx, ny, w, h, 3, over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent);
-		else if (glow > 0) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
-		Icons.draw(g, icon, nx + 5, ny + 3, 10, on ? accentText : over ? text : muted);
-		Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, on ? accentText : over ? text : muted);
+		// The open section is filled with the accent (a pill that slides there), the others light up under the pointer.
+		boolean slide = animationsOn() && navY >= 0;
+		if (on) navTargetY = ny;
+		float cover = slide ? Math.max(0f, 1f - Math.abs(navY - ny) / (h + 2f)) : on ? 1f : 0f;
+		if (on && !slide) Draw.rounded(g, nx, ny, w, h, 3, over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent);
+		else if (glow > 0 && cover < 0.5f) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
+		int fg = Colors.mix(over ? text : muted, accentText, cover);
+		Icons.draw(g, icon, nx + 5, ny + 3, 10, fg);
+		Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, fg);
 		hit(nx, ny, w, h, f -> {
 			section = which;
 			detail = null;

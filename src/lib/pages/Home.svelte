@@ -2,7 +2,6 @@
   import AdSlot from "../components/AdSlot.svelte";
   import Icon from "../components/Icon.svelte";
   import InstanceIcon from "../components/InstanceIcon.svelte";
-  import ProgressBar from "../components/ProgressBar.svelte";
   import SkinViewer from "../components/SkinViewer.svelte";
   import Logo from "../components/Logo.svelte";
   import { app } from "../stores/app.svelte";
@@ -82,12 +81,27 @@
       {:else if b.id === "play"}
         <div class="play-block">
           <div class="play-row">
-            <button class="item play" class:running onclick={play} disabled={!!launchTask && !running}>
+            <button
+              class="item play"
+              class:running
+              class:launching={!!launchTask && !running}
+              class:indeterminate={!!launchTask && !running && progress() === null}
+              style:--p={progress() ?? 0}
+              onclick={play}
+              disabled={!!launchTask && !running}
+            >
+              <span class="fill" aria-hidden="true"></span>
               <span class="main-label">
-                <Icon name={running ? "stop" : current ? "play" : "plus"} size={20} />
-                {running ? t("common.stop") : current ? t("common.play") : t("home.createFirst")}
+                {#if launchTask && !running}
+                  <span class="spinner sm"></span>{t("home.starting")}
+                {:else}
+                  <Icon name={running ? "stop" : current ? "play" : "plus"} size={20} />
+                  {running ? t("common.stop") : current ? t("common.play") : t("home.createFirst")}
+                {/if}
               </span>
-              {#if current}<span class="sub">{instanceTitle(current)}</span>{/if}
+              {#if launchTask && !running}
+                <span class="sub" aria-live="polite">{stageLabel()}</span>
+              {:else if current}<span class="sub">{instanceTitle(current)}</span>{/if}
             </button>
             {#if app.instances.length}
               <button
@@ -116,12 +130,6 @@
               </div>
             {/if}
           </div>
-          {#if launchTask}
-            <div class="launching" aria-live="polite">
-              <span class="tiny muted">{stageLabel()}</span>
-              <ProgressBar value={progress()} label={stageLabel()} />
-            </div>
-          {/if}
           <p class="status small faint">
             {#if !account}
               <button class="link" onclick={() => router.go("accounts")}>{t("home.signInHint")}</button>
@@ -303,6 +311,37 @@
   .item.play:hover:not(:disabled) {
     background: color-mix(in srgb, var(--c-accent) 30%, transparent);
   }
+  .item.play {
+    position: relative;
+    overflow: hidden;
+  }
+  /* While starting, the button fills with the accent as the launch advances. */
+  .item.play .fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--p) * 100%);
+    background: color-mix(in srgb, var(--c-accent) 38%, transparent);
+    transition: width var(--dur-slow) var(--ease);
+    pointer-events: none;
+  }
+  .item.play.launching:disabled {
+    opacity: 1;
+  }
+  .item.play.indeterminate .fill {
+    width: 40%;
+    animation: sweep 1.3s var(--ease) infinite;
+  }
+  @keyframes sweep {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(260%);
+    }
+  }
+  .item.play > :global(*:not(.fill)) {
+    position: relative;
+  }
   .item.play.running {
     background: color-mix(in srgb, var(--c-danger) 18%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-danger) 40%, transparent);
@@ -394,13 +433,6 @@
     font-size: 0.8rem;
     font-weight: 500;
     color: var(--c-text-muted);
-  }
-  .launching {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    padding: 0 0.5rem 0.5rem;
-    text-align: center;
   }
   .picker {
     position: absolute;

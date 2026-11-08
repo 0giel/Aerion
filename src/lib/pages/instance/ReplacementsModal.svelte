@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from "../../components/Skeleton.svelte";
   // Suggestions for a mod this instance can't use: known successors first, then similar
   // projects; each opens the normal project view to install it.
   import { openUrl } from "@tauri-apps/plugin-opener";
@@ -59,7 +60,7 @@
     {#if error}
       <div class="alert danger"><Icon name="alert" size={16} /><span>{error}</span></div>
     {:else if results === null}
-      <span class="small muted">{t("common.loading")}</span>
+      <Skeleton rows={3} height="2.4rem" />
     {:else if !results.length}
       <span class="small muted">{t("replacements.none")}</span>
     {:else}

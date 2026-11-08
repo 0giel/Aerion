@@ -152,6 +152,7 @@ const pl: Dict = {
     greeting: "Witaj ponownie, {name}",
     greetingAnon: "Witaj w Aerionie",
     noInstance: "Brak instancji",
+    starting: "Uruchamianie…",
     createFirst: "Utwórz pierwszą instancję",
     lastPlayed: "Ostatnio grane {when}",
     playTime: "Czas gry: {time}",

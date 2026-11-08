@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from "../../components/Skeleton.svelte";
   // Every version of one installed mod for this instance: install any of them (older ones too),
   // and keep the mod pinned so update checks leave the choice alone.
   import Modal from "../../components/Modal.svelte";
@@ -79,7 +80,7 @@
     {#if error}
       <div class="alert danger"><Icon name="alert" size={16} /><span>{error}</span></div>
     {:else if versions === null}
-      <span class="small muted">{t("common.loading")}</span>
+      <Skeleton rows={4} height="2.4rem" />
     {:else if !versions.length}
       <span class="small muted">{t("modVersions.none", { version: instance.gameVersion })}</span>
     {:else}

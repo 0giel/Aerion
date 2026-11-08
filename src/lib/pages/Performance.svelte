@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from "../components/Skeleton.svelte";
   // Live resource use: the computer, Aerion itself and running games (FPS from the Aerion mod).
   // Only measured numbers are shown; nothing is compared with other launchers.
   import Icon from "../components/Icon.svelte";
@@ -364,7 +365,7 @@
       </section>
     {/if}
   {:else if !error}
-    <span class="muted small">{t("common.loading")}</span>
+    <Skeleton rows={4} height="3rem" />
   {/if}
 </div>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from "./Skeleton.svelte";
   // Key bindings on a keyboard and a mouse: bound keys light up, keys with several actions turn
   // red, and a binding changes by pressing the new key. Works on an instance's game settings or
   // on the shared ones (instanceId null); writes options.txt through the launcher.
@@ -305,7 +306,7 @@
 
 <Modal bind:open title={title ?? t("keybinds.title")} width="64rem">
   {#if loading}
-    <span class="muted small">{t("common.loading")}</span>
+    <Skeleton rows={4} height="2.4rem" />
   {:else if !draft.length}
     <p class="small muted">{t(instanceId ? "keybinds.empty" : "keybinds.emptyShared")}</p>
   {:else}

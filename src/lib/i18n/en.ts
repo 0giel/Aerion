@@ -142,6 +142,7 @@ const en = {
     greeting: "Welcome back, {name}",
     greetingAnon: "Welcome to Aerion",
     noInstance: "No instance yet",
+    starting: "Starting…",
     createFirst: "Create your first instance",
     lastPlayed: "Last played {when}",
     playTime: "Played {time}",

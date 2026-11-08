@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from "../components/Skeleton.svelte";
   // Ready-made themes shared in the project's repository; one click installs and applies one.
   import { openUrl } from "@tauri-apps/plugin-opener";
   import Modal from "../components/Modal.svelte";
@@ -48,7 +49,7 @@
   {#if failed}
     <p class="small muted">{t("gallery.failed")}</p>
   {:else if !list}
-    <div class="row small muted"><span class="spinner"></span>{t("common.loading")}</div>
+    <Skeleton rows={3} height="5rem" />
   {:else}
     <div class="grid">
       {#each list as th (th.id)}
