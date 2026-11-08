@@ -9,6 +9,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.3",
+    notes: {
+      pl: [
+        "Animacje działają też wtedy, gdy Windows ma wyłączone efekty animacji: ustaw Efekty na „Wł.” w Ustawieniach → Wygląd → Interfejs. Wcześniej launcher po cichu je wyłączał.",
+        "Płynniejszy interfejs: karty nie rozmywają już tła, a okna dialogowe używają lżejszego przyciemnienia, więc przewijanie i animacje mniej obciążają kartę graficzną.",
+      ],
+      en: [
+        "Animations also work when Windows has animation effects turned off: set Effects to ‘On’ in Settings → Appearance → Interface. Before, the launcher silently turned them off.",
+        "A smoother interface: cards no longer blur the background and dialogs use a lighter dimming, so scrolling and animations are easier on the graphics card.",
+      ],
+    },
+  },
+  {
     version: "1.0.2",
     notes: {
       pl: [
