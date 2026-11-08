@@ -1,5 +1,5 @@
-// Interface effects that need the pointer: a soft light that follows the cursor behind the glass,
-// a ring where you click, and cards that lean towards the cursor. All of it runs only while the
+// Interface effects that need the pointer: a ring where you click, and cards that lean towards
+// the cursor. All of it runs only while the
 // "animations and effects" setting is on (`<html data-spring="on">`) and does nothing otherwise.
 
 const on = () => document.documentElement.dataset.spring === "on";
@@ -8,7 +8,6 @@ const on = () => document.documentElement.dataset.spring === "on";
 const CLICKABLE = "button, a, [role=button], .btn, .item";
 
 export function initFx(): () => void {
-  let glow: HTMLElement | null = null;
   let tilted: HTMLElement | null = null;
   let frame = 0;
   let px = 0;
@@ -24,11 +23,6 @@ export function initFx(): () => void {
 
   const paint = () => {
     frame = 0;
-    glow ??= document.getElementById("fx-glow");
-    if (glow) {
-      glow.style.opacity = "1";
-      glow.style.transform = `translate(${px - 260}px, ${py - 260}px)`;
-    }
     const card = document.elementFromPoint(px, py)?.closest<HTMLElement>("[data-tilt]") ?? null;
     if (card !== tilted) resetTilt();
     if (card) {
@@ -60,8 +54,6 @@ export function initFx(): () => void {
   };
 
   const leave = () => {
-    glow ??= document.getElementById("fx-glow");
-    if (glow) glow.style.opacity = "0";
     resetTilt();
   };
 

@@ -673,7 +673,7 @@ const pl: Dict = {
       iconSize: "Rozmiar ikon w menu",
       springy: "Animacje i efekty",
       springyHint:
-        "Sprężyste kliknięcia i wskakiwanie, przesuwające się podświetlenie menu, poświata za kursorem, fale po kliknięciu, przechylane karty i iskry. Wyłączone przy ograniczonym ruchu.",
+        "Sprężyste kliknięcia i wskakiwanie, przesuwające się podświetlenie menu, fale po kliknięciu, przechylane karty i iskry. Wyłączone przy ograniczonym ruchu.",
     },
     advancedHint: "Dla doświadczonych: sieć, logowanie Microsoft i inne rzadko zmieniane opcje.",
     javaAdvancedHint: "Preset JVM, automatyczna Java, własna Java dla wersji",

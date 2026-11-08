@@ -630,7 +630,7 @@ const en = {
       iconSize: "Menu icon size",
       springy: "Animations and effects",
       springyHint:
-        "Springy clicks and pop-ins, a sliding menu highlight, cursor glow, click rings, tilting cards and sparks. Off with reduced motion.",
+        "Springy clicks and pop-ins, a sliding menu highlight, click rings, tilting cards and sparks. Off with reduced motion.",
     },
     advancedHint: "For experienced users: network, Microsoft sign-in and other rarely changed options.",
     javaAdvancedHint: "JVM preset, automatic Java, Java per version",
