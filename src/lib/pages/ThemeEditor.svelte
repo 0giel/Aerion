@@ -302,7 +302,7 @@
         </div>
         <div class="field">
           <span class="label">{t("themeEditor.navMode")}</span>
-          <div class="segmented" role="group">
+          <div class="segmented wrap" role="group">
             {#each ["fixed", "hover", "icons"] as const as m (m)}
               <button aria-pressed={draft.layout.navMode === m} onclick={() => (draft.layout.navMode = m)}
                 >{t(`settings.ui.modes.${m}`)}</button

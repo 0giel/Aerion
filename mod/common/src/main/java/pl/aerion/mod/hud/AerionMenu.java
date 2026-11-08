@@ -1051,11 +1051,26 @@ public final class AerionMenu implements Page {
 			toggle(Lang.tr("aerion.feature.freelookHold"), HudConfig.bool(f, "hold", true), v -> f.addProperty("hold", v));
 		}
 		for (Option o : OPTIONS.getOrDefault(detail, List.of())) option(f, o);
+		if (detail.equals("badges")) badgePick(f);
 		if (detail.equals("hurtCam")) note(Lang.tr("aerion.hint.hurtCam"));
 		if (detail.equals("chat")) chatOpacity();
 		if (y == cardTop) note(Lang.tr(Features.key(detail) != null ? "aerion.hint.noOptions" : "aerion.hint.noOptionsSwitch"));
 		endCard();
 		if (List.of("freelook", "fullbright", "hitboxes", "overlays").contains(detail)) note(Lang.tr("aerion.panel.serverWarning"));
+	}
+
+	/** Which of your badges shows next to your own name (others see the first one on the list). */
+	private void badgePick(JsonObject f) {
+		List<String> owned = pl.aerion.mod.Badges.mine();
+		if (owned.isEmpty()) {
+			note(Lang.tr("aerion.badge.none"));
+			return;
+		}
+		List<String> values = new ArrayList<>(List.of("auto", "none"));
+		values.addAll(owned);
+		String[] ids = values.toArray(new String[0]);
+		cycle(Lang.tr("aerion.badge.mine"), ids, choiceLabels(ids), HudConfig.opt(f, "mine", "auto"), v -> setOption(f, "mine", v));
+		note(Lang.tr("aerion.badge.hint"));
 	}
 
 	/** The game's own chat options, here because they belong with the rest. */

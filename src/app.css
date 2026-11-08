@@ -468,6 +468,10 @@ input[type="color"]::-webkit-color-swatch {
   background: color-mix(in srgb, var(--c-bg) 50%, var(--c-surface));
   border: 1px solid var(--c-border);
 }
+.segmented.wrap {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
 .segmented button {
   border: 0;
   background: transparent;

@@ -355,10 +355,10 @@
             >
           </div>
         </div>
-        <div class="grid2">
+        <div class="col gap-3">
           <div class="field">
             <span class="label">{t("settings.ui.navSide")}</span>
-            <div class="segmented" role="group" aria-label={t("settings.ui.navSide")}>
+            <div class="segmented wrap" role="group" aria-label={t("settings.ui.navSide")}>
               {#each NAV_SIDES as v (v)}
                 <button
                   type="button"
@@ -370,7 +370,7 @@
           </div>
           <div class="field">
             <span class="label">{t("settings.ui.navMode")}</span>
-            <div class="segmented" role="group" aria-label={t("settings.ui.navMode")}>
+            <div class="segmented wrap" role="group" aria-label={t("settings.ui.navMode")}>
               {#each ["theme", ...NAV_MODES] as v (v)}
                 <button
                   type="button"
@@ -385,7 +385,7 @@
         <div class="field">
           <span class="label">{t("settings.ui.springy")}</span>
           <span class="small muted">{t("settings.ui.springyHint")}</span>
-          <div class="segmented" role="group" aria-label={t("settings.ui.springy")}>
+          <div class="segmented wrap" role="group" aria-label={t("settings.ui.springy")}>
             {#each ["theme", "on", "off"] as const as v (v)}
               <button
                 type="button"

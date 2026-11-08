@@ -23,19 +23,31 @@ struct List {
     players: Vec<Player>,
 }
 
+/// A player's badges: `badge` for one, `badges` for several (the first is the one others see).
 #[derive(Deserialize)]
 struct Player {
     uuid: String,
-    badge: String,
+    #[serde(default)]
+    badge: Option<String>,
+    #[serde(default)]
+    badges: Vec<String>,
 }
 
 pub fn file(paths: &Paths) -> PathBuf {
     paths.aerion_mod_dir().join("badges.json")
 }
 
-/// Badge per player (UUID without dashes, lower case). Entries with a malformed UUID or badge
-/// id are skipped; the mod ignores badge ids it doesn't know.
-fn parse(bytes: &[u8]) -> Option<BTreeMap<String, String>> {
+/// Every badge of every player, for mods that let a player pick which of their own to show.
+/// `file` keeps only the first badge as a plain string, which older mods read.
+pub fn file_all(paths: &Paths) -> PathBuf {
+    paths.aerion_mod_dir().join("badges-all.json")
+}
+
+const MAX_BADGES: usize = 8;
+
+/// Badges per player (UUID without dashes, lower case). Entries with a malformed UUID are
+/// skipped, as are malformed badge ids; the mod ignores badge ids it doesn't know.
+fn parse(bytes: &[u8]) -> Option<BTreeMap<String, Vec<String>>> {
     let list: List = serde_json::from_slice(bytes).ok()?;
     let map = list
         .players
@@ -45,9 +57,15 @@ fn parse(bytes: &[u8]) -> Option<BTreeMap<String, String>> {
                 .ok()?
                 .simple()
                 .to_string();
-            let ok = (1..=24).contains(&p.badge.len())
-                && p.badge.chars().all(|c| c.is_ascii_alphanumeric());
-            ok.then_some((uuid, p.badge))
+            let mut badges: Vec<String> = Vec::new();
+            for b in p.badge.into_iter().chain(p.badges) {
+                let ok =
+                    (1..=24).contains(&b.len()) && b.chars().all(|c| c.is_ascii_alphanumeric());
+                if ok && !badges.contains(&b) && badges.len() < MAX_BADGES {
+                    badges.push(b);
+                }
+            }
+            (!badges.is_empty()).then_some((uuid, badges))
         })
         .take(MAX_PLAYERS)
         .collect();
@@ -65,8 +83,12 @@ pub async fn refresh(engine: &Engine) {
         tracing::warn!("badges: list is not valid JSON");
         return;
     };
-    if let Err(e) = crate::util::fs::write_json(file(&engine.paths), &map).await {
+    let first: BTreeMap<&String, &String> = map.iter().map(|(k, v)| (k, &v[0])).collect();
+    if let Err(e) = crate::util::fs::write_json(file(&engine.paths), &first).await {
         tracing::warn!(error = %e, "badges: can't save the list");
+    }
+    if let Err(e) = crate::util::fs::write_json(file_all(&engine.paths), &map).await {
+        tracing::warn!(error = %e, "badges: can't save the full list");
     }
 }
 
@@ -85,7 +107,21 @@ mod tests {
         )
         .unwrap();
         assert_eq!(map.len(), 1);
-        assert_eq!(map["b2813a7bbba34b00ae624a6bdad17a91"], "creator");
+        assert_eq!(map["b2813a7bbba34b00ae624a6bdad17a91"], ["creator"]);
         assert!(parse(b"<html>").is_none());
+    }
+
+    #[test]
+    fn several_badges_keep_their_order() {
+        let map = parse(
+            br#"{"players":[
+                {"uuid":"b2813a7b-bba3-4b00-ae62-4a6bdad17a91","badge":"creator","badges":["tester","creator","bad id"]}
+            ]}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            map["b2813a7bbba34b00ae624a6bdad17a91"],
+            ["creator", "tester"]
+        );
     }
 }
