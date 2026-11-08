@@ -36,7 +36,7 @@ abstract class AbstractButtonMixin {
 	@Inject(method = "extractDefaultSprite", at = @At("HEAD"), cancellable = true)
 	private void aerion$button(GuiGraphicsExtractor g, CallbackInfo ci) {
 		Draw.current = new Gfx(g);
-		Theme t = AerionClient.colors();
+		Theme t = AerionClient.buttons();
 		if (t == null) return;
 		AbstractButton b = (AbstractButton) (Object) this;
 		boolean motion = Motion.on();
@@ -112,7 +112,7 @@ abstract class AbstractButtonMixin {
 	/** Labels in smooth text; anything too long or in an unknown script stays with the game. */
 	@Inject(method = "extractDefaultLabel", at = @At("HEAD"), cancellable = true)
 	private void aerion$label(ActiveTextCollector out, CallbackInfo ci) {
-		if (AerionClient.colors() == null || Draw.current == null) return;
+		if (AerionClient.buttons() == null || Draw.current == null) return;
 		AbstractButton b = (AbstractButton) (Object) this;
 		int a = Math.round(b.getAlpha() * 255);
 		if (Draw.label(Draw.current, b.getMessage().getString(), b.getX(), b.getY(), b.getWidth(), b.getHeight(), b.isActive(), a)) ci.cancel();

@@ -1012,6 +1012,11 @@ export type HudFeatures_Deserialize = {
 	 *  `options.edges`); on unless switched off.
 	 */
 	inventory?: OnFeature_Deserialize,
+	/**
+	 *  Which parts of the game's menus follow the theme (`options.buttons`, `background`,
+	 *  `player`, "0" turns one off); all on unless switched off.
+	 */
+	menus?: OnFeature_Deserialize,
 	waypoints?: FeatureOptions_Deserialize,
 	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
 	badges?: OnFeature_Deserialize,
@@ -1044,6 +1049,11 @@ export type HudFeatures_Serialize = {
 	 *  `options.edges`); on unless switched off.
 	 */
 	inventory: OnFeature_Serialize,
+	/**
+	 *  Which parts of the game's menus follow the theme (`options.buttons`, `background`,
+	 *  `player`, "0" turns one off); all on unless switched off.
+	 */
+	menus: OnFeature_Serialize,
 	waypoints: FeatureOptions_Serialize,
 	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
 	badges: OnFeature_Serialize,

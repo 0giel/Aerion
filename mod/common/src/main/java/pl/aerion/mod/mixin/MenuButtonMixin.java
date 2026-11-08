@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.aerion.mod.Host;
 import pl.aerion.mod.Lang;
+import pl.aerion.mod.MenuLook;
 import pl.aerion.mod.TitleCard;
 import pl.aerion.mod.hud.HudEditor;
 import pl.aerion.mod.platform.EditorScreen;
@@ -34,7 +35,7 @@ abstract class MenuButtonMixin extends Screen {
 						b -> Game.setScreen(new EditorScreen(new HudEditor(), self)))
 				.bounds(width - 64, 4, 60, 20)
 				.build());
-		int[] card = self instanceof TitleScreen ? TitleCard.place(width, height) : null;
+		int[] card = self instanceof TitleScreen && MenuLook.player() ? TitleCard.place(width, height) : null;
 		if (card != null) {
 			int w = width, h = height;
 			int[] b = TitleCard.button(card);

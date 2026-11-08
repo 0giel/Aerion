@@ -47,7 +47,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "inventory", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -142,6 +142,7 @@ public final class AerionMenu implements Page {
 			Map.entry("worldLook", List.of(
 					Option.toggle("fixTime", true), Option.number("hour", 12, 0, 23), Option.select("weather", "clear", "game", "clear", "rain", "thunder"))),
 			Map.entry("hitColor", List.of(Option.colour("color", "#55aaff"), Option.number("opacity", 70, 0, 100))),
+			Map.entry("menus", List.of(Option.toggle("buttons", true), Option.toggle("background", true), Option.toggle("player", true))),
 			Map.entry("inventory", List.of(
 					Option.colour("panel", "theme"), Option.number("panelOpacity", 100, 10, 100),
 					Option.colour("slotColor", "theme"), Option.number("slotOpacity", 100, 0, 100),
@@ -181,7 +182,7 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	private enum Section { HUD, PROFILES, FEATURES, SOUNDS, WAYPOINTS, KEYS, LOOK }
+	private enum Section { HUD, PROFILES, FEATURES, SOUNDS, WAYPOINTS, KEYS, GAME, LOOK }
 
 	private enum Sub { GENERAL, LOOK, KEY }
 
@@ -307,7 +308,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private static boolean enabled(HudConfig cfg, String id) {
-		return HudConfig.bool(item(cfg, id), "enabled", id.equals("zoom") || id.equals("badges") || id.equals("inventory"));
+		return HudConfig.bool(item(cfg, id), "enabled", id.equals("zoom") || id.equals("badges"));
 	}
 
 	private void toLayout() {
@@ -578,6 +579,7 @@ public final class AerionMenu implements Page {
 			case WAYPOINTS -> waypointsPage();
 			case PROFILES -> profilesPage();
 			case KEYS -> keysPage();
+			case GAME -> gamePage();
 			case LOOK -> lookPage();
 		}
 		g.pop();
@@ -612,6 +614,7 @@ public final class AerionMenu implements Page {
 		ny = navItem(nx, ny, Section.WAYPOINTS, "waypoints", "aerion.nav.waypoints");
 		ny = navItem(nx, ny, Section.KEYS, "keys", "aerion.nav.keys") + 5;
 		ny = navHead(nx, ny, "aerion.navhead.look");
+		ny = navItem(nx, ny, Section.GAME, "inventory", "aerion.nav.game");
 		navItem(nx, ny, Section.LOOK, "look", "aerion.nav.look");
 		// The player at the foot, as in the launcher's sidebar.
 		int py = top + h - 26;
@@ -674,6 +677,7 @@ public final class AerionMenu implements Page {
 			case SOUNDS -> "sounds";
 			case WAYPOINTS -> "waypoints";
 			case KEYS -> "keys";
+			case GAME -> "game";
 			case LOOK -> "look";
 		};
 		Txt.draw(g, Lang.tr("aerion.nav." + key), mx, my + 6, TITLE, text);
@@ -744,7 +748,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private boolean searchable() {
-		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK && section != Section.WAYPOINTS && section != Section.PROFILES;
+		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK && section != Section.GAME && section != Section.WAYPOINTS && section != Section.PROFILES;
 	}
 
 	/** Typing goes straight here, so there is nothing to click first. */
@@ -1198,6 +1202,22 @@ public final class AerionMenu implements Page {
 			Icons.draw(g, "undo", ix + 1, iy + 1, 9, over ? text : muted);
 			hit(ix, iy, 11, 11, f -> reset(key), false);
 		}
+	}
+
+	/** What the game's own screens look like: themed buttons, background and player, and the inventory. */
+	private void gamePage() {
+		HudConfig cfg = AerionClient.hud();
+		JsonObject menus = cfg.feature("menus");
+		beginCard(Lang.tr("aerion.sec.menus"));
+		for (Option o : OPTIONS.get("menus")) option(menus, o, "menus");
+		note(Lang.tr("aerion.hint.menus"));
+		endCard();
+		JsonObject inv = cfg.feature("inventory");
+		beginCard(Lang.tr("aerion.feature.inventory"));
+		toggle(Lang.tr("aerion.panel.enabled"), HudConfig.bool(inv, "enabled", true), v -> inv.addProperty("enabled", v));
+		for (Option o : OPTIONS.get("inventory")) option(inv, o, "inventory");
+		note(Lang.tr("aerion.desc.inventory"));
+		endCard();
 	}
 
 	private void lookPage() {

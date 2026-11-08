@@ -20,7 +20,7 @@ import pl.aerion.mod.platform.Gfx;
 abstract class ScreenMixin {
 	@Inject(method = "renderPanorama", at = @At("HEAD"), cancellable = true)
 	private void aerion$panorama(GuiGraphics g, float delta, CallbackInfo ci) {
-		Theme t = AerionClient.colors();
+		Theme t = AerionClient.backdrop();
 		if (t == null) return;
 		Draw.background(new Gfx(g), t, 0xFF);
 		Backdrop.draw(new Gfx(g), t);
@@ -32,7 +32,7 @@ abstract class ScreenMixin {
 	@Inject(method = "renderPanorama", at = @At("TAIL"))
 	private void aerion$panoramaParticles(GuiGraphics g, float delta, CallbackInfo ci) {
 		Theme t = AerionClient.theme();
-		if (t != null && !t.colors) Particles.draw(new Gfx(g), t);
+		if (t != null && AerionClient.backdrop() == null) Particles.draw(new Gfx(g), t);
 	}
 
 	@Inject(
@@ -44,7 +44,7 @@ abstract class ScreenMixin {
 			ci.cancel();
 			return;
 		}
-		Theme t = AerionClient.colors();
+		Theme t = AerionClient.backdrop();
 		if (t == null) return;
 		g.fill(x, y, x + w, y + h, Colors.alpha(Draw.behindText(t, t.surface), 0x8C));
 		ci.cancel();
@@ -57,7 +57,7 @@ abstract class ScreenMixin {
 			ci.cancel();
 			return;
 		}
-		Theme t = AerionClient.colors();
+		Theme t = AerionClient.backdrop();
 		if (t == null) return;
 		Draw.background(new Gfx(g), t, 0xA0);
 		ci.cancel();

@@ -99,6 +99,18 @@ public final class AerionClient implements ClientModInitializer {
 		return t != null && t.colors ? t : null;
 	}
 
+	/** The theme when buttons and sliders should be drawn in its colours. */
+	public static Theme buttons() {
+		Theme t = colors();
+		return t != null && MenuLook.buttons() ? t : null;
+	}
+
+	/** The theme when the menu backgrounds should be drawn in its colours. */
+	public static Theme backdrop() {
+		Theme t = colors();
+		return t != null && MenuLook.background() ? t : null;
+	}
+
 	private static boolean keysSorted;
 
 	/** Called every client tick (20 per second, also in menus); checks the file once a second. */

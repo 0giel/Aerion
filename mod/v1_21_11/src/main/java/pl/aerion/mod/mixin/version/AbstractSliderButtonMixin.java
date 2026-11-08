@@ -26,7 +26,7 @@ abstract class AbstractSliderButtonMixin {
 	private void aerion$track(
 			GuiGraphics g, RenderPipeline p, Identifier s, int x, int y, int w, int h, int c, Operation<Void> original) {
 		Draw.current = new Gfx(g);
-		Theme t = AerionClient.colors();
+		Theme t = AerionClient.buttons();
 		if (t == null) {
 			original.call(g, p, s, x, y, w, h, c);
 			return;
@@ -40,7 +40,7 @@ abstract class AbstractSliderButtonMixin {
 	@WrapOperation(method = "renderWidget", at = @At(value = "INVOKE", target = BLIT, ordinal = 1))
 	private void aerion$handle(
 			GuiGraphics g, RenderPipeline p, Identifier s, int x, int y, int w, int h, int c, Operation<Void> original) {
-		Theme t = AerionClient.colors();
+		Theme t = AerionClient.buttons();
 		if (t == null) {
 			original.call(g, p, s, x, y, w, h, c);
 			return;
@@ -55,7 +55,7 @@ abstract class AbstractSliderButtonMixin {
 					value = "INVOKE",
 					target = "Lnet/minecraft/client/gui/components/AbstractSliderButton;renderScrollingStringOverContents(Lnet/minecraft/client/gui/ActiveTextCollector;Lnet/minecraft/network/chat/Component;I)V"))
 	private void aerion$label(AbstractSliderButton b, ActiveTextCollector out, Component text, int margin, Operation<Void> original) {
-		boolean smooth = AerionClient.colors() != null && Draw.current != null
+		boolean smooth = AerionClient.buttons() != null && Draw.current != null
 				&& Draw.label(Draw.current, text.getString(), b.getX(), b.getY(), b.getWidth(), b.getHeight(), b.isActive(), Math.round(b.getAlpha() * 255));
 		if (!smooth) original.call(b, out, text, margin);
 	}
