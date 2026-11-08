@@ -295,20 +295,23 @@ pub async fn plan(
             count_mods(&game_dir),
         )
     });
-    let max_memory_mb = inst.max_memory_mb.or(settings.max_memory_mb).unwrap_or_else(|| {
-        auto.as_ref().map_or_else(
-            || default_max_memory_mb(total_memory_mb(), inst.loader.is_modded()),
-            |a| a.max_mb,
-        )
-    });
+    let max_memory_mb = inst
+        .max_memory_mb
+        .or(settings.max_memory_mb)
+        .unwrap_or_else(|| {
+            auto.as_ref().map_or_else(
+                || default_max_memory_mb(total_memory_mb(), inst.loader.is_modded()),
+                |a| a.max_mb,
+            )
+        });
     // A preset chosen by hand (in the instance, or other than the standard one in the settings)
     // always wins over the automatic one.
-    let preset = inst.jvm_preset.unwrap_or(
-        match (&auto, settings.jvm_preset) {
+    let preset = inst
+        .jvm_preset
+        .unwrap_or(match (&auto, settings.jvm_preset) {
             (Some(a), JvmPreset::Standard) => a.preset,
             (_, chosen) => chosen,
-        },
-    );
+        });
     prepare_game_dir(&prepared, &game_dir).await?;
     let mut share_back = false;
     if inst.shared_options {
