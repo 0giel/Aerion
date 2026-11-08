@@ -51,10 +51,21 @@ public final class Logo {
 		int x = (screenWidth - w) / 2;
 		int y = top + 2;
 		int ink = Colors.mix(0xFFFFFFFF, t.accent, 0.12f) & 0xFFFFFF;
+		// With animations on the logo floats a little, follows the pointer slightly, and the
+		// sparkle twinkles.
+		boolean motion = Motion.on();
+		float time = Motion.seconds();
+		int spark = a;
+		g.push();
+		if (motion) {
+			g.translate(Motion.mouseX() * 1.6f, (float) Math.sin(time * 1.1) * 0.9f + Motion.mouseY() * 0.6f);
+			spark = Math.round(a * (0.55f + 0.45f * (0.5f + 0.5f * (float) Math.sin(time * 2.4))));
+		}
 		// A soft shadow, like the game's own title, then the logo and the accent sparkle.
 		g.texture(MAIN, x + 1, y + 1, w, h, TEX_W, TEX_H, (a * 45 / 100) << 24);
 		g.texture(MAIN, x, y, w, h, TEX_W, TEX_H, (a << 24) | ink);
-		g.texture(SPARK, x, y, w, h, TEX_W, TEX_H, (a << 24) | (t.accent & 0xFFFFFF));
+		g.texture(SPARK, x, y, w, h, TEX_W, TEX_H, (spark << 24) | (t.accent & 0xFFFFFF));
+		g.pop();
 		return true;
 	}
 

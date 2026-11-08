@@ -809,6 +809,8 @@ export type GameTheme_Deserialize = {
 	colors: boolean,
 	particles: string,
 	logo: boolean,
+	/**  The info panel and shortcuts on the title screen (missing = on). */
+	titleExtras?: boolean,
 	/**
 	 *  Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
 	 *  `animations` overrides it.
@@ -849,6 +851,8 @@ export type GameTheme_Serialize = {
 	colors: boolean,
 	particles: string,
 	logo: boolean,
+	/**  The info panel and shortcuts on the title screen (missing = on). */
+	titleExtras: boolean,
 	/**
 	 *  Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
 	 *  `animations` overrides it.
@@ -876,6 +880,8 @@ export type GameUiPrefs_Deserialize = {
 	particles?: boolean,
 	/**  The Aerion logo instead of the Minecraft logo on the title screen. */
 	logo?: boolean,
+	/**  The info panel and shortcuts on the title screen. */
+	titleExtras?: boolean,
 };
 
 /**  What the Aerion mod changes in the game (Settings → Appearance → In game). */
@@ -886,6 +892,8 @@ export type GameUiPrefs_Serialize = {
 	particles: boolean,
 	/**  The Aerion logo instead of the Minecraft logo on the title screen. */
 	logo: boolean,
+	/**  The info panel and shortcuts on the title screen. */
+	titleExtras: boolean,
 };
 
 export type GameUse = GameUse_Serialize | GameUse_Deserialize;

@@ -687,6 +687,7 @@ const pl: Dict = {
       colors: "Przyciski, suwaki i tła menu w kolorach motywu",
       particles: "Cząsteczki w menu (jak w tle launchera)",
       logo: "Logo Aeriona zamiast logo Minecrafta",
+      titleExtras: "Panel informacji i skróty na ekranie głównym gry",
     },
     checkModUpdates: "Sprawdzaj aktualizacje modów w tle",
     checkModUpdatesHint:

@@ -7,7 +7,7 @@ const files = import.meta.glob("../../../themes/builtin/*.json", {
   import: "default",
 }) as Record<string, Theme>;
 const nocturne = Object.values(files).find((t) => t.id === "nocturne")!;
-const prefs = { colors: true, particles: true, logo: true };
+const prefs = { colors: true, particles: true, logo: true, titleExtras: true };
 
 describe("game theme", () => {
   it("takes gradient stops from the CSS gradient", () => {
@@ -31,8 +31,9 @@ describe("game theme", () => {
   });
 
   it("passes the player's choices", () => {
-    const g = toGameTheme(nocturne, { colors: false, particles: false, logo: true });
+    const g = toGameTheme(nocturne, { colors: false, particles: false, logo: true, titleExtras: false });
     expect([g.colors, g.particles, g.logo]).toEqual([false, "none", true]);
+    expect(g.titleExtras).toBe(false);
     expect(toGameTheme(nocturne, prefs).particles).toBe(nocturne.background.particles);
   });
 });

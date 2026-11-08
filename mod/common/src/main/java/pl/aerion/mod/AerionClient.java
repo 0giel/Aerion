@@ -121,6 +121,11 @@ public final class AerionClient implements ClientModInitializer {
 		} catch (RuntimeException e) {
 			warnOnce("host", e);
 		}
+		try {
+			LastPlayed.tick(Minecraft.getInstance());
+		} catch (RuntimeException e) {
+			warnOnce("last-played", e);
+		}
 		if (++ticks % 20 != 0) return;
 		if (file != null) reload();
 		if (hudFile != null) reloadHud();

@@ -587,9 +587,17 @@ public final class Lang {
 			Map.entry("aerion.filter.off", new String[] {"Disabled", "Wyłączone"}),
 			Map.entry("aerion.state.on", new String[] {"On", "Wł."}),
 			Map.entry("aerion.state.off", new String[] {"Off", "Wył."}),
+			Map.entry("aerion.title.night", new String[] {"Good night", "Dobrej nocy"}),
+			Map.entry("aerion.title.morning", new String[] {"Good morning", "Dzień dobry"}),
+			Map.entry("aerion.title.afternoon", new String[] {"Good afternoon", "Miłego popołudnia"}),
+			Map.entry("aerion.title.evening", new String[] {"Good evening", "Dobry wieczór"}),
+			Map.entry("aerion.title.mods", new String[] {"{n} mods", "Modów: {n}"}),
+			Map.entry("aerion.title.back", new String[] {"Back to: {name}", "Wróć: {name}"}),
+			Map.entry("aerion.title.screenshots", new String[] {"Screenshots", "Zrzuty ekranu"}),
+			Map.entry("aerion.title.folder", new String[] {"Game folder", "Folder gry"}),
 			Map.entry("aerion.host.failed", new String[] {"Aerion: couldn't open the world to others.", "Aerion: nie udało się otworzyć świata dla innych."}));
 
-	private static boolean polish() {
+	public static boolean polish() {
 		Minecraft mc = Minecraft.getInstance();
 		return mc != null && mc.options != null && mc.options.languageCode != null && mc.options.languageCode.startsWith("pl");
 	}

@@ -17,8 +17,13 @@ public final class Backdrop {
 		int w = g.width(), h = g.height();
 		float time = (System.nanoTime() % 3_600_000_000_000L) / 1e9f;
 		int mid = t.gradient[t.gradient.length / 2];
+		// The ribbons drift a little against the pointer; their ends fade out, so no edge shows.
+		boolean motion = Motion.on();
+		g.push();
+		if (motion) g.translate(-Motion.mouseX() * 6f, -Motion.mouseY() * 2f);
 		ribbon(g, w, h, time, 0.24f, 0.11f, t.accent, t.light ? 0x26 : 0x48, 0f);
 		ribbon(g, w, h, time * 0.8f, 0.34f, 0.08f, Colors.mix(t.accent, mid, 0.5f), t.light ? 0x1C : 0x34, 2.1f);
+		g.pop();
 		if (!t.light) g.gradient(0, h * 3 / 5, w, h, 0x00000000, 0x55000000);
 	}
 

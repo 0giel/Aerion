@@ -411,7 +411,7 @@
             ><Icon name="sliders" size={15} />{t("hudEditor.open")}</button
           >
         </div>
-        {#each ["colors", "particles", "logo"] as const as key (key)}
+        {#each ["colors", "particles", "logo", "titleExtras"] as const as key (key)}
           <Switch
             label={t(`settings.inGameOptions.${key}`)}
             checked={s.gameUi[key]}

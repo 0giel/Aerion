@@ -53,6 +53,8 @@ public final class Particles {
 		t += steps;
 		// White on the (dimmed) backgrounds, like the launcher's text colour on dark themes.
 		int color = theme.light ? 0xFFFFFF : theme.text & 0xFFFFFF;
+		// Nearer (faster) specks shift more with the pointer, which gives the menu some depth.
+		float par = Motion.on() ? -Motion.mouseX() * 2.2f : 0f;
 		for (int i = 0; i < parts.length; i++) {
 			P p = parts[i];
 			p.x += p.vx * steps + (float) Math.sin((t + p.phase * 50) * 0.01) * 0.03f;
@@ -67,7 +69,7 @@ public final class Particles {
 				default -> 0.15f + 0.30f * tw;
 			};
 			int c = ((int) (alpha * 255) << 24) | color;
-			int x = Math.round(p.x);
+			int x = Math.round(p.x + par * (0.6f + p.speed));
 			int y = Math.round(p.y);
 			if (kind.equals("sparkles")) {
 				// A small four-pointed star: a plus sign whose arms grow with the particle.

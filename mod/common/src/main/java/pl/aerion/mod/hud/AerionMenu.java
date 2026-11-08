@@ -1258,7 +1258,7 @@ public final class AerionMenu implements Page {
 	}
 
 	/** Menu animations (springy window and tiles); also read by the launcher's switch. */
-	static boolean animationsOn() {
+	public static boolean animationsOn() {
 		HudConfig cfg = AerionClient.hud();
 		// What the HUD file says, else what the theme says.
 		pl.aerion.mod.Theme t = AerionClient.theme();
