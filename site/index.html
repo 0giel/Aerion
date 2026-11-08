@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aerion — launcher Minecrafta z własnym HUD-em</title>
+  <meta name="description" content="Szybki, lekki i bardzo konfigurowalny launcher Minecraft: Java Edition z własnym modem: HUD, profile, mapa, motywy. Bez zbierania danych.">
+  <meta property="og:title" content="Aerion — launcher Minecrafta z własnym HUD-em">
+  <meta property="og:description" content="Szybki i konfigurowalny launcher Minecraft z własnym modem i HUD-em.">
+  <meta property="og:image" content="https://0giel.github.io/Aerion/assets/og.jpg">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#top" aria-label="Aerion"><img src="assets/icon.png" alt="" width="32" height="32"><span>Aerion</span></a>
+    <nav aria-label="Sekcje">
+      <a href="#hud" data-i18n="nav.hud">HUD</a>
+      <a href="#features" data-i18n="nav.features">Funkcje</a>
+      <a href="#start" data-i18n="nav.start">Jak zacząć</a>
+      <a href="#faq" data-i18n="nav.faq">FAQ</a>
+    </nav>
+    <button id="lang" class="lang" type="button" aria-label="Language / Język">EN</button>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <p class="pill" data-i18n-html="hero.pill">Wersja <span id="version">1.0</span> · Windows i Linux</p>
+      <h1 data-i18n-html="hero.title">Launcher Minecrafta<br>z własnym <em>HUD-em</em></h1>
+      <p class="lead" data-i18n="hero.lead">Szybki, lekki i bardzo konfigurowalny. Własny mod z HUD-em układanym myszką, motywy w menu gry, mody z Modrinth i zero zbierania danych.</p>
+      <div class="cta">
+        <a class="btn primary" id="download" href="https://github.com/0giel/Aerion/releases/latest" data-i18n="hero.download">Pobierz</a>
+        <a class="btn" href="https://discord.gg/AuqDh2Hkgu" data-i18n="hero.discord">Dołącz do Discorda</a>
+        <a class="btn ghost" href="https://github.com/0giel/Aerion" data-i18n="hero.source">Kod na GitHubie</a>
+      </div>
+      <p class="small" data-i18n="hero.need">Wymaga konta Microsoft z kupionym Minecraftem: Java Edition.</p>
+      <figure class="shot hero-shot"><img src="assets/home.webp" alt="Ekran główny Aeriona" width="1200" height="760"></figure>
+    </section>
+
+    <section id="hud" class="split">
+      <div class="text">
+        <h2 data-i18n="hud.title">HUD, który układasz po swojemu</h2>
+        <p data-i18n="hud.text">Ponad dwadzieścia modułów — FPS, współrzędne, strefy, klawisze, mapa — każdy z własnym wyglądem, kotwicą i regułami: pokazuj w walce, ukryj pod ziemią, zniknij po kilku sekundach.</p>
+        <ul>
+          <li data-i18n="hud.b1">Przeciągaj i zmieniaj rozmiar, przyciąganie do krawędzi</li>
+          <li data-i18n="hud.b2">Profile (PvP, budowanie, survival) przełączane klawiszem lub same po wejściu na serwer</li>
+          <li data-i18n="hud.b3">Gotowe style: Minimal, Szkło, Neon, Retro</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/in-game-hud.webp" alt="HUD w świecie gry" loading="lazy" width="1280" height="720"></figure>
+    </section>
+
+    <section class="split flip">
+      <figure class="shot"><img src="assets/themes.webp" alt="Motywy i edytor" loading="lazy" width="1200" height="760"></figure>
+      <div class="text">
+        <h2 data-i18n="theme.title">Twój motyw także w grze</h2>
+        <p data-i18n="theme.text">Edytor motywów z podglądem na żywo, galeria motywów i animowane tła. Kolory launchera trafiają do menu Minecrafta, a położenie menu, jego styl i efekty ustawiasz w samym motywie.</p>
+        <ul>
+          <li data-i18n="theme.b1">Menu z lewej, prawej, góry lub dołu, rozwijane po najechaniu</li>
+          <li data-i18n="theme.b2">Sprężyste animacje i efekty, które wyłączysz jednym przełącznikiem</li>
+          <li data-i18n="theme.b3">Domyślnie złoty Amber, a do wyboru kilka motywów</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <h2 data-i18n="f.title">Wszystko, czego potrzeba do grania</h2>
+      <div class="grid">
+        <article><h3 data-i18n="f.1t">Mody i paczki</h3><p data-i18n="f.1d">Fabric, Quilt, Forge i NeoForge, mody i paczki z Modrinth jednym kliknięciem, z zależnościami.</p></article>
+        <article><h3 data-i18n="f.2t">Mapa i punkty</h3><p data-i18n="f.2d">Mapa w grze z dodawaniem punktów, punkt śmierci i udostępnianie współrzędnych na czacie.</p></article>
+        <article><h3 data-i18n="f.3t">Edytor klawiszy</h3><p data-i18n="f.3d">Klawiatura w grze z podświetlonymi konfliktami, także wspólna w launcherze.</p></article>
+        <article><h3 data-i18n="f.4t">Naprawa awarii</h3><p data-i18n="f.4d">Analiza błędów gry i poprawki jednym kliknięciem, konsola gry w launcherze.</p></article>
+        <article><h3 data-i18n="f.5t">Aktualizacje same</h3><p data-i18n="f.5d">Launcher pobiera nowe wersje w tle, a mod aktualizuje się niezależnie od niego.</p></article>
+        <article><h3 data-i18n="f.6t">Prywatność</h3><p data-i18n="f.6d">Bez zbierania danych. Kod otwarty na licencji GPL-3.0.</p></article>
+      </div>
+      <figure class="shot wide"><img src="assets/mods.webp" alt="Przeglądarka modów" loading="lazy" width="1200" height="760"></figure>
+    </section>
+
+    <section id="start" class="steps">
+      <h2 data-i18n="s.title">Jak zacząć</h2>
+      <ol>
+        <li><strong data-i18n="s.1t">Pobierz</strong><span data-i18n="s.1d">Instalator dla Windows lub pakiet dla Linuksa z najnowszego wydania.</span></li>
+        <li><strong data-i18n="s.2t">Zaloguj się</strong><span data-i18n="s.2d">Kontem Microsoft, na którym masz Minecraft: Java Edition.</span></li>
+        <li><strong data-i18n="s.3t">Zagraj</strong><span data-i18n="s.3d">Utwórz instancję z modem Aeriona i naciśnij Graj. Prawy Shift w grze otwiera edytor HUD.</span></li>
+      </ol>
+    </section>
+
+    <section id="faq" class="faq">
+      <h2 data-i18n="q.title">Pytania</h2>
+      <details><summary data-i18n="q.1q">Czy to legalne i bezpieczne?</summary><p data-i18n="q.1a">Tak. Logujesz się oficjalnym kontem Microsoft i potrzebujesz kupionej gry. Aerion to nieoficjalny launcher, nie jest powiązany z Mojang ani Microsoft. Kod jest otwarty, a aktualizacje są podpisane.</p></details>
+      <details><summary data-i18n="q.2q">Czy zbiera moje dane?</summary><p data-i18n="q.2a">Nie. Nie ma analityki ani śledzenia. Launcher łączy się tylko z usługami potrzebnymi do działania: Microsoft, Mojang, Modrinth i GitHub.</p></details>
+      <details><summary data-i18n="q.3q">Czy działa na Linuksie?</summary><p data-i18n="q.3a">Tak, są pakiety .deb i AppImage obok wersji dla Windows.</p></details>
+      <details><summary data-i18n="q.4q">Gdzie zgłosić błąd lub pomysł?</summary><p data-i18n="q.4a">Na Discordzie (kanały zgłoszeń i pomysłów) albo w zakładce Issues na GitHubie.</p></details>
+    </section>
+  </main>
+
+  <footer>
+    <p data-i18n="foot.disclaimer">Produkt nieoficjalny. Aerion nie jest zatwierdzony przez Mojang ani Microsoft i nie jest z nimi powiązany. „Minecraft” jest znakiem towarowym Mojang Synergies AB.</p>
+    <p><a href="https://github.com/0giel/Aerion">GitHub</a> · <a href="https://discord.gg/AuqDh2Hkgu">Discord</a> · <a href="https://github.com/0giel/Aerion/releases/latest" data-i18n="foot.releases">Wydania</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
