@@ -6,6 +6,7 @@
 	"client": [
 		"AbstractButtonMixin",
 		"AbstractSliderButtonMixin",
+		"GuiGraphicsExtractorMixin",
 		"CameraMixin",
 		"ChatComponentMixin",
 		"HudMixin",

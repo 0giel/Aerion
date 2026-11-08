@@ -9,6 +9,7 @@
 		"CameraMixin",
 		"ChatComponentMixin",
 		"GameRendererMixin",
+		"GuiGraphicsMixin",
 		"GuiMixin",
 		"LevelRendererMixin",
 		"LevelTimeMixin",
