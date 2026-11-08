@@ -1,6 +1,7 @@
 package pl.aerion.mod.mixin.version;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,6 +18,20 @@ abstract class GuiGraphicsExtractorMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;innerBlit(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIFFFFI)V"))
 	private void aerion$tint(Args args) {
 		args.set(10, Containers.tint((Identifier) args.get(1), (int) args.get(10)));
+	}
+
+	@ModifyArgs(
+			method = "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIII)V"))
+	private void aerion$tintSprite(Args args) {
+		args.set(6, Containers.tintSprite(((TextureAtlasSprite) args.get(1)).contents().name(), (int) args.get(6)));
+	}
+
+	@ModifyArgs(
+			method = "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitNineSlicedSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/resources/metadata/gui/GuiSpriteScaling$NineSlice;IIIII)V"))
+	private void aerion$tintNineSlice(Args args) {
+		args.set(7, Containers.tintSprite(((TextureAtlasSprite) args.get(1)).contents().name(), (int) args.get(7)));
 	}
 
 	@ModifyVariable(

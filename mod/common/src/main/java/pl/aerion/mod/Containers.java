@@ -33,14 +33,27 @@ public final class Containers {
 	/** The colour to draw the picture `id` with, given the one the game asked for. */
 	public static int tint(Identifier id, int color) {
 		if (color != -1 || !isPanel(id)) return color;
+		return panelTint(color);
+	}
+
+	/** Sprites that are part of a container's frame (the creative inventory's tabs). */
+	public static int tintSprite(Identifier name, int color) {
+		if (color != -1 || name == null || !name.getPath().startsWith("container/creative_inventory/tab_")) return color;
+		return panelTint(color);
+	}
+
+	private static int panelTint(int color) {
 		Theme t = AerionClient.colors();
 		if (t == null || !inContainer()) return color;
 		if (t != cachedFor) {
 			cachedFor = t;
-			// A touch lighter than the surface on dark themes, so the panel stands off the dark
-			// background, with a hint of the accent like the buttons; light themes can't go
-			// brighter than the game's grey, only take its hue.
-			int panel = Colors.mix(t.light ? t.surface2 : Colors.mix(t.surface2, 0xFFFFFFFF, 0.05f), t.accent, 0.1f);
+			// The panel takes the accent's hue, quite saturated but dark, so the inventory is as
+			// lively as the buttons. Light themes can't go brighter than the game's grey, so they
+			// get a pale tint of the hue.
+			float[] hsv = Colors.toHsv(t.accent);
+			int panel = t.light
+					? Colors.hsv(hsv[0], Math.min(0.30f, hsv[1] * 0.4f), 0.78f)
+					: Colors.hsv(hsv[0], Math.min(0.62f, hsv[1] * 0.7f), 0.33f);
 			int r = Math.min(255, ((panel >> 16) & 0xFF) * 255 / PANEL_GREY);
 			int g = Math.min(255, ((panel >> 8) & 0xFF) * 255 / PANEL_GREY);
 			int b = Math.min(255, (panel & 0xFF) * 255 / PANEL_GREY);
