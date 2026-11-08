@@ -200,7 +200,7 @@
         class="icon-btn discord"
         onclick={() => openUrl(DISCORD_URL)}
         aria-label={t("nav.discord")}
-        title={t("nav.discord")}><Icon name="chat" size={16} /></button
+        title={t("nav.discord")}><Icon name="discord" size={16} /></button
       >
       <button
         class="icon-btn customize"

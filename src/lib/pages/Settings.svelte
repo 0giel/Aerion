@@ -816,7 +816,7 @@
             <Icon name="github" size={16} />{t("settings.github")}
           </button>
           <button class="btn" onclick={() => openUrl(DISCORD_URL)} title={DISCORD_URL}>
-            <Icon name="chat" size={16} />{t("settings.discord")}
+            <Icon name="discord" size={16} />{t("settings.discord")}
           </button>
           <button class="btn ghost" onclick={() => openUrl(ISSUES_URL)}>
             <Icon name="bug" size={16} />{t("settings.reportIssue")}
