@@ -11,6 +11,7 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.png">
+  <script>document.documentElement.classList.add("js")</script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,11 +23,18 @@
       <a href="#start" data-i18n="nav.start">Jak zacząć</a>
       <a href="#faq" data-i18n="nav.faq">FAQ</a>
     </nav>
+    <div class="themes" role="group" aria-label="Motyw strony / Page theme">
+      <button type="button" class="dot" data-theme="amber" aria-label="Amber" title="Amber"></button>
+      <button type="button" class="dot" data-theme="nocturne" aria-label="Nocturne" title="Nocturne"></button>
+      <button type="button" class="dot" data-theme="emerald" aria-label="Emerald" title="Emerald"></button>
+      <button type="button" class="dot" data-theme="rose" aria-label="Rose" title="Rose"></button>
+    </div>
     <button id="lang" class="lang" type="button" aria-label="Language / Język">EN</button>
   </header>
 
   <main id="top">
     <section class="hero">
+      <canvas id="dust" aria-hidden="true"></canvas>
       <p class="pill" data-i18n-html="hero.pill">Wersja <span id="version">1.0</span> · Windows i Linux</p>
       <h1 data-i18n-html="hero.title">Launcher Minecrafta<br>z własnym <em>HUD-em</em></h1>
       <p class="lead" data-i18n="hero.lead">Szybki, lekki i bardzo konfigurowalny. Własny mod z HUD-em układanym myszką, motywy w menu gry, mody z Modrinth i zero zbierania danych.</p>
@@ -36,10 +44,41 @@
         <a class="btn ghost" href="https://github.com/0giel/Aerion" data-i18n="hero.source">Kod na GitHubie</a>
       </div>
       <p class="small" data-i18n="hero.need">Wymaga konta Microsoft z kupionym Minecraftem: Java Edition.</p>
-      <figure class="shot hero-shot"><img src="assets/home.webp" alt="Ekran główny Aeriona" width="1200" height="760"></figure>
+      <figure class="shot hero-shot tilt"><img src="assets/home.webp" alt="Ekran główny Aeriona" width="1200" height="760"></figure>
     </section>
 
-    <section id="hud" class="split">
+
+    <section class="stats reveal" aria-label="Aerion w liczbach">
+      <div><strong data-count="24">24</strong><span data-i18n="st.1">modułów HUD</span></div>
+      <div><strong data-count="4">4</strong><span data-i18n="st.2">loadery modów</span></div>
+      <div><strong data-count="7">7</strong><span data-i18n="st.3">motywów w zestawie</span></div>
+      <div><strong data-count="0">0</strong><span data-i18n="st.4">zbieranych danych</span></div>
+    </section>
+
+    <section id="try" class="try reveal">
+      <h2 data-i18n="try.title">Wypróbuj HUD tutaj</h2>
+      <p class="sub" data-i18n="try.text">Przeciągaj moduły i przełączaj gotowe style. To ten sam pomysł, co w grze.</p>
+      <div class="looks" role="group" aria-label="Style">
+        <button type="button" data-look="default" class="on" data-i18n="try.default">Domyślny</button>
+        <button type="button" data-look="minimal" data-i18n="try.minimal">Minimal</button>
+        <button type="button" data-look="glass" data-i18n="try.glass">Szkło</button>
+        <button type="button" data-look="neon" data-i18n="try.neon">Neon</button>
+        <button type="button" data-look="retro" data-i18n="try.retro">Retro</button>
+        <button type="button" id="combat" class="toggle" aria-pressed="false" data-i18n="try.combat">Symuluj walkę</button>
+      </div>
+      <div class="scene" id="scene" data-look="default">
+        <div class="hud-mod" style="left:2%;top:4%"><span id="fps">144</span> FPS</div>
+        <div class="hud-mod coords" style="left:2%;top:16%">XYZ 128 / 64 / -32</div>
+        <div class="hud-mod hp" style="left:2%;top:16%">♥ 6 / 20</div>
+        <div class="hud-mod" style="right:2%;top:4%">12:34</div>
+        <div class="hud-mod potion" style="right:2%;top:42%">⚡ Speed II&nbsp; 1:30</div>
+        <div class="hud-mod keys" style="left:2%;bottom:6%"><b>W</b><b>A</b><b>S</b><b>D</b></div>
+        <div class="crosshair" aria-hidden="true"></div>
+      </div>
+      <p class="hint" data-i18n="try.hint">Podpowiedź: w grze każdy moduł ma też własne reguły, np. „pokazuj tylko w walce".</p>
+    </section>
+
+    <section id="hud" class="split reveal">
       <div class="text">
         <h2 data-i18n="hud.title">HUD, który układasz po swojemu</h2>
         <p data-i18n="hud.text">Ponad dwadzieścia modułów — FPS, współrzędne, strefy, klawisze, mapa — każdy z własnym wyglądem, kotwicą i regułami: pokazuj w walce, ukryj pod ziemią, zniknij po kilku sekundach.</p>
@@ -52,7 +91,7 @@
       <figure class="shot"><img src="assets/in-game-hud.webp" alt="HUD w świecie gry" loading="lazy" width="1280" height="720"></figure>
     </section>
 
-    <section class="split flip">
+    <section class="split flip reveal">
       <figure class="shot"><img src="assets/themes.webp" alt="Motywy i edytor" loading="lazy" width="1200" height="760"></figure>
       <div class="text">
         <h2 data-i18n="theme.title">Twój motyw także w grze</h2>
@@ -65,7 +104,7 @@
       </div>
     </section>
 
-    <section id="features" class="features">
+    <section id="features" class="features reveal">
       <h2 data-i18n="f.title">Wszystko, czego potrzeba do grania</h2>
       <div class="grid">
         <article><h3 data-i18n="f.1t">Mody i paczki</h3><p data-i18n="f.1d">Fabric, Quilt, Forge i NeoForge, mody i paczki z Modrinth jednym kliknięciem, z zależnościami.</p></article>
@@ -78,7 +117,7 @@
       <figure class="shot wide"><img src="assets/mods.webp" alt="Przeglądarka modów" loading="lazy" width="1200" height="760"></figure>
     </section>
 
-    <section id="start" class="steps">
+    <section id="start" class="steps reveal">
       <h2 data-i18n="s.title">Jak zacząć</h2>
       <ol>
         <li><strong data-i18n="s.1t">Pobierz</strong><span data-i18n="s.1d">Instalator dla Windows lub pakiet dla Linuksa z najnowszego wydania.</span></li>
@@ -87,7 +126,7 @@
       </ol>
     </section>
 
-    <section id="faq" class="faq">
+    <section id="faq" class="faq reveal">
       <h2 data-i18n="q.title">Pytania</h2>
       <details><summary data-i18n="q.1q">Czy to legalne i bezpieczne?</summary><p data-i18n="q.1a">Tak. Logujesz się oficjalnym kontem Microsoft i potrzebujesz kupionej gry. Aerion to nieoficjalny launcher, nie jest powiązany z Mojang ani Microsoft. Kod jest otwarty, a aktualizacje są podpisane.</p></details>
       <details><summary data-i18n="q.2q">Czy zbiera moje dane?</summary><p data-i18n="q.2a">Nie. Nie ma analityki ani śledzenia. Launcher łączy się tylko z usługami potrzebnymi do działania: Microsoft, Mojang, Modrinth i GitHub.</p></details>
