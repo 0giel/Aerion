@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Aerion — polityka prywatności / privacy policy</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css?v=dev">
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <header class="top"><div class="wrap bar"><a class="brand" href="./"><img src="assets/icon.png" alt="" width="28" height="28"><span>Aerion</span></a><button id="lang" class="lang" type="button" style="margin-left:auto" aria-label="Language / Język">EN</button></div></header>
+  <main class="wrap doc">
+    <article data-only="pl">
+      <h1>Polityka prywatności</h1>
+      <p class="fine">Ostatnia aktualizacja: 8 listopada 2026</p>
+      <p>Aerion nie ma kont użytkowników ani własnych serwerów, które zbierałyby dane. Launcher i mod nie zawierają analityki ani śledzenia.</p>
+      <h2>Launcher i mod</h2>
+      <ul>
+        <li>Ustawienia, instancje i światy zostają na Twoim komputerze.</li>
+        <li>Tokeny logowania przechowuje systemowy magazyn haseł. Trafiają tylko do usług logowania Microsoft, Xbox i Mojang.</li>
+        <li>Launcher łączy się z usługami potrzebnymi do działania: Microsoft i Xbox (logowanie), Mojang (gra, skiny, profile), Modrinth i CurseForge (mody), Fabric, Quilt, Forge i NeoForge (loadery), Adoptium (Java) oraz GitHub (aktualizacje, lista odznak, galeria motywów). Każda z tych usług widzi adres IP i ma własne zasady prywatności.</li>
+        <li>Gdy hostujesz świat, dołączony mod e4mc łączy się ze swoim serwerem, żeby udostępnić adres znajomym.</li>
+        <li>Sam Minecraft wysyła dane telemetryczne do Mojang na zasadach Mojang. Aerion ich nie odbiera.</li>
+      </ul>
+      <h2>Ta strona</h2>
+      <ul>
+        <li>Stronę hostuje GitHub Pages. GitHub może przetwarzać adres IP odwiedzających, zgodnie ze swoją <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">polityką prywatności</a>.</li>
+        <li>Przeglądarka pobiera dane o najnowszej wersji z API GitHuba.</li>
+        <li>Strona nie używa ciasteczek ani analityki, a czcionki ładuje z tego samego adresu. W pamięci przeglądarki zapisuje tylko wybrany język i na chwilę dane o wersji.</li>
+      </ul>
+      <h2>Discord i GitHub</h2>
+      <p>Jeśli dołączysz do naszego Discorda albo zgłosisz błąd na GitHubie, obowiązują zasady tych serwisów.</p>
+      <h2>Kontakt</h2>
+      <p><a href="mailto:aerion.launcher@proton.me">aerion.launcher@proton.me</a></p>
+    </article>
+    <article data-only="en" hidden>
+      <h1>Privacy policy</h1>
+      <p class="fine">Last updated: November 8, 2026</p>
+      <p>Aerion has no user accounts and no servers of its own that collect data. The launcher and the mod contain no analytics or tracking.</p>
+      <h2>Launcher and mod</h2>
+      <ul>
+        <li>Settings, instances and worlds stay on your computer.</li>
+        <li>Sign-in tokens are kept in the system's password store. They go only to Microsoft, Xbox and Mojang sign-in services.</li>
+        <li>The launcher connects to the services it needs to work: Microsoft and Xbox (sign-in), Mojang (the game, skins, profiles), Modrinth and CurseForge (mods), Fabric, Quilt, Forge and NeoForge (loaders), Adoptium (Java) and GitHub (updates, the badge list, the theme gallery). Each of them sees your IP address and has its own privacy rules.</li>
+        <li>When you host a world, the included e4mc mod connects to its server to give your friends an address.</li>
+        <li>Minecraft itself sends telemetry to Mojang under Mojang's rules. Aerion does not receive it.</li>
+      </ul>
+      <h2>This page</h2>
+      <ul>
+        <li>The page is hosted on GitHub Pages. GitHub may process visitors' IP addresses under its <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">privacy statement</a>.</li>
+        <li>Your browser fetches the newest version's details from GitHub's API.</li>
+        <li>The page uses no cookies or analytics and loads its fonts from its own address. It stores only your language and, briefly, the version details in your browser.</li>
+      </ul>
+      <h2>Discord and GitHub</h2>
+      <p>If you join our Discord or report a bug on GitHub, those services' rules apply.</p>
+      <h2>Contact</h2>
+      <p><a href="mailto:aerion.launcher@proton.me">aerion.launcher@proton.me</a></p>
+    </article>
+  </main>
+  <script>
+    (function () {
+      var get = function () { try { return localStorage.getItem("lang"); } catch (e) { return null; } };
+      var lang = get() || ((navigator.language || "pl").toLowerCase().indexOf("pl") === 0 ? "pl" : "en");
+      function show() {
+        document.documentElement.lang = lang;
+        document.querySelectorAll("[data-only]").forEach(function (n) { n.hidden = n.dataset.only !== lang; });
+        document.getElementById("lang").textContent = lang === "en" ? "PL" : "EN";
+        document.title = lang === "en" ? "Aerion — privacy policy" : "Aerion — polityka prywatności";
+      }
+      document.getElementById("lang").addEventListener("click", function () {
+        lang = lang === "en" ? "pl" : "en";
+        try { localStorage.setItem("lang", lang); } catch (e) {}
+        show();
+      });
+      show();
+    })();
+  </script>
+</body>
+</html>

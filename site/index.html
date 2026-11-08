@@ -3,198 +3,255 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0f0f12">
   <title>Aerion — launcher Minecrafta z własnym HUD-em</title>
-  <meta name="description" content="Szybki, lekki i bardzo konfigurowalny launcher Minecraft: Java Edition z własnym modem: HUD, profile, mapa, motywy. Bez zbierania danych.">
-  <meta property="og:title" content="Aerion — launcher Minecrafta z własnym HUD-em">
-  <meta property="og:description" content="Szybki i konfigurowalny launcher Minecraft z własnym modem i HUD-em.">
-  <meta property="og:image" content="https://0giel.github.io/Aerion/assets/og.jpg">
+  <meta name="description" content="Darmowy launcher Minecraft: Java Edition z własnym modem. HUD układany myszką, motywy także w menu gry, mody z Modrinth i CurseForge. Otwarty kod, bez śledzenia.">
+  <link rel="canonical" href="https://0giel.github.io/Aerion/">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Aerion">
+  <meta property="og:title" content="Aerion — launcher Minecrafta z własnym HUD-em">
+  <meta property="og:description" content="HUD układany myszką, motywy także w menu gry, mody z Modrinth i CurseForge. Otwarty kod, bez śledzenia.">
+  <meta property="og:url" content="https://0giel.github.io/Aerion/">
+  <meta property="og:image" content="https://0giel.github.io/Aerion/assets/og.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.png">
+  <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
   <script>document.documentElement.classList.add("js")</script>
   <link rel="stylesheet" href="style.css?v=dev">
 </head>
 <body>
+  <a class="skip" href="#main" data-i18n="nav.skip">Przejdź do treści</a>
   <header class="top">
-    <a class="brand" href="#top" aria-label="Aerion"><img src="assets/icon.png" alt="" width="32" height="32"><span>Aerion</span></a>
-    <nav aria-label="Sekcje">
-      <a href="#hud" data-i18n="nav.hud">HUD</a>
-      <a href="#features" data-i18n="nav.features">Funkcje</a>
-      <a href="#faq" data-i18n="nav.faq">FAQ</a>
-    </nav>
-    <div class="themes" role="group" aria-label="Motyw strony / Page theme">
-      <button type="button" class="dot" data-theme="amber" aria-label="Amber" title="Amber"></button>
-      <button type="button" class="dot" data-theme="nocturne" aria-label="Nocturne" title="Nocturne"></button>
-      <button type="button" class="dot" data-theme="emerald" aria-label="Emerald" title="Emerald"></button>
-      <button type="button" class="dot" data-theme="rose" aria-label="Rose" title="Rose"></button>
+    <div class="wrap bar">
+      <a class="brand" href="#top" aria-label="Aerion"><img src="assets/icon.png" alt="" width="28" height="28"><span>Aerion</span></a>
+      <nav aria-label="Sekcje">
+        <a href="#hud" data-i18n="nav.hud">HUD</a>
+        <a href="#themes" data-i18n="nav.themes">Motywy</a>
+        <a href="#mods" data-i18n="nav.mods">Mody</a>
+        <a href="#features" data-i18n="nav.features">Funkcje</a>
+        <a href="#faq" data-i18n="nav.faq">FAQ</a>
+      </nav>
+      <button id="lang" class="lang" type="button" aria-label="Language / Język">EN</button>
+      <a class="btn primary sm" href="#download" data-i18n="nav.get">Pobierz</a>
     </div>
-    <button id="lang" class="lang" type="button" aria-label="Language / Język">EN</button>
-    <a class="btn primary top-dl" href="#download" data-i18n="nav.start">Pobierz</a>
   </header>
 
-  <main id="top">
-    <section class="hero">
-      <canvas id="dust" aria-hidden="true"></canvas>
-      <p class="pill" data-i18n-html="hero.pill">Wersja <span id="version">1.0</span> · Windows i Linux</p>
-      <h1 data-i18n-html="hero.title">Launcher Minecrafta<br>z własnym <em>HUD-em</em></h1>
-      <p class="lead" data-i18n="hero.lead">Szybki, lekki i bardzo konfigurowalny. Własny mod z HUD-em układanym myszką, motywy w menu gry, mody z Modrinth i zero zbierania danych.</p>
-      <div class="cta">
-        <a class="btn primary big" id="hero-dl" href="#download"><span id="hero-dl-text" data-i18n="hero.download">Pobierz</span><small id="hero-dl-sub"></small></a>
-        <a class="btn" href="https://discord.gg/AuqDh2Hkgu" data-i18n="hero.discord">Dołącz do Discorda</a>
-        <a class="btn ghost" href="https://github.com/0giel/Aerion" data-i18n="hero.source">Kod na GitHubie</a>
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="wrap narrow">
+        <h1 data-i18n-html="hero.title">Minecraft ułożony<br>po Twojemu</h1>
+        <p class="lead" data-i18n="hero.lead">Launcher i mod w jednym. HUD układany myszką, motywy także w menu gry, mody z Modrinth i CurseForge. Otwarty kod, bez śledzenia.</p>
+        <div class="cta">
+          <a class="btn primary big" id="hero-dl" href="#download"><span class="big-t"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg><span id="hero-dl-text" data-i18n="hero.download">Pobierz</span></span><small id="hero-dl-sub" hidden></small></a>
+          <a class="btn big-alt" href="https://discord.gg/AuqDh2Hkgu"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span data-i18n="hero.discord">Discord</span></a>
+        </div>
+        <p class="fine" data-i18n-html="hero.need">Darmowy · Windows i Linux · <span id="version-line">Wersja <span id="version"></span></span> · Wymaga Minecraft: Java Edition</p>
       </div>
-      <p class="small"><span data-i18n="hero.need">Wymaga konta Microsoft z kupionym Minecraftem: Java Edition.</span> <a href="#download" data-i18n="hero.other">Inne pliki i instrukcja</a></p>
-      <figure class="shot hero-shot tilt"><img src="assets/home.webp" alt="Ekran główny Aeriona" width="1200" height="760"></figure>
-    </section>
-
-
-    <section class="stats reveal" aria-label="Aerion w liczbach">
-      <div><strong data-count="27">27</strong><span data-i18n="st.1">modułów HUD</span></div>
-      <div><strong data-count="4">4</strong><span data-i18n="st.2">loadery modów</span></div>
-      <div><strong data-count="7">7</strong><span data-i18n="st.3">motywów w zestawie</span></div>
-      <div><strong data-count="0">0</strong><span data-i18n="st.4">zbieranych danych</span></div>
-    </section>
-
-    <section id="try" class="try reveal">
-      <h2 data-i18n="try.title">Wypróbuj HUD tutaj</h2>
-      <p class="sub" data-i18n="try.text">Przeciągaj moduły i przełączaj gotowe style. To ten sam pomysł, co w grze.</p>
-      <div class="looks" role="group" aria-label="Style">
-        <button type="button" data-look="default" class="on" data-i18n="try.default">Domyślny</button>
-        <button type="button" data-look="minimal" data-i18n="try.minimal">Minimal</button>
-        <button type="button" data-look="glass" data-i18n="try.glass">Szkło</button>
-        <button type="button" data-look="neon" data-i18n="try.neon">Neon</button>
-        <button type="button" data-look="retro" data-i18n="try.retro">Retro</button>
-        <button type="button" id="combat" class="toggle" aria-pressed="false" data-i18n="try.combat">Symuluj walkę</button>
-      </div>
-      <div class="scene" id="scene" data-look="default">
-        <div class="hud-mod" style="left:2%;top:4%"><span id="fps">144</span> FPS</div>
-        <div class="hud-mod coords" style="left:2%;top:16%">XYZ 128 / 64 / -32</div>
-        <div class="hud-mod hp" style="left:2%;top:16%">♥ 6 / 20</div>
-        <div class="hud-mod" style="right:2%;top:4%">12:34</div>
-        <div class="hud-mod potion" style="right:2%;top:42%">⚡ Speed II&nbsp; 1:30</div>
-        <div class="hud-mod keys" style="left:2%;bottom:6%"><b>W</b><b>A</b><b>S</b><b>D</b></div>
-        <div class="crosshair" aria-hidden="true"></div>
-      </div>
-      <p class="hint" data-i18n="try.hint">Podpowiedź: w grze każdy moduł ma też własne reguły, np. „pokazuj tylko w walce".</p>
-    </section>
-
-    <section id="hud" class="split reveal">
-      <div class="text">
-        <h2 data-i18n="hud.title">HUD, który układasz po swojemu</h2>
-        <p data-i18n="hud.text">Ponad dwadzieścia modułów — FPS, współrzędne, efekty, klawisze, mapa — każdy z własnym wyglądem, kotwicą i regułami: pokazuj w walce, ukryj pod ziemią, zniknij po kilku sekundach.</p>
-        <ul>
-          <li data-i18n="hud.b1">Przeciągaj i zmieniaj rozmiar, przyciąganie do krawędzi</li>
-          <li data-i18n="hud.b2">Profile (PvP, budowanie, survival) przełączane klawiszem lub same po wejściu na serwer</li>
-          <li data-i18n="hud.b3">Gotowe style: Minimal, Szkło, Neon, Retro</li>
-        </ul>
-      </div>
-      <figure class="shot"><img src="assets/in-game-hud.webp" alt="HUD w świecie gry" loading="lazy" width="1280" height="720"></figure>
-    </section>
-
-    <section class="split flip reveal">
-      <figure class="shot"><img src="assets/themes.webp" alt="Motywy i edytor" loading="lazy" width="1200" height="760"></figure>
-      <div class="text">
-        <h2 data-i18n="theme.title">Twój motyw także w grze</h2>
-        <p data-i18n="theme.text">Edytor motywów z podglądem na żywo, galeria motywów i animowane tła. Kolory launchera trafiają do menu Minecrafta, a położenie menu, jego styl i efekty ustawiasz w samym motywie.</p>
-        <ul>
-          <li data-i18n="theme.b1">Menu z lewej, prawej, góry lub dołu, rozwijane po najechaniu</li>
-          <li data-i18n="theme.b2">Sprężyste animacje i efekty, które wyłączysz jednym przełącznikiem</li>
-          <li data-i18n="theme.b3">Domyślnie złoty Amber, a do wyboru kilka motywów</li>
-        </ul>
+      <div class="wrap tour">
+        <div class="tabs" role="tablist" aria-label="Prezentacja" id="tour-tabs">
+          <button type="button" role="tab" aria-selected="true" data-shot="home-amber" data-i18n="tt.1">Start</button>
+          <button type="button" role="tab" aria-selected="false" tabindex="-1" data-shot="hud" data-i18n="tt.2">HUD w grze</button>
+          <button type="button" role="tab" aria-selected="false" tabindex="-1" data-shot="editor" data-i18n="tt.3">Układanie HUD-u</button>
+          <button type="button" role="tab" aria-selected="false" tabindex="-1" data-shot="menu" data-i18n="tt.4">Menu moda</button>
+          <button type="button" role="tab" aria-selected="false" tabindex="-1" data-shot="instances" data-i18n="tt.5">Instancje</button>
+        </div>
+        <figure class="frame"><img id="tour-img" src="assets/shots/home-amber-pl.webp" data-localized="home-amber" width="1280" height="800" alt="Ekran główny Aeriona" fetchpriority="high"></figure>
       </div>
     </section>
 
-    <section id="features" class="features reveal">
-      <h2 data-i18n="f.title">Wszystko, czego potrzeba do grania</h2>
-      <div class="grid">
-        <article><h3 data-i18n="f.1t">Mody i paczki</h3><p data-i18n="f.1d">Fabric, Quilt, Forge i NeoForge, mody i paczki z Modrinth jednym kliknięciem, z zależnościami.</p></article>
-        <article><h3 data-i18n="f.2t">Mapa i punkty</h3><p data-i18n="f.2d">Mapa w grze z dodawaniem punktów, punkt śmierci i udostępnianie współrzędnych na czacie.</p></article>
-        <article><h3 data-i18n="f.3t">Edytor klawiszy</h3><p data-i18n="f.3d">Klawiatura w grze z podświetlonymi konfliktami, także wspólna w launcherze.</p></article>
-        <article><h3 data-i18n="f.4t">Naprawa awarii</h3><p data-i18n="f.4d">Analiza błędów gry i poprawki jednym kliknięciem, konsola gry w launcherze.</p></article>
-        <article><h3 data-i18n="f.5t">Aktualizacje same</h3><p data-i18n="f.5d">Launcher pobiera nowe wersje w tle, a mod aktualizuje się niezależnie od niego.</p></article>
-        <article><h3 data-i18n="f.6t">Prywatność</h3><p data-i18n="f.6d">Bez zbierania danych. Kod otwarty na licencji GPL-3.0.</p></article>
-      </div>
-      <figure class="shot wide"><img src="assets/mods.webp" alt="Przeglądarka modów z przyciskiem szybkiej instalacji" loading="lazy" width="1109" height="786"></figure>
-    </section>
-
-    <section class="gallery reveal" aria-labelledby="gal-title">
-      <h2 id="gal-title" data-i18n="g.title">Zobacz, jak to wygląda</h2>
-      <div class="gal">
-        <button type="button" data-full="assets/hud-layout.webp"><img src="assets/hud-layout.webp" alt="" loading="lazy" width="1280" height="720"><span data-i18n="g.1">Układanie HUD-u w grze</span></button>
-        <button type="button" data-full="assets/profiles.webp"><img src="assets/profiles.webp" alt="" loading="lazy" width="1280" height="720"><span data-i18n="g.2">Profile HUD</span></button>
-        <button type="button" data-full="assets/in-game.webp"><img src="assets/in-game.webp" alt="" loading="lazy" width="1280" height="720"><span data-i18n="g.3">Ekran tytułowy z modem</span></button>
+    <section class="facts" aria-label="Najważniejsze fakty">
+      <div class="wrap facts-row">
+        <div><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg><span data-i18n="fx.1">Otwarty kod GPL-3.0</span></div>
+        <div><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/></svg><span data-i18n="fx.2">Bez analityki i śledzenia</span></div>
+        <div><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><span data-i18n="fx.3">Podpisane aktualizacje</span></div>
+        <div><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span data-i18n="fx.4">Oficjalne logowanie Microsoft</span></div>
       </div>
     </section>
 
-    <section id="download" class="download reveal">
-      <h2 data-i18n="d.title">Pobierz i zainstaluj</h2>
-      <p class="sub" id="rel-line" aria-live="polite"></p>
-      <p class="notice" id="no-desktop" hidden data-i18n="d.unsupported">Aerion działa na komputerach z Windows i Linuksem. Na tym urządzeniu go nie uruchomisz, ale możesz wrócić tu z komputera.</p>
-
-      <div class="os-tabs" role="tablist" aria-label="System">
-        <button type="button" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true">Windows</button>
-        <button type="button" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1">Linux</button>
-      </div>
-
-      <div class="panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows">
-        <article class="file" data-file="exe">
-          <div class="file-info"><strong data-i18n="d.exeT">Instalator Windows</strong><span class="meta" data-i18n="d.exeD">Windows 10 lub 11, 64-bit. Bez uprawnień administratora.</span><span class="meta" data-size></span></div>
-          <a class="btn primary" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
-          <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
-        </article>
-        <ol class="install">
-          <li data-i18n="d.w1">Uruchom pobrany plik i przejdź przez instalator.</li>
-          <li data-i18n-html="d.w2">Jeśli Windows pokaże ostrzeżenie SmartScreen, wybierz <b>Więcej informacji</b>, potem <b>Uruchom mimo to</b>. Ostrzeżenie pojawia się, bo instalator nie ma płatnego certyfikatu wydawcy.</li>
-          <li data-i18n="d.w3">Gdy na komputerze brakuje składnika WebView2, instalator pobierze go sam.</li>
-        </ol>
-      </div>
-
-      <div class="panel" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux" hidden>
-        <div class="files">
-          <article class="file" data-file="appimage">
-            <div class="file-info"><strong>AppImage</strong><span class="meta" data-i18n="d.appD">Większość dystrybucji, bez instalacji. 64-bit.</span><span class="meta" data-size></span></div>
-            <a class="btn primary" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
-            <div class="cmd"><code data-cmd="appimage"></code><button type="button" class="copy" data-i18n="d.copy">Kopiuj</button></div>
-            <p class="meta" data-i18n-html="d.appN">Po pobraniu uruchom to polecenie w folderze z plikiem. Jeśli system zgłosi brak FUSE, zainstaluj pakiet <code>libfuse2</code>.</p>
-            <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
-          </article>
-          <article class="file" data-file="deb">
-            <div class="file-info"><strong>.deb</strong><span class="meta" data-i18n="d.debD">Ubuntu, Debian, Mint, Zorin i pokrewne. 64-bit.</span><span class="meta" data-size></span></div>
-            <a class="btn" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
-            <div class="cmd"><code data-cmd="deb"></code><button type="button" class="copy" data-i18n="d.copy">Kopiuj</button></div>
-            <p class="meta" data-i18n="d.debN">Po pobraniu uruchom to polecenie w folderze z plikiem. Zależności zainstalują się same.</p>
-            <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
-          </article>
+    <section id="hud" class="block">
+      <div class="wrap demo reveal">
+        <div class="copy">
+          <h2 data-i18n="hud.title">Wypróbuj HUD już tutaj</h2>
+          <p data-i18n="hud.text">Przeciągnij moduły i przełącz styl. W grze masz 27 modułów i elementów, każdy z własnym wyglądem.</p>
+          <div class="looks" role="group" aria-label="Styl">
+            <button type="button" data-look="default" aria-pressed="true" data-i18n="try.default">Domyślny</button>
+            <button type="button" data-look="minimal" aria-pressed="false" data-i18n="try.minimal">Minimal</button>
+            <button type="button" data-look="glass" aria-pressed="false" data-i18n="try.glass">Szkło</button>
+            <button type="button" data-look="neon" aria-pressed="false" data-i18n="try.neon">Neon</button>
+            <button type="button" data-look="retro" aria-pressed="false" data-i18n="try.retro">Retro</button>
+          </div>
+          <button type="button" id="combat" class="switch" role="switch" aria-checked="false"><i></i><span data-i18n="try.combat">Symuluj walkę</span></button>
+          <p class="fine" data-i18n="try.note">Moduł współrzędnych ustawiony na „ukryj w walce” znika, a jego miejsce zajmuje zdrowie.</p>
+        </div>
+        <div class="scene" id="scene" data-look="default">
+          <div class="hud-mod" style="left:2%;top:4%">SE 305°</div>
+          <div class="hud-mod coords" style="left:2%;top:15%">XYZ 353 / 118 / -352</div>
+          <div class="hud-mod hp" style="left:2%;top:15%">♥ 6 / 20</div>
+          <div class="hud-mod" style="left:44%;top:4%">14:04</div>
+          <div class="hud-mod" style="right:2%;top:40%"><span data-i18n="try.potion">Szybkość II</span>&nbsp; 1:30</div>
+          <div class="hud-mod keys" style="left:2%;bottom:5%"><b>W</b><b>A</b><b>S</b><b>D</b></div>
         </div>
       </div>
-
-      <h3 class="next" data-i18n="s.title">Po instalacji</h3>
-      <ol class="steps-list">
-        <li><strong data-i18n="s.1t">Zaloguj się</strong><span data-i18n="s.1d">Kontem Microsoft, na którym masz Minecraft: Java Edition.</span></li>
-        <li><strong data-i18n="s.2t">Utwórz instancję</strong><span data-i18n="s.2d">Wybierz wersję gry i włącz mod Aeriona. Javę launcher pobierze sam.</span></li>
-        <li><strong data-i18n="s.3t">Zagraj</strong><span data-i18n="s.3d">Naciśnij Graj. Prawy Shift w grze otwiera edytor HUD.</span></li>
-      </ol>
-      <p class="hint" data-i18n="d.updates">Aktualizacji nie musisz pobierać ręcznie: launcher i mod aktualizują się same.</p>
     </section>
 
-    <section id="faq" class="faq reveal">
-      <h2 data-i18n="q.title">Pytania</h2>
-      <details><summary data-i18n="q.1q">Czy to legalne i bezpieczne?</summary><p data-i18n="q.1a">Tak. Logujesz się oficjalnym kontem Microsoft i potrzebujesz kupionej gry. Aerion to nieoficjalny launcher, nie jest powiązany z Mojang ani Microsoft. Kod jest otwarty, a aktualizacje są podpisane.</p></details>
-      <details><summary data-i18n="q.2q">Czy zbiera moje dane?</summary><p data-i18n="q.2a">Nie. Nie ma analityki ani śledzenia. Launcher łączy się tylko z tym, co jest potrzebne do działania: logowaniem Microsoft, serwerami Mojang, źródłami modów i loaderów (Modrinth, CurseForge, Fabric, Quilt, Forge, NeoForge) oraz GitHubem, skąd pobiera aktualizacje.</p></details>
-      <details><summary data-i18n="q.3q">Na jakich systemach działa?</summary><p data-i18n="q.3a">Na Windows 10 i 11 oraz na Linuksie, w obu przypadkach 64-bit. Wersji na macOS i telefony nie ma.</p></details>
-      <details><summary data-i18n="q.5q">Czy muszę instalować Javę?</summary><p data-i18n="q.5a">Nie. Launcher sam pobiera wersję Javy potrzebną do danej wersji gry.</p></details>
-      <details><summary data-i18n="q.6q">Dlaczego Windows ostrzega przed instalatorem?</summary><p data-i18n="q.6a">Instalator nie ma płatnego certyfikatu wydawcy, więc SmartScreen go nie rozpoznaje. Kod jest otwarty, a na tej stronie znajdziesz sumę SHA-256 każdego pliku.</p></details>
-      <details><summary data-i18n="q.4q">Gdzie zgłosić błąd lub pomysł?</summary><p data-i18n="q.4a">Na Discordzie (kanały zgłoszeń i pomysłów) albo w zakładce Issues na GitHubie.</p></details>
+    <section class="block">
+      <div class="wrap split reveal">
+        <div class="copy">
+          <h2 data-i18n="rules.title">Moduły, które wiedzą, kiedy się pokazać</h2>
+          <p data-i18n="rules.text">Każdy moduł może mieć własne reguły, więc na ekranie jest tylko to, czego akurat potrzebujesz.</p>
+          <ul class="ticks">
+            <li data-i18n="rules.1">18 sytuacji: walka, pod ziemią, mało zdrowia, noc, Nether i inne</li>
+            <li data-i18n="rules.2">Czas pokazywania, opóźnienie i płynne zanikanie</li>
+            <li data-i18n="rules.3">Kotwice do rogów ekranu, więc układ działa w każdym rozmiarze okna</li>
+            <li data-i18n="rules.4">Osobny wygląd dla każdego modułu albo gotowy styl dla wszystkich</li>
+          </ul>
+        </div>
+        <figure class="frame"><img data-localized="behavior" src="assets/shots/behavior-pl.webp" loading="lazy" width="1280" height="800" alt="Ustawienia zachowania modułu w grze"></figure>
+      </div>
+    </section>
+
+    <section id="themes" class="block">
+      <div class="wrap center-head reveal">
+        <h2 data-i18n="th.title">Wygląd, który jest Twój</h2>
+        <p data-i18n="th.text">Wybierz motyw albo zbuduj własny w edytorze z podglądem. Kolory przechodzą też do menu gry, a położenie paska, jego styl i animacje ustawisz w motywie.</p>
+        <div class="chips" role="group" aria-label="Motyw" id="theme-chips">
+          <button type="button" aria-pressed="true" data-theme-shot="amber"><i style="background:#fbbf24"></i>Amber</button>
+          <button type="button" aria-pressed="false" data-theme-shot="nocturne"><i style="background:#a395ff"></i>Nocturne</button>
+          <button type="button" aria-pressed="false" data-theme-shot="emerald"><i style="background:#34d399"></i>Emerald</button>
+          <button type="button" aria-pressed="false" data-theme-shot="rose"><i style="background:#fb7185"></i>Rose</button>
+          <button type="button" aria-pressed="false" data-theme-shot="light"><i style="background:#f4f2ff"></i>Light</button>
+        </div>
+        <figure class="frame wide"><img id="theme-img" data-localized="home-amber" src="assets/shots/home-amber-pl.webp" loading="lazy" width="1280" height="800" alt="Launcher w wybranym motywie"></figure>
+      </div>
+    </section>
+
+    <section id="mods" class="block">
+      <div class="wrap split flip reveal">
+        <figure class="frame"><img data-localized="mods" src="assets/shots/mods-pl.webp" loading="lazy" width="1280" height="800" alt="Przeglądarka modów w launcherze"></figure>
+        <div class="copy">
+          <h2 data-i18n="m.title">Mody bez szukania i klikania</h2>
+          <p data-i18n="m.text">Mody i paczki z Modrinth i CurseForge dodasz jednym przyciskiem, razem z wymaganymi zależnościami.</p>
+          <ul class="ticks">
+            <li data-i18n="m.1">Fabric, Quilt, Forge i NeoForge</li>
+            <li data-i18n="m.2">Java pobierana automatycznie</li>
+            <li data-i18n="m.3">Nowa instancja może od razu dostać mody optymalizacyjne:</li>
+          </ul>
+          <p class="modlist"><a href="https://modrinth.com/mod/sodium">Sodium</a><a href="https://modrinth.com/mod/lithium">Lithium</a><a href="https://modrinth.com/mod/ferrite-core">FerriteCore</a><a href="https://modrinth.com/mod/immediatelyfast">ImmediatelyFast</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="block">
+      <div class="wrap reveal">
+        <h2 class="c" data-i18n="f.title">I cała reszta</h2>
+        <div class="grid">
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg><h3 data-i18n="f.1t">Profile HUD</h3><p data-i18n="f.1d">Osobne układy na PvP, budowanie i survival. Zmieniasz je klawiszem albo same po wejściu na serwer.</p></article>
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg><h3 data-i18n="f.2t">Mapa i punkty</h3><p data-i18n="f.2d">Mapa w grze, punkty dodawane kliknięciem, punkt śmierci i udostępnianie współrzędnych.</p></article>
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg><h3 data-i18n="f.3t">Edytor klawiszy</h3><p data-i18n="f.3d">Klawiatura w grze i w launcherze, która od razu pokazuje konflikty.</p></article>
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><h3 data-i18n="f.4t">Hostowanie świata</h3><p data-i18n="f.4d">Otwórz świat dla znajomych przez internet jednym przyciskiem, bez przekierowywania portów.</p></article>
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><h3 data-i18n="f.5t">Znajomi</h3><p data-i18n="f.5d">Lista znajomych ze skinami i przycisk dołączania do ich świata.</p></article>
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><h3 data-i18n="f.6t">Naprawa awarii</h3><p data-i18n="f.6d">Launcher rozpoznaje przyczynę awarii gry i proponuje poprawkę.</p></article>
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg><h3 data-i18n="f.7t">Statystyki i wydajność</h3><p data-i18n="f.7d">Czas gry, podsumowanie FPS i pamięci po każdej sesji.</p></article>
+        <article><svg class="i" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg><h3 data-i18n="f.8t">Przenosiny</h3><p data-i18n="f.8d">Import instancji z innych launcherów i przeniesienie ustawień na nowy komputer w jednym pliku.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="block open">
+      <div class="wrap open-box reveal">
+        <div>
+          <h2 data-i18n="o.title">Nie musisz wierzyć nam na słowo</h2>
+          <p data-i18n="o.text">Cały kod launchera i moda jest publiczny na licencji GPL-3.0. Tokeny logowania trzyma systemowy magazyn haseł, a każda aktualizacja jest podpisana i sprawdzana przed instalacją.</p>
+        </div>
+        <div class="open-cta">
+          <a class="btn" href="https://github.com/0giel/Aerion"><svg class="i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg><span data-i18n="o.code">Zobacz kod</span></a>
+          <a class="link" href="privacy.html" data-i18n="o.privacy">Polityka prywatności</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="download" class="block download">
+      <div class="wrap reveal">
+        <h2 class="c" data-i18n="d.title">Pobierz i zainstaluj</h2>
+        <p class="sub" id="rel-line" aria-live="polite"></p>
+        <p class="notice" id="no-desktop" hidden data-i18n="d.unsupported">Aerion działa na komputerach z Windows i Linuksem. Na tym urządzeniu go nie uruchomisz, ale możesz wrócić tu z komputera.</p>
+        <div class="os-tabs" role="tablist" aria-label="System">
+          <button type="button" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true">Windows</button>
+          <button type="button" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1">Linux</button>
+        </div>
+        <div class="panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows">
+          <article class="file" data-file="exe">
+            <div class="file-info"><strong data-i18n="d.exeT">Instalator Windows</strong><span class="meta" data-i18n="d.exeD">Windows 10 lub 11, 64-bit. Bez uprawnień administratora.</span><span class="meta" data-size></span></div>
+            <a class="btn primary" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
+            <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
+          </article>
+          <ol class="install">
+            <li data-i18n="d.w1">Uruchom pobrany plik i przejdź przez instalator.</li>
+            <li data-i18n-html="d.w2">Jeśli Windows pokaże ostrzeżenie SmartScreen, wybierz <b>Więcej informacji</b>, potem <b>Uruchom mimo to</b>. Ostrzeżenie pojawia się, bo instalator nie ma płatnego certyfikatu wydawcy.</li>
+            <li data-i18n="d.w3">Gdy na komputerze brakuje składnika WebView2, instalator pobierze go sam.</li>
+          </ol>
+        </div>
+        <div class="panel" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux" hidden>
+          <div class="files">
+            <article class="file" data-file="appimage">
+              <div class="file-info"><strong>AppImage</strong><span class="meta" data-i18n="d.appD">Większość dystrybucji, bez instalacji. 64-bit.</span><span class="meta" data-size></span></div>
+              <a class="btn primary" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
+              <div class="cmd"><code data-cmd="appimage"></code><button type="button" class="copy-btn" data-i18n="d.copy">Kopiuj</button></div>
+              <p class="meta" data-i18n-html="d.appN">Po pobraniu uruchom to polecenie w folderze z plikiem. Jeśli system zgłosi brak FUSE, zainstaluj pakiet <code>libfuse2</code>.</p>
+              <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
+            </article>
+            <article class="file" data-file="deb">
+              <div class="file-info"><strong>.deb</strong><span class="meta" data-i18n="d.debD">Ubuntu, Debian, Mint, Zorin i pokrewne. 64-bit.</span><span class="meta" data-size></span></div>
+              <a class="btn" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
+              <div class="cmd"><code data-cmd="deb"></code><button type="button" class="copy-btn" data-i18n="d.copy">Kopiuj</button></div>
+              <p class="meta" data-i18n="d.debN">Po pobraniu uruchom to polecenie w folderze z plikiem. Zależności zainstalują się same.</p>
+              <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
+            </article>
+          </div>
+        </div>
+        <ol class="steps-list">
+          <li><strong data-i18n="s.1t">Zaloguj się</strong><span data-i18n="s.1d">Kontem Microsoft, na którym masz Minecraft: Java Edition.</span></li>
+          <li><strong data-i18n="s.2t">Utwórz instancję</strong><span data-i18n="s.2d">Wybierz wersję gry i włącz mod Aeriona. Javę launcher pobierze sam.</span></li>
+          <li><strong data-i18n="s.3t">Zagraj</strong><span data-i18n="s.3d">Naciśnij Graj. Prawy Shift w grze otwiera edytor HUD.</span></li>
+        </ol>
+        <p class="fine c" data-i18n="d.updates">Aktualizacji nie musisz pobierać ręcznie: launcher i mod aktualizują się same.</p>
+      </div>
+    </section>
+
+    <section id="faq" class="block">
+      <div class="wrap faq reveal">
+        <h2 class="c" data-i18n="q.title">Pytania</h2>
+        <details><summary data-i18n="q.7q">Ile to kosztuje?</summary><p data-i18n="q.7a">Launcher i mod są darmowe. Potrzebujesz tylko kupionego Minecraft: Java Edition.</p></details>
+        <details><summary data-i18n="q.1q">Czy to bezpieczne?</summary><p data-i18n="q.1a">Logujesz się oficjalnym kontem Microsoft, a tokeny trzyma systemowy magazyn haseł. Kod jest otwarty, a aktualizacje podpisane. Aerion to produkt nieoficjalny, niezwiązany z Mojang ani Microsoft.</p></details>
+        <details><summary data-i18n="q.2q">Czy Aerion zbiera moje dane?</summary><p data-i18n="q.2a">Nie. Nie ma analityki ani śledzenia. Launcher łączy się tylko z tym, co jest potrzebne do działania: logowaniem Microsoft, serwerami Mojang, źródłami modów i loaderów oraz GitHubem. Szczegóły są w polityce prywatności.</p></details>
+        <details><summary data-i18n="q.3q">Na jakich systemach działa?</summary><p data-i18n="q.3a">Na Windows 10 i 11 oraz na Linuksie, w obu przypadkach 64-bit. Wersji na macOS i telefony nie ma.</p></details>
+        <details><summary data-i18n="q.5q">Czy muszę instalować Javę?</summary><p data-i18n="q.5a">Nie. Launcher sam pobiera wersję Javy potrzebną do danej wersji gry.</p></details>
+        <details><summary data-i18n="q.8q">Na których wersjach Minecrafta działa mod?</summary><p data-i18n="q.8a">Mod Aeriona działa z Fabric na wersjach 26.3 i 1.21.11. Sam launcher uruchamia też inne wersje gry, tylko bez moda.</p></details>
+        <details><summary data-i18n="q.6q">Dlaczego Windows ostrzega przed instalatorem?</summary><p data-i18n="q.6a">Instalator nie ma płatnego certyfikatu wydawcy, więc SmartScreen go nie rozpoznaje. Kod jest otwarty, a w sekcji pobierania znajdziesz sumę SHA-256 każdego pliku.</p></details>
+        <details><summary data-i18n="q.4q">Gdzie zgłosić błąd lub pomysł?</summary><p data-i18n="q.4a">Na Discordzie, w kanałach zgłoszeń i pomysłów, albo w zakładce Issues na GitHubie.</p></details>
+      </div>
+    </section>
+
+    <section class="final">
+      <div class="wrap reveal">
+        <h2 data-i18n="c.title">Gotowy, żeby zagrać po swojemu?</h2>
+        <a class="btn primary big-cta" href="#download" data-i18n="c.get">Pobierz Aeriona</a>
+      </div>
     </section>
   </main>
 
-  <dialog id="lightbox" aria-label="Podgląd"><button type="button" class="close" aria-label="Zamknij / Close">×</button><img alt=""></dialog>
-
   <footer>
-    <p data-i18n="foot.disclaimer">Produkt nieoficjalny. Aerion nie jest zatwierdzony przez Mojang ani Microsoft i nie jest z nimi powiązany. „Minecraft” jest znakiem towarowym Mojang Synergies AB.</p>
-    <p><a href="https://github.com/0giel/Aerion">GitHub</a> · <a href="https://discord.gg/AuqDh2Hkgu">Discord</a> · <a href="https://github.com/0giel/Aerion/releases/latest" data-i18n="foot.releases">Wydania</a></p>
+    <div class="wrap foot">
+      <div class="foot-brand">
+        <a class="brand" href="#top"><img src="assets/icon.png" alt="" width="24" height="24" loading="lazy"><span>Aerion</span></a>
+        <p data-i18n="foot.disclaimer">Produkt nieoficjalny. Aerion nie jest zatwierdzony przez Mojang ani Microsoft i nie jest z nimi powiązany. „Minecraft” jest znakiem towarowym Mojang Synergies AB.</p>
+      </div>
+      <div><h4 data-i18n="foot.p">Produkt</h4><a href="#download" data-i18n="nav.get">Pobierz</a><a href="https://github.com/0giel/Aerion/releases" data-i18n="foot.releases">Wydania</a><a href="#faq" data-i18n="nav.faq">FAQ</a></div>
+      <div><h4 data-i18n="foot.c">Społeczność</h4><a href="https://discord.gg/AuqDh2Hkgu">Discord</a><a href="https://github.com/0giel/Aerion">GitHub</a><a href="https://github.com/0giel/Aerion/issues" data-i18n="foot.bug">Zgłoś błąd</a></div>
+      <div><h4 data-i18n="foot.l">Informacje</h4><a href="privacy.html" data-i18n="o.privacy">Polityka prywatności</a><a href="https://github.com/0giel/Aerion/blob/main/LICENSE" data-i18n="foot.license">Licencja GPL-3.0</a><a href="mailto:aerion.launcher@proton.me" data-i18n="foot.contact">Kontakt</a></div>
+    </div>
   </footer>
-
   <script src="app.js?v=dev"></script>
 </body>
 </html>

@@ -1,42 +1,38 @@
-// Language switch (Polish is the page's own text; English is below) and the latest version number.
+// Aerion's web page: language, product tour, HUD demo, theme preview and downloads.
 (function () {
   const EN = {
-    "nav.hud": "HUD", "nav.features": "Features", "nav.start": "Download", "nav.faq": "FAQ",
-    "hero.pill": 'Version <span id="version">1.0</span> · Windows and Linux',
-    "hero.title": "A Minecraft launcher<br>with its own <em>HUD</em>",
-    "hero.lead": "Fast, light and highly customizable. Its own mod with a HUD you arrange with the mouse, themes inside the game menus, Modrinth mods and no data collection.",
-    "hero.download": "Download", "hero.discord": "Join the Discord", "hero.source": "Source on GitHub",
-    "hero.need": "Needs a Microsoft account that owns Minecraft: Java Edition.",
-    "hud.title": "A HUD you arrange your way",
-    "hud.text": "Over twenty modules — FPS, coordinates, potions, keystrokes, map — each with its own look, anchor and rules: show it in combat, hide it underground, fade it out after a few seconds.",
-    "hud.b1": "Drag and resize, with snapping to edges", "hud.b2": "Profiles (PvP, building, survival) switched with a key or by themselves when you join a server",
-    "hud.b3": "Ready-made looks: Minimal, Glass, Neon, Retro",
-    "theme.title": "Your theme in the game too",
-    "theme.text": "A theme editor with live preview, a theme gallery and animated backgrounds. The launcher's colours reach Minecraft's menus, and the menu's position, style and effects are set in the theme itself.",
-    "theme.b1": "Menu on the left, right, top or bottom, opening on hover", "theme.b2": "Springy animations and effects you can turn off with one switch",
-    "theme.b3": "Golden Amber by default, with several themes to choose from",
-    "f.title": "Everything you need to play",
-    "f.1t": "Mods and packs", "f.1d": "Fabric, Quilt, Forge and NeoForge, Modrinth mods and packs in one click, with their dependencies.",
-    "f.2t": "Map and waypoints", "f.2d": "An in-game map where you add waypoints, a death point and sharing coordinates in chat.",
-    "f.3t": "Key editor", "f.3d": "A keyboard in the game that highlights conflicts, and a shared one in the launcher.",
-    "f.4t": "Crash fixes", "f.4d": "Game crashes analysed with one-click fixes, and the game console in the launcher.",
-    "f.5t": "Updates by themselves", "f.5d": "The launcher downloads new versions in the background, and the mod updates independently of it.",
-    "f.6t": "Privacy", "f.6d": "No data collection. Open source under GPL-3.0.",
-    "s.title": "After installing",
-    "s.1t": "Sign in", "s.1d": "With the Microsoft account that owns Minecraft: Java Edition.",
-    "s.2t": "Create an instance", "s.2d": "Pick a game version and turn on the Aerion mod. The launcher downloads Java by itself.",
-    "s.3t": "Play", "s.3d": "Press Play. Right Shift in the game opens the HUD editor.",
-    "q.title": "Questions",
-    "q.1q": "Is it legal and safe?", "q.1a": "Yes. You sign in with an official Microsoft account and need to own the game. Aerion is an unofficial launcher, not affiliated with Mojang or Microsoft. The code is open and updates are signed.",
-    "q.2q": "Does it collect my data?", "q.2a": "No. There is no analytics or tracking. The launcher only connects to what it needs to work: Microsoft sign-in, Mojang's servers, mod and loader sources (Modrinth, CurseForge, Fabric, Quilt, Forge, NeoForge) and GitHub for updates.",
-    "q.3q": "Which systems does it run on?", "q.3a": "Windows 10 and 11, and Linux, 64-bit in both cases. There is no macOS or phone version.",
-    "q.5q": "Do I need to install Java?", "q.5a": "No. The launcher downloads the Java version each game version needs.",
-    "q.6q": "Why does Windows warn about the installer?", "q.6a": "The installer has no paid publisher certificate, so SmartScreen doesn't recognize it. The code is open, and this page lists the SHA-256 of every file.",
-    "q.4q": "Where do I report a bug or an idea?", "q.4a": "On the Discord (the report and ideas channels) or in Issues on GitHub.",
-    "foot.disclaimer": "Unofficial product. Aerion is not approved by or associated with Mojang or Microsoft. “Minecraft” is a trademark of Mojang Synergies AB.",
-    "foot.releases": "Releases",
-    "hero.other": "Other files and instructions",
-    "g.title": "See it in action", "g.1": "Arranging the HUD in the game", "g.2": "HUD profiles", "g.3": "The title screen with the mod",
+    "nav.skip": "Skip to content", "nav.hud": "HUD", "nav.themes": "Themes", "nav.mods": "Mods", "nav.features": "Features", "nav.faq": "FAQ", "nav.get": "Download",
+    "hero.title": "Minecraft, arranged<br>your way",
+    "hero.lead": "A launcher and a mod in one. A HUD you arrange with the mouse, themes in the game menus too, mods from Modrinth and CurseForge. Open source, no tracking.",
+    "hero.download": "Download", "hero.discord": "Discord",
+    "hero.need": 'Free · Windows and Linux · <span id="version-line">Version <span id="version"></span></span> · Needs Minecraft: Java Edition',
+    "tt.1": "Home", "tt.2": "In-game HUD", "tt.3": "Arranging the HUD", "tt.4": "Mod menu", "tt.5": "Instances",
+    "fx.1": "Open source, GPL-3.0", "fx.2": "No analytics or tracking", "fx.3": "Signed updates", "fx.4": "Official Microsoft sign-in",
+    "hud.title": "Try the HUD right here",
+    "hud.text": "Drag the modules and switch the look. In the game you get 27 modules and elements, each with its own style.",
+    "try.default": "Default", "try.minimal": "Minimal", "try.glass": "Glass", "try.neon": "Neon", "try.retro": "Retro", "try.combat": "Simulate a fight",
+    "try.note": "The coordinates module, set to “hide in combat”, disappears and health takes its place.", "try.potion": "Speed II",
+    "rules.title": "Modules that know when to appear",
+    "rules.text": "Every module can have its own rules, so the screen shows only what you need right now.",
+    "rules.1": "18 situations: combat, underground, low health, night, the Nether and more", "rules.2": "Show time, delay and smooth fading",
+    "rules.3": "Anchors to the screen's corners, so a layout works at any window size", "rules.4": "A separate look for each module, or one ready-made style for all",
+    "th.title": "A look that's yours",
+    "th.text": "Pick a theme or build your own in an editor with live preview. Its colours reach the game menus too, and the menu's position, style and animations are set in the theme.",
+    "m.title": "Mods without the hunt",
+    "m.text": "Add mods and packs from Modrinth and CurseForge with one button, together with what they require.",
+    "m.1": "Fabric, Quilt, Forge and NeoForge", "m.2": "Java downloaded automatically", "m.3": "A new instance can start with optimization mods:",
+    "f.title": "And everything else",
+    "f.1t": "HUD profiles", "f.1d": "Separate layouts for PvP, building and survival, switched with a key or by themselves when you join a server.",
+    "f.2t": "Map and waypoints", "f.2d": "An in-game map, waypoints added with a click, a death point and sharing coordinates.",
+    "f.3t": "Key editor", "f.3d": "A keyboard in the game and the launcher that shows conflicts at once.",
+    "f.4t": "World hosting", "f.4d": "Open your world to friends over the internet with one button, no port forwarding.",
+    "f.5t": "Friends", "f.5d": "A friends list with skins and a button to join their world.",
+    "f.6t": "Crash fixes", "f.6d": "The launcher recognizes why the game crashed and suggests a fix.",
+    "f.7t": "Stats and performance", "f.7d": "Play time, plus an FPS and memory summary after every session.",
+    "f.8t": "Moving in", "f.8d": "Import instances from other launchers and move your settings to a new computer in one file.",
+    "o.title": "You don't have to take our word for it",
+    "o.text": "All the code of the launcher and the mod is public under GPL-3.0. Sign-in tokens stay in the system's password store, and every update is signed and checked before it installs.",
+    "o.code": "View the code", "o.privacy": "Privacy policy",
     "d.title": "Download and install", "d.get": "Download", "d.copy": "Copy", "d.verify": "SHA-256 checksum",
     "d.unsupported": "Aerion runs on Windows and Linux computers. You can't run it on this device, but you can come back here from a computer.",
     "d.exeT": "Windows installer", "d.exeD": "Windows 10 or 11, 64-bit. No administrator rights needed.",
@@ -47,200 +43,93 @@
     "d.appN": "After downloading, run this command in the file's folder. If the system reports that FUSE is missing, install the <code>libfuse2</code> package.",
     "d.debD": "Ubuntu, Debian, Mint, Zorin and similar. 64-bit.",
     "d.debN": "After downloading, run this command in the file's folder. Dependencies install by themselves.",
+    "s.1t": "Sign in", "s.1d": "With the Microsoft account that owns Minecraft: Java Edition.",
+    "s.2t": "Create an instance", "s.2d": "Pick a game version and turn on the Aerion mod. The launcher downloads Java by itself.",
+    "s.3t": "Play", "s.3d": "Press Play. Right Shift in the game opens the HUD editor.",
     "d.updates": "You don't have to download updates by hand: the launcher and the mod update themselves.",
-    "st.1": "HUD modules", "st.2": "mod loaders", "st.3": "themes included", "st.4": "data collected",
-    "try.title": "Try the HUD right here", "try.text": "Drag the modules and switch the ready-made looks. It is the same idea as in the game.",
-    "try.default": "Default", "try.minimal": "Minimal", "try.glass": "Glass", "try.neon": "Neon", "try.retro": "Retro", "try.combat": "Simulate a fight",
-    "try.hint": "Tip: in the game every module also has its own rules, e.g. “show only in combat”.",
+    "q.title": "Questions",
+    "q.7q": "How much does it cost?", "q.7a": "The launcher and the mod are free. You only need to own Minecraft: Java Edition.",
+    "q.1q": "Is it safe?", "q.1a": "You sign in with an official Microsoft account, and tokens stay in the system's password store. The code is open and updates are signed. Aerion is an unofficial product, not affiliated with Mojang or Microsoft.",
+    "q.2q": "Does Aerion collect my data?", "q.2a": "No. There is no analytics or tracking. The launcher only connects to what it needs to work: Microsoft sign-in, Mojang's servers, mod and loader sources, and GitHub. The privacy policy has the details.",
+    "q.3q": "Which systems does it run on?", "q.3a": "Windows 10 and 11, and Linux, 64-bit in both cases. There is no macOS or phone version.",
+    "q.5q": "Do I need to install Java?", "q.5a": "No. The launcher downloads the Java version each game version needs.",
+    "q.8q": "Which Minecraft versions does the mod support?", "q.8a": "The Aerion mod runs with Fabric on 26.3 and 1.21.11. The launcher also starts other game versions, just without the mod.",
+    "q.6q": "Why does Windows warn about the installer?", "q.6a": "The installer has no paid publisher certificate, so SmartScreen doesn't recognize it. The code is open, and the download section lists the SHA-256 of every file.",
+    "q.4q": "Where do I report a bug or an idea?", "q.4a": "On the Discord, in the report and ideas channels, or in Issues on GitHub.",
+    "c.title": "Ready to play your way?", "c.get": "Download Aerion",
+    "foot.disclaimer": "Unofficial product. Aerion is not approved by or associated with Mojang or Microsoft. “Minecraft” is a trademark of Mojang Synergies AB.",
+    "foot.p": "Product", "foot.releases": "Releases", "foot.c": "Community", "foot.bug": "Report a bug", "foot.l": "Information", "foot.license": "GPL-3.0 license", "foot.contact": "Contact",
   };
+  const DL = {
+    pl: { win: "Pobierz dla Windows", linux: "Pobierz dla Linuksa", any: "Pobierz", version: "Wersja {v}", date: "wydana {d}", notes: "Co nowego", copied: "Skopiowano", failed: "Nie udało się odczytać listy plików. Przyciski prowadzą do strony wydania na GitHubie.", loading: "Sprawdzam najnowszą wersję…" },
+    en: { win: "Download for Windows", linux: "Download for Linux", any: "Download", version: "Version {v}", date: "released {d}", notes: "What's new", copied: "Copied", failed: "Couldn't read the list of files. The buttons open the release page on GitHub.", loading: "Checking the newest version…" },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const root = document.documentElement;
+  const lang = () => (root.lang === "en" ? "en" : "pl");
+  const tr = (k, v) => DL[lang()][k].replace(/\{(\w)\}/, () => v ?? "");
+  const store = {
+    get: (s, k) => { try { return s.getItem(k); } catch { return null; } },
+    set: (s, k, v) => { try { s.setItem(k, v); } catch { /* storage unavailable */ } },
+  };
+
+  // --- language: Polish is the page's own text -----------------------------------------------
   const nodes = [...document.querySelectorAll("[data-i18n], [data-i18n-html]")];
   const PL = {};
   for (const n of nodes) {
     const key = n.dataset.i18n || n.dataset.i18nHtml;
     PL[key] = n.dataset.i18nHtml ? n.innerHTML : n.textContent;
   }
-  function apply(lang) {
-    const dict = lang === "en" ? EN : PL;
+  const shotUrl = (name) => "assets/shots/" + name + "-" + lang() + ".webp";
+
+  function applyLang(l) {
+    root.lang = l;
+    const dict = l === "en" ? EN : PL;
     for (const n of nodes) {
       const key = n.dataset.i18n || n.dataset.i18nHtml;
       if (dict[key] === undefined) continue;
       if (n.dataset.i18nHtml) n.innerHTML = dict[key];
       else n.textContent = dict[key];
     }
-    document.documentElement.lang = lang;
-    document.title = lang === "en" ? "Aerion — a Minecraft launcher with its own HUD" : "Aerion — launcher Minecrafta z własnym HUD-em";
-    document.getElementById("lang").textContent = lang === "en" ? "PL" : "EN";
-    try { localStorage.setItem("lang", lang); } catch { /* storage unavailable */ }
-    document.dispatchEvent(new Event("aerion:lang"));
-  }
-  let saved = null;
-  try { saved = localStorage.getItem("lang"); } catch { /* storage unavailable */ }
-  let lang = saved || ((navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en");
-  document.getElementById("lang").addEventListener("click", () => { lang = lang === "en" ? "pl" : "en"; apply(lang); });
-  apply(lang);
-})();
-
-// Page theme, dust, reveal on scroll, numbers, tilt and the HUD playground.
-(function () {
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const root = document.documentElement;
-
-  // --- page theme -------------------------------------------------------------------------
-  const dots = [...document.querySelectorAll(".dot")];
-  function setTheme(name) {
-    root.dataset.theme = name;
-    dots.forEach((d) => d.setAttribute("aria-pressed", String(d.dataset.theme === name)));
-    try { localStorage.setItem("theme", name); } catch { /* storage unavailable */ }
-    accent = getComputedStyle(root).getPropertyValue("--accent").trim() || "#fbbf24";
-  }
-  let accent = "#fbbf24";
-  let saved = null;
-  try { saved = localStorage.getItem("theme"); } catch { /* storage unavailable */ }
-  dots.forEach((d) => d.addEventListener("click", () => setTheme(d.dataset.theme)));
-  setTheme(saved && dots.some((d) => d.dataset.theme === saved) ? saved : "amber");
-
-  // --- reveal on scroll and counting numbers ------------------------------------------------
-  function countUp(el) {
-    const to = Number(el.dataset.count);
-    if (reduce || !to) { el.textContent = String(to); return; }
-    const t0 = performance.now();
-    const step = (t) => {
-      const k = Math.min(1, (t - t0) / 1200);
-      el.textContent = String(Math.round(to * (1 - Math.pow(1 - k, 3))));
-      if (k < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }
-  const targets = [...document.querySelectorAll(".reveal")];
-  if ("IntersectionObserver" in window) {
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        e.target.classList.add("in");
-        e.target.querySelectorAll("[data-count]").forEach(countUp);
-        io.unobserve(e.target);
-      }
-    }, { threshold: 0.05 });
-    targets.forEach((t) => io.observe(t));
-  } else {
-    targets.forEach((t) => { t.classList.add("in"); t.querySelectorAll("[data-count]").forEach(countUp); });
+    document.title = l === "en" ? "Aerion — a Minecraft launcher with its own HUD" : "Aerion — launcher Minecrafta z własnym HUD-em";
+    $("lang").textContent = l === "en" ? "PL" : "EN";
+    document.querySelectorAll("img[data-localized]").forEach((img) => { img.src = shotUrl(img.dataset.localized); });
+    store.set(localStorage, "lang", l);
+    renderDownloads();
   }
 
-  // --- dust behind the hero (stops when it is off screen or motion is reduced) ---------------
-  const canvas = document.getElementById("dust");
-  if (canvas && !reduce) {
-    const ctx = canvas.getContext("2d");
-    let w = 0, h = 0, running = true;
-    const dust = Array.from({ length: 55 }, () => ({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.6, v: 0.015 + Math.random() * 0.05, a: 0.15 + Math.random() * 0.5 }));
-    const resize = () => {
-      const d = Math.min(2, devicePixelRatio || 1);
-      w = canvas.clientWidth; h = canvas.clientHeight;
-      canvas.width = w * d; canvas.height = h * d; ctx.setTransform(d, 0, 0, d, 0, 0);
-    };
-    resize(); addEventListener("resize", resize);
-    let last = performance.now();
-    const frame = (t) => {
-      const dt = Math.min(0.05, (t - last) / 1000); last = t;
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = accent;
-      for (const p of dust) {
-        p.y -= p.v * dt; if (p.y < -0.02) { p.y = 1.02; p.x = Math.random(); }
-        ctx.globalAlpha = p.a; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, p.r, 0, 6.283); ctx.fill();
-      }
-      if (running) requestAnimationFrame(frame);
-    };
-    new IntersectionObserver((e) => {
-      const on = e[0].isIntersecting;
-      if (on && !running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
-      running = on;
-    }).observe(canvas);
-    requestAnimationFrame(frame);
+  function swap(img, name, alt) {
+    img.dataset.localized = name;
+    img.classList.add("swap");
+    const next = shotUrl(name);
+    const done = () => { img.src = next; img.classList.remove("swap"); if (alt) img.alt = alt; };
+    const pre = new Image();
+    pre.onload = done;
+    pre.onerror = done;
+    pre.src = next;
   }
 
-  // --- the screenshot leans a little towards the pointer -----------------------------------
-  const tilt = document.querySelector(".tilt");
-  if (tilt && !reduce && matchMedia("(hover: hover)").matches) {
-    tilt.addEventListener("pointermove", (e) => {
-      const r = tilt.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      tilt.style.transform = `perspective(1100px) rotateX(${(-y * 5).toFixed(2)}deg) rotateY(${(x * 7).toFixed(2)}deg)`;
-    });
-    tilt.addEventListener("pointerleave", () => { tilt.style.transform = ""; });
-  }
-
-  // --- the HUD playground ---------------------------------------------------------------------
-  const scene = document.getElementById("scene");
-  if (scene) {
-    document.querySelectorAll(".looks [data-look]").forEach((b) => b.addEventListener("click", () => {
-      scene.dataset.look = b.dataset.look;
-      document.querySelectorAll(".looks [data-look]").forEach((o) => o.classList.toggle("on", o === b));
-    }));
-    const combat = document.getElementById("combat");
-    combat.addEventListener("click", () => {
-      const on = scene.classList.toggle("fight");
-      combat.setAttribute("aria-pressed", String(on));
-    });
-    // Drag a module, kept inside the scene.
-    scene.querySelectorAll(".hud-mod").forEach((m) => {
-      m.addEventListener("pointerdown", (e) => {
-        if (e.button !== 0) return;
-        m.setPointerCapture(e.pointerId);
-        m.classList.add("drag");
-        const sr = scene.getBoundingClientRect(), mr = m.getBoundingClientRect();
-        const dx = e.clientX - mr.left, dy = e.clientY - mr.top;
-        const move = (ev) => {
-          const x = Math.min(Math.max(0, ev.clientX - sr.left - dx), sr.width - mr.width);
-          const y = Math.min(Math.max(0, ev.clientY - sr.top - dy), sr.height - mr.height);
-          m.style.left = (x / sr.width * 100) + "%"; m.style.top = (y / sr.height * 100) + "%";
-          m.style.right = "auto"; m.style.bottom = "auto";
-        };
-        const up = () => { m.classList.remove("drag"); m.removeEventListener("pointermove", move); m.removeEventListener("pointerup", up); };
-        m.addEventListener("pointermove", move); m.addEventListener("pointerup", up);
-      });
-    });
-    const fps = document.getElementById("fps");
-    setInterval(() => { if (!document.hidden) fps.textContent = String(138 + Math.floor(Math.random() * 9)); }, 700);
-  }
-})();
-
-// Downloads: exact files of the newest release, picked for this computer. Without an answer from
-// GitHub every button simply opens the release page.
-(function () {
+  // --- downloads ------------------------------------------------------------------------------
   const PAGE = "https://github.com/0giel/Aerion/releases/latest";
   const API = "https://api.github.com/repos/0giel/Aerion/releases/latest";
-  const CACHE_MS = 10 * 60 * 1000;
-  const TEXT = {
-    pl: { win: "Pobierz dla Windows", linux: "Pobierz dla Linuksa", any: "Pobierz", version: "Wersja {v}", date: "wydana {d}", notes: "Co nowego", copied: "Skopiowano", failed: "Nie udało się odczytać listy plików. Przyciski prowadzą do strony wydania na GitHubie.", loading: "Sprawdzam najnowszą wersję…" },
-    en: { win: "Download for Windows", linux: "Download for Linux", any: "Download", version: "Version {v}", date: "released {d}", notes: "What's new", copied: "Copied", failed: "Couldn't read the list of files. The buttons open the release page on GitHub.", loading: "Checking the newest version…" },
-  };
-  const lang = () => (document.documentElement.lang === "en" ? "en" : "pl");
-  const tr = (k, v) => TEXT[lang()][k].replace(/\{(\w)\}/, () => v ?? "");
-
   const ua = navigator.userAgent;
   const os = /Android|iPhone|iPad|iPod/i.test(ua) ? "mobile" : /Windows/i.test(ua) ? "windows" : /Mac/i.test(ua) ? "mac" : /Linux|X11/i.test(ua) ? "linux" : "other";
   const mainFile = { windows: "exe", linux: "appimage" }[os];
-
   let release = null;
   let failed = false;
 
-  function mb(bytes) {
-    const n = bytes / 1048576;
-    return n.toLocaleString(lang(), { maximumFractionDigits: n >= 10 ? 0 : 1 }) + " MB";
-  }
-
-  function command(kind, name) {
-    if (kind === "appimage") {
-      const f = name || "Aerion_*.AppImage";
-      return "chmod +x " + f + " && ./" + f;
-    }
+  const mb = (b) => { const n = b / 1048576; return n.toLocaleString(lang(), { maximumFractionDigits: n >= 10 ? 0 : 1 }) + " MB"; };
+  const command = (kind, name) => {
+    if (kind === "appimage") { const f = name || "Aerion_*.AppImage"; return "chmod +x " + f + " && ./" + f; }
     return "sudo apt install ./" + (name || "Aerion_*.deb");
-  }
+  };
 
-  function render() {
-    const v = document.getElementById("version");
-    if (v && release) v.textContent = release.version;
-
-    const line = document.getElementById("rel-line");
+  function renderDownloads() {
+    const v = $("version"), vl = $("version-line");
+    if (v) v.textContent = release ? release.version : "";
+    if (vl) vl.hidden = !release;
+    const line = $("rel-line");
     line.textContent = "";
     if (release) {
       const when = new Date(release.date).toLocaleDateString(lang(), { day: "numeric", month: "long", year: "numeric" });
@@ -252,7 +141,6 @@
     } else {
       line.textContent = failed ? tr("failed") : tr("loading");
     }
-
     document.querySelectorAll(".file").forEach((card) => {
       const kind = card.dataset.file;
       const f = release && release.files[kind];
@@ -264,16 +152,11 @@
       const cmd = card.querySelector("[data-cmd]");
       if (cmd) cmd.textContent = command(kind, f && f.name);
     });
-
-    // The big button downloads the right file straight away; on other devices it opens the section.
-    const hero = document.getElementById("hero-dl");
-    const label = document.getElementById("hero-dl-text");
-    const sub = document.getElementById("hero-dl-sub");
     const f = release && mainFile && release.files[mainFile];
-    hero.href = f ? f.url : "#download";
-    label.textContent = f ? tr(os === "windows" ? "win" : "linux") : tr("any");
-    sub.textContent = f ? release.version + " · " + mb(f.size) : "";
-    sub.hidden = !f;
+    $("hero-dl").href = f ? f.url : "#download";
+    $("hero-dl-text").textContent = f ? tr(os === "windows" ? "win" : "linux") : tr("any");
+    $("hero-dl-sub").textContent = f ? release.version + " · " + mb(f.size) : "";
+    $("hero-dl-sub").hidden = !f;
   }
 
   function adopt(j) {
@@ -282,59 +165,56 @@
       return a ? { name: a.name, size: a.size, url: a.browser_download_url, sha: (a.digest || "").replace(/^sha256:/, "") } : null;
     };
     const files = { exe: pick((n) => n.endsWith("-setup.exe")), appimage: pick((n) => n.endsWith(".AppImage")), deb: pick((n) => n.endsWith(".deb")) };
-    if (!files.exe && !files.appimage && !files.deb) return null;
-    return { version: String(j.tag_name).replace(/^v/, ""), date: j.published_at, page: j.html_url, files };
+    return files.exe || files.appimage || files.deb ? { version: String(j.tag_name).replace(/^v/, ""), date: j.published_at, page: j.html_url, files } : null;
   }
 
-  function load() {
+  function loadRelease() {
     try {
-      const c = JSON.parse(sessionStorage.getItem("aerion-release") || "null");
-      if (c && Date.now() - c.at < CACHE_MS) { release = c.release; render(); return; }
-    } catch { /* storage unavailable */ }
+      const c = JSON.parse(store.get(sessionStorage, "aerion-release") || "null");
+      if (c && Date.now() - c.at < 600000) { release = c.release; renderDownloads(); return; }
+    } catch { /* bad cache */ }
     fetch(API, { headers: { Accept: "application/vnd.github+json" } })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((j) => {
         release = adopt(j);
         failed = !release;
-        if (release) {
-          try { sessionStorage.setItem("aerion-release", JSON.stringify({ at: Date.now(), release })); } catch { /* storage unavailable */ }
-        }
-        render();
+        if (release) store.set(sessionStorage, "aerion-release", JSON.stringify({ at: Date.now(), release }));
+        renderDownloads();
       })
-      .catch(() => { failed = true; render(); });
+      .catch(() => { failed = true; renderDownloads(); });
   }
 
-  // --- tabs -----------------------------------------------------------------------------------
-  const tabs = [...document.querySelectorAll('.os-tabs [role="tab"]')];
-  function show(tab, focus) {
-    for (const t of tabs) {
+  function tablist(tabs, activate) {
+    tabs.forEach((t, i) => {
+      t.addEventListener("click", () => activate(t));
+      t.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        e.preventDefault();
+        const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+        activate(next);
+        next.focus();
+      });
+    });
+  }
+
+  const osTabs = [...document.querySelectorAll('.os-tabs [role="tab"]')];
+  function showOs(tab) {
+    for (const t of osTabs) {
       const on = t === tab;
       t.setAttribute("aria-selected", String(on));
       t.tabIndex = on ? 0 : -1;
-      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+      $(t.getAttribute("aria-controls")).hidden = !on;
     }
-    if (focus) tab.focus();
   }
-  tabs.forEach((t, i) => {
-    t.addEventListener("click", () => show(t));
-    t.addEventListener("keydown", (e) => {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      e.preventDefault();
-      show(tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length], true);
-    });
-  });
-  if (os === "linux") show(document.getElementById("tab-linux"));
-  if (os === "mobile" || os === "mac") document.getElementById("no-desktop").hidden = false;
+  tablist(osTabs, showOs);
+  if (os === "linux") showOs($("tab-linux"));
+  if (os === "mobile" || os === "mac") $("no-desktop").hidden = false;
 
-  // After the big button starts a download, show what to do next.
-  document.getElementById("hero-dl").addEventListener("click", () => {
-    if (!document.getElementById("hero-dl").href.endsWith("#download")) {
-      setTimeout(() => document.getElementById("download").scrollIntoView({ behavior: "smooth" }), 400);
-    }
+  $("hero-dl").addEventListener("click", () => {
+    if (!$("hero-dl").getAttribute("href").startsWith("#")) setTimeout(() => $("download").scrollIntoView(), 400);
   });
 
-  // --- copying a command ----------------------------------------------------------------------
-  document.querySelectorAll(".copy").forEach((b) => b.addEventListener("click", async () => {
+  document.querySelectorAll(".copy-btn").forEach((b) => b.addEventListener("click", async () => {
     const code = b.parentElement.querySelector("code");
     try {
       await navigator.clipboard.writeText(code.textContent);
@@ -342,25 +222,77 @@
       b.textContent = tr("copied");
       setTimeout(() => { b.textContent = old; }, 1500);
     } catch {
-      // No clipboard access (e.g. a local file): select it for Ctrl+C.
       const r = document.createRange();
       r.selectNodeContents(code);
-      const sel = getSelection();
-      sel.removeAllRanges();
-      sel.addRange(r);
+      getSelection().removeAllRanges();
+      getSelection().addRange(r);
     }
   }));
 
-  // --- screenshot gallery ---------------------------------------------------------------------
-  const box = document.getElementById("lightbox");
-  document.querySelectorAll(".gal button").forEach((b) => b.addEventListener("click", () => {
-    box.querySelector("img").src = b.dataset.full;
-    box.querySelector("img").alt = b.querySelector("span").textContent;
-    box.showModal();
-  }));
-  box.addEventListener("click", (e) => { if (e.target === box || e.target.classList.contains("close")) box.close(); });
+  // --- product tour ---------------------------------------------------------------------------
+  const tourTabs = [...$("tour-tabs").querySelectorAll('[role="tab"]')];
+  function showTour(tab) {
+    for (const t of tourTabs) {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+    }
+    swap($("tour-img"), tab.dataset.shot, tab.textContent);
+  }
+  tablist(tourTabs, showTour);
 
-  document.addEventListener("aerion:lang", render);
-  render();
-  load();
+  // --- theme preview --------------------------------------------------------------------------
+  const chips = [...document.querySelectorAll("#theme-chips button")];
+  chips.forEach((b) => b.addEventListener("click", () => {
+    chips.forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+    swap($("theme-img"), "home-" + b.dataset.themeShot);
+  }));
+
+  // --- HUD demo -------------------------------------------------------------------------------
+  const scene = $("scene");
+  const looks = [...document.querySelectorAll(".looks [data-look]")];
+  looks.forEach((b) => b.addEventListener("click", () => {
+    scene.dataset.look = b.dataset.look;
+    looks.forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+  }));
+  $("combat").addEventListener("click", () => {
+    $("combat").setAttribute("aria-checked", String(scene.classList.toggle("fight")));
+  });
+  scene.querySelectorAll(".hud-mod").forEach((m) => {
+    m.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      m.setPointerCapture(e.pointerId);
+      m.classList.add("drag");
+      const sr = scene.getBoundingClientRect(), mr = m.getBoundingClientRect();
+      const dx = e.clientX - mr.left, dy = e.clientY - mr.top;
+      const move = (ev) => {
+        const x = Math.min(Math.max(0, ev.clientX - sr.left - dx), sr.width - mr.width);
+        const y = Math.min(Math.max(0, ev.clientY - sr.top - dy), sr.height - mr.height);
+        m.style.left = (x / sr.width) * 100 + "%";
+        m.style.top = (y / sr.height) * 100 + "%";
+        m.style.right = "auto";
+        m.style.bottom = "auto";
+      };
+      const up = () => { m.classList.remove("drag"); m.removeEventListener("pointermove", move); m.removeEventListener("pointerup", up); m.removeEventListener("pointercancel", up); };
+      m.addEventListener("pointermove", move);
+      m.addEventListener("pointerup", up);
+      m.addEventListener("pointercancel", up);
+    });
+  });
+
+  // --- sections appear once -------------------------------------------------------------------
+  const targets = [...document.querySelectorAll(".reveal")];
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    }, { threshold: 0.05 });
+    targets.forEach((t) => io.observe(t));
+  } else {
+    targets.forEach((t) => t.classList.add("in"));
+  }
+
+  // --- start ----------------------------------------------------------------------------------
+  $("lang").addEventListener("click", () => applyLang(lang() === "en" ? "pl" : "en"));
+  applyLang(store.get(localStorage, "lang") || ((navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en"));
+  loadRelease();
 })();
