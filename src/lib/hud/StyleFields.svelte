@@ -26,6 +26,32 @@
     neon: { background: "theme", opacity: 75, border: "accent", radius: 2, bar: "left" },
     retro: { font: "game", background: "#000000", opacity: 60, border: "#ffffff", shadow: true, padding: 3 },
   };
+  /** What an unset look value means (the same as in the mod). */
+  const BASE: HudStyle = {
+    text: "theme",
+    background: "theme",
+    opacity: 55,
+    border: "none",
+    borderWidth: 1,
+    radius: 0,
+    padding: 3,
+    shadow: true,
+    align: "left",
+    font: "smooth",
+    outline: false,
+    gradient: "none",
+    bar: "none",
+    chromaWave: false,
+  };
+  const LOOK = Object.keys(BASE) as (keyof HudStyle)[];
+  /** The ready-made look the style exactly is, or null when it was changed by hand. */
+  const active = $derived(
+    Object.keys(PRESETS).find((name) =>
+      LOOK.filter((k) => k !== "align").every(
+        (k) => (style[k] ?? BASE[k]) === ({ ...BASE, ...PRESETS[name] }[k] ?? BASE[k]),
+      ),
+    ) ?? null,
+  );
   const applyPreset = (name: string) =>
     onchange({
       text: "theme",
@@ -57,10 +83,14 @@
       <span class="label">{t("hudEditor.style.presets")}</span>
       <div class="row wrap gap-2">
         {#each Object.keys(PRESETS) as p (p)}
-          <button class="btn sm" onclick={() => applyPreset(p)}
-            >{t(`hudEditor.style.presetNames.${p}`)}</button
+          <button
+            class="btn sm"
+            class:primary={active === p}
+            aria-pressed={active === p}
+            onclick={() => applyPreset(p)}>{t(`hudEditor.style.presetNames.${p}`)}</button
           >
         {/each}
+        {#if !active}<span class="small muted">{t("hudEditor.style.presetCustom")}</span>{/if}
       </div>
     </div>
   {/if}

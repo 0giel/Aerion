@@ -939,7 +939,11 @@ public final class AerionMenu implements Page {
 			for (int i = 0; i < Situations.IDS.size(); i++) show[i + 1] = hide[i + 1] = Situations.IDS.get(i);
 			cycle(Lang.tr("aerion.opt.showWhen"), show, choiceLabels(show), HudConfig.opt(m, "showWhen", "always"), v -> setOption(m, "showWhen", v));
 			cycle(Lang.tr("aerion.opt.hideWhen"), hide, choiceLabels(hide), HudConfig.opt(m, "hideWhen", "never"), v -> setOption(m, "hideWhen", v));
+			slider(Lang.tr("aerion.opt.showFor"), HudConfig.num(optionsOf(m), "showFor", 0), 0, 60, 1, " s", v -> setOption(m, "showFor", String.valueOf(v)));
+			slider(Lang.tr("aerion.opt.delay"), HudConfig.num(optionsOf(m), "delay", 0), 0, 10, 1, " s", v -> setOption(m, "delay", String.valueOf(v)));
+			slider(Lang.tr("aerion.opt.linger"), HudConfig.num(optionsOf(m), "linger", 0), 0, 30, 1, " s", v -> setOption(m, "linger", String.valueOf(v)));
 			toggle(Lang.tr("aerion.opt.animate"), "1".equals(HudConfig.opt(m, "animate", "1")), v -> setOption(m, "animate", v ? "1" : "0"));
+			slider(Lang.tr("aerion.opt.fade"), HudConfig.num(optionsOf(m), "fade", 170), 50, 1500, 50, " ms", v -> setOption(m, "fade", String.valueOf(v)));
 			toggle(Lang.tr("aerion.opt.pulse"), "1".equals(HudConfig.opt(m, "pulse", "1")), v -> setOption(m, "pulse", v ? "1" : "0"));
 			note(Lang.tr("aerion.hint.behavior"));
 			endCard();
@@ -1159,15 +1163,17 @@ public final class AerionMenu implements Page {
 		beginCard(Lang.tr("aerion.sec.presets"));
 		beginRow("presets");
 		int bx = x, by = y + 2;
+		String active = activePreset(cfg.style());
 		for (String id : PRESETS) {
 			String label = Lang.tr("aerion.preset." + id);
 			int w = Math.round(Txt.width(label, SMALL)) + 14;
-			smallButton(bx, by, w, ROW - 4, label, false, () -> {
+			smallButton(bx, by, w, ROW - 4, label, id.equals(active), () -> {
 				applyPreset(cfg.style(), id);
 				changed = true;
 			});
 			bx += w + 3;
 		}
+		if (active == null) Txt.draw(g, Lang.tr("aerion.preset.custom"), bx + 4, by + (ROW - 4) / 2f, SMALL, muted);
 		y += ROW;
 		endRow();
 		note(Lang.tr("aerion.hint.presets"));
@@ -1177,6 +1183,41 @@ public final class AerionMenu implements Page {
 
 	private static final String[] PRESETS = {"minimal", "glass", "neon", "retro"};
 
+	/** What an unset look value means. */
+	private static final Map<String, String> LOOK_DEFAULTS = Map.ofEntries(
+			Map.entry("text", "theme"), Map.entry("background", "theme"), Map.entry("opacity", "55"), Map.entry("border", "none"),
+			Map.entry("borderWidth", "1"), Map.entry("radius", "0"), Map.entry("padding", "3"), Map.entry("shadow", "true"),
+			Map.entry("align", "left"), Map.entry("font", "smooth"), Map.entry("outline", "false"), Map.entry("gradient", "none"),
+			Map.entry("bar", "none"), Map.entry("chromaWave", "false"));
+
+	/** The values a preset sets; everything else it leaves at the default. */
+	private static Map<String, String> presetValues(String id) {
+		return switch (id) {
+			case "minimal" -> Map.of("background", "none", "border", "none", "outline", "true", "shadow", "false", "padding", "2");
+			case "glass" -> Map.of("background", "theme", "opacity", "40", "gradient", "#000000", "radius", "4", "padding", "4", "border", "#ffffff", "shadow", "true");
+			case "neon" -> Map.of("background", "theme", "opacity", "75", "border", "accent", "radius", "2", "bar", "left");
+			case "retro" -> Map.of("font", "game", "background", "#000000", "opacity", "60", "border", "#ffffff", "shadow", "true", "padding", "3");
+			default -> Map.of();
+		};
+	}
+
+	/** The ready-made look the shared style is exactly, or null when it was changed by hand. */
+	static String activePreset(JsonObject style) {
+		for (String id : PRESETS) {
+			Map<String, String> values = presetValues(id);
+			boolean same = true;
+			for (var e : LOOK_DEFAULTS.entrySet()) {
+				String have = HudConfig.str(style, e.getKey(), e.getValue());
+				if (!have.equals(values.getOrDefault(e.getKey(), e.getValue()))) {
+					same = false;
+					break;
+				}
+			}
+			if (same) return id;
+		}
+		return null;
+	}
+
 	/** Menu animations (springy window and tiles); also read by the launcher's switch. */
 	static boolean animationsOn() {
 		HudConfig cfg = AerionClient.hud();
@@ -1185,42 +1226,12 @@ public final class AerionMenu implements Page {
 
 	/** A whole look in one click: the shared style's values are replaced, module overrides stay. */
 	private static void applyPreset(JsonObject st, String id) {
-		for (String k : new String[] {"text", "background", "opacity", "border", "borderWidth", "radius", "padding", "shadow", "align", "font", "outline", "gradient", "bar", "chromaWave"}) st.remove(k);
-		switch (id) {
-			case "minimal" -> {
-				st.addProperty("background", "none");
-				st.addProperty("border", "none");
-				st.addProperty("outline", true);
-				st.addProperty("shadow", false);
-				st.addProperty("padding", 2);
-			}
-			case "glass" -> {
-				st.addProperty("background", "theme");
-				st.addProperty("opacity", 40);
-				st.addProperty("gradient", "#000000");
-				st.addProperty("radius", 4);
-				st.addProperty("padding", 4);
-				st.addProperty("border", "#ffffff");
-				st.addProperty("shadow", true);
-			}
-			case "neon" -> {
-				st.addProperty("background", "theme");
-				st.addProperty("opacity", 75);
-				st.addProperty("border", "accent");
-				st.addProperty("radius", 2);
-				st.addProperty("bar", "left");
-				st.addProperty("outline", false);
-			}
-			case "retro" -> {
-				st.addProperty("font", "game");
-				st.addProperty("background", "#000000");
-				st.addProperty("opacity", 60);
-				st.addProperty("border", "#ffffff");
-				st.addProperty("shadow", true);
-				st.addProperty("padding", 3);
-			}
-			default -> {
-			}
+		for (String k : LOOK_DEFAULTS.keySet()) st.remove(k);
+		for (var e : presetValues(id).entrySet()) {
+			String v = e.getValue();
+			if (v.equals("true") || v.equals("false")) st.addProperty(e.getKey(), Boolean.parseBoolean(v));
+			else if (v.chars().allMatch(Character::isDigit)) st.addProperty(e.getKey(), Integer.parseInt(v));
+			else st.addProperty(e.getKey(), v);
 		}
 	}
 

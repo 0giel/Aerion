@@ -1006,6 +1006,38 @@ public final class Hud {
 	private static final class Anim {
 		float vis, pulse;
 		int grade = -1;
+		/** When the situation last began and last held, in seconds of game time (-1: never). */
+		double since = -1, lastTrue = -1;
+		boolean cond;
+	}
+
+	private static double seconds() {
+		return System.nanoTime() / 1e9;
+	}
+
+	/** A module's number option in seconds or milliseconds, clamped. */
+	private static int numOpt(JsonObject m, String key, int fallback, int min, int max) {
+		try {
+			return Math.max(min, Math.min(max, Integer.parseInt(HudConfig.opt(m, key, String.valueOf(fallback)).trim())));
+		} catch (NumberFormatException e) {
+			return fallback;
+		}
+	}
+
+	/**
+	 * Whether the module should be on screen now: its situation holds (after `delay` seconds), for at
+	 * most `showFor` seconds after it began (0: for as long as it holds), and `linger` seconds past its end.
+	 */
+	private static boolean wanted(Anim a, JsonObject m, Minecraft mc) {
+		boolean cond = Situations.condition(m, mc);
+		double now = seconds();
+		if (cond && !a.cond) a.since = now;
+		if (cond) a.lastTrue = now;
+		a.cond = cond;
+		int delay = numOpt(m, "delay", 0, 0, 10), showFor = numOpt(m, "showFor", 0, 0, 60), linger = numOpt(m, "linger", 0, 0, 30);
+		if (!cond) return linger > 0 && a.lastTrue >= 0 && now - a.lastTrue < linger;
+		double elapsed = now - a.since;
+		return elapsed >= delay && (showFor == 0 || elapsed < delay + showFor);
 	}
 
 	private static final Map<String, Anim> ANIMS = new HashMap<>();
@@ -1043,6 +1075,7 @@ public final class Hud {
 		long now = System.nanoTime();
 		if (lastFrame != 0) dt = Math.min(0.1f, (now - lastFrame) / 1e9f);
 		lastFrame = now;
+		if (!preview && mc.player == null) ANIMS.clear();
 		if (!preview && !Game.hudHidden() && mc.player != null) Overlays.draw(g);
 		// The editor draws the modules itself, also while the whole HUD is switched off.
 		if (!preview && (!cfg.enabled() || Game.hudHidden() || mc.player == null || Game.screen() instanceof EditorScreen)) return;
@@ -1056,10 +1089,12 @@ public final class Hud {
 			try {
 				// Fades in and out when a situation shows or hides it (the editor always shows it).
 				Anim a = ANIMS.computeIfAbsent(e.getKey(), k -> new Anim());
-				boolean want = preview || Situations.visible(m, mc);
+				boolean want = preview || wanted(a, m, mc);
 				boolean animate = c.flag("animate", true);
+				// How long a fade takes (ms): 50 to 1500.
+				float rate = 1000f / numOpt(m, "fade", 170, 50, 1500);
 				if (a.grade < 0 && a.vis == 0 && want) a.vis = 1;
-				a.vis = !animate || preview ? (want ? 1 : 0) : Math.max(0, Math.min(1, a.vis + (want ? 1 : -1) * dt * 6f));
+				a.vis = !animate || preview ? (want ? 1 : 0) : Math.max(0, Math.min(1, a.vis + (want ? 1 : -1) * dt * rate));
 				if (a.vis <= 0.001f) continue;
 				int[] s = e.getValue().size(c);
 				if (s[0] <= 0 || s[1] <= 0) continue;

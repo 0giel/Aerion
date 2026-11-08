@@ -47,10 +47,26 @@
     "underground",
     "underwater",
     "lowHealth",
+    "hungry",
+    "lowArmor",
     "moving",
     "sprinting",
+    "sneaking",
+    "flying",
+    "riding",
+    "night",
+    "raining",
+    "overworld",
     "nether",
+    "end",
     "multiplayer",
+    "singleplayer",
+  ];
+  /** Timing options of a module: key, default, max, unit step. */
+  const TIMING = [
+    { key: "showFor", def: 0, max: 60, step: 1, unit: "s" },
+    { key: "delay", def: 0, max: 10, step: 1, unit: "s" },
+    { key: "linger", def: 0, max: 30, step: 1, unit: "s" },
   ];
 
   const mod = (id: string): HudModule | undefined => cfg?.modules[id];
@@ -527,6 +543,34 @@
                 >
               </div>
               <p class="tiny muted">{t("hudEditor.behavior.hint")}</p>
+              <div class="grid2">
+                {#each TIMING as f (f.key)}
+                  <label class="range"
+                    ><span class="small muted"
+                      >{t(`hudEditor.behavior.${f.key}`)}: {opt(m, f.key, String(f.def))} {f.unit}</span
+                    >
+                    <input
+                      type="range"
+                      min="0"
+                      max={f.max}
+                      step={f.step}
+                      value={Number(opt(m, f.key, String(f.def)))}
+                      oninput={(e) => setOption(selected, f.key, (e.target as HTMLInputElement).value)}
+                    /></label
+                  >
+                {/each}
+                <label class="range"
+                  ><span class="small muted">{t("hudEditor.behavior.fade")}: {opt(m, "fade", "170")} ms</span>
+                  <input
+                    type="range"
+                    min="50"
+                    max="1500"
+                    step="50"
+                    value={Number(opt(m, "fade", "170"))}
+                    oninput={(e) => setOption(selected, "fade", (e.target as HTMLInputElement).value)}
+                  /></label
+                >
+              </div>
               <Switch
                 label={t("hudEditor.behavior.animate")}
                 checked={opt(m, "animate", "1") === "1"}
