@@ -60,7 +60,7 @@ public final class HudConfig {
 			  "fullbright":{"enabled":false},"fovLock":{"enabled":false},"toggleSprint":{"enabled":false},"toggleSneak":{"enabled":false},
 			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false},"lightLevels":{"enabled":false},
 			  "blockOutline":{"enabled":false},"chat":{"enabled":false},"perspective":{"enabled":false},"fovKey":{"enabled":false},
-			  "worldLook":{"enabled":false},"hitColor":{"enabled":false},"screens":{"enabled":false},"waypoints":{"enabled":false},"badges":{"enabled":true}}}
+			  "worldLook":{"enabled":false},"hitColor":{"enabled":false},"screens":{"enabled":false},"inventory":{"enabled":true},"waypoints":{"enabled":false},"badges":{"enabled":true}}}
 			""";
 
 	public static HudConfig defaults() {

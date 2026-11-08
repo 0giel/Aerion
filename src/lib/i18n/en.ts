@@ -1545,6 +1545,9 @@ const en = {
       hitColorHint: "The tint of entities that were just hit.",
       screens: "Screen background",
       screensHint: "Remove the theme's tint behind the inventory and menus.",
+      inventory: "Inventory look",
+      inventoryHint:
+        "The colours of the inventory, chests and other windows; set the panel, slots and edges in the game.",
       waypoints: "Waypoints",
       waypointsHint: "Your own points with a name, colour and distance. Added in the game's menu.",
       lightLevels: "Light numbers",

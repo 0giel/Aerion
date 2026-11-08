@@ -1603,6 +1603,8 @@ const pl: Dict = {
       hitColorHint: "Zabarwienie stworzeń tuż po trafieniu.",
       screens: "Tło ekranów",
       screensHint: "Usuń kolor motywu za ekwipunkiem i menu.",
+      inventory: "Wygląd ekwipunku",
+      inventoryHint: "Kolory ekwipunku, skrzyń i innych okien; w grze ustawisz panel, sloty i krawędzie.",
       waypoints: "Punkty trasy",
       waypointsHint: "Własne punkty z nazwą, kolorem i odległością. Dodasz je w menu w grze.",
       lightLevels: "Liczby światła",

@@ -1007,6 +1007,11 @@ export type HudFeatures_Deserialize = {
 	worldLook?: FeatureOptions_Deserialize,
 	hitColor?: FeatureOptions_Deserialize,
 	screens?: FeatureOptions_Deserialize,
+	/**
+	 *  The look of inventories and other containers (colours and opacity of panel and slots,
+	 *  `options.edges`); on unless switched off.
+	 */
+	inventory?: OnFeature_Deserialize,
 	waypoints?: FeatureOptions_Deserialize,
 	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
 	badges?: OnFeature_Deserialize,
@@ -1034,6 +1039,11 @@ export type HudFeatures_Serialize = {
 	worldLook: FeatureOptions_Serialize,
 	hitColor: FeatureOptions_Serialize,
 	screens: FeatureOptions_Serialize,
+	/**
+	 *  The look of inventories and other containers (colours and opacity of panel and slots,
+	 *  `options.edges`); on unless switched off.
+	 */
+	inventory: OnFeature_Serialize,
 	waypoints: FeatureOptions_Serialize,
 	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
 	badges: OnFeature_Serialize,

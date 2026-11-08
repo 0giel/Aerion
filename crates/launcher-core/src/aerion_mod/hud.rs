@@ -199,6 +199,9 @@ pub struct HudFeatures {
     pub world_look: FeatureOptions,
     pub hit_color: FeatureOptions,
     pub screens: FeatureOptions,
+    /// The look of inventories and other containers (colours and opacity of panel and slots,
+    /// `options.edges`); on unless switched off.
+    pub inventory: OnFeature,
     pub waypoints: FeatureOptions,
     /// Badges next to players' names ([`super::badges`]); on unless switched off.
     pub badges: OnFeature,
@@ -444,6 +447,7 @@ impl HudConfig {
             && self.features.overlays.options.len() <= 32
             && self.features.sounds.options.len() <= 8192
             && self.features.badges.options.len() <= 32
+            && self.features.inventory.options.len() <= 32
             && [
                 &self.features.hitboxes.options,
                 &self.features.overlays.options,
@@ -462,6 +466,7 @@ impl HudConfig {
                 &self.features.waypoints.options,
                 &self.features.sounds.options,
                 &self.features.badges.options,
+                &self.features.inventory.options,
             ]
             .iter()
             .all(|o| o.iter().all(|(k, v)| k.len() <= 200 && v.len() <= 64));

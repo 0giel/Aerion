@@ -47,7 +47,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "inventory", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -142,6 +142,10 @@ public final class AerionMenu implements Page {
 			Map.entry("worldLook", List.of(
 					Option.toggle("fixTime", true), Option.number("hour", 12, 0, 23), Option.select("weather", "clear", "game", "clear", "rain", "thunder"))),
 			Map.entry("hitColor", List.of(Option.colour("color", "#55aaff"), Option.number("opacity", 70, 0, 100))),
+			Map.entry("inventory", List.of(
+					Option.colour("panel", "theme"), Option.number("panelOpacity", 100, 10, 100),
+					Option.colour("slotColor", "theme"), Option.number("slotOpacity", 100, 0, 100),
+					Option.select("edges", "bevel", "bevel", "flat", "glow"))),
 			Map.entry("screens", List.of(Option.select("veil", "none", "none2", "dark", "theme"), Option.number("opacity", 50, 0, 100), Option.toggle("blur", true))),
 			Map.entry("lightLevels", List.of(
 					Option.select("mode", "block", "block", "combined"), Option.number("radius", 8, 2, 16), Option.number("maxLevel", 15, 0, 15),
@@ -303,7 +307,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private static boolean enabled(HudConfig cfg, String id) {
-		return HudConfig.bool(item(cfg, id), "enabled", id.equals("zoom") || id.equals("badges"));
+		return HudConfig.bool(item(cfg, id), "enabled", id.equals("zoom") || id.equals("badges") || id.equals("inventory"));
 	}
 
 	private void toLayout() {
@@ -1110,7 +1114,11 @@ public final class AerionMenu implements Page {
 		if (o.isToggle()) {
 			toggle(label, "1".equals(value), v -> setOption(m, o.key, v ? "1" : "0"));
 		} else if (o.color) {
-			color(owner + "." + o.key, label, new String[] {"accent"}, new String[] {Lang.tr("aerion.style.accent")}, value, v -> setOption(m, o.key, v));
+			if (o.def.equals("theme")) {
+				color(owner + "." + o.key, label, new String[] {"theme", "accent"}, new String[] {Lang.tr("aerion.choice.theme"), Lang.tr("aerion.style.accent")}, value, v -> setOption(m, o.key, v));
+			} else {
+				color(owner + "." + o.key, label, new String[] {"accent"}, new String[] {Lang.tr("aerion.style.accent")}, value, v -> setOption(m, o.key, v));
+			}
 		} else if (o.choices != null) {
 			String[] labels = o.labels;
 			if (labels == null) {

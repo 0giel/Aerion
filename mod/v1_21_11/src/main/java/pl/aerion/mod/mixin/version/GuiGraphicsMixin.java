@@ -16,8 +16,8 @@ abstract class GuiGraphicsMixin {
 	@ModifyArgs(
 			method = "blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIIIIII)V",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;innerBlit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIFFFFI)V"))
-	private void aerion$tint(Args args) {
-		args.set(10, Containers.tint((Identifier) args.get(1), (int) args.get(10)));
+	private void aerion$recolour(Args args) {
+		args.set(1, Containers.texture((Identifier) args.get(1)));
 	}
 
 	@ModifyArgs(

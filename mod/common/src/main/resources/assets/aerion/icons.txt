@@ -60,3 +60,4 @@ packs
 armorWarn
 features
 fovLock
+inventory
