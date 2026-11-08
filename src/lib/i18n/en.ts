@@ -463,6 +463,8 @@ const en = {
     updated: "Updated {when}",
     alsoOn: "Also on {provider}",
     installNewInstance: "Install as new instance",
+    quickDone: "{name} added to {target}",
+    quickStarted: "Installing {name}…",
     installTo: "Install to {name}",
     installing: "Installing…",
     loadMore: "Load more",

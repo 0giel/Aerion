@@ -2,6 +2,8 @@
   import Icon from "../components/Icon.svelte";
   import VirtualList from "../components/VirtualList.svelte";
   import ProjectView from "./mods/ProjectView.svelte";
+  import InstallPlanModal from "./mods/InstallPlanModal.svelte";
+  import { toasts } from "../stores/toasts.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import {
@@ -130,6 +132,45 @@
     void [debounced, kind, effectiveSource, sort, categories, filterVersion, filterLoader];
     void search(true);
   });
+
+  /** Projects being added with the side button right now. */
+  let quickBusy = $state.raw<string[]>([]);
+  /** A quick install that needs a decision (optional or conflicting mods) goes through the full plan. */
+  let planFor = $state.raw<ProjectSummary | null>(null);
+
+  const setBusy = (key: string, on: boolean) => {
+    quickBusy = on ? [...quickBusy, key] : quickBusy.filter((k) => k !== key);
+  };
+
+  /** One click on the side button: install the newest compatible version, with its required mods. */
+  async function quick(p: ProjectSummary) {
+    const key = `${p.provider}:${p.id}`;
+    if (quickBusy.includes(key)) return;
+    if (kind !== "modpack" && !target) {
+      toasts.info(t("mods.pickInstance"));
+      return;
+    }
+    setBusy(key, true);
+    try {
+      if (kind === "modpack") {
+        await commands.installModpack(p.provider, p.id, null, p.title);
+        toasts.info(t("mods.quickStarted", { name: p.title }));
+        return;
+      }
+      const plan = await commands.planContentInstall(target!.id, p.provider, p.id, null, kind);
+      if (plan.optional.length || plan.incompatible.length || plan.unavailable.length) {
+        planFor = p;
+        return;
+      }
+      await commands.installContent(target!.id, p.provider, p.id, null, kind, [], p.title);
+      installed = new Set([...installed, key]);
+      toasts.success(t("mods.quickDone", { name: p.title, target: target!.name }));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    } finally {
+      setBusy(key, false);
+    }
+  }
 
   function more() {
     if (!loading && hits.length < total) void search(false);
@@ -278,40 +319,79 @@
       <VirtualList items={hits} rowHeight={100} onend={more}>
         {#snippet row(p: ProjectSummary)}
           {@const isInstalled = installed.has(`${p.provider}:${p.id}`)}
-          <button class="hit" onclick={() => (selected = p)}>
-            {#if p.iconUrl}
-              <img src={providerImg(p.provider, p.iconUrl)} alt="" loading="lazy" />
-            {:else}
-              <span class="noimg"><Icon name="package" size={26} /></span>
+          <div class="hit-wrap">
+            <button class="hit" onclick={() => (selected = p)}>
+              {#if p.iconUrl}
+                <img src={providerImg(p.provider, p.iconUrl)} alt="" loading="lazy" />
+              {:else}
+                <span class="noimg"><Icon name="package" size={26} /></span>
+              {/if}
+              <span class="col gap-1 grow info">
+                <span class="row title-row">
+                  <strong class="truncate">{p.title}</strong>
+                  <span class="tiny faint truncate">{t("mods.byAuthor", { author: p.author })}</span>
+                </span>
+                <span class="desc small muted">{p.description}</span>
+                <span class="row tiny faint meta">
+                  <span><Icon name="download" size={12} />{formatNumber(p.downloads, true)}</span>
+                  {#if p.updated}<span><Icon name="clock" size={12} />{formatRelative(p.updated)}</span>{/if}
+                  <span class="badge src {p.provider}"
+                    >{p.provider === "modrinth" ? "Modrinth" : "CurseForge"}</span
+                  >
+                  {#if p.alsoOn}<span class="badge"
+                      >+ {p.alsoOn.provider === "modrinth" ? "Modrinth" : "CurseForge"}</span
+                    >{/if}
+                  {#each p.categories.slice(0, 3) as c (c)}<span class="cat">{c}</span>{/each}
+                </span>
+              </span>
+              {#if isInstalled}<span class="badge success"
+                  ><Icon name="check" size={12} />{t("common.installed")}</span
+                >{/if}
+            </button>
+            {#if kind === "modpack" || !isInstalled}
+              <button
+                class="quick btn primary"
+                disabled={quickBusy.includes(`${p.provider}:${p.id}`)}
+                aria-label={kind === "modpack"
+                  ? t("mods.installNewInstance")
+                  : target
+                    ? t("mods.installTo", { name: target.name })
+                    : t("mods.pickInstance")}
+                title={kind === "modpack"
+                  ? t("mods.installNewInstance")
+                  : target
+                    ? t("mods.installTo", { name: target.name })
+                    : t("mods.pickInstance")}
+                onclick={() => quick(p)}
+              >
+                {#if quickBusy.includes(`${p.provider}:${p.id}`)}<span class="spinner sm"></span>{:else}<Icon
+                    name="download"
+                    size={18}
+                  />{/if}
+              </button>
             {/if}
-            <span class="col gap-1 grow info">
-              <span class="row title-row">
-                <strong class="truncate">{p.title}</strong>
-                <span class="tiny faint truncate">{t("mods.byAuthor", { author: p.author })}</span>
-              </span>
-              <span class="desc small muted">{p.description}</span>
-              <span class="row tiny faint meta">
-                <span><Icon name="download" size={12} />{formatNumber(p.downloads, true)}</span>
-                {#if p.updated}<span><Icon name="clock" size={12} />{formatRelative(p.updated)}</span>{/if}
-                <span class="badge src {p.provider}"
-                  >{p.provider === "modrinth" ? "Modrinth" : "CurseForge"}</span
-                >
-                {#if p.alsoOn}<span class="badge"
-                    >+ {p.alsoOn.provider === "modrinth" ? "Modrinth" : "CurseForge"}</span
-                  >{/if}
-                {#each p.categories.slice(0, 3) as c (c)}<span class="cat">{c}</span>{/each}
-              </span>
-            </span>
-            {#if isInstalled}<span class="badge success"
-                ><Icon name="check" size={12} />{t("common.installed")}</span
-              >{/if}
-          </button>
+          </div>
         {/snippet}
       </VirtualList>
       {#if loading}<div class="more faint small">{t("common.loading")}</div>{/if}
     {/if}
   </div>
 </div>
+
+{#if planFor && target}
+  <InstallPlanModal
+    summary={planFor}
+    instance={target}
+    {kind}
+    versionId={null}
+    onclose={() => (planFor = null)}
+    ondone={() => {
+      const done = planFor;
+      planFor = null;
+      if (done) installed = new Set([...installed, `${done.provider}:${done.id}`]);
+    }}
+  />
+{/if}
 
 {#if selected}
   <ProjectView
@@ -388,7 +468,30 @@
     flex: 1;
     min-height: 0;
   }
+  .hit-wrap {
+    position: relative;
+    width: 100%;
+    height: 92px;
+  }
+  /* The side button: add the newest compatible version in one click. */
+  .quick {
+    position: absolute;
+    right: 0.8rem;
+    top: 50%;
+    width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    border-radius: var(--r-md);
+    transform: translateY(-50%);
+  }
+  :global([data-spring="on"]) .quick:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.1);
+  }
+  :global([data-spring="on"]) .quick:active:not(:disabled) {
+    transform: translateY(-50%) scale(0.9);
+  }
   .hit {
+    padding-right: 4.2rem !important;
     display: flex;
     align-items: center;
     gap: var(--sp-3);

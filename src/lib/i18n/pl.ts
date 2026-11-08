@@ -502,6 +502,8 @@ const pl: Dict = {
     updated: "Zaktualizowano {when}",
     alsoOn: "Także na {provider}",
     installNewInstance: "Zainstaluj jako nową instancję",
+    quickDone: "Dodano {name} do {target}",
+    quickStarted: "Instalowanie {name}…",
     installTo: "Zainstaluj do {name}",
     installing: "Instalowanie…",
     loadMore: "Wczytaj więcej",
