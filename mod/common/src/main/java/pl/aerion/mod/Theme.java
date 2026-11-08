@@ -25,8 +25,6 @@ public final class Theme {
 	/** `sparkles`, `dust`, `snow` or `none`. */
 	public final String particles;
 	public final boolean logo;
-	/** The info panel and shortcuts on the title screen (off unless the file says so). */
-	public final boolean titleExtras;
 	/** Springy menus and fading modules (the theme's `motion.effects`); hud.json may override. */
 	public final boolean animations;
 	/** The launcher background's picture (absolute path, PNG/JPEG/GIF) for the menus, or null. */
@@ -57,7 +55,6 @@ public final class Theme {
 		animations = bool(o, "animations");
 		particles = str(o, "particles", "none");
 		logo = bool(o, "logo");
-		titleExtras = o.has("titleExtras") && bool(o, "titleExtras");
 		backgroundFile = str(o, "backgroundFile", null);
 		float dim;
 		try {

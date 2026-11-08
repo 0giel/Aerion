@@ -644,7 +644,6 @@ const en = {
       colors: "Buttons, sliders and menu backgrounds in the theme colours",
       particles: "Particles in the menus (like the launcher background)",
       logo: "The Aerion logo instead of the Minecraft logo",
-      titleExtras: "Info panel and shortcuts on the game's title screen",
     },
     checkModUpdates: "Check for mod updates in the background",
     checkModUpdatesHint: "At start and every 6 hours; the number of updates shows on the instance tiles.",
