@@ -51,7 +51,19 @@ public final class Hud {
 	private Hud() {}
 
 	/** Resolved look of one module. */
-	public record Style(int text, int background, int border, int borderWidth, int radius, int padding, boolean shadow, String align, boolean smooth, boolean wave, int chromaSpeed) {}
+	public record Style(int text, int background, int border, int borderWidth, int radius, int padding, boolean shadow, String align, boolean smooth, boolean wave, int chromaSpeed,
+			boolean outline, int gradient, String bar, int barColor) {
+		/** The same look with every colour made `k` times as opaque (fading in and out). */
+		Style faded(float k) {
+			if (k >= 0.999f) return this;
+			return new Style(fade(text, k), fade(background, k), fade(border, k), borderWidth, radius, padding, shadow, align, smooth, wave, chromaSpeed, outline,
+					fade(gradient, k), bar, fade(barColor, k));
+		}
+	}
+
+	private static int fade(int color, float k) {
+		return color == 0 ? 0 : Colors.alpha(color, Math.round(((color >>> 24) & 0xFF) * k));
+	}
 
 	/** Everything a module needs while measuring and drawing. */
 	public record Ctx(Minecraft mc, LocalPlayer player, JsonObject cfg, Style style, Theme theme, boolean preview) {
@@ -76,6 +88,11 @@ public final class Hud {
 	interface Module {
 		/** Width and height at scale 1, padding included; {0, 0} hides the module. */
 		int[] size(Ctx c);
+
+		/** 0 good, 1 fair, 2 bad: a module that turns worse pulses once. */
+		default int grade(Ctx c) {
+			return 0;
+		}
 
 		void draw(Ctx c, Gfx g);
 	}
@@ -104,6 +121,19 @@ public final class Hud {
 	}
 
 	private static void plain(Ctx c, Gfx g, String s, int x, int y, int color, boolean shadow) {
+		if (c.style().outline()) {
+			int edge = Colors.alpha(0xFF000000, (color >>> 24) & 0xFF);
+			if (!c.style().smooth()) {
+				for (int[] d : new int[][] {{-1, 0}, {1, 0}, {0, -1}, {0, 1}}) g.text(s, x + d[0], y + d[1], edge, false);
+				g.text(s, x, y, color, false);
+			} else {
+				for (float[] d : new float[][] {{-0.8f, 0}, {0.8f, 0}, {0, -0.8f}, {0, 0.8f}, {-0.6f, -0.6f}, {0.6f, 0.6f}, {-0.6f, 0.6f}, {0.6f, -0.6f}}) {
+					Txt.draw(g, s, x + d[0], y + 4f + d[1], SMOOTH_SIZE, edge);
+				}
+				Txt.draw(g, s, x, y + 4f, SMOOTH_SIZE, color);
+			}
+			return;
+		}
 		if (!c.style().smooth()) {
 			g.text(s, x, y, color, shadow);
 			return;
@@ -129,6 +159,12 @@ public final class Hud {
 		/** Colour of a line's text. */
 		int color(Ctx c, int line) {
 			return c.style().text();
+		}
+
+		@Override
+		public int grade(Ctx c) {
+			int col = color(c, 0);
+			return col == graded(false, false) ? 2 : col == graded(false, true) ? 1 : 0;
 		}
 
 		private int swatchSpace(Ctx c, List<String> lines) {
@@ -469,8 +505,8 @@ public final class Hud {
 		if (!HudConfig.bool(m, "enabled", false)) return true;
 		float k = scaleOf(m);
 		int[] b = gameBox(id, g.width(), g.height());
-		float x = HudConfig.num(m, "x", 0) / 1000f * Math.max(0, g.width() - b[2] * k);
-		float y = HudConfig.num(m, "y", 0) / 1000f * Math.max(0, g.height() - b[3] * k);
+		int[] at = position(m, g.width(), g.height(), Math.round(b[2] * k), Math.round(b[3] * k));
+		float x = at[0], y = at[1];
 		g.push();
 		g.translate(x - b[0] * k, y - b[1] * k);
 		g.scale(k);
@@ -704,6 +740,7 @@ public final class Hud {
 	/** Movement keys and mouse buttons, lit while held; CPS under the mouse buttons. */
 	static final class Keystrokes implements Module {
 		static final int GAP = 2;
+		private static final Map<String, Float> PRESS = new HashMap<>();
 
 		private static int keySize(Ctx c) {
 			try {
@@ -727,9 +764,18 @@ public final class Hud {
 			String pressed = c.opt("pressed", "accent");
 			int accent = Chroma.parse(pressed, 0xFF7AA2FF);
 			int body = down ? Colors.alpha(accent, 0xCC) : (s.background() != 0 ? s.background() : 0x66000000);
-			Draw.rounded(g, x, y, w, h, s.radius(), body);
-			int color = down ? 0xFF111111 : s.text();
-			Hud.text(c, g, label, x + (w - Hud.width(c, label)) / 2, y + (h - 8) / 2, color, s.shadow() && !down);
+			// Presses fade in and out and sink a pixel, rather than switching.
+			String id = x + "," + y + label;
+			float t = c.flag("animate", true) ? PRESS.merge(id, 0f, (old, z) -> old) : down ? 1f : 0f;
+			t += ((down ? 1f : 0f) - t) * Math.min(1f, Hud.dt * 18f);
+			if (Math.abs((down ? 1f : 0f) - t) < 0.02f) t = down ? 1f : 0f;
+			PRESS.put(id, t);
+			int idle = s.background() != 0 ? s.background() : 0x66000000;
+			body = Colors.mix(idle, Colors.alpha(accent, 0xCC), t);
+			int dy = Math.round(t);
+			Draw.rounded(g, x, y + dy, w, h - dy, s.radius(), body);
+			int color = Colors.mix(s.text(), 0xFF111111, t);
+			Hud.text(c, g, label, x + (w - Hud.width(c, label)) / 2, y + dy + (h - 8) / 2, color, s.shadow() && t < 0.5f);
 		}
 
 		@Override
@@ -929,8 +975,18 @@ public final class Hud {
 		String align = pick(own, base, "align", "left");
 		int borderWidth = HudConfig.num(own.has("borderWidth") ? own : base, "borderWidth", 1);
 		boolean smooth = pick(own, base, "font", "smooth").equals("smooth");
+		boolean outline = HudConfig.bool(own.has("outline") ? own : base, "outline", false);
+		String grad = pick(own, base, "gradient", "none");
+		int gradient = switch (grad) {
+			case "none" -> 0;
+			case "accent" -> Colors.alpha(t != null ? t.accent : 0xFF7AA2FF, opacity * 255 / 100);
+			default -> Colors.alpha(Theme.color(grad, surface), opacity * 255 / 100);
+		};
+		String bar = pick(own, base, "bar", "none");
+		int barColor = borderColor != 0 ? borderColor : t != null ? t.accent : 0xFF7AA2FF;
 		return new Style(text, background, borderColor, Math.max(1, Math.min(4, borderWidth)), Math.max(0, Math.min(8, radius)), Math.max(0, Math.min(10, padding)), shadow, align, smooth,
-				txt.equals(Chroma.VALUE) && HudConfig.bool(own.has("chromaWave") ? own : base, "chromaWave", false), speed);
+				txt.equals(Chroma.VALUE) && HudConfig.bool(own.has("chromaWave") ? own : base, "chromaWave", false), speed,
+				outline, background == 0 ? 0 : gradient, bar, barColor);
 	}
 
 	private static String pick(JsonObject own, JsonObject base, String key, String fallback) {
@@ -942,11 +998,51 @@ public final class Hud {
 		return Math.max(25, Math.min(400, HudConfig.num(module, "scale", 100))) / 100f;
 	}
 
+	/** Seconds since the last frame, for the animations. */
+	static float dt = 0.016f;
+	private static long lastFrame;
+
+	/** Fade, pop and pulse state of one module. */
+	private static final class Anim {
+		float vis, pulse;
+		int grade = -1;
+	}
+
+	private static final Map<String, Anim> ANIMS = new HashMap<>();
+
+	/** A module's top-left corner: from its anchor and margin, or from the free x/y it was dragged to. */
+	static int[] position(JsonObject m, int screenW, int screenH, int w, int h) {
+		String a = HudConfig.opt(m, "anchor", "free");
+		if (!"free".equals(a) && a.length() <= 2) {
+			int margin;
+			try {
+				margin = Math.max(0, Math.min(40, Integer.parseInt(HudConfig.opt(m, "margin", "4").trim())));
+			} catch (NumberFormatException e) {
+				margin = 4;
+			}
+			int x = a.contains("l") ? margin : a.contains("r") ? screenW - w - margin : (screenW - w) / 2;
+			int y = a.contains("t") ? margin : a.contains("b") ? screenH - h - margin : (screenH - h) / 2;
+			return new int[] {Math.max(0, x), Math.max(0, y)};
+		}
+		return new int[] {Math.round(HudConfig.num(m, "x", 0) / 1000f * Math.max(0, screenW - w)),
+				Math.round(HudConfig.num(m, "y", 0) / 1000f * Math.max(0, screenH - h))};
+	}
+
+	/** Overshoots a little before settling: the "springy" pop. */
+	static float spring(float t) {
+		t = Math.max(0, Math.min(1, t));
+		float c1 = 1.70158f, c3 = c1 + 1;
+		return 1 + c3 * (float) Math.pow(t - 1, 3) + c1 * (float) Math.pow(t - 1, 2);
+	}
+
 	/** Draw every enabled module; `preview` fills empty ones with samples (editor). */
 	public static void render(Gfx g, boolean preview) {
 		Minecraft mc = Minecraft.getInstance();
 		HudConfig cfg = AerionClient.hud();
 		if (cfg == null) return;
+		long now = System.nanoTime();
+		if (lastFrame != 0) dt = Math.min(0.1f, (now - lastFrame) / 1e9f);
+		lastFrame = now;
 		if (!preview && !Game.hudHidden() && mc.player != null) Overlays.draw(g);
 		// The editor draws the modules itself, also while the whole HUD is switched off.
 		if (!preview && (!cfg.enabled() || Game.hudHidden() || mc.player == null || Game.screen() instanceof EditorScreen)) return;
@@ -958,24 +1054,70 @@ public final class Hud {
 			if (!preview && e.getValue() instanceof GameElement) continue;
 			Ctx c = new Ctx(mc, mc.player, m, style(cfg, m, t), t, preview);
 			try {
+				// Fades in and out when a situation shows or hides it (the editor always shows it).
+				Anim a = ANIMS.computeIfAbsent(e.getKey(), k -> new Anim());
+				boolean want = preview || Situations.visible(m, mc);
+				boolean animate = c.flag("animate", true);
+				if (a.grade < 0 && a.vis == 0 && want) a.vis = 1;
+				a.vis = !animate || preview ? (want ? 1 : 0) : Math.max(0, Math.min(1, a.vis + (want ? 1 : -1) * dt * 6f));
+				if (a.vis <= 0.001f) continue;
 				int[] s = e.getValue().size(c);
 				if (s[0] <= 0 || s[1] <= 0) continue;
+				// A module that turns worse (green to yellow to red) pulses once.
+				if (!preview && c.flag("pulse", true)) {
+					int grade = e.getValue().grade(c);
+					if (a.grade >= 0 && grade > a.grade) a.pulse = 1;
+					a.grade = grade;
+				} else {
+					a.grade = Math.max(a.grade, 0);
+				}
+				a.pulse = Math.max(0, a.pulse - dt * 2.2f);
 				float k = scaleOf(m);
 				int w = Math.round(s[0] * k), h = Math.round(s[1] * k);
-				int x = Math.round(HudConfig.num(m, "x", 0) / 1000f * Math.max(0, g.width() - w));
-				int y = Math.round(HudConfig.num(m, "y", 0) / 1000f * Math.max(0, g.height() - h));
+				int[] pos = position(m, g.width(), g.height(), w, h);
+				int x = pos[0], y = pos[1];
 				BOUNDS.put(e.getKey(), new int[] {x, y, w, h});
+				float pop = animate ? 0.88f + 0.12f * spring(a.vis) : 1f;
+				float bump = 1f + 0.12f * a.pulse * a.pulse;
 				g.push();
-				g.translate(x, y);
+				g.translate(x + w / 2f, y + h / 2f);
+				g.scale(pop * bump);
+				g.translate(-w / 2f, -h / 2f);
 				g.scale(k);
-				Style st = c.style();
-				if (st.border() != 0) Draw.control(g, 0, 0, s[0], s[1], st.radius(), st.border(), st.background(), st.borderWidth());
-				else if (st.background() != 0) Draw.rounded(g, 0, 0, s[0], s[1], st.radius(), st.background());
+				Style st = c.style().faded(a.vis);
+				if (st != c.style()) c = new Ctx(mc, mc.player, m, st, t, preview);
+				paintBox(g, st, s[0], s[1]);
+				if (a.pulse > 0) {
+					int flash = e.getValue().grade(c) >= 2 ? 0xFF5555 : 0xFFE25A;
+					Draw.rounded(g, 0, 0, s[0], s[1], st.radius(), Colors.alpha(flash, Math.round(0x66 * a.pulse)));
+				}
 				e.getValue().draw(c, g);
 				g.pop();
 			} catch (RuntimeException ex) {
 				// One broken module must not take the whole HUD (or the frame) down.
 				AerionClient.warnOnce("hud." + e.getKey(), ex);
+			}
+		}
+	}
+
+	/** Background (flat or shaded), border and accent bar of a module box. */
+	private static void paintBox(Gfx g, Style st, int w, int h) {
+		if (st.gradient() != 0) {
+			Draw.roundedGradient(g, 0, 0, w, h, st.radius(), st.background(), st.gradient());
+			if (st.border() != 0) Draw.control(g, 0, 0, w, h, st.radius(), st.border(), 0, st.borderWidth());
+		} else if (st.border() != 0) {
+			Draw.control(g, 0, 0, w, h, st.radius(), st.border(), st.background(), st.borderWidth());
+		} else if (st.background() != 0) {
+			Draw.rounded(g, 0, 0, w, h, st.radius(), st.background());
+		}
+		if ("none".equals(st.bar())) return;
+		int r = Math.min(st.radius(), Math.min(w, h) / 2), t = 2;
+		switch (st.bar()) {
+			case "left" -> g.fill(0, r, t, h - r, st.barColor());
+			case "right" -> g.fill(w - t, r, w, h - r, st.barColor());
+			case "top" -> g.fill(r, 0, w - r, t, st.barColor());
+			case "bottom" -> g.fill(r, h - t, w - r, h, st.barColor());
+			default -> {
 			}
 		}
 	}

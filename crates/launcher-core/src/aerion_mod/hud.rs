@@ -51,6 +51,15 @@ pub struct HudStyle {
     /// Chroma text as a wave across the letters.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chroma_wave: Option<bool>,
+    /// A dark edge around the letters, for readability over any background.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outline: Option<bool>,
+    /// The background shades to this colour at the bottom: `none`, `accent` or `#rrggbb`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gradient: Option<String>,
+    /// A coloured strip on one side: `none`, `left`, `top`, `right` or `bottom`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bar: Option<String>,
 }
 
 impl HudStyle {
@@ -224,6 +233,8 @@ pub struct HudConfig {
     /// Name of the active profile (none while there are no profiles).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile: Option<String>,
+    /// Springy menus and fading modules; modules can opt out one by one.
+    pub animations: bool,
 }
 
 /// Every module the mod knows: id, on by default, x, y.
@@ -274,6 +285,9 @@ impl Default for HudConfig {
                 font: Some("smooth".into()),
                 chroma_speed: Some(5),
                 chroma_wave: Some(false),
+                outline: Some(false),
+                gradient: Some("none".into()),
+                bar: Some("none".into()),
             },
             modules: MODULES
                 .iter()
@@ -292,6 +306,7 @@ impl Default for HudConfig {
             features: HudFeatures::default(),
             profiles: Vec::new(),
             profile: None,
+            animations: true,
         }
     }
 }
@@ -322,6 +337,12 @@ fn style_ok(s: &HudStyle) -> bool {
         && s.font
             .as_deref()
             .is_none_or(|f| matches!(f, "game" | "smooth"))
+        && s.gradient
+            .as_deref()
+            .is_none_or(|c| color_ok(c, &["none", "accent"]))
+        && s.bar
+            .as_deref()
+            .is_none_or(|b| matches!(b, "none" | "left" | "top" | "right" | "bottom"))
 }
 
 const MAX_PROFILES: usize = 16;
@@ -337,7 +358,7 @@ fn layout_ok(style: &HudStyle, modules: &BTreeMap<String, HudModule>) -> bool {
                 && m.y <= 1000
                 && (25..=400).contains(&m.scale)
                 && style_ok(&m.style)
-                && m.options.len() <= 16
+                && m.options.len() <= 24
                 && m.options
                     .iter()
                     .all(|(k, v)| k.len() <= 32 && v.len() <= 200)

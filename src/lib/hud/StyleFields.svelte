@@ -5,7 +5,46 @@
   import type { HudStyle } from "../api";
   import { t } from "../i18n/index.svelte";
 
-  let { style, onchange }: { style: HudStyle; onchange: (s: HudStyle) => void } = $props();
+  let {
+    style,
+    onchange,
+    presets = false,
+  }: { style: HudStyle; onchange: (s: HudStyle) => void; presets?: boolean } = $props();
+
+  /** Whole looks in one click; each replaces every look field. */
+  const PRESETS: Record<string, HudStyle> = {
+    minimal: { background: "none", border: "none", outline: true, shadow: false, padding: 2 },
+    glass: {
+      background: "theme",
+      opacity: 40,
+      gradient: "#000000",
+      radius: 4,
+      padding: 4,
+      border: "#ffffff",
+      shadow: true,
+    },
+    neon: { background: "theme", opacity: 75, border: "accent", radius: 2, bar: "left" },
+    retro: { font: "game", background: "#000000", opacity: 60, border: "#ffffff", shadow: true, padding: 3 },
+  };
+  const applyPreset = (name: string) =>
+    onchange({
+      text: "theme",
+      background: "theme",
+      opacity: 55,
+      border: "none",
+      borderWidth: 1,
+      radius: 0,
+      padding: 3,
+      shadow: true,
+      align: "left",
+      font: "smooth",
+      chromaSpeed: style.chromaSpeed,
+      chromaWave: false,
+      outline: false,
+      gradient: "none",
+      bar: "none",
+      ...PRESETS[name],
+    });
 
   const set = (patch: Partial<HudStyle>) => onchange({ ...style, ...patch });
   const isHex = (v: string | null | undefined) => !!v && v.startsWith("#");
@@ -13,6 +52,18 @@
 </script>
 
 <div class="col gap-3">
+  {#if presets}
+    <div class="field">
+      <span class="label">{t("hudEditor.style.presets")}</span>
+      <div class="row wrap gap-2">
+        {#each Object.keys(PRESETS) as p (p)}
+          <button class="btn sm" onclick={() => applyPreset(p)}
+            >{t(`hudEditor.style.presetNames.${p}`)}</button
+          >
+        {/each}
+      </div>
+    </div>
+  {/if}
   <div class="field">
     <span class="label">{t("hudEditor.style.text")}</span>
     <div class="row wrap gap-2">
@@ -90,6 +141,36 @@
       >
     {/if}
   </div>
+
+  {#if style.background !== "none"}
+    <div class="field">
+      <span class="label">{t("hudEditor.style.gradient")}</span>
+      <div class="row wrap gap-2">
+        <div class="segmented" role="group" aria-label={t("hudEditor.style.gradient")}>
+          <button
+            aria-pressed={!style.gradient || style.gradient === "none"}
+            onclick={() => set({ gradient: "none" })}>{t("hudEditor.style.none")}</button
+          >
+          <button aria-pressed={style.gradient === "accent"} onclick={() => set({ gradient: "accent" })}
+            >{t("hudEditor.style.accent")}</button
+          >
+          <button
+            aria-pressed={isHex(style.gradient)}
+            onclick={() => set({ gradient: hexOr(style.gradient, "#000000") })}
+            >{t("hudEditor.style.custom")}</button
+          >
+        </div>
+        {#if isHex(style.gradient)}
+          <input
+            type="color"
+            aria-label={t("hudEditor.style.gradient")}
+            value={style.gradient}
+            oninput={(e) => set({ gradient: (e.target as HTMLInputElement).value })}
+          />
+        {/if}
+      </div>
+    </div>
+  {/if}
 
   <div class="field">
     <span class="label">{t("hudEditor.style.border")}</span>
@@ -188,10 +269,26 @@
     </div>
   </div>
 
+  <div class="field">
+    <span class="label">{t("hudEditor.style.bar")}</span>
+    <div class="segmented" role="group" aria-label={t("hudEditor.style.bar")}>
+      {#each ["none", "left", "top", "right", "bottom"] as b (b)}
+        <button aria-pressed={(style.bar ?? "none") === b} onclick={() => set({ bar: b })}
+          >{t(`hudEditor.style.bars.${b}`)}</button
+        >
+      {/each}
+    </div>
+  </div>
+
   <Switch
     label={t("hudEditor.style.shadow")}
     checked={style.shadow ?? true}
     onchange={(v) => set({ shadow: v })}
+  />
+  <Switch
+    label={t("hudEditor.style.outline")}
+    checked={style.outline ?? false}
+    onchange={(v) => set({ outline: v })}
   />
 </div>
 

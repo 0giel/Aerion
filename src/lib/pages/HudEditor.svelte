@@ -41,6 +41,18 @@
     }, 350);
   }
 
+  /** Situations a module can be shown or hidden in (the mod's `Situations`). */
+  const SITUATIONS = [
+    "combat",
+    "underground",
+    "underwater",
+    "lowHealth",
+    "moving",
+    "sprinting",
+    "nether",
+    "multiplayer",
+  ];
+
   const mod = (id: string): HudModule | undefined => cfg?.modules[id];
   const opt = (m: HudModule | undefined, key: string, def: string) => m?.options[key] ?? def;
 
@@ -80,6 +92,7 @@
     const [x0, y0] = [e.clientX, e.clientY];
     const [left0, top0] = [b.left - c.left, b.top - c.top];
     const move = (ev: PointerEvent) => {
+      if (m.options.anchor && m.options.anchor !== "free") m.options = { ...m.options, anchor: "free" };
       const freeW = Math.max(1, c.width - b.width);
       const freeH = Math.max(1, c.height - b.height);
       m.x = Math.round(Math.min(1, Math.max(0, (left0 + ev.clientX - x0) / freeW)) * 1000);
@@ -99,6 +112,7 @@
     const d = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.key];
     if (!m || !d) return;
     e.preventDefault();
+    if (m.options.anchor && m.options.anchor !== "free") m.options = { ...m.options, anchor: "free" };
     m.x = Math.min(1000, Math.max(0, m.x + d[0] * (e.shiftKey ? 5 : 1)));
     m.y = Math.min(1000, Math.max(0, m.y + d[1] * (e.shiftKey ? 5 : 1)));
     changed();
@@ -135,12 +149,46 @@
           : s.border === "chroma"
             ? chroma
             : s.border;
+    const anchor = m.options.anchor ?? "free";
+    const spot =
+      anchor === "free"
+        ? { x: m.x / 10, y: m.y / 10, dx: 0, dy: 0 }
+        : (() => {
+            const gap = Number(m.options.margin ?? 4) * k;
+            const ax = anchor.includes("l") ? 0 : anchor.includes("r") ? 100 : 50;
+            const ay = anchor.includes("t") ? 0 : anchor.includes("b") ? 100 : 50;
+            return {
+              x: ax,
+              y: ay,
+              dx: ax === 0 ? gap : ax === 100 ? -gap : 0,
+              dy: ay === 0 ? gap : ay === 100 ? -gap : 0,
+            };
+          })();
+    const shade =
+      s.background !== "none" && s.gradient && s.gradient !== "none"
+        ? s.gradient === "accent"
+          ? "var(--c-accent)"
+          : s.gradient
+        : null;
+    const px = 2 * kk;
+    const barColor = !s.border || s.border === "none" ? "var(--c-accent)" : border;
+    const bar =
+      {
+        left: `inset ${px}px 0 0 ${barColor}`,
+        right: `inset ${-px}px 0 0 ${barColor}`,
+        top: `inset 0 ${px}px 0 ${barColor}`,
+        bottom: `inset 0 ${-px}px 0 ${barColor}`,
+      }[s.bar ?? "none"] ?? "none";
+    const edge = `${kk}px 0 0 #000, ${-kk}px 0 0 #000, 0 ${kk}px 0 #000, 0 ${-kk}px 0 #000`;
     return [
-      `left:${m.x / 10}%`,
-      `top:${m.y / 10}%`,
-      `transform:translate(${-m.x / 10}%, ${-m.y / 10}%)`,
+      `left:calc(${spot.x}% + ${spot.dx}px)`,
+      `top:calc(${spot.y}% + ${spot.dy}px)`,
+      `transform:translate(${-spot.x}%, ${-spot.y}%)`,
       `--kk:${kk}px`,
-      `background:${bg}`,
+      shade
+        ? `background:linear-gradient(${bg}, color-mix(in srgb, ${shade} ${alpha * 100}%, transparent))`
+        : `background:${bg}`,
+      `box-shadow:${bar}`,
       `color:${text}`,
       `border:${kk * (s.borderWidth ?? 1)}px solid ${border}`,
       `font-family:${s.font === "game" ? "monospace" : "var(--font-ui, Inter, sans-serif)"}`,
@@ -148,7 +196,7 @@
       `border-radius:var(--box-r)`,
       `padding:${(s.padding ?? 3) * kk}px`,
       `text-align:${s.align ?? "left"}`,
-      `text-shadow:${s.shadow === false ? "none" : `${kk}px ${kk}px 0 rgb(0 0 0 / 0.55)`}`,
+      `text-shadow:${s.outline ? edge : s.shadow === false ? "none" : `${kk}px ${kk}px 0 rgb(0 0 0 / 0.55)`}`,
     ].join(";");
   }
 
@@ -235,6 +283,11 @@
         label={t("hudEditor.enabled")}
         checked={cfg.enabled}
         onchange={(v) => cfg && ((cfg.enabled = v), changed())}
+      />
+      <Switch
+        label={t("hudEditor.animations")}
+        checked={cfg.animations ?? true}
+        onchange={(v) => cfg && ((cfg.animations = v), changed())}
       />
       <span class="grow"></span>
       <span class="small muted">{t("hudEditor.presetsLabel")}</span>
@@ -445,6 +498,72 @@
                 >
               {/if}
             {/each}
+            {#if !["bossbar", "scoreboard", "chatbox"].includes(selected)}
+              <h4 class="sub">{t("hudEditor.behavior.title")}</h4>
+              <div class="grid2">
+                <label class="field"
+                  ><span class="label">{t("hudEditor.behavior.showWhen")}</span>
+                  <select
+                    class="select"
+                    value={opt(m, "showWhen", "always")}
+                    onchange={(e) => setOption(selected, "showWhen", (e.target as HTMLSelectElement).value)}
+                  >
+                    {#each ["always", ...SITUATIONS] as v (v)}<option value={v}
+                        >{t(`hudEditor.behavior.situations.${v}`)}</option
+                      >{/each}
+                  </select></label
+                >
+                <label class="field"
+                  ><span class="label">{t("hudEditor.behavior.hideWhen")}</span>
+                  <select
+                    class="select"
+                    value={opt(m, "hideWhen", "never")}
+                    onchange={(e) => setOption(selected, "hideWhen", (e.target as HTMLSelectElement).value)}
+                  >
+                    {#each ["never", ...SITUATIONS] as v (v)}<option value={v}
+                        >{t(`hudEditor.behavior.situations.${v}`)}</option
+                      >{/each}
+                  </select></label
+                >
+              </div>
+              <p class="tiny muted">{t("hudEditor.behavior.hint")}</p>
+              <Switch
+                label={t("hudEditor.behavior.animate")}
+                checked={opt(m, "animate", "1") === "1"}
+                onchange={(v) => setOption(selected, "animate", v ? "1" : "0")}
+              />
+              <Switch
+                label={t("hudEditor.behavior.pulse")}
+                checked={opt(m, "pulse", "1") === "1"}
+                onchange={(v) => setOption(selected, "pulse", v ? "1" : "0")}
+              />
+            {/if}
+            <div class="grid2">
+              <label class="field"
+                ><span class="label">{t("hudEditor.behavior.anchor")}</span>
+                <select
+                  class="select"
+                  value={opt(m, "anchor", "free")}
+                  onchange={(e) => setOption(selected, "anchor", (e.target as HTMLSelectElement).value)}
+                >
+                  {#each ["free", "tl", "t", "tr", "l", "c", "r", "bl", "b", "br"] as v (v)}<option value={v}
+                      >{t(`hudEditor.behavior.anchors.${v}`)}</option
+                    >{/each}
+                </select></label
+              >
+              {#if opt(m, "anchor", "free") !== "free"}
+                <label class="range"
+                  ><span class="small muted">{t("hudEditor.behavior.margin")}: {opt(m, "margin", "4")}</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="40"
+                    value={Number(opt(m, "margin", "4"))}
+                    oninput={(e) => setOption(selected, "margin", (e.target as HTMLInputElement).value)}
+                  /></label
+                >
+              {/if}
+            </div>
             <Switch
               label={t("hudEditor.ownStyle")}
               hint={t("hudEditor.ownStyleHint")}
@@ -459,7 +578,7 @@
 
         <section class="card col gap-3">
           <h3>{t("hudEditor.sharedStyle")}</h3>
-          <StyleFields style={cfg.style} onchange={(s) => cfg && ((cfg.style = s), changed())} />
+          <StyleFields presets style={cfg.style} onchange={(s) => cfg && ((cfg.style = s), changed())} />
         </section>
 
         <section class="card col gap-3">
@@ -585,6 +704,15 @@
 </div>
 
 <style>
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3);
+  }
+  .sub {
+    margin: var(--sp-2) 0 0;
+    font-size: 0.9rem;
+  }
   .hud {
     display: flex;
     flex-direction: column;

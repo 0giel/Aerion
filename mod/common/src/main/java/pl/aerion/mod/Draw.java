@@ -55,6 +55,22 @@ public final class Draw {
 		g.pop();
 	}
 
+	/** A rounded box shaded from `top` to `bottom`, row by row in screen pixels. */
+	public static void roundedGradient(Gfx g, int x, int y, int w, int h, int r, int top, int bottom) {
+		if (w <= 0 || h <= 0) return;
+		r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+		int k = Gfx.guiScale();
+		int X = x * k, Y = y * k, W = w * k, H = h * k, R = r * k;
+		g.push();
+		g.scale(1f / k);
+		for (int i = 0; i < H; i++) {
+			int d = Math.min(i, H - 1 - i);
+			float in = d < R ? inset(d, R) : 0;
+			row(g, X, Y + i, W, in, Colors.mix(top, bottom, H <= 1 ? 0 : i / (float) (H - 1)));
+		}
+		g.pop();
+	}
+
 	/** A control: a thin border in `edge` around a body in `fill` (which stays see-through). */
 	public static void control(Gfx g, int x, int y, int w, int h, int r, int edge, int fill) {
 		control(g, x, y, w, h, r, edge, fill, 1);

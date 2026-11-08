@@ -955,6 +955,8 @@ export type HudConfig_Deserialize = {
 	profiles?: HudProfile_Deserialize[],
 	/**  Name of the active profile (none while there are no profiles). */
 	profile?: string | null,
+	/**  Springy menus and fading modules; modules can opt out one by one. */
+	animations?: boolean,
 };
 
 export type HudConfig_Serialize = {
@@ -967,6 +969,8 @@ export type HudConfig_Serialize = {
 	profiles?: HudProfile_Serialize[],
 	/**  Name of the active profile (none while there are no profiles). */
 	profile?: string,
+	/**  Springy menus and fading modules; modules can opt out one by one. */
+	animations: boolean,
 };
 
 export type HudFeatures = HudFeatures_Serialize | HudFeatures_Deserialize;
@@ -1115,6 +1119,12 @@ export type HudStyle_Deserialize = {
 	chromaSpeed?: number | null,
 	/**  Chroma text as a wave across the letters. */
 	chromaWave?: boolean | null,
+	/**  A dark edge around the letters, for readability over any background. */
+	outline?: boolean | null,
+	/**  The background shades to this colour at the bottom: `none`, `accent` or `#rrggbb`. */
+	gradient?: string | null,
+	/**  A coloured strip on one side: `none`, `left`, `top`, `right` or `bottom`. */
+	bar?: string | null,
 };
 
 /**
@@ -1143,6 +1153,12 @@ export type HudStyle_Serialize = {
 	chromaSpeed?: number,
 	/**  Chroma text as a wave across the letters. */
 	chromaWave?: boolean,
+	/**  A dark edge around the letters, for readability over any background. */
+	outline?: boolean,
+	/**  The background shades to this colour at the bottom: `none`, `accent` or `#rrggbb`. */
+	gradient?: string,
+	/**  A coloured strip on one side: `none`, `left`, `top`, `right` or `bottom`. */
+	bar?: string,
 };
 
 export type ImportedSettings = ImportedSettings_Serialize | ImportedSettings_Deserialize;

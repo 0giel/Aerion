@@ -228,6 +228,8 @@ public final class AerionMenu implements Page {
 	private long lastFrame;
 	private float dt = 0.016f;
 
+	private final long openedAt = System.nanoTime();
+
 	public AerionMenu() {}
 
 	/** Opens on the HUD profiles. */
@@ -495,6 +497,11 @@ public final class AerionMenu implements Page {
 		g.push();
 		g.scale(1f / toUnits);
 		Gfx.pixels(p);
+		// The window springs open: it grows from a little smaller and settles with a small overshoot.
+		float open = animationsOn() ? Hud.spring(Math.min(1f, (now - openedAt) / 3.2e8f)) : 1f;
+		float pop = 0.9f + 0.1f * open;
+		g.translate(unitsW / 2f * (1 - pop), unitsH / 2f * (1 - pop));
+		g.scale(pop);
 		try {
 			window();
 		} finally {
@@ -864,6 +871,7 @@ public final class AerionMenu implements Page {
 	private void tileAt(HudConfig cfg, String id, int cx, int cy, int w, int h) {
 		boolean on = enabled(cfg, id), over = inside(cx, cy, w, h);
 		float lift = ease("tile" + id, over ? 1 : 0);
+		if (animationsOn()) cy -= Math.round(lift * 2f);
 		int band = 15;
 		Draw.rounded(g, cx, cy, w, h, 4, Colors.mix(tile, control, lift));
 		int bandColor = on ? (over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent) : Colors.mix(control, track, lift);
@@ -922,12 +930,55 @@ public final class AerionMenu implements Page {
 			if (List.of("bossbar", "scoreboard", "chatbox").contains(detail)) note(Lang.tr("aerion.hint.element"));
 			endCard();
 		}
+		// Shown only in some situations, and how it comes and goes.
+		if (!List.of("bossbar", "scoreboard", "chatbox").contains(detail)) {
+			beginCard(Lang.tr("aerion.sec.behavior"));
+			String[] show = new String[Situations.IDS.size() + 1], hide = new String[Situations.IDS.size() + 1];
+			show[0] = "always";
+			hide[0] = "never";
+			for (int i = 0; i < Situations.IDS.size(); i++) show[i + 1] = hide[i + 1] = Situations.IDS.get(i);
+			cycle(Lang.tr("aerion.opt.showWhen"), show, choiceLabels(show), HudConfig.opt(m, "showWhen", "always"), v -> setOption(m, "showWhen", v));
+			cycle(Lang.tr("aerion.opt.hideWhen"), hide, choiceLabels(hide), HudConfig.opt(m, "hideWhen", "never"), v -> setOption(m, "hideWhen", v));
+			toggle(Lang.tr("aerion.opt.animate"), "1".equals(HudConfig.opt(m, "animate", "1")), v -> setOption(m, "animate", v ? "1" : "0"));
+			toggle(Lang.tr("aerion.opt.pulse"), "1".equals(HudConfig.opt(m, "pulse", "1")), v -> setOption(m, "pulse", v ? "1" : "0"));
+			note(Lang.tr("aerion.hint.behavior"));
+			endCard();
+		}
 		beginCard(Lang.tr("aerion.sec.place"));
 		slider(Lang.tr("aerion.panel.scale"), HudConfig.num(m, "scale", 100), 25, 400, 5, "%", v -> m.addProperty("scale", v));
 		grid(m);
-		slider(Lang.tr("aerion.place.x"), HudConfig.num(m, "x", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("x", v * 10));
-		slider(Lang.tr("aerion.place.y"), HudConfig.num(m, "y", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("y", v * 10));
+		String[] anchors = {"free", "tl", "t", "tr", "l", "c", "r", "bl", "b", "br"};
+		cycle(Lang.tr("aerion.place.anchor"), anchors, choiceLabels(anchors), HudConfig.opt(m, "anchor", "free"), v -> setOption(m, "anchor", v));
+		if (!"free".equals(HudConfig.opt(m, "anchor", "free"))) {
+			slider(Lang.tr("aerion.place.margin"), HudConfig.num(optionsOf(m), "margin", 4), 0, 40, 1, "", v -> setOption(m, "margin", String.valueOf(v)));
+		} else {
+			slider(Lang.tr("aerion.place.x"), HudConfig.num(m, "x", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("x", v * 10));
+			slider(Lang.tr("aerion.place.y"), HudConfig.num(m, "y", 0) / 10, 0, 100, 1, "%", v -> m.addProperty("y", v * 10));
+		}
 		endCard();
+	}
+
+	private static JsonObject optionsOf(JsonObject m) {
+		return m.get("options") instanceof JsonObject o ? o : new JsonObject();
+	}
+
+	private static String[] choiceLabels(String[] ids) {
+		String[] out = new String[ids.length];
+		for (int i = 0; i < ids.length; i++) out[i] = Lang.tr("aerion.choice." + ids[i]);
+		return out;
+	}
+
+	/** One button that steps through the values (for lists too long to show side by side). */
+	private void cycle(String label, String[] values, String[] labels, String current, Consumer<String> set) {
+		beginRow(label);
+		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
+		int idx = Math.max(0, java.util.Arrays.asList(values).indexOf(current));
+		smallButton(controlX(), y + 2, controlW(), ROW - 4, labels[idx] + "  ›", idx != 0, () -> {
+			set.accept(values[(idx + 1) % values.length]);
+			changed = true;
+		});
+		y += ROW;
+		endRow();
 	}
 
 	/** Nine spots for the corners, edges and centre, drawn on a little screen. */
@@ -944,11 +995,15 @@ public final class AerionMenu implements Page {
 			for (int col = 0; col < 3; col++) {
 				int tx = cx + pad + col * (cw + gap), ty = top + pad + row * (ch + gap);
 				int vx = xs[col], vy = ys[row];
-				boolean on = Math.abs(mx - vx) < 15 && Math.abs(my - vy) < 15, over = inside(tx, ty, cw, ch);
+				String here = HudConfig.opt(m, "anchor", "free");
+				boolean on = here.equals("free") ? Math.abs(mx - vx) < 15 && Math.abs(my - vy) < 15 : here.equals(new String[][] {{"tl", "t", "tr"}, {"l", "c", "r"}, {"bl", "b", "br"}}[row][col]);
+				boolean over = inside(tx, ty, cw, ch);
 				Draw.rounded(g, tx, ty, cw, ch, 1, on ? accent : over ? Colors.mix(surface, text, 0.35f) : Colors.mix(surface, text, 0.16f));
+				String code = new String[][] {{"tl", "t", "tr"}, {"l", "c", "r"}, {"bl", "b", "br"}}[row][col];
 				hit(tx, ty, cw, ch, f -> {
 					m.addProperty("x", vx);
 					m.addProperty("y", vy);
+					setOption(m, "anchor", code);
 					changed = true;
 				}, false);
 			}
@@ -1099,8 +1154,74 @@ public final class AerionMenu implements Page {
 		HudConfig cfg = AerionClient.hud();
 		beginCard(null);
 		toggle(Lang.tr("aerion.panel.hud"), cfg.enabled(), v -> cfg.root.addProperty("enabled", v));
+		toggle(Lang.tr("aerion.style.animations"), animationsOn(), v -> cfg.root.addProperty("animations", v));
+		endCard();
+		beginCard(Lang.tr("aerion.sec.presets"));
+		beginRow("presets");
+		int bx = x, by = y + 2;
+		for (String id : PRESETS) {
+			String label = Lang.tr("aerion.preset." + id);
+			int w = Math.round(Txt.width(label, SMALL)) + 14;
+			smallButton(bx, by, w, ROW - 4, label, false, () -> {
+				applyPreset(cfg.style(), id);
+				changed = true;
+			});
+			bx += w + 3;
+		}
+		y += ROW;
+		endRow();
+		note(Lang.tr("aerion.hint.presets"));
 		endCard();
 		lookFields(new Look(cfg.style(), null));
+	}
+
+	private static final String[] PRESETS = {"minimal", "glass", "neon", "retro"};
+
+	/** Menu animations (springy window and tiles); also read by the launcher's switch. */
+	static boolean animationsOn() {
+		HudConfig cfg = AerionClient.hud();
+		return cfg == null || HudConfig.bool(cfg.root, "animations", true);
+	}
+
+	/** A whole look in one click: the shared style's values are replaced, module overrides stay. */
+	private static void applyPreset(JsonObject st, String id) {
+		for (String k : new String[] {"text", "background", "opacity", "border", "borderWidth", "radius", "padding", "shadow", "align", "font", "outline", "gradient", "bar", "chromaWave"}) st.remove(k);
+		switch (id) {
+			case "minimal" -> {
+				st.addProperty("background", "none");
+				st.addProperty("border", "none");
+				st.addProperty("outline", true);
+				st.addProperty("shadow", false);
+				st.addProperty("padding", 2);
+			}
+			case "glass" -> {
+				st.addProperty("background", "theme");
+				st.addProperty("opacity", 40);
+				st.addProperty("gradient", "#000000");
+				st.addProperty("radius", 4);
+				st.addProperty("padding", 4);
+				st.addProperty("border", "#ffffff");
+				st.addProperty("shadow", true);
+			}
+			case "neon" -> {
+				st.addProperty("background", "theme");
+				st.addProperty("opacity", 75);
+				st.addProperty("border", "accent");
+				st.addProperty("radius", 2);
+				st.addProperty("bar", "left");
+				st.addProperty("outline", false);
+			}
+			case "retro" -> {
+				st.addProperty("font", "game");
+				st.addProperty("background", "#000000");
+				st.addProperty("opacity", 60);
+				st.addProperty("border", "#ffffff");
+				st.addProperty("shadow", true);
+				st.addProperty("padding", 3);
+			}
+			default -> {
+			}
+		}
 	}
 
 	private void moduleLook(HudConfig cfg, JsonObject m) {
@@ -1146,6 +1267,9 @@ public final class AerionMenu implements Page {
 		toggle(Lang.tr("aerion.style.shadow"), HudConfig.bool(l.read("shadow"), "shadow", true), v -> l.write().addProperty("shadow", v));
 		l.mark("shadow", top);
 		top = y;
+		toggle(Lang.tr("aerion.style.outline"), HudConfig.bool(l.read("outline"), "outline", false), v -> l.write().addProperty("outline", v));
+		l.mark("outline", top);
+		top = y;
 		choiceRow(Lang.tr("aerion.style.align"), new String[] {"left", "center", "right"}, new String[] {Lang.tr("aerion.style.left"), Lang.tr("aerion.style.center"), Lang.tr("aerion.style.right")}, HudConfig.str(l.read("align"), "align", "left"), v -> l.write().addProperty("align", v));
 		l.mark("align", top);
 
@@ -1163,6 +1287,9 @@ public final class AerionMenu implements Page {
 		slider(Lang.tr("aerion.style.opacity"), HudConfig.num(l.read("opacity"), "opacity", 55), 0, 100, 5, "%", v -> l.write().addProperty("opacity", v));
 		l.mark("opacity", top);
 		top = y;
+		color("gradient", Lang.tr("aerion.style.gradient"), new String[] {"none", "accent"}, new String[] {none, acc}, HudConfig.str(l.read("gradient"), "gradient", "none"), v -> l.write().addProperty("gradient", v));
+		l.mark("gradient", top);
+		top = y;
 		slider(Lang.tr("aerion.style.padding"), HudConfig.num(l.read("padding"), "padding", 3), 0, 10, 1, "", v -> l.write().addProperty("padding", v));
 		l.mark("padding", top);
 		top = y;
@@ -1175,6 +1302,10 @@ public final class AerionMenu implements Page {
 		String border = HudConfig.str(l.read("border"), "border", "none");
 		color("border", Lang.tr("aerion.style.border"), new String[] {"none", "accent"}, new String[] {none, acc}, border, v -> l.write().addProperty("border", v));
 		l.mark("border", top);
+		top = y;
+		String[] bars = {"none", "left", "top", "right", "bottom"};
+		choice(Lang.tr("aerion.style.bar"), bars, choiceLabels(bars), HudConfig.str(l.read("bar"), "bar", "none"), v -> l.write().addProperty("bar", v));
+		l.mark("bar", top);
 		if (!"none".equals(border)) {
 			top = y;
 			slider(Lang.tr("aerion.style.borderWidth"), HudConfig.num(l.read("borderWidth"), "borderWidth", 1), 1, 4, 1, "", v -> l.write().addProperty("borderWidth", v));
