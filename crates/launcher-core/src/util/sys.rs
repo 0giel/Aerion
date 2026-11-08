@@ -40,6 +40,11 @@ pub fn current_arch() -> Arch {
     }
 }
 
+/// Logical processor cores (1 when unknown).
+pub fn cpu_cores() -> usize {
+    std::thread::available_parallelism().map_or(1, usize::from)
+}
+
 /// Total physical memory in MiB (falls back to 8 GiB if it cannot be determined).
 pub fn total_memory_mb() -> u64 {
     let total = sysinfo::System::new().ok().map_or(0, |mut sys| {

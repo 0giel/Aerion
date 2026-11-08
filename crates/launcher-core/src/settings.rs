@@ -165,6 +165,10 @@ pub struct Settings {
     /// Default initial heap (`-Xms`); `None` = the JVM's own default.
     pub min_memory_mb: Option<u32>,
     pub jvm_preset: JvmPreset,
+    /// Heap size and GC picked from the computer and the instance (see
+    /// [`crate::java::flags::auto_plan`]) wherever the player didn't choose one. `None` (settings
+    /// written before this existed) counts as on. Older launchers ignore the field.
+    pub java_auto: Option<bool>,
     // Game defaults for every instance. An instance's own values are added after these (JVM and
     // game arguments, environment) or replace them (resolution, fullscreen, wrapper).
     pub jvm_args: Vec<String>,
@@ -258,6 +262,7 @@ impl Default for Settings {
             max_memory_mb: None,
             min_memory_mb: None,
             jvm_preset: JvmPreset::Standard,
+            java_auto: None,
             jvm_args: vec![],
             game_args: vec![],
             resolution: None,

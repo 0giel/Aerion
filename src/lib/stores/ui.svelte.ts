@@ -3,6 +3,8 @@
 class Ui {
   newInstanceOpen = $state(false);
   paletteOpen = $state(false);
+  /** The "update all mods" window. */
+  updateAllOpen = $state(false);
   /** Error code of a launch that failed for an account reason; shows the help dialog. */
   accountHelp = $state<string | null>(null);
   /** Open "customize" dialog: the sidebar or the home screen. */

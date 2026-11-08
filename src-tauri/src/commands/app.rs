@@ -57,6 +57,38 @@ pub async fn app_info(state: State<'_, AppState>) -> CmdResult<AppInfo> {
     })
 }
 
+/// What the automatic Java settings would pick for an instance (or a typical modded one), for
+/// the settings pages; the real Java version is only known at launch.
+#[tauri::command]
+#[specta::specta]
+pub async fn auto_java_plan(
+    state: State<'_, AppState>,
+    instance_id: Option<String>,
+) -> CmdResult<launcher_core::java::flags::AutoPlan> {
+    use launcher_core::java::flags::{Hardware, auto_plan, typical_java_major};
+    let (modded, mods, version) = match instance_id {
+        Some(id) => {
+            let inst = state.instances.get(&id).await?;
+            let dir = state.instances.game_dir(&id)?;
+            (
+                inst.loader.is_modded(),
+                launcher_core::instances::launch::count_mods(&dir),
+                inst.game_version,
+            )
+        }
+        None => (true, 0, "1.21.11".to_owned()),
+    };
+    Ok(auto_plan(
+        Hardware {
+            total_mb: total_memory_mb(),
+            cores: launcher_core::util::sys::cpu_cores(),
+        },
+        typical_java_major(&version),
+        modded,
+        mods,
+    ))
+}
+
 #[tauri::command]
 #[specta::specta]
 pub async fn get_settings(state: State<'_, AppState>) -> CmdResult<Settings> {

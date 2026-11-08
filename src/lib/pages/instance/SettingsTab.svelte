@@ -21,7 +21,8 @@
     type JvmPreset,
     type LoaderVersion,
   } from "../../api";
-  import type { WorldInfo } from "../../bindings";
+  import type { AutoPlan, WorldInfo } from "../../bindings";
+  import { autoSummary } from "../../javaAuto";
   import { t } from "../../i18n/index.svelte";
 
   let { instance, onremove }: { instance: Instance; onremove: () => void } = $props();
@@ -49,11 +50,21 @@
   let testResult = $state<string | null>(null);
 
   const totalMb = $derived(app.info?.totalMemoryMb ?? 8192);
+  let autoPlan = $state.raw<AutoPlan | null>(null);
+  const javaAuto = $derived(app.settings?.javaAuto !== false);
   const autoMb = $derived(
-    instance.loader === "vanilla"
-      ? (app.info?.defaultMemoryMb ?? 4096)
-      : (app.info?.defaultMemoryModdedMb ?? 6144),
+    javaAuto && autoPlan
+      ? autoPlan.maxMb
+      : instance.loader === "vanilla"
+        ? (app.info?.defaultMemoryMb ?? 4096)
+        : (app.info?.defaultMemoryModdedMb ?? 6144),
   );
+  $effect(() => {
+    commands
+      .autoJavaPlan(instance.id)
+      .then((p) => (autoPlan = p))
+      .catch(() => {});
+  });
   const maxSlider = $derived(Math.max(2048, Math.floor((totalMb * 0.85) / 256) * 256));
 
   $effect(() => {
@@ -337,6 +348,7 @@
       onchange={(mb) => ((memoryAuto = false), (draft.maxMemoryMb = mb))}
     />
     <span class="hint">{t("memory.instanceHint")}</span>
+    {#if javaAuto && autoPlan}<span class="hint">{autoSummary(autoPlan, true)}</span>{/if}
     <Advanced
       hint={t("instance.settings.memoryAdvancedHint")}
       open={minMemoryOwn || !!draft.jvmPreset || customJava}
@@ -376,7 +388,9 @@
               >{p
                 ? t(`instance.settings.presets.${p}`)
                 : t("instance.settings.useGlobal", {
-                    value: t(`instance.settings.presets.${g?.jvmPreset ?? "standard"}`),
+                    value: t(
+                      `instance.settings.presets.${javaAuto && autoPlan && (g?.jvmPreset ?? "standard") === "standard" ? autoPlan.preset : (g?.jvmPreset ?? "standard")}`,
+                    ),
                   })}</button
             >
           {/each}

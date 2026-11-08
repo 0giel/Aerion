@@ -41,6 +41,10 @@
   });
 
   let launchersOpen = $state(false);
+  /** Mod updates waiting in instances that aren't running. */
+  const updatable = $derived(
+    Object.entries(app.contentUpdates).reduce((n, [id, c]) => n + (app.running[id] ? 0 : c), 0),
+  );
 
   async function importPack() {
     const file = await openDialog({
@@ -54,6 +58,11 @@
 <div class="page">
   <header class="page-header">
     <h1 class="grow">{t("instances.title")}</h1>
+    {#if updatable}
+      <button class="btn" onclick={() => (ui.updateAllOpen = true)}
+        ><Icon name="arrowUp" size={16} />{t("updateAll.button", { n: updatable })}</button
+      >
+    {/if}
     <button class="btn" onclick={() => (launchersOpen = true)}
       ><Icon name="download" size={16} />{t("importLaunchers.button")}</button
     >

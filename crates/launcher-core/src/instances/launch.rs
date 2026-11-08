@@ -12,7 +12,7 @@ use crate::game::launch::{
 use crate::horizon;
 use crate::instances::{Instance, InstanceManager};
 use crate::java::detect::{detect_system, inspect};
-use crate::java::flags::{default_max_memory_mb, probe_args};
+use crate::java::flags::{Hardware, JvmPreset, auto_plan, default_max_memory_mb, probe_args};
 use crate::java::{JavaInstall, JavaSource};
 use crate::loaders;
 use crate::loaders::LoaderKind;
@@ -20,7 +20,7 @@ use crate::mojang::version::JavaVersionReq;
 use crate::net::download::VerifyMode;
 use crate::progress::TaskCtx;
 use crate::settings::Settings;
-use crate::util::sys::total_memory_mb;
+use crate::util::sys::{cpu_cores, total_memory_mb};
 
 pub struct LaunchPlan {
     pub instance: Instance,
@@ -233,6 +233,15 @@ async fn pick_java(
         .ok_or(Error::JavaNotFound(req.major_version))
 }
 
+/// Mods in a game folder: the `.jar` files of `mods/` that are switched on.
+pub fn count_mods(game_dir: &std::path::Path) -> u32 {
+    std::fs::read_dir(game_dir.join("mods")).map_or(0, |dir| {
+        dir.flatten()
+            .filter(|e| e.file_name().to_string_lossy().ends_with(".jar"))
+            .count() as u32
+    })
+}
+
 // Every input is a distinct piece of launch context; a struct would only rename them.
 #[allow(clippy::too_many_arguments)]
 pub async fn plan(
@@ -273,11 +282,33 @@ pub async fn plan(
     {
         game_args.push("--fullscreen".into());
     }
-    let max_memory_mb = inst
-        .max_memory_mb
-        .or(settings.max_memory_mb)
-        .unwrap_or_else(|| default_max_memory_mb(total_memory_mb(), inst.loader.is_modded()));
     let game_dir = instances.game_dir_of(&inst)?;
+    // Automatic heap and GC for what the player left unset (see `auto_plan`).
+    let auto = settings.java_auto.unwrap_or(true).then(|| {
+        auto_plan(
+            Hardware {
+                total_mb: total_memory_mb(),
+                cores: cpu_cores(),
+            },
+            java.major,
+            inst.loader.is_modded(),
+            count_mods(&game_dir),
+        )
+    });
+    let max_memory_mb = inst.max_memory_mb.or(settings.max_memory_mb).unwrap_or_else(|| {
+        auto.as_ref().map_or_else(
+            || default_max_memory_mb(total_memory_mb(), inst.loader.is_modded()),
+            |a| a.max_mb,
+        )
+    });
+    // A preset chosen by hand (in the instance, or other than the standard one in the settings)
+    // always wins over the automatic one.
+    let preset = inst.jvm_preset.unwrap_or(
+        match (&auto, settings.jvm_preset) {
+            (Some(a), JvmPreset::Standard) => a.preset,
+            (_, chosen) => chosen,
+        },
+    );
     prepare_game_dir(&prepared, &game_dir).await?;
     let mut share_back = false;
     if inst.shared_options {
@@ -305,7 +336,7 @@ pub async fn plan(
         java_major: java.major,
         max_memory_mb,
         min_memory_mb: inst.min_memory_mb.or(settings.min_memory_mb),
-        preset: inst.jvm_preset.unwrap_or(settings.jvm_preset),
+        preset,
         extra_jvm_args: jvm_args,
         extra_game_args: game_args,
         resolution: resolution(settings, &inst),

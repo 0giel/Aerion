@@ -23,6 +23,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
         .commands(collect_commands![
             app::app_info,
             app::get_settings,
+            app::auto_java_plan,
             app::save_settings,
             app::export_settings,
             app::import_settings,
@@ -92,6 +93,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             mods::undo_content_update,
             mods::instance_upgrade_plan,
             mods::upgrade_instance,
+            mods::apply_all_content_updates,
             mods::list_content_backups,
             mods::add_content_files,
             mods::install_modpack,

@@ -9,6 +9,11 @@ import * as __TAURI_EVENT from "@tauri-apps/api/event";
 export const commands = {
 	appInfo: () => __TAURI_INVOKE<AppInfo_Serialize>("app_info"),
 	getSettings: () => __TAURI_INVOKE<Settings_Serialize>("get_settings"),
+	/**
+	 *  What the automatic Java settings would pick for an instance (or a typical modded one), for
+	 *  the settings pages; the real Java version is only known at launch.
+	 */
+	autoJavaPlan: (instanceId: string | null) => __TAURI_INVOKE<AutoPlan>("auto_java_plan", { instanceId }),
 	/**  Save settings; rebuilds the HTTP stack when network options change. */
 	saveSettings: (settings: Settings_Deserialize) => __TAURI_INVOKE<Settings_Serialize>("save_settings", { settings }),
 	/**  Launcher settings, themes, skins, the in-game HUD and the shared game settings in one file. */
@@ -138,6 +143,13 @@ export const commands = {
 	 *  The task result is the upgraded instance's id.
 	 */
 	upgradeInstance: (instanceId: string, target: string, updates: UpdateInfo_Deserialize[], disable: ContentRef[], copyName: string | null) => __TAURI_INVOKE<string>("upgrade_instance", { instanceId, target, updates, disable, copyName }),
+	/**
+	 *  Update several instances, one after another in a single task (so the worlds' backups and the
+	 *  downloads don't all run at once). A running game is left alone, and one failing instance
+	 *  doesn't stop the rest; the result lists what was skipped. Undo stays per instance, in its
+	 *  Content tab.
+	 */
+	applyAllContentUpdates: (items: InstanceUpdates_Deserialize[]) => __TAURI_INVOKE<string>("apply_all_content_updates", { items }),
 	listContentBackups: (instanceId: string) => __TAURI_INVOKE<BackupInfo[]>("list_content_backups", { instanceId }),
 	/**  Copy local files (drag & drop) into the instance. */
 	addContentFiles: (instanceId: string, kind: ContentKind, paths: string[]) => __TAURI_INVOKE<number>("add_content_files", { instanceId, kind, paths }),
@@ -387,6 +399,17 @@ export type AppUpdate_Serialize = {
 };
 
 export type Arch = "x86" | "x64" | "arm64" | "arm";
+
+/**  The automatic choice of heap size and GC preset for one launch. */
+export type AutoPlan = {
+	maxMb: number,
+	/**  The concrete preset the flags are built from. */
+	preset: JvmPreset,
+	totalMb: number,
+	cores: number,
+	mods: number,
+	javaMajor: number,
+};
 
 export type BackupInfo = {
 	id: string,
@@ -1251,6 +1274,21 @@ export type InstanceStat_Serialize = {
 	launches: number,
 };
 
+/**  The updates chosen for one instance in the "update everything" window. */
+export type InstanceUpdates = InstanceUpdates_Serialize | InstanceUpdates_Deserialize;
+
+/**  The updates chosen for one instance in the "update everything" window. */
+export type InstanceUpdates_Deserialize = {
+	instanceId: string,
+	updates: UpdateInfo_Deserialize[],
+};
+
+/**  The updates chosen for one instance in the "update everything" window. */
+export type InstanceUpdates_Serialize = {
+	instanceId: string,
+	updates: UpdateInfo_Serialize[],
+};
+
 export type Instance_Deserialize = {
 	/**  Folder name; always taken from the directory, never trusted from the file. */
 	id?: string,
@@ -2094,6 +2132,12 @@ export type Settings_Deserialize = {
 	/**  Default initial heap (`-Xms`); `None` = the JVM's own default. */
 	minMemoryMb?: number | null,
 	jvmPreset?: JvmPreset,
+	/**
+	 *  Heap size and GC picked from the computer and the instance (see
+	 *  [`crate::java::flags::auto_plan`]) wherever the player didn't choose one. `None` (settings
+	 *  written before this existed) counts as on. Older launchers ignore the field.
+	 */
+	javaAuto?: boolean | null,
 	jvmArgs?: string[],
 	gameArgs?: string[],
 	resolution?: Resolution | null,
@@ -2157,6 +2201,12 @@ export type Settings_Serialize = {
 	/**  Default initial heap (`-Xms`); `None` = the JVM's own default. */
 	minMemoryMb: number | null,
 	jvmPreset: JvmPreset,
+	/**
+	 *  Heap size and GC picked from the computer and the instance (see
+	 *  [`crate::java::flags::auto_plan`]) wherever the player didn't choose one. `None` (settings
+	 *  written before this existed) counts as on. Older launchers ignore the field.
+	 */
+	javaAuto: boolean | null,
 	jvmArgs: string[],
 	gameArgs: string[],
 	resolution: Resolution | null,

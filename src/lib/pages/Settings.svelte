@@ -28,6 +28,8 @@
     type Settings,
   } from "../api";
   import { LOCALES, systemLocale, t } from "../i18n/index.svelte";
+  import { autoSummary } from "../javaAuto";
+  import type { AutoPlan } from "../bindings";
 
   const s = $derived(app.settings as Settings);
   let cfKey = $state("");
@@ -36,6 +38,16 @@
   let proxy = $state(app.settings?.proxy ?? "");
   let clientId = $state(app.settings?.msaClientId ?? "");
   let galleryOpen = $state(false);
+  let autoPlan = $state.raw<AutoPlan | null>(null);
+  // Heap and GC picked from the computer (on unless switched off).
+  const javaAuto = $derived(app.settings?.javaAuto !== false);
+  const javaAutoSummary = (p: AutoPlan) => autoSummary(p, false);
+  $effect(() => {
+    commands
+      .autoJavaPlan(null)
+      .then((p) => (autoPlan = p))
+      .catch(() => {});
+  });
   let optionsTemplate = $state.raw<{ source: string; savedAt: number } | null>(null);
   $effect(() => {
     commands
@@ -447,6 +459,15 @@
 
       <section id="set-java" class="card col gap-3">
         <h2>{t("settings.sections.java")}</h2>
+        <Switch
+          label={t("javaAuto.label")}
+          hint={t("javaAuto.hint")}
+          checked={javaAuto}
+          onchange={(v) => save({ javaAuto: v })}
+        />
+        {#if javaAuto && autoPlan}
+          <div class="small muted">{javaAutoSummary(autoPlan)}</div>
+        {/if}
         <div class="field">
           <span class="label">{t("settings.defaultMemory")}</span>
           <div class="segmented" role="group" aria-label={t("settings.defaultMemory")}>
@@ -454,7 +475,9 @@
               type="button"
               aria-pressed={s.maxMemoryMb === null}
               onclick={() => save({ maxMemoryMb: null })}
-              >{t("instance.settings.memoryAuto", { mb: app.info?.defaultMemoryMb ?? 4096 })}</button
+              >{t("instance.settings.memoryAuto", {
+                mb: (javaAuto ? autoPlan?.maxMb : null) ?? app.info?.defaultMemoryMb ?? 4096,
+              })}</button
             >
             <button
               type="button"

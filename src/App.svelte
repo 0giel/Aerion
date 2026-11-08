@@ -47,6 +47,7 @@
     onboarding: () => import("./lib/pages/Onboarding.svelte"),
   };
   const newInstance = () => import("./lib/pages/NewInstanceModal.svelte");
+  const updateAll = () => import("./lib/components/UpdateAllModal.svelte");
 
   let dragging = $state(false);
 
@@ -173,6 +174,11 @@
   {#if ui.newInstanceOpen}
     {#await newInstance() then mod}
       <mod.default bind:open={ui.newInstanceOpen} />
+    {/await}
+  {/if}
+  {#if ui.updateAllOpen}
+    {#await updateAll() then mod}
+      <mod.default bind:open={ui.updateAllOpen} />
     {/await}
   {/if}
   <CommandPalette bind:open={ui.paletteOpen} onnew={() => (ui.newInstanceOpen = true)} />

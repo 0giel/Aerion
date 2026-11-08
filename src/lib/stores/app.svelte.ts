@@ -165,6 +165,18 @@ class AppStore {
       case "update":
         void this.refreshInstances();
         break;
+      case "updateAll": {
+        void this.refreshInstances();
+        const r: { updated: number; mods: number; skipped: string[] } | null = task.result
+          ? JSON.parse(task.result)
+          : null;
+        if (r?.skipped.length) {
+          toasts.info(t("updateAll.doneSkipped", { n: r.mods, k: r.updated, names: r.skipped.join(", ") }));
+        } else {
+          toasts.success(t("updateAll.done", { n: r?.mods ?? 0, k: r?.updated ?? 0 }));
+        }
+        break;
+      }
       case "upgrade": {
         void this.refreshInstances();
         const id: string | null = task.result ? JSON.parse(task.result) : null;

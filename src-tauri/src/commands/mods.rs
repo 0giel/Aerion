@@ -411,6 +411,49 @@ pub async fn content_update_counts(
     Ok(crate::content_watch::counts(&state).await)
 }
 
+/// Back up the worlds, then replace the mods with their newer versions; the pending list of the
+/// instance is updated afterwards. Shared by the single and the bulk update.
+async fn apply_to_instance(
+    app: &AppHandle,
+    instance_id: &str,
+    updates: &[UpdateInfo],
+    pin: bool,
+    ctx: &launcher_core::TaskCtx,
+) -> launcher_core::Result<BackupInfo> {
+    let state = app.state::<AppState>();
+    let content = state.instances.content(instance_id)?;
+    // Worlds first: a broken mod update can corrupt them on the next launch.
+    ctx.stage("stage.worldBackup", None);
+    state.instances.backup_worlds(instance_id).await?;
+    let engine = state.engine().await;
+    let backup: BackupInfo = content
+        .apply_updates(&engine.downloader, updates, ctx)
+        .await?;
+    // A version chosen by hand stays: later update checks leave it alone.
+    if pin {
+        for u in updates {
+            if let Some(f) = u.version.primary_file() {
+                content.set_pinned(u.kind, &f.filename, true).await?;
+            }
+        }
+    }
+    // Applied updates are no longer pending.
+    let left: Vec<UpdateInfo> = state
+        .content_updates
+        .read()
+        .await
+        .get(instance_id)
+        .map(|all| {
+            all.iter()
+                .filter(|a| !updates.iter().any(|u| u.file_name == a.file_name))
+                .cloned()
+                .collect()
+        })
+        .unwrap_or_default();
+    crate::content_watch::store(app, instance_id, left).await;
+    Ok(backup)
+}
+
 #[tauri::command]
 #[specta::specta]
 pub async fn apply_content_updates(
@@ -429,38 +472,77 @@ pub async fn apply_content_updates(
         Some(inst.name),
         Some(instance_id.clone()),
         move |ctx| async move {
+            let backup = apply_to_instance(&app2, &instance_id, &updates, pin, &ctx).await?;
+            Ok(serde_json::to_string(&backup).ok())
+        },
+    ))
+}
+
+/// The updates chosen for one instance in the "update everything" window.
+#[derive(Debug, Clone, serde::Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct InstanceUpdates {
+    pub instance_id: String,
+    pub updates: Vec<UpdateInfo>,
+}
+
+/// What a bulk update did, as the task's result.
+#[derive(Debug, Clone, Default, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BulkResult {
+    updated: u32,
+    mods: u32,
+    /// Instances left alone: the game was running, or the update failed.
+    skipped: Vec<String>,
+}
+
+/// Update several instances, one after another in a single task (so the worlds' backups and the
+/// downloads don't all run at once). A running game is left alone, and one failing instance
+/// doesn't stop the rest; the result lists what was skipped. Undo stays per instance, in its
+/// Content tab.
+#[tauri::command]
+#[specta::specta]
+pub async fn apply_all_content_updates(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    items: Vec<InstanceUpdates>,
+) -> CmdResult<String> {
+    if items.is_empty() || items.len() > 200 {
+        return Err(launcher_core::Error::Invalid("nothing to update".into()).into());
+    }
+    let app2 = app.clone();
+    Ok(state.tasks.spawn(
+        &app,
+        "updateAll",
+        "task.updateAll",
+        None,
+        None,
+        move |ctx| async move {
             let state = app2.state::<AppState>();
-            let content = state.instances.content(&instance_id)?;
-            // Worlds first: a broken mod update can corrupt them on the next launch.
-            ctx.stage("stage.worldBackup", None);
-            state.instances.backup_worlds(&instance_id).await?;
-            let engine = state.engine().await;
-            let backup: BackupInfo = content
-                .apply_updates(&engine.downloader, &updates, &ctx)
-                .await?;
-            // A version chosen by hand stays: later update checks leave it alone.
-            if pin {
-                for u in &updates {
-                    if let Some(f) = u.version.primary_file() {
-                        content.set_pinned(u.kind, &f.filename, true).await?;
+            let mut result = BulkResult::default();
+            for item in items {
+                let name = match state.instances.get(&item.instance_id).await {
+                    Ok(i) => i.name,
+                    Err(_) => continue,
+                };
+                if state.games.is_running(&item.instance_id) {
+                    result.skipped.push(name);
+                    continue;
+                }
+                ctx.stage("stage.updateInstance", Some(name.clone()));
+                match apply_to_instance(&app2, &item.instance_id, &item.updates, false, &ctx).await
+                {
+                    Ok(_) => {
+                        result.updated += 1;
+                        result.mods += item.updates.len() as u32;
+                    }
+                    Err(e) => {
+                        tracing::warn!(instance = %item.instance_id, error = %e, "bulk mod update failed");
+                        result.skipped.push(name);
                     }
                 }
             }
-            // Applied updates are no longer pending.
-            let left: Vec<UpdateInfo> = state
-                .content_updates
-                .read()
-                .await
-                .get(&instance_id)
-                .map(|all| {
-                    all.iter()
-                        .filter(|a| !updates.iter().any(|u| u.file_name == a.file_name))
-                        .cloned()
-                        .collect()
-                })
-                .unwrap_or_default();
-            crate::content_watch::store(&app2, &instance_id, left).await;
-            Ok(serde_json::to_string(&backup).ok())
+            Ok(serde_json::to_string(&result).ok())
         },
     ))
 }

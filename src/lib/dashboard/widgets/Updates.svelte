@@ -2,6 +2,7 @@
   import Icon from "../../components/Icon.svelte";
   import { app } from "../../stores/app.svelte";
   import { router } from "../../stores/router.svelte";
+  import { ui } from "../../stores/ui.svelte";
   import { t } from "../../i18n/index.svelte";
   import type { WidgetProps } from "../widgets";
 
@@ -22,6 +23,9 @@
         <span class="badge success"><Icon name="arrowUp" size={11} />{n}</span>
       </button>
     {/each}
+    <button class="btn sm" onclick={() => (ui.updateAllOpen = true)}
+      ><Icon name="arrowUp" size={13} />{t("updateAll.widget")}</button
+    >
   {/if}
 </div>
 
