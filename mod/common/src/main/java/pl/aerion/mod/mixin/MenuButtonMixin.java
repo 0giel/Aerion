@@ -67,7 +67,7 @@ abstract class MenuButtonMixin extends Screen {
 	/** The left side of the title screen: facts and shortcuts (see TitleSide). */
 	private void aerion$side(Screen self) {
 		Theme th = AerionClient.theme();
-		if (th != null && !th.titleExtras) return;
+		if (th == null || !th.titleExtras) return;
 		if (aerion$lastTitle != self) {
 			aerion$lastTitle = self;
 			TitleSide.opened();

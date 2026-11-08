@@ -809,7 +809,7 @@ export type GameTheme_Deserialize = {
 	colors: boolean,
 	particles: string,
 	logo: boolean,
-	/**  The info panel and shortcuts on the title screen (missing = on). */
+	/**  The info panel and shortcuts on the title screen (missing = off). */
 	titleExtras?: boolean,
 	/**
 	 *  Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
@@ -851,7 +851,7 @@ export type GameTheme_Serialize = {
 	colors: boolean,
 	particles: string,
 	logo: boolean,
-	/**  The info panel and shortcuts on the title screen (missing = on). */
+	/**  The info panel and shortcuts on the title screen (missing = off). */
 	titleExtras: boolean,
 	/**
 	 *  Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
@@ -880,7 +880,7 @@ export type GameUiPrefs_Deserialize = {
 	particles?: boolean,
 	/**  The Aerion logo instead of the Minecraft logo on the title screen. */
 	logo?: boolean,
-	/**  The info panel and shortcuts on the title screen. */
+	/**  The info panel and shortcuts on the title screen (off until the player turns them on). */
 	titleExtras?: boolean,
 };
 
@@ -892,7 +892,7 @@ export type GameUiPrefs_Serialize = {
 	particles: boolean,
 	/**  The Aerion logo instead of the Minecraft logo on the title screen. */
 	logo: boolean,
-	/**  The info panel and shortcuts on the title screen. */
+	/**  The info panel and shortcuts on the title screen (off until the player turns them on). */
 	titleExtras: boolean,
 };
 

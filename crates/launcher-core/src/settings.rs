@@ -132,7 +132,7 @@ pub struct GameUiPrefs {
     pub particles: bool,
     /// The Aerion logo instead of the Minecraft logo on the title screen.
     pub logo: bool,
-    /// The info panel and shortcuts on the title screen.
+    /// The info panel and shortcuts on the title screen (off until the player turns them on).
     pub title_extras: bool,
 }
 
@@ -142,7 +142,7 @@ impl Default for GameUiPrefs {
             colors: true,
             particles: true,
             logo: true,
-            title_extras: true,
+            title_extras: false,
         }
     }
 }

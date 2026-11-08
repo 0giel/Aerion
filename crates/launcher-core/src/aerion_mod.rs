@@ -60,8 +60,8 @@ pub struct GameTheme {
     pub colors: bool,
     pub particles: String,
     pub logo: bool,
-    /// The info panel and shortcuts on the title screen (missing = on).
-    #[serde(default = "yes")]
+    /// The info panel and shortcuts on the title screen (missing = off).
+    #[serde(default)]
     pub title_extras: bool,
     /// Springy menus and fading modules, from the theme's `motion.effects`; the HUD file's own
     /// `animations` overrides it.
