@@ -1397,6 +1397,16 @@ export type LayoutPrefs_Deserialize = {
 	home?: LayoutItem[],
 	/**  `right`, `left` or `hidden`. */
 	homePlayer?: string,
+	/**  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`. */
+	navSide?: string,
+	/**  `fixed`, `hover` (a slim rail that opens under the cursor) or `icons` (icons only). */
+	navMode?: string,
+	/**  Menu icon size in pixels. */
+	navIconSize?: number,
+	/**  Ids of menu items that have a divider after them (groups of buttons). */
+	navGaps?: string[],
+	/**  Springy clicks, entrances and a sliding highlight in the menu. */
+	springy?: boolean,
 };
 
 /**
@@ -1410,6 +1420,16 @@ export type LayoutPrefs_Serialize = {
 	home: LayoutItem[],
 	/**  `right`, `left` or `hidden`. */
 	homePlayer: string,
+	/**  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`. */
+	navSide: string,
+	/**  `fixed`, `hover` (a slim rail that opens under the cursor) or `icons` (icons only). */
+	navMode: string,
+	/**  Menu icon size in pixels. */
+	navIconSize: number,
+	/**  Ids of menu items that have a divider after them (groups of buttons). */
+	navGaps: string[],
+	/**  Springy clicks, entrances and a sliding highlight in the menu. */
+	springy: boolean,
 };
 
 export type License = License_Serialize | License_Deserialize;

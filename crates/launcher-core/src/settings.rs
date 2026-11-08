@@ -64,6 +64,16 @@ pub struct LayoutPrefs {
     pub home: Vec<LayoutItem>,
     /// `right`, `left` or `hidden`.
     pub home_player: String,
+    /// Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`.
+    pub nav_side: String,
+    /// `fixed`, `hover` (a slim rail that opens under the cursor) or `icons` (icons only).
+    pub nav_mode: String,
+    /// Menu icon size in pixels.
+    pub nav_icon_size: u8,
+    /// Ids of menu items that have a divider after them (groups of buttons).
+    pub nav_gaps: Vec<String>,
+    /// Springy clicks, entrances and a sliding highlight in the menu.
+    pub springy: bool,
 }
 
 impl Default for LayoutPrefs {
@@ -73,6 +83,11 @@ impl Default for LayoutPrefs {
             nav_favorites: true,
             home: vec![],
             home_player: "right".into(),
+            nav_side: "theme".into(),
+            nav_mode: "fixed".into(),
+            nav_icon_size: 19,
+            nav_gaps: vec![],
+            springy: true,
         }
     }
 }

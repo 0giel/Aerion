@@ -280,14 +280,12 @@
           <div class="field">
             <span class="label">{t("themeEditor.sidebar")}</span>
             <div class="segmented" role="group">
-              <button
-                aria-pressed={draft.layout.sidebar === "left"}
-                onclick={() => (draft.layout.sidebar = "left")}>{t("themeEditor.sidebarLeft")}</button
-              >
-              <button
-                aria-pressed={draft.layout.sidebar === "top"}
-                onclick={() => (draft.layout.sidebar = "top")}>{t("themeEditor.sidebarTop")}</button
-              >
+              {#each ["left", "right", "top", "bottom"] as const as side (side)}
+                <button
+                  aria-pressed={draft.layout.sidebar === side}
+                  onclick={() => (draft.layout.sidebar = side)}>{t(`themeEditor.sidebar_${side}`)}</button
+                >
+              {/each}
             </div>
           </div>
         </div>

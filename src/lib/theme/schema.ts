@@ -31,7 +31,7 @@ export interface Theme {
   radius: { sm: number; md: number; lg: number; xl: number };
   font: { family: string; mono: string; size: number };
   density: "comfortable" | "compact";
-  layout: { sidebar: "left" | "top"; scale: number };
+  layout: { sidebar: "left" | "right" | "top" | "bottom"; scale: number };
   effects: { blur: number; glass: number; shadow: number };
   motion: { enabled: boolean; speed: number };
   background: {
@@ -122,8 +122,9 @@ export function normalizeTheme(raw: unknown, fallback: Theme): Theme {
     density:
       r.density === "compact" ? "compact" : r.density === "comfortable" ? "comfortable" : fallback.density,
     layout: {
-      sidebar:
-        layout.sidebar === "top" ? "top" : layout.sidebar === "left" ? "left" : fallback.layout.sidebar,
+      sidebar: ["left", "right", "top", "bottom"].includes(layout.sidebar as string)
+        ? (layout.sidebar as Theme["layout"]["sidebar"])
+        : fallback.layout.sidebar,
       scale: clamp(layout.scale, 0.75, 1.5, fallback.layout.scale),
     },
     effects: {

@@ -84,6 +84,15 @@
   // Running games with the Aerion mod follow the launcher theme (they re-read the file).
   let gameThemeTimer: ReturnType<typeof setTimeout> | undefined;
   let gameThemeSent = "";
+  // The user's own menu position beats the theme's; springy animations are a root switch for CSS.
+  $effect(() => {
+    const side = layout.navSide;
+    themes.sideOverride = side === "theme" ? null : side;
+    themes.apply();
+    document.documentElement.dataset.spring =
+      layout.springy && themes.active.motion.enabled && !themes.reducedMotion ? "on" : "off";
+  });
+
   $effect(() => {
     if (!app.ready || !app.settings) return;
     const theme = toGameTheme(themes.active, app.settings.gameUi);
@@ -205,9 +214,16 @@
     grid-template-columns: auto 1fr;
     height: 100vh;
   }
+  :global([data-sidebar="right"]) .shell {
+    grid-template-columns: 1fr auto;
+  }
   :global([data-sidebar="top"]) .shell {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
+  }
+  :global([data-sidebar="bottom"]) .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
   }
   .content {
     /* Always the last track, also when the navigation is hidden (onboarding, splash). */
@@ -216,9 +232,24 @@
     min-height: 0;
     position: relative;
   }
+  :global([data-sidebar="right"]) .content {
+    grid-column: 1;
+  }
+  :global([data-sidebar="right"]) .shell > :global(.navslot) {
+    grid-column: 2;
+    grid-row: 1;
+  }
   :global([data-sidebar="top"]) .content {
     grid-column: auto;
     grid-row: -2;
+  }
+  :global([data-sidebar="bottom"]) .content {
+    grid-column: auto;
+    grid-row: 1;
+  }
+  :global([data-sidebar="bottom"]) .shell > :global(.navslot) {
+    grid-column: 1;
+    grid-row: 2;
   }
   .splash,
   .fatal {

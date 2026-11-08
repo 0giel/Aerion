@@ -35,7 +35,7 @@ describe("theme normalisation", () => {
       {
         radius: { sm: 999, md: -4 },
         font: { size: 2 },
-        layout: { scale: 9, sidebar: "bottom" },
+        layout: { scale: 9, sidebar: "diagonal" },
         motion: { speed: 0 },
         base: "purple",
         background: { particles: "fire", dim: 5 },

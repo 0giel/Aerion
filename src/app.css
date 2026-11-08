@@ -34,6 +34,7 @@
   --dur: 180ms;
   --dur-slow: 360ms;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Platform brand colors (identify the source of a project). */
   --c-brand-modrinth: #1bd96a;
@@ -614,6 +615,62 @@ kbd,
 }
 .fade-up {
   animation: fade-up var(--dur-slow) var(--ease) both;
+}
+
+/* Springy mode (Settings → Appearance → Interface): presses, entrances and hovers with a bounce. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+[data-spring="on"] .btn {
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    transform var(--dur-slow) var(--spring);
+}
+[data-spring="on"] .btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+[data-spring="on"] .btn:active:not(:disabled) {
+  transform: scale(0.94);
+  transition-duration: 80ms;
+}
+[data-spring="on"] .btn.lg:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.03);
+}
+[data-spring="on"] .icon-btn:hover:not(:disabled) {
+  transform: scale(1.12);
+}
+[data-spring="on"] .icon-btn:active:not(:disabled) {
+  transform: scale(0.86);
+}
+[data-spring="on"] .icon-btn {
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    transform var(--dur-slow) var(--spring);
+}
+[data-spring="on"] .content .card:nth-child(-n + 8) {
+  animation: pop-in var(--dur-slow) var(--spring) both;
+}
+[data-spring="on"] .content .card:nth-child(2) {
+  animation-delay: 40ms;
+}
+[data-spring="on"] .content .card:nth-child(3) {
+  animation-delay: 80ms;
+}
+[data-spring="on"] .content .card:nth-child(4) {
+  animation-delay: 120ms;
+}
+[data-spring="on"] .content .card:nth-child(n + 5) {
+  animation-delay: 160ms;
 }
 
 /* Page scaffolding */

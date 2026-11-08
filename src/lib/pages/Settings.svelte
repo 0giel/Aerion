@@ -4,6 +4,7 @@
   import KeybindEditor from "../components/KeybindEditor.svelte";
   import { DISCORD_URL, ISSUES_URL, REPO_URL } from "../links";
   import Icon from "../components/Icon.svelte";
+  import { layout, NAV_MODES, NAV_SIDES } from "../stores/layout.svelte";
   import { dashboards } from "../stores/dashboards.svelte";
   import { dialogs } from "../stores/dialogs.svelte";
   import Advanced from "../components/Advanced.svelte";
@@ -354,6 +355,38 @@
             >
           </div>
         </div>
+        <div class="grid2">
+          <div class="field">
+            <span class="label">{t("settings.ui.navSide")}</span>
+            <div class="segmented" role="group" aria-label={t("settings.ui.navSide")}>
+              {#each NAV_SIDES as v (v)}
+                <button
+                  type="button"
+                  aria-pressed={layout.navSide === v}
+                  onclick={() => void layout.setNavSide(v)}>{t(`settings.ui.sides.${v}`)}</button
+                >
+              {/each}
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">{t("settings.ui.navMode")}</span>
+            <div class="segmented" role="group" aria-label={t("settings.ui.navMode")}>
+              {#each NAV_MODES as v (v)}
+                <button
+                  type="button"
+                  aria-pressed={layout.navMode === v}
+                  onclick={() => void layout.setNavMode(v)}>{t(`settings.ui.modes.${v}`)}</button
+                >
+              {/each}
+            </div>
+          </div>
+        </div>
+        <Switch
+          label={t("settings.ui.springy")}
+          hint={t("settings.ui.springyHint")}
+          checked={layout.springy}
+          onchange={(v) => void layout.setSpringy(v)}
+        />
         <Switch
           label={t("settings.followCursor")}
           hint={t("settings.followCursorHint")}

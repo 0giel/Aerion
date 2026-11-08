@@ -151,6 +151,9 @@ class ThemeEngine {
     this.apply();
   }
 
+  /** The user's own menu position (overrides the theme's); null follows the theme. */
+  sideOverride: Theme["layout"]["sidebar"] | null = null;
+
   setPreview(theme: Theme | null, css: string | null = null) {
     this.preview = theme;
     this.previewCss = css;
@@ -163,7 +166,7 @@ class ThemeEngine {
     for (const [k, v] of Object.entries(themeToCss(t, this.reducedMotion))) root.style.setProperty(k, v);
     root.dataset.base = t.base;
     root.dataset.density = t.density;
-    root.dataset.sidebar = t.layout.sidebar;
+    root.dataset.sidebar = this.sideOverride ?? t.layout.sidebar;
     root.dataset.motion = t.motion.enabled && !this.reducedMotion ? "on" : "off";
     root.style.colorScheme = t.base;
     const css = this.preview ? this.previewCss : this.currentCss;

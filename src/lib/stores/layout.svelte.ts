@@ -63,6 +63,10 @@ function merge<T extends { id: string; visible: boolean; locked?: boolean }>(
 }
 
 export type PlayerSide = "right" | "left" | "hidden";
+export type NavSide = "theme" | "left" | "right" | "top" | "bottom";
+export type NavMode = "fixed" | "hover" | "icons";
+export const NAV_SIDES: NavSide[] = ["theme", "left", "right", "top", "bottom"];
+export const NAV_MODES: NavMode[] = ["fixed", "hover", "icons"];
 
 class Layout {
   get nav(): NavDef[] {
@@ -76,6 +80,26 @@ class Layout {
   }
   get player(): PlayerSide {
     return (app.settings?.layout.homePlayer as PlayerSide) ?? "right";
+  }
+
+  /** Where the menu sits; "theme" means whatever the theme says. */
+  get navSide(): NavSide {
+    const v = app.settings?.layout.navSide;
+    return NAV_SIDES.includes(v as NavSide) ? (v as NavSide) : "theme";
+  }
+  get navMode(): NavMode {
+    const v = app.settings?.layout.navMode;
+    return NAV_MODES.includes(v as NavMode) ? (v as NavMode) : "fixed";
+  }
+  get navIconSize(): number {
+    const v = app.settings?.layout.navIconSize ?? 19;
+    return Math.min(26, Math.max(15, v));
+  }
+  get navGaps(): string[] {
+    return app.settings?.layout.navGaps ?? [];
+  }
+  get springy(): boolean {
+    return app.settings?.layout.springy ?? true;
   }
 
   private async save(patch: Partial<NonNullable<typeof app.settings>["layout"]>) {
@@ -96,8 +120,30 @@ class Layout {
   setPlayer(side: PlayerSide) {
     return this.save({ homePlayer: side });
   }
+  setNavSide(v: NavSide) {
+    return this.save({ navSide: v });
+  }
+  setNavMode(v: NavMode) {
+    return this.save({ navMode: v });
+  }
+  setNavIconSize(v: number) {
+    return this.save({ navIconSize: Math.round(v) });
+  }
+  setNavGaps(ids: string[]) {
+    return this.save({ navGaps: ids });
+  }
+  setSpringy(on: boolean) {
+    return this.save({ springy: on });
+  }
   resetNav() {
-    return this.save({ nav: [], navFavorites: true });
+    return this.save({
+      nav: [],
+      navFavorites: true,
+      navSide: "theme",
+      navMode: "fixed",
+      navIconSize: 19,
+      navGaps: [],
+    });
   }
   resetHome() {
     return this.save({ home: [], homePlayer: "right" });
