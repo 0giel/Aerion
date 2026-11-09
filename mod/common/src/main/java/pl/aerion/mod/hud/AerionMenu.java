@@ -480,8 +480,7 @@ public final class AerionMenu implements Page {
 		muted = t != null ? t.textMuted : 0xFFAAAAAA;
 		accent = t != null ? t.accent : 0xFF7AA2FF;
 		accentText = t != null ? t.accentText : 0xFF111111;
-		// The window takes on the theme's accent, so a yellow theme gives a warm menu.
-		surface = Colors.alpha(t != null ? Colors.mix(t.surface, t.accent, t.light ? 0.08f : 0.13f) : 0xFF1A1A1A, 0xFF);
+		surface = Colors.alpha(t != null ? t.surface : 0xFF1A1A1A, 0xFF);
 		sidebar = Colors.mix(surface, 0xFF000000, t != null && t.light ? 0.04f : 0.18f);
 		tile = Colors.mix(surface, text, 0.05f);
 		line = Colors.mix(surface, text, 0.14f);
