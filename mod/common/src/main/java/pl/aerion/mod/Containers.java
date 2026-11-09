@@ -84,17 +84,18 @@ public final class Containers {
 		float hue = Math.round(wheel[0] * 36f) / 36f;
 		int panel = switch (panelOpt) {
 			case "theme" -> themed;
-			case Chroma.VALUE -> Colors.hsv(hue, 0.62f, t.light ? 0.93f : 0.33f);
+			case Chroma.VALUE -> Colors.hsv(hue, 0.8f, t.light ? 0.9f : 0.62f);
 			case "accent" -> {
 				float[] hsv = Colors.toHsv(t.accent);
-				yield Colors.hsv(hsv[0], hsv[1], Math.min(hsv[2], t.light ? 0.9f : 0.42f));
+				yield Colors.hsv(hsv[0], hsv[1], Math.min(hsv[2], 0.85f));
 			}
 			default -> Theme.color(panelOpt, themed);
 		} | 0xFF000000;
 		boolean pale = luminance(panel) > 0.5f;
 		int slot = switch (slotOpt) {
-			case Chroma.VALUE -> Colors.hsv((hue + 0.08f) % 1f, 0.6f, pale ? 0.8f : 0.2f);
-			case "theme" -> Colors.mix(panel, 0xFF000000, pale ? 0.14f : 0.32f);
+			case Chroma.VALUE -> Colors.hsv((hue + 0.08f) % 1f, 0.8f, 0.4f);
+			// A vivid panel needs clearly darker slots; a pale grey one only a shade.
+			case "theme" -> Colors.mix(panel, 0xFF000000, pale && Colors.toHsv(panel)[1] < 0.4f ? 0.14f : 0.36f);
 			case "accent" -> {
 				float[] hsv = Colors.toHsv(t.accent);
 				yield Colors.hsv(hsv[0], hsv[1], Math.min(hsv[2], pale ? 0.8f : 0.3f));
@@ -132,12 +133,12 @@ public final class Containers {
 		return new Look(key, ramp, tab, text);
 	}
 
-	/** The panel colour the theme gives: its accent's hue, lively but dark (or pale on light themes). */
+	/** The panel colour the theme gives: clearly its accent's colour, a little deeper so items stand out. */
 	private static int themed(Theme t) {
 		float[] hsv = Colors.toHsv(t.accent);
 		return t.light
-				? Colors.hsv(hsv[0], Math.min(0.18f, hsv[1] * 0.25f), 0.93f)
-				: Colors.hsv(hsv[0], Math.min(0.62f, hsv[1] * 0.7f), 0.33f);
+				? Colors.hsv(hsv[0], Math.min(0.4f, hsv[1] * 0.5f), 0.95f)
+				: Colors.hsv(hsv[0], Math.min(0.85f, hsv[1] * 0.92f), 0.66f);
 	}
 
 	private static int channel(int argb, int shift) {

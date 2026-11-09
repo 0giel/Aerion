@@ -480,7 +480,8 @@ public final class AerionMenu implements Page {
 		muted = t != null ? t.textMuted : 0xFFAAAAAA;
 		accent = t != null ? t.accent : 0xFF7AA2FF;
 		accentText = t != null ? t.accentText : 0xFF111111;
-		surface = Colors.alpha(t != null ? t.surface : 0xFF1A1A1A, 0xFF);
+		// The window takes on the theme's accent, so a yellow theme gives a warm menu.
+		surface = Colors.alpha(t != null ? Colors.mix(t.surface, t.accent, t.light ? 0.08f : 0.13f) : 0xFF1A1A1A, 0xFF);
 		sidebar = Colors.mix(surface, 0xFF000000, t != null && t.light ? 0.04f : 0.18f);
 		tile = Colors.mix(surface, text, 0.05f);
 		line = Colors.mix(surface, text, 0.14f);
@@ -594,28 +595,37 @@ public final class AerionMenu implements Page {
 		}
 	}
 
+	/** Height of the sidebar's entries with their headings, and of the player at its foot. */
+	private static final int NAV_H = 240, FOOT_H = 32;
+	private boolean navCompact;
+
 	private void sidebar(int left, int top, int h) {
 		Draw.rounded(g, left, top, SIDE, h, 6, sidebar);
 		g.fill(left + SIDE - 6, top, left + SIDE, top + h, sidebar);
 		Logo.draw(g, AerionClient.theme(), left + 9, top + 8, 13);
-		int nx = left + 5, ny = top + 30;
+		// A low window can't hold everything: first the player at the foot goes, then the headings.
+		boolean foot = h >= NAV_H + FOOT_H;
+		navCompact = h < NAV_H;
+		int gap = navCompact ? 0 : 5;
+		int nx = left + 5, ny = top + (navCompact ? 26 : 30);
 		if (animationsOn() && navTargetY >= 0) {
 			navY = navY < 0 ? navTargetY : navY + (navTargetY - navY) * Math.min(1f, dt * 14f);
 			if (Math.abs(navTargetY - navY) < 0.3f) navY = navTargetY;
 			Draw.rounded(g, nx, Math.round(navY), SIDE - 10, 16, 3, accent);
 		}
-		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + 5;
+		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + gap;
 		ny = navHead(nx, ny, "aerion.navhead.mods");
 		ny = navItem(nx, ny, Section.HUD, "fps", "aerion.nav.hud");
 		ny = navItem(nx, ny, Section.PROFILES, "packs", "aerion.nav.profiles");
-		ny = navItem(nx, ny, Section.FEATURES, "features", "aerion.nav.features") + 5;
+		ny = navItem(nx, ny, Section.FEATURES, "features", "aerion.nav.features") + gap;
 		ny = navHead(nx, ny, "aerion.navhead.tools");
 		ny = navItem(nx, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
 		ny = navItem(nx, ny, Section.WAYPOINTS, "waypoints", "aerion.nav.waypoints");
-		ny = navItem(nx, ny, Section.KEYS, "keys", "aerion.nav.keys") + 5;
+		ny = navItem(nx, ny, Section.KEYS, "keys", "aerion.nav.keys") + gap;
 		ny = navHead(nx, ny, "aerion.navhead.look");
 		ny = navItem(nx, ny, Section.GAME, "inventory", "aerion.nav.game");
 		navItem(nx, ny, Section.LOOK, "look", "aerion.nav.look");
+		if (!foot) return;
 		// The player at the foot, as in the launcher's sidebar.
 		int py = top + h - 26;
 		Draw.hline(g, left + 6, py - 4, SIDE - 12, line);
@@ -629,6 +639,7 @@ public final class AerionMenu implements Page {
 			.map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("");
 
 	private int navHead(int nx, int ny, String key) {
+		if (navCompact) return ny;
 		Txt.draw(g, Lang.tr(key).toUpperCase(Locale.ROOT), nx + 4, ny + 4, 6f, Colors.mix(sidebar, muted, 0.75f));
 		return ny + 10;
 	}
