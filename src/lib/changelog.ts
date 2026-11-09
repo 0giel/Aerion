@@ -9,6 +9,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.5",
+    notes: {
+      pl: [
+        "Windows: AerionSetup wykrywa zainstalowanego Aeriona i pozwala go uruchomić, zainstalować ponownie albo odinstalować.",
+        "Windows: nowe okno odinstalowania z opcją usunięcia światów i ustawień (domyślnie zostają na komputerze).",
+        "Windows: zwykły instalator ma polskie napisy (na polskim systemie jego strony były puste) oraz grafiki Aeriona.",
+      ],
+      en: [
+        "Windows: AerionSetup detects an installed Aerion and lets you start, reinstall or uninstall it.",
+        "Windows: a new uninstall window with the option to delete worlds and settings (by default they stay on your computer).",
+        "Windows: the regular installer has Polish texts (its pages were blank on Polish systems) and Aerion's pictures.",
+      ],
+    },
+  },
+  {
     version: "1.0.4",
     notes: {
       pl: [

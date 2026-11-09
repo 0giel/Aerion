@@ -64,6 +64,14 @@ fn removing() -> bool {
     REMOVING.get().is_some()
 }
 
+/// Aerion was already here when the program started: it offers a choice instead of installing.
+static FOUND: OnceLock<PathBuf> = OnceLock::new();
+
+/// The screen with the three choices is showing.
+fn choosing() -> bool {
+    FOUND.get().is_some() && phase() == Phase::Ready
+}
+
 fn phase() -> Phase {
     PHASE.lock().unwrap_or_else(|e| e.into_inner()).clone()
 }
@@ -91,6 +99,9 @@ struct Texts {
     removing: &'static str,
     removed: &'static str,
     remove_failed: &'static str,
+    found_tagline: &'static str,
+    start_app: &'static str,
+    reinstall: &'static str,
 }
 
 const PL: Texts = Texts {
@@ -116,6 +127,9 @@ const PL: Texts = Texts {
     removing: "Odinstalowywanie…",
     removed: "Aerion został odinstalowany.",
     remove_failed: "Nie udało się odinstalować Aeriona.",
+    found_tagline: "Aerion jest już zainstalowany.",
+    start_app: "Uruchom Aeriona",
+    reinstall: "Zainstaluj ponownie",
 };
 
 const EN: Texts = Texts {
@@ -141,6 +155,9 @@ const EN: Texts = Texts {
     removing: "Uninstalling…",
     removed: "Aerion has been uninstalled.",
     remove_failed: "Couldn't uninstall Aerion.",
+    found_tagline: "Aerion is already installed.",
+    start_app: "Start Aerion",
+    reinstall: "Reinstall",
 };
 
 fn texts() -> &'static Texts {
@@ -159,6 +176,8 @@ enum Hit {
     Button,
     Cancel,
     Check,
+    Reinstall,
+    Uninstall,
 }
 
 struct App {
@@ -211,6 +230,23 @@ impl App {
         (rect(left), rect(left + w + gap))
     }
 
+    /// The choices when Aerion is already installed: start it, or the two smaller ones below.
+    fn choice_rects(&self) -> (RECT, RECT, RECT) {
+        let (w, gap) = (self.px(160), self.px(12));
+        let left = (self.w - 2 * w - gap) / 2;
+        let rect = |x: i32, y: i32, width: i32, h: i32| RECT {
+            left: x,
+            top: y,
+            right: x + width,
+            bottom: y + h,
+        };
+        (
+            rect(left, self.px(200), 2 * w + gap, self.px(46)),
+            rect(left, self.px(254), w, self.px(40)),
+            rect(left + w + gap, self.px(254), w, self.px(40)),
+        )
+    }
+
     fn check_rect(&self) -> RECT {
         RECT {
             left: self.px(70),
@@ -235,6 +271,17 @@ impl App {
         let shows_button = matches!(phase(), Phase::Ready | Phase::Failed(_));
         if inside(self.close_rect()) {
             Hit::Close
+        } else if choosing() {
+            let (run, again, remove) = self.choice_rects();
+            if inside(run) {
+                Hit::Button
+            } else if inside(again) {
+                Hit::Reinstall
+            } else if inside(remove) {
+                Hit::Uninstall
+            } else {
+                Hit::None
+            }
         } else if removing() {
             let (cancel, go) = self.remove_rects();
             match shows_button {
@@ -296,6 +343,44 @@ impl App {
         let (bar_x, bar_w, bar_y, bar_h) = (60.0 * s, w as f32 - 120.0 * s, 218.0 * s, 8.0 * s);
         let mut status = String::new();
         match &now {
+            Phase::Ready if FOUND.get().is_some() => {
+                let (run, again, remove) = self.choice_rects();
+                let mut pill = |r: RECT, color: u32| {
+                    c.rounded(
+                        r.left as f32,
+                        r.top as f32,
+                        (r.right - r.left) as f32,
+                        (r.bottom - r.top) as f32,
+                        11.0 * s,
+                        color,
+                        1.0,
+                    );
+                };
+                pill(
+                    run,
+                    if self.hover == Hit::Button {
+                        ACCENT_HOT
+                    } else {
+                        ACCENT
+                    },
+                );
+                pill(
+                    again,
+                    if self.hover == Hit::Reinstall {
+                        TRACK_HOT
+                    } else {
+                        TRACK
+                    },
+                );
+                pill(
+                    remove,
+                    if self.hover == Hit::Uninstall {
+                        TRACK_HOT
+                    } else {
+                        TRACK
+                    },
+                );
+            }
             Phase::Ready | Phase::Failed(_) if removing() => {
                 let (cancel, go) = self.remove_rects();
                 let mut pill = |r: RECT, color: u32| {
@@ -466,6 +551,8 @@ impl App {
             self.text(
                 if removing() {
                     t.remove_tagline
+                } else if choosing() {
+                    t.found_tagline
                 } else {
                     t.tagline
                 },
@@ -475,6 +562,12 @@ impl App {
                 center,
             );
             match &now {
+                Phase::Ready if FOUND.get().is_some() => {
+                    let (run, again, remove) = self.choice_rects();
+                    self.text(t.start_app, self.button, ON_ACCENT, run, center);
+                    self.text(t.reinstall, self.body, TEXT, again, center);
+                    self.text(t.remove, self.body, TEXT, remove, center);
+                }
                 Phase::Ready | Phase::Failed(_) if removing() => {
                     let (cancel, go) = self.remove_rects();
                     self.text(t.cancel, self.button, TEXT, cancel, center);
@@ -725,6 +818,7 @@ fn dispatch() -> bool {
         return true;
     }
     if first != Some("--uninstall") {
+        look_for_installation();
         return true;
     }
     let Some(here) = std::env::current_exe()
@@ -741,22 +835,44 @@ fn dispatch() -> bool {
             .status();
         std::process::exit(status.ok().and_then(|s| s.code()).unwrap_or(2));
     }
-    // A running program can't delete itself, so the window runs from a temporary copy.
-    let temp = std::env::temp_dir().join(format!("aerion-uninstall-{}", std::process::id()));
-    let copy = temp.join(UNINSTALLER);
-    let copied =
-        std::fs::create_dir_all(&temp).and_then(|_| std::fs::copy(here.join(UNINSTALLER), &copy));
-    if copied.is_ok()
-        && Command::new(&copy)
-            .arg("--uninstall-from")
-            .arg(&here)
-            .spawn()
-            .is_ok()
-    {
+    if open_uninstall_window(&here) {
         return false;
     }
     let _ = REMOVING.set(here);
     true
+}
+
+/// A running program can't delete itself, so the uninstall window runs from a temporary copy.
+fn open_uninstall_window(install: &Path) -> bool {
+    let temp = std::env::temp_dir().join(format!("aerion-uninstall-{}", std::process::id()));
+    let copy = temp.join(UNINSTALLER);
+    let Ok(this) = std::env::current_exe() else {
+        return false;
+    };
+    std::fs::create_dir_all(&temp)
+        .and_then(|_| std::fs::copy(this, &copy))
+        .is_ok()
+        && Command::new(&copy)
+            .arg("--uninstall-from")
+            .arg(install)
+            .spawn()
+            .is_ok()
+}
+
+/// Remembers an existing installation, so the window opens with the choices.
+fn look_for_installation() {
+    if let Ok(dir) = install_dir()
+        && dir.join("aerion.exe").is_file()
+        && dir.join("uninstall.exe").is_file()
+    {
+        let _ = FOUND.set(dir);
+    }
+}
+
+fn start_app(dir: &Path) {
+    let _ = Command::new(dir.join("aerion.exe"))
+        .current_dir(dir)
+        .spawn();
 }
 
 /// A temporary copy (see [`dispatch`]) can only go once it has ended: `cmd` waits a moment and
@@ -832,6 +948,18 @@ fn activate(hwnd: HWND, a: &mut App, hit: Hit) {
             unsafe { InvalidateRect(hwnd, null(), 0) };
         }
         Hit::Button if removing() => start_uninstall(hwnd, a.delete_data),
+        Hit::Button if choosing() => {
+            if let Some(dir) = FOUND.get() {
+                start_app(dir);
+            }
+            unsafe { DestroyWindow(hwnd) };
+        }
+        Hit::Reinstall => start(hwnd),
+        Hit::Uninstall => {
+            if FOUND.get().is_some_and(|dir| open_uninstall_window(dir)) {
+                unsafe { DestroyWindow(hwnd) };
+            }
+        }
         Hit::Button => start(hwnd),
         Hit::None => {}
     }
@@ -859,7 +987,12 @@ unsafe extern "system" fn window_proc(
                     HTCLIENT as LRESULT
                 }
             }
-            WM_SETCURSOR if matches!(a.hover, Hit::Button | Hit::Cancel | Hit::Check) => {
+            WM_SETCURSOR
+                if matches!(
+                    a.hover,
+                    Hit::Button | Hit::Cancel | Hit::Check | Hit::Reinstall | Hit::Uninstall
+                ) =>
+            {
                 SetCursor(LoadCursorW(null_mut(), IDC_HAND));
                 1
             }
@@ -892,7 +1025,11 @@ unsafe extern "system" fn window_proc(
                     && !removing()
                     && matches!(phase(), Phase::Ready | Phase::Failed(_))
                 {
-                    start(hwnd);
+                    if choosing() {
+                        activate(hwnd, a, Hit::Button);
+                    } else {
+                        start(hwnd);
+                    }
                 } else if key == VK_ESCAPE {
                     activate(hwnd, a, Hit::Close);
                 }
