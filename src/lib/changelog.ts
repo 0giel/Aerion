@@ -9,6 +9,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.6",
+    notes: {
+      pl: [
+        "Windows: instalator i odinstalowanie mają teraz jedno, własne okno Aeriona zamiast klasycznego kreatora, także po kliknięciu „Odinstaluj” w Ustawieniach Windows.",
+      ],
+      en: [
+        "Windows: installing and uninstalling now use one window of Aerion's own instead of the classic wizard, also when you click Uninstall in Windows Settings.",
+      ],
+    },
+  },
+  {
     version: "1.0.5",
     notes: {
       pl: [
