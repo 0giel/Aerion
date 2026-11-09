@@ -84,6 +84,9 @@
         ],
         "displayLanguageSelector": false,
         "installerHooks": "nsis/hooks.nsh",
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "nsis/header.bmp",
+        "sidebarImage": "nsis/sidebar.bmp",
         "customLanguageFiles": {
           "Polish": "nsis/Polish.nsh"
         }
