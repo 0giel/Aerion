@@ -179,6 +179,9 @@ h2 { font-size: clamp(1.8rem, 3.8vw, 2.7rem); line-height: 1.12; font-weight: 70
 .file[hidden] { display: none; }
 .file.wide { grid-column: 1 / -1; }
 .panel > .file + .file { margin-top: 1rem; }
+.more { margin-top: 1rem; }
+.more > summary { cursor: pointer; color: var(--muted, #a9a8b6); font-size: 0.9rem; }
+.more > .file { margin-top: 0.75rem; }
 .file-info { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
 .file-info strong { font-size: 1.08rem; font-weight: 650; }
 .meta { color: var(--muted); font-size: 0.86rem; overflow-wrap: anywhere; }

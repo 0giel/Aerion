@@ -37,7 +37,7 @@
     "d.unsupported": "Aerion runs on Windows and Linux computers. You can't run it on this device, but you can come back here from a computer.",
     "d.setT": "Aerion Setup", "d.setD": "Recommended. One click: it downloads the newest version, checks the signature and starts the launcher.",
     "d.exeT": "Windows installer", "d.exeD": "Windows 10 or 11, 64-bit. No administrator rights needed.",
-    "d.w1": "Run the downloaded file and go through the installer.",
+    "d.w1": "Run the downloaded file and click Install.", "d.more": "Other ways to install",
     "d.w2": "If Windows shows a SmartScreen warning, choose <b>More info</b>, then <b>Run anyway</b>. It appears because the installer has no paid publisher certificate.",
     "d.w3": "If the WebView2 component is missing, the installer downloads it by itself.",
     "d.instT": "Install with one command", "d.instD": "Recommended. No administrator password, with an icon in your application menu. 64-bit.",
@@ -148,7 +148,7 @@
       const kind = card.dataset.file;
       const f = release && release.files[kind];
       // Aerion Setup is offered once a release has it; the regular installer steps back then.
-      if (kind === "setup") card.hidden = !f;
+      if (kind === "setup") { card.hidden = !f; $("more-exe").open = !f; }
       if (kind === "exe") card.querySelector("[data-dl]").classList.toggle("primary", !(release && release.files.setup));
       card.querySelector("[data-dl]").href = f ? f.url : PAGE;
       card.querySelector("[data-size]").textContent = f ? f.name + " · " + mb(f.size) : "";

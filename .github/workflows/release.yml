@@ -80,6 +80,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # The uninstall window for the Windows setup file (see src-tauri/nsis/hooks.nsh).
+          AERION_UNINSTALLER: ${{ github.workspace }}\src-tauri\nsis\AerionUninstall.exe
           # An identifier, not a secret: a repository variable or a secret both work.
           LAUNCHER_MSA_CLIENT_ID: ${{ vars.LAUNCHER_MSA_CLIENT_ID || secrets.LAUNCHER_MSA_CLIENT_ID }}
         with:
