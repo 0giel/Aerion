@@ -385,6 +385,8 @@ export type AppUpdate_Deserialize = {
 	notes?: string | null,
 	/**  The update can be installed from inside the launcher. */
 	canInstall: boolean,
+	/**  Installing asks for the administrator's password in a system dialog (a .deb or .rpm). */
+	needsAdmin: boolean,
 	/**  Download page for manual installs. */
 	url: string,
 };
@@ -394,6 +396,8 @@ export type AppUpdate_Serialize = {
 	notes: string | null,
 	/**  The update can be installed from inside the launcher. */
 	canInstall: boolean,
+	/**  Installing asks for the administrator's password in a system dialog (a .deb or .rpm). */
+	needsAdmin: boolean,
 	/**  Download page for manual installs. */
 	url: string,
 };

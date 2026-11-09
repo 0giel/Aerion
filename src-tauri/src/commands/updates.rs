@@ -1,5 +1,6 @@
 //! Launcher updates from GitHub Releases. Windows, macOS and AppImage builds install a signed
-//! update in place; other Linux packages (.deb) are only told that a new version exists.
+//! update in place; a .deb or .rpm install does too, through the system's own graphical
+//! password prompt (polkit), so nobody has to download and open a package by hand.
 
 use std::time::{Duration, Instant};
 
@@ -22,6 +23,8 @@ pub struct AppUpdate {
     pub notes: Option<String>,
     /// The update can be installed from inside the launcher.
     pub can_install: bool,
+    /// Installing asks for the administrator's password in a system dialog (a .deb or .rpm).
+    pub needs_admin: bool,
     /// Download page for manual installs.
     pub url: String,
 }
@@ -35,8 +38,19 @@ pub struct AppUpdateProgressEvent {
     pub done: bool,
 }
 
+/// Installed from a system package (.deb, .rpm): updating replaces files under `/usr`.
+fn system_package() -> bool {
+    use tauri::utils::config::BundleType;
+    matches!(
+        tauri::utils::platform::bundle_type(),
+        Some(BundleType::Deb | BundleType::Rpm)
+    )
+}
+
 fn self_updating() -> bool {
-    cfg!(any(windows, target_os = "macos")) || std::env::var_os("APPIMAGE").is_some()
+    cfg!(any(windows, target_os = "macos"))
+        || std::env::var_os("APPIMAGE").is_some()
+        || system_package()
 }
 
 /// `0.1.10` > `0.1.9`; a leading `v` is ignored, non-numeric parts count as 0.
@@ -69,6 +83,7 @@ pub async fn check_app_update(
             version: u.version.clone(),
             notes: u.body.clone(),
             can_install: true,
+            needs_admin: system_package(),
             url: RELEASES.into(),
         });
         *state.pending_update.lock().await = update;
@@ -88,6 +103,7 @@ pub async fn check_app_update(
                 .map(str::to_owned),
             version,
             can_install: false,
+            needs_admin: false,
             url: RELEASES.into(),
         }),
     )
@@ -170,6 +186,10 @@ pub async fn install_app_update(app: AppHandle, state: State<'_, AppState>) -> C
 /// On closing the launcher: put a downloaded update in place, so the next start is the new
 /// version. Skipped while a game runs or when nothing is ready.
 pub fn install_on_exit(app: &AppHandle) {
+    // A package needs the password: asking while the window closes would be a surprise.
+    if system_package() {
+        return;
+    }
     let state = app.state::<AppState>();
     if !state.games.running().is_empty() {
         return;

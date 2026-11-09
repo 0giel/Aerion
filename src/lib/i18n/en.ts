@@ -1620,7 +1620,8 @@ const en = {
     details: "Update",
     title: "Aerion {version}",
     current: "You have version {version}.",
-    manual: "This installation (system package) is updated by downloading the new package.",
+    manual:
+      "This build doesn't update itself. Get the new one from the project page (on Linux, the install command there is enough: after it the launcher updates itself).",
     later: "Later",
     install: "Update & restart",
     ready: "Aerion {version} is ready",
@@ -1628,6 +1629,8 @@ const en = {
     whatsNew: "What's new",
     downloading: "Downloading Aerion {version}… {percent}%",
     closeGame: "Close the game to update the launcher.",
+    admin:
+      "Installing the package asks for the administrator password in a system dialog; there is nothing to download or open by hand.",
     onExit: "If not now, the update installs itself when you close the launcher.",
     background: "Download updates in the background",
     backgroundHint: "A new version downloads while you use the launcher; only a restart is left.",

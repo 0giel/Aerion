@@ -39,6 +39,8 @@
     "d.w1": "Run the downloaded file and go through the installer.",
     "d.w2": "If Windows shows a SmartScreen warning, choose <b>More info</b>, then <b>Run anyway</b>. It appears because the installer has no paid publisher certificate.",
     "d.w3": "If the WebView2 component is missing, the installer downloads it by itself.",
+    "d.instT": "Install with one command", "d.instD": "Recommended. No administrator password, with an icon in your application menu. 64-bit.",
+    "d.instN": "Paste it in a terminal. It downloads the newest version, checks its SHA-256 and adds Aerion to your menu. After that the launcher updates itself. <a href=\"install.sh\">See what the script does</a>.",
     "d.appD": "Most distributions, nothing to install. 64-bit.",
     "d.appN": "After downloading, run this command in the file's folder. If the system reports that FUSE is missing, install the <code>libfuse2</code> package.",
     "d.debD": "Ubuntu, Debian, Mint, Zorin and similar. 64-bit.",
@@ -141,7 +143,7 @@
     } else {
       line.textContent = failed ? tr("failed") : tr("loading");
     }
-    document.querySelectorAll(".file").forEach((card) => {
+    document.querySelectorAll(".file[data-file]").forEach((card) => {
       const kind = card.dataset.file;
       const f = release && release.files[kind];
       card.querySelector("[data-dl]").href = f ? f.url : PAGE;
@@ -153,7 +155,8 @@
       if (cmd) cmd.textContent = command(kind, f && f.name);
     });
     const f = release && mainFile && release.files[mainFile];
-    $("hero-dl").href = f ? f.url : "#download";
+    // On Linux the button leads to the one-line install, which also sets up self-updating.
+    $("hero-dl").href = f && os !== "linux" ? f.url : "#download";
     $("hero-dl-text").textContent = f ? tr(os === "windows" ? "win" : "linux") : tr("any");
     $("hero-dl-sub").textContent = f ? release.version + " · " + mb(f.size) : "";
     $("hero-dl-sub").hidden = !f;

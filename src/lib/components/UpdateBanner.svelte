@@ -78,7 +78,10 @@
     {#if updates.available?.canInstall && gameRunning}<p class="small muted">
         {t("appUpdate.closeGame")}
       </p>{/if}
-    {#if updates.ready}<p class="small muted">{t("appUpdate.onExit")}</p>{/if}
+    {#if updates.available?.needsAdmin}<p class="small muted">{t("appUpdate.admin")}</p>{/if}
+    {#if updates.ready && !updates.available?.needsAdmin}<p class="small muted">
+        {t("appUpdate.onExit")}
+      </p>{/if}
   </div>
   {#snippet footer()}
     <button class="btn ghost" onclick={() => (details = false)}>{t("appUpdate.later")}</button>

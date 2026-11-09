@@ -1678,7 +1678,8 @@ const pl: Dict = {
     details: "Aktualizuj",
     title: "Aerion {version}",
     current: "Masz wersję {version}.",
-    manual: "Ta instalacja (pakiet systemowy) aktualizuje się przez pobranie nowego pakietu.",
+    manual:
+      "Ta wersja nie aktualizuje się sama. Pobierz nową ze strony projektu (na Linuksie wystarczy polecenie instalacyjne ze strony: potem launcher aktualizuje się sam).",
     later: "Później",
     install: "Aktualizuj i uruchom ponownie",
     ready: "Aerion {version} jest gotowy",
@@ -1686,6 +1687,8 @@ const pl: Dict = {
     whatsNew: "Co nowego",
     downloading: "Pobieranie Aeriona {version}… {percent}%",
     closeGame: "Zamknij grę, aby zaktualizować launcher.",
+    admin:
+      "Instalacja pakietu poprosi o hasło administratora w oknie systemowym; nic nie musisz pobierać ani otwierać ręcznie.",
     onExit: "Jeśli nie teraz, aktualizacja zainstaluje się sama przy zamknięciu launchera.",
     background: "Pobieraj aktualizacje w tle",
     backgroundHint:
