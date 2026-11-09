@@ -57,6 +57,9 @@ jobs:
       - run: pnpm build
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
+      # The Windows installer's logic (its window only builds on Windows).
+      - run: cargo test
+        working-directory: installer
       # The app's own test program can't start on Windows (it lacks the manifest the real app
       # gets at build time: STATUS_ENTRYPOINT_NOT_FOUND); the engine's tests run there, and the
       # app's run on Linux and macOS.

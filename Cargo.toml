@@ -1,6 +1,8 @@
 [workspace]
 resolver = "3"
 members = ["crates/launcher-core", "src-tauri"]
+# Built for Windows on its own (see installer/Cargo.toml).
+exclude = ["installer"]
 
 [workspace.package]
 version = "1.0.3"

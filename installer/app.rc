@@ -1,0 +1,25 @@
+1 ICON "../src-tauri/icons/icon.ico"
+1 24 "app.manifest"
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEOS 0x4
+FILETYPE 0x1
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "FileDescription", "Aerion Setup"
+      VALUE "ProductName", "Aerion"
+      VALUE "FileVersion", "1.0.0"
+      VALUE "ProductVersion", "1.0.0"
+      VALUE "OriginalFilename", "AerionSetup.exe"
+      VALUE "LegalCopyright", "GPL-3.0-only. Unofficial product, not approved by or associated with Mojang or Microsoft."
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

@@ -35,6 +35,7 @@
     "o.code": "View the code", "o.privacy": "Privacy policy",
     "d.title": "Download and install", "d.get": "Download", "d.copy": "Copy", "d.verify": "SHA-256 checksum",
     "d.unsupported": "Aerion runs on Windows and Linux computers. You can't run it on this device, but you can come back here from a computer.",
+    "d.setT": "Aerion Setup", "d.setD": "Recommended. One click: it downloads the newest version, checks the signature and starts the launcher.",
     "d.exeT": "Windows installer", "d.exeD": "Windows 10 or 11, 64-bit. No administrator rights needed.",
     "d.w1": "Run the downloaded file and go through the installer.",
     "d.w2": "If Windows shows a SmartScreen warning, choose <b>More info</b>, then <b>Run anyway</b>. It appears because the installer has no paid publisher certificate.",
@@ -117,7 +118,7 @@
   const API = "https://api.github.com/repos/0giel/Aerion/releases/latest";
   const ua = navigator.userAgent;
   const os = /Android|iPhone|iPad|iPod/i.test(ua) ? "mobile" : /Windows/i.test(ua) ? "windows" : /Mac/i.test(ua) ? "mac" : /Linux|X11/i.test(ua) ? "linux" : "other";
-  const mainFile = { windows: "exe", linux: "appimage" }[os];
+  const mainFile = () => (os === "linux" ? "appimage" : os !== "windows" ? null : release && release.files.setup ? "setup" : "exe");
   let release = null;
   let failed = false;
 
@@ -146,6 +147,9 @@
     document.querySelectorAll(".file[data-file]").forEach((card) => {
       const kind = card.dataset.file;
       const f = release && release.files[kind];
+      // Aerion Setup is offered once a release has it; the regular installer steps back then.
+      if (kind === "setup") card.hidden = !f;
+      if (kind === "exe") card.querySelector("[data-dl]").classList.toggle("primary", !(release && release.files.setup));
       card.querySelector("[data-dl]").href = f ? f.url : PAGE;
       card.querySelector("[data-size]").textContent = f ? f.name + " · " + mb(f.size) : "";
       const sum = card.querySelector(".sum");
@@ -154,7 +158,8 @@
       const cmd = card.querySelector("[data-cmd]");
       if (cmd) cmd.textContent = command(kind, f && f.name);
     });
-    const f = release && mainFile && release.files[mainFile];
+    const main = mainFile();
+    const f = release && main && release.files[main];
     // On Linux the button leads to the one-line install, which also sets up self-updating.
     $("hero-dl").href = f && os !== "linux" ? f.url : "#download";
     $("hero-dl-text").textContent = f ? tr(os === "windows" ? "win" : "linux") : tr("any");
@@ -167,8 +172,8 @@
       const a = (j.assets || []).find((x) => test(x.name));
       return a ? { name: a.name, size: a.size, url: a.browser_download_url, sha: (a.digest || "").replace(/^sha256:/, "") } : null;
     };
-    const files = { exe: pick((n) => n.endsWith("-setup.exe")), appimage: pick((n) => n.endsWith(".AppImage")), deb: pick((n) => n.endsWith(".deb")) };
-    return files.exe || files.appimage || files.deb ? { version: String(j.tag_name).replace(/^v/, ""), date: j.published_at, page: j.html_url, files } : null;
+    const files = { setup: pick((n) => n === "AerionSetup.exe"), exe: pick((n) => n.endsWith("-setup.exe")), appimage: pick((n) => n.endsWith(".AppImage")), deb: pick((n) => n.endsWith(".deb")) };
+    return files.setup || files.exe || files.appimage || files.deb ? { version: String(j.tag_name).replace(/^v/, ""), date: j.published_at, page: j.html_url, files } : null;
   }
 
   function loadRelease() {
