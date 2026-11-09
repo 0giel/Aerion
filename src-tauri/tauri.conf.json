@@ -82,7 +82,10 @@
           "English",
           "Polish"
         ],
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "customLanguageFiles": {
+          "Polish": "nsis/Polish.nsh"
+        }
       },
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
