@@ -9,6 +9,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.4",
+    notes: {
+      pl: [
+        "Ekwipunek, skrzynie i inne okna w kolorach motywu. Nowa zakładka w menu moda (Prawy Shift → Mody → Wygląd gry): kolor i przezroczystość panelu i slotów, przezroczyste sloty, styl krawędzi, a także wyłączanie własnych przycisków, tła i gracza na ekranie głównym.",
+        "Płynniejsze menu w grze: przyciski podświetlają się miękko i wsuwają przy otwarciu, a logo delikatnie się unosi.",
+        "„Zaktualizuj wszystko”: jedno okno z aktualizacjami modów ze wszystkich instancji. Przed każdą powstaje kopia światów.",
+        "Tryb lekki dla słabszych komputerów (Ustawienia → Wygląd). Launcher sam go zaproponuje, gdy działa wolno.",
+        "Automatyczny dobór pamięci i parametrów Javy do komputera i liczby modów. Ręczne ustawienia zawsze wygrywają.",
+        "Linux: pakiet .deb aktualizuje się teraz z launchera (poprosi tylko o hasło w okienku systemu), a ze strony zainstalujesz Aeriona jednym poleceniem.",
+        "Windows: nowy instalator AerionSetup, który sam pobiera najnowszą wersję.",
+      ],
+      en: [
+        "Inventories, chests and other windows in the theme's colours. A new page in the mod menu (Right Shift → Mods → Game look): panel and slot colour and opacity, clear slots, edge style, and switches for the custom buttons, background and the player on the title screen.",
+        "Smoother game menus: buttons light up softly and slide in on opening, and the logo gently floats.",
+        "“Update everything”: one window with the mod updates of all instances. The worlds are backed up before each one.",
+        "Lite mode for weaker computers (Settings → Appearance). The launcher suggests it when it runs slowly.",
+        "Memory and Java settings picked automatically for your computer and number of mods. Values you set by hand always win.",
+        "Linux: the .deb package now updates from the launcher (it only asks for the password in a system dialog), and the website installs Aerion with one command.",
+        "Windows: a new installer, AerionSetup, that downloads the newest version by itself.",
+      ],
+    },
+  },
+  {
     version: "1.0.3",
     notes: {
       pl: [
