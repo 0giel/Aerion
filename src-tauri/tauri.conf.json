@@ -83,6 +83,7 @@
           "Polish"
         ],
         "displayLanguageSelector": false,
+        "installerHooks": "nsis/hooks.nsh",
         "customLanguageFiles": {
           "Polish": "nsis/Polish.nsh"
         }

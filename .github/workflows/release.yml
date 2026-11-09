@@ -64,6 +64,17 @@ jobs:
           echo "client ID present (${#LAUNCHER_MSA_CLIENT_ID} characters)"
         env:
           LAUNCHER_MSA_CLIENT_ID: ${{ vars.LAUNCHER_MSA_CLIENT_ID || secrets.LAUNCHER_MSA_CLIENT_ID }}
+      # AerionSetup.exe: the small installer window, and (as AerionUninstall.exe, bundled through
+      # src-tauri/nsis/hooks.nsh) the uninstall window. If this fails the release still works with
+      # the regular installer and uninstaller, so check the draft has the file before publishing.
+      - name: Build AerionSetup.exe
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        id: setup
+        shell: bash
+        run: |
+          (cd installer && cargo build --release)
+          cp installer/target/release/AerionSetup.exe src-tauri/nsis/AerionUninstall.exe
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,16 +89,6 @@ jobs:
           releaseDraft: true
           includeUpdaterJson: true
           args: --bundles ${{ matrix.bundles }}
-      # AerionSetup.exe, the small window that downloads and installs the newest version. It sits
-      # next to the regular files; if this fails the release still works (the site then offers the
-      # regular installer), so check the draft has the file before publishing.
-      - name: Build AerionSetup.exe
-        if: runner.os == 'Windows'
-        continue-on-error: true
-        id: setup
-        shell: bash
-        working-directory: installer
-        run: cargo build --release
       - name: Attach AerionSetup.exe to the draft
         if: runner.os == 'Windows' && steps.setup.outcome == 'success'
         continue-on-error: true

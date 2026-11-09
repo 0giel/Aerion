@@ -2,10 +2,11 @@
 //! included) is installed. A worker thread does the job and posts its progress here.
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
-use std::path::PathBuf;
+use std::os::windows::process::CommandExt;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::ptr::{null, null_mut};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 
 use windows_sys::Win32::Foundation::*;
 use windows_sys::Win32::Globalization::GetUserDefaultUILanguage;
@@ -41,6 +42,9 @@ const MUTED: u32 = 0xA9A8B6;
 const FAINT: u32 = 0x75747F;
 const TRACK: u32 = 0x2C2D35;
 const ERROR: u32 = 0xFF8A80;
+const TRACK_HOT: u32 = 0x3A3B45;
+const DANGER: u32 = 0xD8453D;
+const DANGER_HOT: u32 = 0xE85A52;
 
 #[derive(Clone, PartialEq)]
 enum Phase {
@@ -53,6 +57,12 @@ enum Phase {
 }
 
 static PHASE: Mutex<Phase> = Mutex::new(Phase::Ready);
+/// Set when this window removes Aerion: the folder it is installed in.
+static REMOVING: OnceLock<PathBuf> = OnceLock::new();
+
+fn removing() -> bool {
+    REMOVING.get().is_some()
+}
 
 fn phase() -> Phase {
     PHASE.lock().unwrap_or_else(|e| e.into_inner()).clone()
@@ -72,6 +82,15 @@ struct Texts {
     signature: &'static str,
     running: &'static str,
     failed: &'static str,
+    remove_tagline: &'static str,
+    remove: &'static str,
+    cancel: &'static str,
+    remove_data: &'static str,
+    remove_data_warning: &'static str,
+    keeps_data: &'static str,
+    removing: &'static str,
+    removed: &'static str,
+    remove_failed: &'static str,
 }
 
 const PL: Texts = Texts {
@@ -88,6 +107,15 @@ const PL: Texts = Texts {
     signature: "Pobrany plik nie ma poprawnego podpisu, więc go nie uruchomiono.",
     running: "Zamknij Aeriona i spróbuj ponownie.",
     failed: "Instalacja się nie powiodła.",
+    remove_tagline: "Czy na pewno chcesz odinstalować launcher?",
+    remove: "Odinstaluj",
+    cancel: "Anuluj",
+    remove_data: "Usuń też instancje, światy i ustawienia",
+    remove_data_warning: "Tego nie da się cofnąć.",
+    keeps_data: "Twoje światy i ustawienia zostaną na komputerze.",
+    removing: "Odinstalowywanie…",
+    removed: "Aerion został odinstalowany.",
+    remove_failed: "Nie udało się odinstalować Aeriona.",
 };
 
 const EN: Texts = Texts {
@@ -104,6 +132,15 @@ const EN: Texts = Texts {
     signature: "The downloaded file has no valid signature, so it wasn't run.",
     running: "Close Aerion and try again.",
     failed: "The installation didn't succeed.",
+    remove_tagline: "Are you sure you want to uninstall the launcher?",
+    remove: "Uninstall",
+    cancel: "Cancel",
+    remove_data: "Also delete instances, worlds and settings",
+    remove_data_warning: "This can't be undone.",
+    keeps_data: "Your worlds and settings stay on this computer.",
+    removing: "Uninstalling…",
+    removed: "Aerion has been uninstalled.",
+    remove_failed: "Couldn't uninstall Aerion.",
 };
 
 fn texts() -> &'static Texts {
@@ -120,6 +157,8 @@ enum Hit {
     None,
     Close,
     Button,
+    Cancel,
+    Check,
 }
 
 struct App {
@@ -130,6 +169,7 @@ struct App {
     scale: f32,
     hover: Hit,
     tick: f32,
+    delete_data: bool,
     title: HFONT,
     body: HFONT,
     small: HFONT,
@@ -157,6 +197,29 @@ impl App {
         }
     }
 
+    /// Uninstalling has two buttons side by side; the main one is on the right.
+    fn remove_rects(&self) -> (RECT, RECT) {
+        let (w, h, gap) = (self.px(160), self.px(44), self.px(12));
+        let y = self.px(238);
+        let left = (self.w - 2 * w - gap) / 2;
+        let rect = |x: i32| RECT {
+            left: x,
+            top: y,
+            right: x + w,
+            bottom: y + h,
+        };
+        (rect(left), rect(left + w + gap))
+    }
+
+    fn check_rect(&self) -> RECT {
+        RECT {
+            left: self.px(70),
+            top: self.px(198),
+            right: self.w - self.px(70),
+            bottom: self.px(226),
+        }
+    }
+
     fn close_rect(&self) -> RECT {
         let s = self.px(38);
         RECT {
@@ -172,6 +235,14 @@ impl App {
         let shows_button = matches!(phase(), Phase::Ready | Phase::Failed(_));
         if inside(self.close_rect()) {
             Hit::Close
+        } else if removing() {
+            let (cancel, go) = self.remove_rects();
+            match shows_button {
+                true if inside(go) => Hit::Button,
+                true if inside(cancel) => Hit::Cancel,
+                true if phase() == Phase::Ready && inside(self.check_rect()) => Hit::Check,
+                _ => Hit::None,
+            }
         } else if shows_button && inside(self.button_rect()) {
             Hit::Button
         } else {
@@ -225,6 +296,83 @@ impl App {
         let (bar_x, bar_w, bar_y, bar_h) = (60.0 * s, w as f32 - 120.0 * s, 218.0 * s, 8.0 * s);
         let mut status = String::new();
         match &now {
+            Phase::Ready | Phase::Failed(_) if removing() => {
+                let (cancel, go) = self.remove_rects();
+                let mut pill = |r: RECT, color: u32| {
+                    c.rounded(
+                        r.left as f32,
+                        r.top as f32,
+                        (r.right - r.left) as f32,
+                        (r.bottom - r.top) as f32,
+                        11.0 * s,
+                        color,
+                        1.0,
+                    );
+                };
+                pill(
+                    cancel,
+                    if self.hover == Hit::Cancel {
+                        TRACK_HOT
+                    } else {
+                        TRACK
+                    },
+                );
+                pill(
+                    go,
+                    if self.hover == Hit::Button {
+                        DANGER_HOT
+                    } else {
+                        DANGER
+                    },
+                );
+                if now == Phase::Ready {
+                    let (x, y, side) =
+                        (self.px(70) as f32, self.px(204) as f32, self.px(16) as f32);
+                    let on = self.delete_data;
+                    let edge = if self.hover == Hit::Check {
+                        ACCENT
+                    } else {
+                        FAINT
+                    };
+                    c.rounded(
+                        x,
+                        y,
+                        side,
+                        side,
+                        4.0 * s,
+                        if on { DANGER } else { edge },
+                        1.0,
+                    );
+                    if on {
+                        c.line(
+                            x + 0.25 * side,
+                            y + 0.52 * side,
+                            x + 0.43 * side,
+                            y + 0.7 * side,
+                            1.1 * s,
+                            0xFFFFFF,
+                        );
+                        c.line(
+                            x + 0.43 * side,
+                            y + 0.7 * side,
+                            x + 0.76 * side,
+                            y + 0.3 * side,
+                            1.1 * s,
+                            0xFFFFFF,
+                        );
+                    } else {
+                        c.rounded(
+                            x + 1.5 * s,
+                            y + 1.5 * s,
+                            side - 3.0 * s,
+                            side - 3.0 * s,
+                            3.0 * s,
+                            BG,
+                            1.0,
+                        );
+                    }
+                }
+            }
             Phase::Ready | Phase::Failed(_) => {
                 let r = self.button_rect();
                 let color = if self.hover == Hit::Button {
@@ -278,7 +426,9 @@ impl App {
                 let piece = bar_w * 0.3;
                 let x = bar_x + (bar_w - piece) * (0.5 + 0.5 * self.tick.sin());
                 c.rounded(x, bar_y, piece, bar_h, bar_h / 2.0, ACCENT, 1.0);
-                status = if now == Phase::Verify {
+                status = if removing() {
+                    t.removing
+                } else if now == Phase::Verify {
                     t.verifying
                 } else {
                     t.installing
@@ -287,7 +437,7 @@ impl App {
             }
             Phase::Done => {
                 c.rounded(bar_x, bar_y, bar_w, bar_h, bar_h / 2.0, ACCENT, 1.0);
-                status = t.done.to_owned();
+                status = if removing() { t.removed } else { t.done }.to_owned();
             }
         }
         if self.hover == Hit::Close {
@@ -314,13 +464,51 @@ impl App {
                 center,
             );
             self.text(
-                t.tagline,
+                if removing() {
+                    t.remove_tagline
+                } else {
+                    t.tagline
+                },
                 self.body,
                 MUTED,
                 line(self.px(162), self.px(188)),
                 center,
             );
             match &now {
+                Phase::Ready | Phase::Failed(_) if removing() => {
+                    let (cancel, go) = self.remove_rects();
+                    self.text(t.cancel, self.button, TEXT, cancel, center);
+                    let label = if now == Phase::Ready {
+                        t.remove
+                    } else {
+                        t.retry
+                    };
+                    self.text(label, self.button, 0xFFFFFF, go, center);
+                    let below = line(self.px(284), self.px(304));
+                    if let Phase::Failed(why) = &now {
+                        let message = if *why == Failure::Running {
+                            t.running
+                        } else {
+                            t.remove_failed
+                        };
+                        self.text(message, self.small, ERROR, below, center);
+                    } else {
+                        let mut row = self.check_rect();
+                        row.left = self.px(96);
+                        self.text(
+                            t.remove_data,
+                            self.body,
+                            TEXT,
+                            row,
+                            DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX,
+                        );
+                        if self.delete_data {
+                            self.text(t.remove_data_warning, self.small, ERROR, below, center);
+                        } else {
+                            self.text(t.keeps_data, self.small, MUTED, below, center);
+                        }
+                    }
+                }
                 Phase::Ready => {
                     self.text(
                         t.install,
@@ -461,6 +649,140 @@ fn install(report: impl Fn(Phase)) -> Result<(), Failure> {
     Ok(())
 }
 
+/// The folders of a player's data: settings, instances and worlds, and what the window system
+/// keeps for the launcher. Only the default places; a data folder moved elsewhere stays.
+fn data_dirs() -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    if let Some(local) = std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .filter(|d| d.is_absolute())
+    {
+        dirs.push(local.join("Aerion"));
+        dirs.push(local.join("pl.aerion.desktop"));
+    }
+    if let Some(roaming) = std::env::var_os("APPDATA")
+        .map(PathBuf::from)
+        .filter(|d| d.is_absolute())
+    {
+        dirs.push(roaming.join("pl.aerion.desktop"));
+    }
+    dirs
+}
+
+/// The regular uninstaller does the removing (files, shortcuts, the entry in Windows), so
+/// nothing can be left half done by a second implementation.
+fn uninstall(dir: &Path, delete_data: bool) -> Result<(), Failure> {
+    if app_is_running() {
+        return Err(Failure::Running);
+    }
+    let regular = dir.join("uninstall.exe");
+    if !regular.is_file() {
+        return Err(Failure::Install("uninstall.exe is missing".into()));
+    }
+    // `_?=` runs it in place and waits; the path must be last and unquoted, spaces included.
+    let status = Command::new(&regular)
+        .raw_arg("/S")
+        .raw_arg(format!("_?={}", dir.display()))
+        .status()
+        .map_err(|e| Failure::Install(e.to_string()))?;
+    if !status.success() {
+        return Err(Failure::Install(format!(
+            "the uninstaller returned {status}"
+        )));
+    }
+    // Run in place, it can't delete itself; neither could this program from there.
+    let _ = std::fs::remove_file(&regular);
+    let _ = std::fs::remove_file(dir.join(UNINSTALLER));
+    if delete_data {
+        for d in data_dirs() {
+            let _ = std::fs::remove_dir_all(d);
+        }
+    }
+    let _ = std::fs::remove_dir(dir);
+    Ok(())
+}
+
+fn start_uninstall(hwnd: HWND, delete_data: bool) {
+    let Some(dir) = REMOVING.get() else { return };
+    let handle = hwnd as isize;
+    set_phase(handle, Phase::Install);
+    std::thread::spawn(move || match uninstall(dir, delete_data) {
+        Ok(()) => set_phase(handle, Phase::Done),
+        Err(why) => set_phase(handle, Phase::Failed(why)),
+    });
+}
+
+const UNINSTALLER: &str = "AerionUninstall.exe";
+
+/// What the program was asked to do; the window opens only for the two interactive cases.
+fn dispatch() -> bool {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let first = args.first().map(String::as_str);
+    if first == Some("--uninstall-from") {
+        if let Some(dir) = args.get(1) {
+            let _ = REMOVING.set(PathBuf::from(dir));
+        }
+        return true;
+    }
+    if first != Some("--uninstall") {
+        return true;
+    }
+    let Some(here) = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(Path::to_path_buf))
+    else {
+        return false;
+    };
+    // The regular installer calls this with its own switches (when replacing an old version,
+    // and during updates): that always goes straight to the regular uninstaller.
+    if args.len() > 1 {
+        let status = Command::new(here.join("uninstall.exe"))
+            .raw_arg(args[1..].join(" "))
+            .status();
+        std::process::exit(status.ok().and_then(|s| s.code()).unwrap_or(2));
+    }
+    // A running program can't delete itself, so the window runs from a temporary copy.
+    let temp = std::env::temp_dir().join(format!("aerion-uninstall-{}", std::process::id()));
+    let copy = temp.join(UNINSTALLER);
+    let copied =
+        std::fs::create_dir_all(&temp).and_then(|_| std::fs::copy(here.join(UNINSTALLER), &copy));
+    if copied.is_ok()
+        && Command::new(&copy)
+            .arg("--uninstall-from")
+            .arg(&here)
+            .spawn()
+            .is_ok()
+    {
+        return false;
+    }
+    let _ = REMOVING.set(here);
+    true
+}
+
+/// A temporary copy (see [`dispatch`]) can only go once it has ended: `cmd` waits a moment and
+/// removes its folder.
+fn remove_temporary_copy() {
+    let Some(temp) = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(Path::to_path_buf))
+    else {
+        return;
+    };
+    let ours = temp
+        .file_name()
+        .is_some_and(|n| n.to_string_lossy().starts_with("aerion-uninstall-"));
+    if ours && temp.starts_with(std::env::temp_dir()) {
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        let _ = Command::new("cmd")
+            .creation_flags(CREATE_NO_WINDOW)
+            .raw_arg(format!(
+                "/c ping -n 3 127.0.0.1 >nul & rmdir /s /q \"{}\"",
+                temp.display()
+            ))
+            .spawn();
+    }
+}
+
 fn set_phase(hwnd: isize, p: Phase) {
     *PHASE.lock().unwrap_or_else(|e| e.into_inner()) = p;
     unsafe { PostMessageW(hwnd as HWND, WM_PHASE, 0, 0) };
@@ -494,7 +816,7 @@ fn set_hover(a: &mut App, hwnd: HWND, hit: Hit) {
     }
 }
 
-fn activate(hwnd: HWND, a: &App, hit: Hit) {
+fn activate(hwnd: HWND, a: &mut App, hit: Hit) {
     match hit {
         Hit::Close => {
             // Stopping the regular installer halfway would leave a half-installed program.
@@ -502,10 +824,17 @@ fn activate(hwnd: HWND, a: &App, hit: Hit) {
                 unsafe { DestroyWindow(hwnd) };
             }
         }
+        Hit::Cancel => unsafe {
+            DestroyWindow(hwnd);
+        },
+        Hit::Check => {
+            a.delete_data = !a.delete_data;
+            unsafe { InvalidateRect(hwnd, null(), 0) };
+        }
+        Hit::Button if removing() => start_uninstall(hwnd, a.delete_data),
         Hit::Button => start(hwnd),
         Hit::None => {}
     }
-    let _ = a;
 }
 
 unsafe extern "system" fn window_proc(
@@ -530,7 +859,7 @@ unsafe extern "system" fn window_proc(
                     HTCLIENT as LRESULT
                 }
             }
-            WM_SETCURSOR if a.hover == Hit::Button => {
+            WM_SETCURSOR if matches!(a.hover, Hit::Button | Hit::Cancel | Hit::Check) => {
                 SetCursor(LoadCursorW(null_mut(), IDC_HAND));
                 1
             }
@@ -559,7 +888,10 @@ unsafe extern "system" fn window_proc(
             }
             WM_KEYDOWN => {
                 let key = wparam as u16;
-                if key == VK_RETURN && matches!(phase(), Phase::Ready | Phase::Failed(_)) {
+                if key == VK_RETURN
+                    && !removing()
+                    && matches!(phase(), Phase::Ready | Phase::Failed(_))
+                {
                     start(hwnd);
                 } else if key == VK_ESCAPE {
                     activate(hwnd, a, Hit::Close);
@@ -574,7 +906,12 @@ unsafe extern "system" fn window_proc(
                     KillTimer(hwnd, TIMER_ANIMATE);
                 }
                 if now == Phase::Done {
-                    SetTimer(hwnd, TIMER_CLOSE, 1200, None);
+                    SetTimer(
+                        hwnd,
+                        TIMER_CLOSE,
+                        if removing() { 2200 } else { 1200 },
+                        None,
+                    );
                 }
                 a.hover = Hit::None;
                 InvalidateRect(hwnd, null(), 0);
@@ -630,6 +967,9 @@ unsafe fn font(px: i32, weight: i32) -> HFONT {
 }
 
 pub fn run() {
+    if !dispatch() {
+        return;
+    }
     unsafe {
         let instance = GetModuleHandleW(null());
         let class = wide("AerionSetupWindow");
@@ -677,6 +1017,7 @@ pub fn run() {
             scale,
             hover: Hit::None,
             tick: 0.0,
+            delete_data: false,
             title: font(px(32.0), 700),
             body: font(px(14.0), 400),
             small: font(px(12.0), 400),
@@ -717,4 +1058,5 @@ pub fn run() {
             DispatchMessageW(&msg);
         }
     }
+    remove_temporary_copy();
 }

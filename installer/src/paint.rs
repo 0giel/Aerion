@@ -57,6 +57,21 @@ impl Canvas<'_> {
         }
     }
 
+    /// A short line with round ends and soft edges.
+    #[allow(clippy::too_many_arguments)]
+    pub fn line(&mut self, x0: f32, y0: f32, x1: f32, y1: f32, half: f32, color: u32) {
+        let (dx, dy) = (x1 - x0, y1 - y0);
+        let len2 = (dx * dx + dy * dy).max(0.001);
+        for py in ((y0.min(y1) - half - 1.0) as i32)..=((y0.max(y1) + half + 1.0) as i32) {
+            for px in ((x0.min(x1) - half - 1.0) as i32)..=((x0.max(x1) + half + 1.0) as i32) {
+                let (ax, ay) = (px as f32 + 0.5 - x0, py as f32 + 0.5 - y0);
+                let t = ((ax * dx + ay * dy) / len2).clamp(0.0, 1.0);
+                let d = ((ax - t * dx).powi(2) + (ay - t * dy).powi(2)).sqrt();
+                self.blend(px, py, color, (half + 0.5 - d).clamp(0.0, 1.0));
+            }
+        }
+    }
+
     /// A square RGBA picture scaled to `size` pixels, averaging what each pixel covers.
     pub fn image(&mut self, rgba: &[u8], side: i32, x: i32, y: i32, size: i32) {
         let step = side as f32 / size as f32;

@@ -36,3 +36,6 @@ mod/.gradle/
 mod/build/
 mod/run/
 mod/*/build/
+
+# Built by the release job (the Windows installer crate), bundled into the setup file.
+/src-tauri/nsis/AerionUninstall.exe
