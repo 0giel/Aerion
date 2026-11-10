@@ -57,6 +57,23 @@ pub async fn app_info(state: State<'_, AppState>) -> CmdResult<AppInfo> {
     })
 }
 
+/// Where theme videos are served from on Linux and macOS (see `media_server`); none on
+/// Windows, whose window plays them from the `themeasset` scheme.
+#[tauri::command]
+#[specta::specta]
+pub async fn theme_media_base(state: State<'_, AppState>) -> CmdResult<Option<String>> {
+    if cfg!(windows) {
+        return Ok(None);
+    }
+    match crate::media_server::base(state.paths.theme_assets_dir()).await {
+        Ok(base) => Ok(Some(base)),
+        Err(e) => {
+            tracing::warn!(error = %e, "the theme video server didn't start");
+            Ok(None)
+        }
+    }
+}
+
 /// What the automatic Java settings would pick for an instance (or a typical modded one), for
 /// the settings pages; the real Java version is only known at launch.
 #[tauri::command]

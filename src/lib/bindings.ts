@@ -14,6 +14,11 @@ export const commands = {
 	 *  the settings pages; the real Java version is only known at launch.
 	 */
 	autoJavaPlan: (instanceId: string | null) => __TAURI_INVOKE<AutoPlan>("auto_java_plan", { instanceId }),
+	/**
+	 *  Where theme videos are served from on Linux and macOS (see `media_server`); none on
+	 *  Windows, whose window plays them from the `themeasset` scheme.
+	 */
+	themeMediaBase: () => __TAURI_INVOKE<string | null>("theme_media_base"),
 	/**  Save settings; rebuilds the HTTP stack when network options change. */
 	saveSettings: (settings: Settings_Deserialize) => __TAURI_INVOKE<Settings_Serialize>("save_settings", { settings }),
 	/**  Launcher settings, themes, skins, the in-game HUD and the shared game settings in one file. */

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { themes } from "../theme/engine.svelte";
-  import { themeAssetUrl } from "../api";
+  import { commands, IS_WINDOWS, themeAssetUrl } from "../api";
+  import { media } from "../stores/media.svelte";
   import Particles from "./Particles.svelte";
   import { ambient } from "../stores/ambient.svelte";
 
@@ -9,6 +10,16 @@
   // Animate only while someone is using the launcher (see stores/ambient).
   const animate = $derived(motion && ambient.active && !themes.lite);
   const assetUrl = $derived(bg.asset ? themeAssetUrl(bg.asset) : null);
+
+  // Linux and macOS play videos only from a local address the launcher opens on demand.
+  $effect(() => {
+    if (bg.type === "video" && !IS_WINDOWS && !media.base) {
+      void commands
+        .themeMediaBase()
+        .then((b) => (media.base = b))
+        .catch(() => {});
+    }
+  });
 
   let video: HTMLVideoElement | undefined = $state();
   // Don't decode video while nobody is looking (or when motion is off).
@@ -33,7 +44,7 @@
       alt=""
       style:filter={bg.blur && !themes.lite ? `blur(${bg.blur}px)` : undefined}
     />
-  {:else if bg.type === "video" && assetUrl}
+  {:else if bg.type === "video" && assetUrl && (IS_WINDOWS || media.base)}
     <video
       bind:this={video}
       class="media"

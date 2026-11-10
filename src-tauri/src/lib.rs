@@ -3,6 +3,7 @@
 mod commands;
 mod content_watch;
 mod games;
+mod media_server;
 pub mod platform;
 mod protocols;
 mod state;
@@ -24,6 +25,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             app::app_info,
             app::get_settings,
             app::auto_java_plan,
+            app::theme_media_base,
             app::save_settings,
             app::export_settings,
             app::import_settings,
