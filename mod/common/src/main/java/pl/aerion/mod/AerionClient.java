@@ -133,6 +133,11 @@ public final class AerionClient implements ClientModInitializer {
 		} catch (RuntimeException e) {
 			warnOnce("host", e);
 		}
+		try {
+			MenuPicture.tick(Minecraft.getInstance());
+		} catch (RuntimeException e) {
+			warnOnce("menu-picture", e);
+		}
 		if (++ticks % 20 != 0) return;
 		if (file != null) reload();
 		if (hudFile != null) reloadHud();

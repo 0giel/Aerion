@@ -38,6 +38,17 @@ public final class MenuPicture {
 	private static int uploaded, w, h, total;
 	private static int[] delays = new int[0];
 
+	/**
+	 * Called every client tick. In a world the menus show the world, not this picture, so its
+	 * frames (a video's can take a few hundred MB) are let go; back in the menus they load again.
+	 */
+	public static void tick(net.minecraft.client.Minecraft mc) {
+		if (mc.level != null && (path != null || decoded != null)) {
+			release();
+			AerionClient.LOG.info("Aerion UI: menu background released while in a world");
+		}
+	}
+
 	/** Whether a picture is on screen instead of the gradient (the aurora stays away then). */
 	public static boolean active() {
 		return ids.length > 0 && uploaded == ids.length;
@@ -46,6 +57,8 @@ public final class MenuPicture {
 	/** Draws the picture over the whole screen; false when there is none (yet). */
 	public static boolean draw(Gfx g, Theme t) {
 		String want = t.backgroundFile;
+		// Loading a world draws menu backgrounds too; the picture isn't loaded for those.
+		if (net.minecraft.client.Minecraft.getInstance().level != null) return false;
 		if (want == null) {
 			release();
 			return false;

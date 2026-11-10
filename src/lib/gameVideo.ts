@@ -3,8 +3,9 @@
 // the mod (see begin/save/finish_video_frames). Once per video; later the frames are reused.
 import { commands } from "./api";
 
-const FPS = 8;
-const MAX_FRAMES = 160;
+// 6 a second for 20 seconds: smooth enough under the dimmed menus, ~70 MB in the game.
+const FPS = 6;
+const MAX_FRAMES = 120;
 const WIDTH = 512;
 
 const running = new Map<string, Promise<boolean>>();
