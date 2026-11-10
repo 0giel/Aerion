@@ -4,6 +4,7 @@
 //! Discord isn't running. The socket is looked for in the places the Discord apps use, the
 //! Flatpak and Snap ones included.
 use std::io::{Read, Write};
+#[cfg(unix)]
 use std::path::PathBuf;
 use std::time::Duration;
 
