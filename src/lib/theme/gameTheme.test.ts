@@ -36,5 +36,12 @@ describe("game theme", () => {
     expect(toGameTheme(nocturne, prefs).particles).toBe(nocturne.background.particles);
     // Lite mode takes the particles (and the aurora) out of the game's menus.
     expect(toGameTheme(nocturne, prefs, true).particles).toBe("none");
+    // A video background reaches the game as its frames, once they exist.
+    const video = {
+      ...nocturne,
+      background: { ...nocturne.background, type: "video" as const, asset: "clip.mp4" },
+    };
+    expect(toGameTheme(video, prefs).backgroundAsset).toBe(null);
+    expect(toGameTheme(video, prefs, false, "clip.mp4.frames").backgroundAsset).toBe("clip.mp4.frames");
   });
 });

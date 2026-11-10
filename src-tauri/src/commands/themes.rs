@@ -328,6 +328,81 @@ pub async fn install_gallery_theme(state: State<'_, AppState>, id: String) -> Cm
 }
 
 /// Save the active theme's colours for running and future games with the Aerion mod.
+fn frames_dir(state: &AppState, video: &str) -> CmdResult<PathBuf> {
+    let is_video = matches!(
+        video
+            .rsplit('.')
+            .next()
+            .map(str::to_ascii_lowercase)
+            .as_deref(),
+        Some("mp4" | "m4v" | "webm" | "ogv")
+    );
+    if !valid_asset(video) || !is_video {
+        return Err(bad("not a video"));
+    }
+    launcher_core::aerion_mod::video_frames_dir(&state.paths, video).ok_or_else(|| bad("bad name"))
+}
+
+/// Whether the game already has finished frames of this video background.
+#[tauri::command]
+#[specta::specta]
+pub async fn video_frames_ready(state: State<'_, AppState>, video: String) -> CmdResult<bool> {
+    Ok(frames_dir(&state, &video)?.join("frames.json").is_file())
+}
+
+/// Start over: the frames of this video are made again (one per call of `save_video_frame`).
+#[tauri::command]
+#[specta::specta]
+pub async fn begin_video_frames(state: State<'_, AppState>, video: String) -> CmdResult<()> {
+    let dir = frames_dir(&state, &video)?;
+    let _ = tokio::fs::remove_dir_all(&dir).await;
+    tokio::fs::create_dir_all(&dir)
+        .await
+        .map_err(|e| io(&dir, e))
+}
+
+/// One frame, a JPEG picture as base64, grabbed from the video by the window.
+#[tauri::command]
+#[specta::specta]
+pub async fn save_video_frame(
+    state: State<'_, AppState>,
+    video: String,
+    index: u32,
+    jpeg: String,
+) -> CmdResult<()> {
+    let dir = frames_dir(&state, &video)?;
+    if index >= 400 || jpeg.len() > 4 << 20 {
+        return Err(bad("too many or too large frames"));
+    }
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(jpeg.as_bytes())
+        .map_err(|_| bad("not base64"))?;
+    if !bytes.starts_with(&[0xFF, 0xD8]) {
+        return Err(bad("not a JPEG picture"));
+    }
+    let path = dir.join(format!("frame-{index:04}.jpg"));
+    tokio::fs::write(&path, bytes)
+        .await
+        .map_err(|e| io(&path, e))
+}
+
+/// The frames are complete: the game may use them now.
+#[tauri::command]
+#[specta::specta]
+pub async fn finish_video_frames(
+    state: State<'_, AppState>,
+    video: String,
+    delay_ms: u32,
+    count: u32,
+) -> CmdResult<()> {
+    let dir = frames_dir(&state, &video)?;
+    let info = serde_json::json!({ "delay": delay_ms.clamp(20, 1000), "count": count });
+    let path = dir.join("frames.json");
+    tokio::fs::write(&path, info.to_string())
+        .await
+        .map_err(|e| io(&path, e))
+}
+
 #[tauri::command]
 #[specta::specta]
 pub async fn set_game_theme(

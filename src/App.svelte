@@ -21,7 +21,9 @@
   import { router, type Page } from "./lib/stores/router.svelte";
   import { ui } from "./lib/stores/ui.svelte";
   import { toasts } from "./lib/stores/toasts.svelte";
-  import { commands, errorMessage } from "./lib/api";
+  import { commands, errorMessage, IS_WINDOWS, themeAssetUrl } from "./lib/api";
+  import { media } from "./lib/stores/media.svelte";
+  import { gameFrames } from "./lib/gameVideo";
   import { t } from "./lib/i18n/index.svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { themes } from "./lib/theme/engine.svelte";
@@ -104,9 +106,23 @@
       layout.springy && themes.active.motion.enabled && !themes.reducedMotion ? "on" : "off";
   });
 
+  // A video background reaches the game's menus as frames made from it (once per video).
+  let videoFrames = $state<string | null>(null);
+  $effect(() => {
+    const b = themes.active.background;
+    if (!app.ready || b.type !== "video" || !b.asset || !(IS_WINDOWS || media.base)) {
+      videoFrames = null;
+      return;
+    }
+    const asset = b.asset;
+    void gameFrames(asset, themeAssetUrl(asset)).then((f) => {
+      if (themes.active.background.asset === asset) videoFrames = f;
+    });
+  });
+
   $effect(() => {
     if (!app.ready || !app.settings) return;
-    const theme = toGameTheme(themes.active, app.settings.gameUi, app.settings.liteMode);
+    const theme = toGameTheme(themes.active, app.settings.gameUi, app.settings.liteMode, videoFrames);
     // Only a real change is written: a reload of the same theme mustn't keep postponing it.
     const json = JSON.stringify(theme);
     clearTimeout(gameThemeTimer);

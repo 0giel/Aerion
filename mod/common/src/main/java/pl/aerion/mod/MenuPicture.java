@@ -129,11 +129,43 @@ public final class MenuPicture {
 	// --- decoding (off the render thread) ------------------------------------------------------
 
 	private static Decoded decode(String file) throws Exception {
+		if (new File(file).isDirectory()) return decodeFrames(file);
 		if (file.toLowerCase(java.util.Locale.ROOT).endsWith(".gif")) return decodeGif(file);
 		BufferedImage img = ImageIO.read(new File(file));
 		if (img == null) throw new IllegalArgumentException("not a picture");
 		int[] size = fit(img.getWidth(), img.getHeight(), 1);
 		return new Decoded(file, size[0], size[1], List.of(pixels(img, size[0], size[1])), new int[] {1000});
+	}
+
+	/**
+	 * A video background, as the launcher prepares it: numbered JPEG pictures and `frames.json`
+	 * with the time between them (the game can't play videos itself).
+	 */
+	private static Decoded decodeFrames(String dir) throws Exception {
+		File folder = new File(dir);
+		int delay = 125;
+		File info = new File(folder, "frames.json");
+		if (info.isFile()) {
+			try (java.io.Reader r = new java.io.FileReader(info, java.nio.charset.StandardCharsets.UTF_8)) {
+				com.google.gson.JsonObject o = com.google.gson.JsonParser.parseReader(r).getAsJsonObject();
+				if (o.has("delay")) delay = Math.max(20, Math.min(1000, o.get("delay").getAsInt()));
+			}
+		}
+		File[] files = folder.listFiles((d, n) -> n.startsWith("frame-") && n.endsWith(".jpg"));
+		if (files == null || files.length == 0) throw new IllegalArgumentException("no frames");
+		java.util.Arrays.sort(files);
+		int count = Math.min(MAX_FRAMES, files.length);
+		BufferedImage first = ImageIO.read(files[0]);
+		if (first == null) throw new IllegalArgumentException("not a picture");
+		int[] size = fit(first.getWidth(), first.getHeight(), count);
+		List<int[]> frames = new ArrayList<>();
+		for (int i = 0; i < count; i++) {
+			BufferedImage img = i == 0 ? first : ImageIO.read(files[i]);
+			if (img != null) frames.add(pixels(img, size[0], size[1]));
+		}
+		int[] delays = new int[frames.size()];
+		java.util.Arrays.fill(delays, delay);
+		return new Decoded(dir, size[0], size[1], frames, delays);
 	}
 
 	/** A size within the screen-sized limit and, for animations, the memory budget. */

@@ -120,7 +120,7 @@ async fn serve(mut socket: TcpStream, dir: &Path, token: &str) -> std::io::Resul
     }
     let length = end - start + 1;
     let mut head = format!(
-        "HTTP/1.1 {}\r\nContent-Type: {}\r\nContent-Length: {length}\r\nAccept-Ranges: bytes\r\nCache-Control: no-store\r\nConnection: close\r\n",
+        "HTTP/1.1 {}\r\nContent-Type: {}\r\nContent-Length: {length}\r\nAccept-Ranges: bytes\r\nCache-Control: no-store\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n",
         if wanted.range.is_some() {
             "206 Partial Content"
         } else {

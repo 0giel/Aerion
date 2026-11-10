@@ -6,7 +6,12 @@ import type { Theme } from "./schema";
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b/gi;
 
 /** `lite`: the game's menus drop their particles (and the aurora with them), the costly part. */
-export function toGameTheme(t: Theme, prefs: GameUiPrefs, lite = false): GameTheme {
+export function toGameTheme(
+  t: Theme,
+  prefs: GameUiPrefs,
+  lite = false,
+  videoFrames: string | null = null,
+): GameTheme {
   const c = t.colors;
   const b = t.background;
   const gradient =
@@ -31,8 +36,14 @@ export function toGameTheme(t: Theme, prefs: GameUiPrefs, lite = false): GameThe
     logo: prefs.logo,
     animations: t.motion.enabled && t.motion.effects,
     // A picture (or GIF) background shows in the game's menus too; the launcher checks the file
-    // and the mod reads it. Videos stay launcher-only and leave the gradient in the game.
-    backgroundAsset: prefs.colors && b.type === "image" && b.asset ? b.asset : null,
+    // and the mod reads it. A video shows there as frames made from it (lib/gameVideo); until they exist, the gradient.
+    backgroundAsset: !prefs.colors
+      ? null
+      : b.type === "image" && b.asset
+        ? b.asset
+        : b.type === "video"
+          ? videoFrames
+          : null,
     backgroundDim: b.dim,
     backgroundFile: null,
   };

@@ -83,9 +83,28 @@ fn yes() -> bool {
 /// Picture formats the mod can read (Java's own decoders); videos and WebP keep the gradient.
 const PICTURES: &[&str] = &["png", "jpg", "jpeg", "gif"];
 
-/// The picture file for the mod: an existing theme asset of a supported format, nothing else.
+/// Frames made from a video background for the game's menus, which can't play videos: JPEG
+/// pictures and a `frames.json` (delay between them), in the mod's folder rather than the
+/// themes folder (which is watched, and would reload for every frame written).
+pub fn video_frames_dir(paths: &Paths, video: &str) -> Option<PathBuf> {
+    crate::util::fs::safe_join(
+        &paths.aerion_mod_dir().join("backgrounds"),
+        &format!("{video}.frames"),
+    )
+    .ok()
+}
+
+/// The picture file for the mod: an existing theme asset of a supported format, or the finished
+/// frames of a video (`<video>.frames`), nothing else.
 fn background_file(paths: &Paths, asset: Option<&str>) -> Option<String> {
     let name = asset?;
+    if let Some(video) = name.strip_suffix(".frames") {
+        let dir = video_frames_dir(paths, video)?;
+        return dir
+            .join("frames.json")
+            .is_file()
+            .then(|| display_path(&dir));
+    }
     let ext = name.rsplit_once('.')?.1.to_ascii_lowercase();
     if !PICTURES.contains(&ext.as_str()) {
         return None;
@@ -213,6 +232,13 @@ mod tests {
         assert_eq!(background_file(&paths, Some("pic.webp")), None);
         assert_eq!(background_file(&paths, Some("missing.gif")), None);
         assert_eq!(background_file(&paths, Some("../../etc/x.gif")), None);
+        // A video's frames count once they are finished.
+        let frames = video_frames_dir(&paths, "clip.mp4").unwrap();
+        std::fs::create_dir_all(&frames).unwrap();
+        assert_eq!(background_file(&paths, Some("clip.mp4.frames")), None);
+        std::fs::write(frames.join("frames.json"), "{}").unwrap();
+        assert!(background_file(&paths, Some("clip.mp4.frames")).is_some());
+        assert_eq!(background_file(&paths, Some("../x.frames")), None);
         assert_eq!(background_file(&paths, None), None);
     }
 

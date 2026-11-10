@@ -214,8 +214,15 @@ export const commands = {
 	/**  Show a cape (`None` hides it). */
 	setCape: (accountId: string, capeId: string | null) => __TAURI_INVOKE<Account_Serialize>("set_cape", { accountId, capeId }),
 	listUserThemes: () => __TAURI_INVOKE<ThemeFile_Serialize[]>("list_user_themes"),
-	/**  Save the active theme's colours for running and future games with the Aerion mod. */
 	setGameTheme: (theme: GameTheme_Deserialize) => __TAURI_INVOKE<null>("set_game_theme", { theme }),
+	/**  Whether the game already has finished frames of this video background. */
+	videoFramesReady: (video: string) => __TAURI_INVOKE<boolean>("video_frames_ready", { video }),
+	/**  Start over: the frames of this video are made again (one per call of `save_video_frame`). */
+	beginVideoFrames: (video: string) => __TAURI_INVOKE<null>("begin_video_frames", { video }),
+	/**  One frame, a JPEG picture as base64, grabbed from the video by the window. */
+	saveVideoFrame: (video: string, index: number, jpeg: string) => __TAURI_INVOKE<null>("save_video_frame", { video, index, jpeg }),
+	/**  The frames are complete: the game may use them now. */
+	finishVideoFrames: (video: string, delayMs: number, count: number) => __TAURI_INVOKE<null>("finish_video_frames", { video, delayMs, count }),
 	/**  HUD modules and client features of the Aerion mod (`hud.json`). */
 	getHudConfig: () => __TAURI_INVOKE<HudConfig_Serialize>("get_hud_config"),
 	/**  Save HUD settings; running games pick them up within a second. */

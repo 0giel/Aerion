@@ -206,6 +206,7 @@ pub fn theme_asset<R: Runtime>(
                 .status(StatusCode::PARTIAL_CONTENT)
                 .header(header::CONTENT_TYPE, ct)
                 .header(header::ACCEPT_RANGES, "bytes")
+                .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                 .header(
                     header::CONTENT_RANGE,
                     format!("bytes {start}-{end}/{total}"),
@@ -215,6 +216,7 @@ pub fn theme_asset<R: Runtime>(
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, ct)
                 .header(header::ACCEPT_RANGES, "bytes")
+                .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                 .body(data),
         };
         responder.respond(resp.unwrap_or_default());
