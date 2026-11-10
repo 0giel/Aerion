@@ -5,7 +5,7 @@ members = ["crates/launcher-core", "src-tauri"]
 exclude = ["installer"]
 
 [workspace.package]
-version = "1.0.7"
+version = "1.0.8"
 edition = "2024"
 rust-version = "1.88"
 publish = false

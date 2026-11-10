@@ -9,6 +9,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.8",
+    notes: {
+      pl: ["Status na Discordzie działa też z Discordem zainstalowanym jako Flatpak lub Snap."],
+      en: ["The Discord status also works with Discord installed as a Flatpak or Snap."],
+    },
+  },
+  {
     version: "1.0.7",
     notes: {
       pl: [
