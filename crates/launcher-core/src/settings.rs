@@ -197,6 +197,8 @@ pub struct Settings {
     pub lite_mode: bool,
     /// The launcher already suggested lite mode (it asks once).
     pub lite_prompted: bool,
+    /// "Playing Aerion: Minecraft <version>" on the player's Discord profile while a game runs.
+    pub discord_presence: bool,
     /// Download a launcher update in the background as soon as it is found.
     pub update_in_background: bool,
     /// Look for mod updates of every instance in the background (at start, then every 6 h).
@@ -288,6 +290,7 @@ impl Default for Settings {
             check_updates: true,
             lite_mode: false,
             lite_prompted: false,
+            discord_presence: true,
             update_in_background: true,
             check_mod_updates: true,
             aerion_mod_updates: true,

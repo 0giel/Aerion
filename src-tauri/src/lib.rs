@@ -5,6 +5,7 @@ mod content_watch;
 mod games;
 mod media_server;
 pub mod platform;
+mod presence;
 mod protocols;
 mod state;
 mod tasks;
@@ -350,6 +351,7 @@ pub fn run(platform_notes: Vec<String>) {
             app.manage(state);
             themes::install_schema(&themes_dir);
             themes::watch(app.handle().clone(), themes_dir);
+            presence::start(app.handle().clone());
             tauri::async_runtime::spawn(protocols::trim_image_cache(cache));
             tauri::async_runtime::spawn(content_watch::run(app.handle().clone()));
             if let Err(e) = setup_tray(app) {

@@ -169,6 +169,10 @@ const en = {
     summary: "Now: {mb} MB, the “{preset}” preset ({cores} cores, {ram} GB RAM).",
     summaryMods: "Automatic: {mb} MB, the “{preset}” preset ({mods} mods, {cores} cores, {ram} GB RAM).",
   },
+  presence: {
+    label: "Discord status",
+    hint: "While you play, your Discord friends see “Aerion: Minecraft and the version”. Works only with the Discord app running on this computer.",
+  },
   lite: {
     label: "Lite mode",
     hint: "Turns off blurs, particles and the moving background in the launcher, and the particles in the game's menus. Buttons and simple transitions stay. Helps on weaker computers.",

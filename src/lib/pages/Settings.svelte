@@ -408,6 +408,12 @@
           </div>
         </div>
         <Switch
+          label={t("presence.label")}
+          hint={t("presence.hint")}
+          checked={s.discordPresence}
+          onchange={(v) => save({ discordPresence: v })}
+        />
+        <Switch
           label={t("lite.label")}
           hint={t("lite.hint")}
           checked={s.liteMode}

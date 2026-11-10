@@ -9,6 +9,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.7",
+    notes: {
+      pl: [
+        "Film jako tło motywu działa na Linuksie i jest widoczny także w menu gry (pierwsze 20 sekund, zapętlone).",
+        "Mniejsze zużycie pamięci w grze: tło z menu nie zajmuje jej podczas gry w świecie.",
+        "Status na Discordzie: gdy grasz, znajomi widzą „Aerion: Minecraft i wersja”. Wyłączysz go w Ustawieniach → Wygląd.",
+      ],
+      en: [
+        "A video theme background works on Linux and shows in the game's menus too (the first 20 seconds, looped).",
+        "Less memory used in the game: the menu background doesn't take any while you play in a world.",
+        "Discord status: while you play, your friends see “Aerion: Minecraft and the version”. Turn it off in Settings → Appearance.",
+      ],
+    },
+  },
+  {
     version: "1.0.6",
     notes: {
       pl: [

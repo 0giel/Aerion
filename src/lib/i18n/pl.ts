@@ -180,6 +180,10 @@ const pl: Dict = {
     summaryMods:
       "Automatycznie: {mb} MB, ustawienia „{preset}” ({mods} modów, {cores} rdzeni, {ram} GB RAM).",
   },
+  presence: {
+    label: "Status na Discordzie",
+    hint: "Gdy grasz, znajomi na Discordzie widzą „Aerion: Minecraft i wersja”. Działa tylko z aplikacją Discord włączoną na tym komputerze.",
+  },
   lite: {
     label: "Tryb lekki",
     hint: "Wyłącza rozmycia, cząsteczki i ruchome tło w launcherze i cząsteczki w menu gry. Przyciski i proste przejścia zostają. Pomaga na słabszych komputerach.",
