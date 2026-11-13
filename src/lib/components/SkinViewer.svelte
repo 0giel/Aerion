@@ -336,12 +336,14 @@
     ctx.clearRect(0, 0, c.width, c.height);
     ctx.imageSmoothingEnabled = false;
 
-    // Soft contact shadow under the feet.
+    // Soft contact shadow under the feet; on drawn ground it is wider and darker, to seat the
+    // player on it.
     const [fx, fy] = point([0, 18, 0]);
-    const rx = 7 * s;
+    const rx = (ground ? 7 : 8.5) * s;
     ctx.setTransform(1, 0, 0, ground ? 0.24 : Math.sin(rad(-pitch)), ox + fx * s, oy + fy * s);
     const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-    g.addColorStop(0, "rgba(0,0,0,0.38)");
+    g.addColorStop(0, ground ? "rgba(0,0,0,0.38)" : "rgba(0,0,0,0.5)");
+    if (!ground) g.addColorStop(0.55, "rgba(0,0,0,0.3)");
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.fillRect(-rx, -rx, 2 * rx, 2 * rx);

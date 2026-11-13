@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "../components/Icon.svelte";
   import Logo from "../components/Logo.svelte";
-  import SkyIsland from "../components/SkyIsland.svelte";
+  import SkyIsland, { ISLAND } from "../components/SkyIsland.svelte";
   import SkinViewer from "../components/SkinViewer.svelte";
   import { DEFAULT_SKIN } from "../api";
   import { app } from "../stores/app.svelte";
@@ -14,6 +14,10 @@
   /** The scene beside the card: pixels per model unit, and the view's tilt. */
   const SCENE = 6;
   const TILT = -20;
+  const figure = {
+    left: (ISLAND.feet[0] - 11) * SCENE,
+    top: (ISLAND.feet[1] - 18 - 16 * Math.cos((TILT * Math.PI) / 180)) * SCENE,
+  };
   let busy = $state(false);
   let latest = $state("");
   let clientId = $state("");
@@ -79,13 +83,13 @@
 
 <div class="onboarding">
   <!-- The island is built as the steps go by; the player lands on it at the end. -->
-  <aside class="scene" aria-hidden="true" style:--u="{SCENE}px">
+  <aside class="scene" aria-hidden="true">
     <span class="glow"></span>
-    <div class="stage">
+    <div class="stage" style:width="{ISLAND.width * SCENE}px" style:height="{ISLAND.height * SCENE}px">
       {#key step}
         <div class="island pop"><SkyIsland scale={SCENE} pitch={TILT} stage={step} /></div>
       {/key}
-      <div class="figure" class:shown={step === 3}>
+      <div class="figure" class:shown={step === 3} style:left="{figure.left}px" style:top="{figure.top}px">
         <SkinViewer
           skinUrl={app.selectedAccount?.skinUrl ?? DEFAULT_SKIN}
           capeUrl={app.selectedAccount?.capeUrl}
@@ -225,13 +229,11 @@
   }
   .stage {
     position: relative;
-    margin-top: -5rem;
+    flex: none;
   }
-  /* The island's top centre sits exactly under the player's feet (see the home screen). */
   .island {
     position: absolute;
-    left: calc((11 - 46) * var(--u));
-    top: calc((18 + 16 * 0.9397 - 50) * var(--u));
+    inset: 0;
   }
   :global([data-motion="on"]) .island.pop {
     animation: settle var(--dur-slow) var(--spring);
@@ -242,7 +244,7 @@
     }
   }
   .figure {
-    position: relative;
+    position: absolute;
     opacity: 0;
     pointer-events: none;
   }

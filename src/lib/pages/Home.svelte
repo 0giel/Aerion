@@ -3,7 +3,7 @@
   import Icon from "../components/Icon.svelte";
   import InstanceIcon from "../components/InstanceIcon.svelte";
   import SkinViewer from "../components/SkinViewer.svelte";
-  import SkyIsland from "../components/SkyIsland.svelte";
+  import SkyIsland, { ISLAND } from "../components/SkyIsland.svelte";
   import { ambient } from "../stores/ambient.svelte";
   import { themes } from "../theme/engine.svelte";
   import { app } from "../stores/app.svelte";
@@ -64,17 +64,42 @@
 
   // The scene: the player on a floating island, clouds drifting behind. It only moves while the
   // launcher is in use, and not at all in lite mode or with motion off.
-  const SCENE = 7;
   const TILT = -20;
+  // The scene fills the space it gets: bigger on a big window, smaller on a small one.
+  let room = $state({ w: 0, h: 0 });
+  const SCENE = $derived(
+    room.w
+      ? Math.max(
+          4,
+          Math.min(
+            9.5,
+            Math.floor(Math.min(room.w / (ISLAND.width - 2), room.h / (ISLAND.height - 2)) * 4) / 4,
+          ),
+        )
+      : 7,
+  );
+  /** Where the player model's box goes so its feet land on the island's top (the model is
+   *  22 units wide; its feet are 18 units below its centre line, seen at the view's tilt). */
+  const figure = $derived({
+    left: (ISLAND.feet[0] - 11) * SCENE,
+    top: (ISLAND.feet[1] - 18 - 16 * Math.cos((TILT * Math.PI) / 180)) * SCENE,
+  });
   const CLOUDS = [
-    { x: 4, y: 16, k: 1, t: 95 },
+    { x: 2, y: 24, k: 1, t: 95 },
     { x: 62, y: 8, k: 0.7, t: 130 },
     { x: 70, y: 58, k: 0.85, t: 110 },
     { x: -4, y: 70, k: 0.6, t: 150 },
   ];
   // By the computer's clock: a square sun by day, a moon and stars from evening to morning.
   const night = (() => {
-    const h = new Date().getHours();
+    // `aerion.hour` in localStorage sets the hour by hand, to look at both without waiting.
+    let h = new Date().getHours();
+    try {
+      const forced = localStorage.getItem("aerion.hour");
+      if (forced !== null && forced !== "") h = Number(forced);
+    } catch {
+      /* storage unavailable */
+    }
     return h >= 20 || h < 6;
   })();
   const STARS = Array.from({ length: 14 }, (_, n) => ({
@@ -256,7 +281,12 @@
   </section>
 
   {#if layout.player !== "hidden"}
-    <aside class="player fade-up" aria-label={account?.username ?? ""}>
+    <aside
+      class="player fade-up"
+      aria-label={account?.username ?? ""}
+      bind:clientWidth={room.w}
+      bind:clientHeight={room.h}
+    >
       <div class="sky" class:still={!drift} aria-hidden="true">
         <span class="glow"></span>
         <span class="orb" class:night></span>
@@ -271,17 +301,26 @@
           </span>
         {/each}
       </div>
-      <div class="stage" class:still={!drift} style:--u="{SCENE}px">
-        <div class="island"><SkyIsland scale={SCENE} pitch={TILT} /></div>
-        <SkinViewer
-          skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
-          capeUrl={account?.capeUrl}
-          follow={app.settings?.followCursor ?? true}
-          slim={account?.skinVariant === "slim"}
-          scale={SCENE}
-          pitch={TILT}
-          ground={false}
-        />
+      <div
+        class="stage"
+        class:still={!drift}
+        style:width="{ISLAND.width * SCENE}px"
+        style:height="{ISLAND.height * SCENE}px"
+        style:margin-left="{(-ISLAND.width * SCENE) / 2}px"
+        style:margin-top="{(-ISLAND.height * SCENE) / 2}px"
+      >
+        <div class="island"><SkyIsland scale={SCENE} pitch={TILT} {night} /></div>
+        <div class="figure" style:left="{figure.left}px" style:top="{figure.top}px">
+          <SkinViewer
+            skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
+            capeUrl={account?.capeUrl}
+            follow={app.settings?.followCursor ?? true}
+            slim={account?.skinVariant === "slim"}
+            scale={SCENE}
+            pitch={TILT}
+            ground={false}
+          />
+        </div>
       </div>
     </aside>
   {/if}
@@ -299,12 +338,13 @@
     position: relative;
     height: 100%;
     display: grid;
-    grid-template-columns: 1fr minmax(22rem, 46%);
+    /* The left column keeps the width its buttons need; the scene takes the rest, up to half. */
+    grid-template-columns: minmax(34.5rem, 1fr) minmax(16rem, 50%);
     padding: var(--sp-5) var(--sp-6);
     overflow: auto;
   }
   .home[data-player="left"] {
-    grid-template-columns: minmax(22rem, 46%) 1fr;
+    grid-template-columns: minmax(16rem, 50%) minmax(34.5rem, 1fr);
   }
   .home[data-player="left"] .player {
     order: -1;
@@ -519,7 +559,7 @@
   }
   .actions {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: var(--sp-2);
   }
   .action {
@@ -628,7 +668,8 @@
     position: relative;
     display: grid;
     place-items: center;
-    min-height: 34rem;
+    min-height: 24rem;
+    overflow: hidden;
   }
   .sky {
     position: absolute;
@@ -640,8 +681,9 @@
     position: absolute;
     left: 50%;
     top: 46%;
-    width: 34rem;
-    height: 34rem;
+    /* Never wider than the scene, so its edge is not cut into a visible line. */
+    width: min(34rem, 96%);
+    aspect-ratio: 1;
     transform: translate(-50%, -50%);
     border-radius: 50%;
     background: radial-gradient(
@@ -654,8 +696,8 @@
   /* The sun is a square, as it should be in a world of blocks; at night it is a paler moon. */
   .orb {
     position: absolute;
-    left: 14%;
-    top: 9%;
+    left: 20%;
+    top: 6%;
     width: 3.4rem;
     height: 3.4rem;
     background: color-mix(in srgb, var(--c-accent) 70%, #fff);
@@ -713,9 +755,11 @@
       transform: translateX(4.5rem);
     }
   }
+  /* Centred by its margins and out of the page's flow: its size never pushes the layout. */
   .stage {
-    position: relative;
-    margin-top: -7rem;
+    position: absolute;
+    left: 50%;
+    top: 50%;
     animation: hover 7s steps(70) infinite alternate;
   }
   @keyframes hover {
@@ -730,12 +774,11 @@
   /* The island's top centre sits exactly under the player's feet. */
   .island {
     position: absolute;
-    left: calc((11 - 46) * var(--u));
-    top: calc((18 + 16 * 0.9397 - 50) * var(--u));
+    inset: 0;
     pointer-events: none;
   }
-  .stage > :global(.viewer) {
-    position: relative;
+  .figure {
+    position: absolute;
   }
   .fav-mark {
     display: inline-flex;
