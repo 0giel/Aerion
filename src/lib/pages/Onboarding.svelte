@@ -1,6 +1,9 @@
 <script lang="ts">
   import Icon from "../components/Icon.svelte";
   import Logo from "../components/Logo.svelte";
+  import SkyIsland from "../components/SkyIsland.svelte";
+  import SkinViewer from "../components/SkinViewer.svelte";
+  import { DEFAULT_SKIN } from "../api";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { toasts } from "../stores/toasts.svelte";
@@ -8,6 +11,9 @@
   import { i18n, LOCALES, t } from "../i18n/index.svelte";
 
   let step = $state(0);
+  /** The scene beside the card: pixels per model unit, and the view's tilt. */
+  const SCENE = 6;
+  const TILT = -20;
   let busy = $state(false);
   let latest = $state("");
   let clientId = $state("");
@@ -72,6 +78,26 @@
 </script>
 
 <div class="onboarding">
+  <!-- The island is built as the steps go by; the player lands on it at the end. -->
+  <aside class="scene" aria-hidden="true" style:--u="{SCENE}px">
+    <span class="glow"></span>
+    <div class="stage">
+      {#key step}
+        <div class="island pop"><SkyIsland scale={SCENE} pitch={TILT} stage={step} /></div>
+      {/key}
+      <div class="figure" class:shown={step === 3}>
+        <SkinViewer
+          skinUrl={app.selectedAccount?.skinUrl ?? DEFAULT_SKIN}
+          capeUrl={app.selectedAccount?.capeUrl}
+          slim={app.selectedAccount?.skinVariant === "slim"}
+          follow={false}
+          scale={SCENE}
+          pitch={TILT}
+          ground={false}
+        />
+      </div>
+    </div>
+  </aside>
   <div class="card raised box fade-up">
     <ol class="steps" aria-label="Steps">
       {#each steps as s, i (s)}<li class:done={i < step} class:current={i === step}>
@@ -159,10 +185,89 @@
   .onboarding {
     height: 100%;
     display: grid;
+    grid-template-columns: minmax(0, 40rem) minmax(0, 30rem);
+    grid-template-areas:
+      "box scene"
+      "note note";
+    justify-content: center;
     place-items: center;
     align-content: center;
-    gap: 1rem;
+    gap: 1rem 2rem;
     padding: 2rem;
+  }
+  .box {
+    grid-area: box;
+  }
+  .disclaimer {
+    grid-area: note;
+  }
+  .scene {
+    grid-area: scene;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    min-height: 30rem;
+  }
+  .glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 28rem;
+    height: 28rem;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--c-accent) 22%, transparent),
+      transparent
+    );
+  }
+  .stage {
+    position: relative;
+    margin-top: -5rem;
+  }
+  /* The island's top centre sits exactly under the player's feet (see the home screen). */
+  .island {
+    position: absolute;
+    left: calc((11 - 46) * var(--u));
+    top: calc((18 + 16 * 0.9397 - 50) * var(--u));
+  }
+  :global([data-motion="on"]) .island.pop {
+    animation: settle var(--dur-slow) var(--spring);
+  }
+  @keyframes settle {
+    from {
+      transform: translateY(10px) scale(0.97);
+    }
+  }
+  .figure {
+    position: relative;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .figure.shown {
+    opacity: 1;
+  }
+  :global([data-motion="on"]) .figure.shown {
+    animation: land var(--dur-slow) var(--spring);
+  }
+  @keyframes land {
+    from {
+      opacity: 0;
+      transform: translateY(-40px);
+    }
+  }
+  @media (max-width: 1000px) {
+    .onboarding {
+      grid-template-columns: minmax(0, 40rem);
+      grid-template-areas:
+        "box"
+        "note";
+    }
+    .scene {
+      display: none;
+    }
   }
   .box {
     width: min(40rem, 100%);
@@ -186,7 +291,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.25rem 0.6rem 0.25rem 0.3rem;
-    border-radius: 99px;
+    border-radius: var(--r-sm);
     background: var(--c-hover);
   }
   .steps span {
@@ -194,7 +299,7 @@
     place-items: center;
     width: 1.3rem;
     height: 1.3rem;
-    border-radius: 50%;
+    border-radius: 4px;
     background: var(--c-surface-3);
     font-weight: 700;
   }

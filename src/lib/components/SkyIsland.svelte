@@ -8,7 +8,10 @@
     scale = 7,
     pitch = -20,
     yaw = -28,
+    stage = 3,
   }: {
+    /** How much of the island is built: 0 bare rock, 1 grass and water, 2 plants, 3 everything. */
+    stage?: number;
     /** CSS pixels per model unit (the same unit as the player model: one skin pixel). */
     scale?: number;
     pitch?: number;
@@ -38,7 +41,26 @@
     /** Width and height as a share of a full cube (small things stand on the cube's floor). */
     w?: number;
     h?: number;
+    /** Part of a small island beside the big one (built last). */
+    far?: boolean;
   }
+  const STAGE: Record<Kind, number> = {
+    deep: 0,
+    stone: 0,
+    ore: 0,
+    dirt: 0,
+    grass: 1,
+    moss: 1,
+    water: 1,
+    fall: 1,
+    trunk: 2,
+    leaf: 2,
+    bush: 2,
+    bloomA: 2,
+    bloomB: 2,
+    post: 3,
+    gem: 3,
+  };
 
   /** Edge of one cube in model units. */
   const V = 4;
@@ -157,9 +179,10 @@
             list.push({
               at: [cx + x, cy + y, cz + z],
               kind: y === 0 ? "grass" : y === 1 ? "dirt" : "stone",
+              far: true,
             });
         }
-      if (extra) list.push({ at: [cx, cy - 1, cz], kind: extra });
+      if (extra) list.push({ at: [cx, cy - 1, cz], kind: extra, far: true });
     };
     islet(-7, 5, 2, 1.2);
     islet(7, 6, 1, 1.7, "bush");
@@ -241,9 +264,11 @@
 
     // Full cubes hide the faces between them; small things (flowers, the lantern) hide nothing.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup, not UI state
-    const filled = new Set(voxels.filter((v) => !v.w && !v.h).map((v) => v.at.join(",")));
+    const built = voxels.filter((v) => (v.far ? 3 : STAGE[v.kind]) <= stage);
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup, not UI state
-    const falling = new Set(voxels.filter((v) => v.kind === "fall").map((v) => v.at.join(",")));
+    const filled = new Set(built.filter((v) => !v.w && !v.h).map((v) => v.at.join(",")));
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup, not UI state
+    const falling = new Set(built.filter((v) => v.kind === "fall").map((v) => v.at.join(",")));
     const seen = SIDES.filter((side) => rot(side.n)[2] > 1e-6).map((side) => ({
       ...side,
       shade: 0.6 + 0.4 * Math.max(0, side.n[0] * LIGHT[0] + side.n[1] * LIGHT[1] + side.n[2] * LIGHT[2]),
@@ -255,7 +280,7 @@
     };
 
     const faces: { pts: Vec3[]; depth: number; fill: string }[] = [];
-    for (const { at, kind, w = 1, h = 1 } of voxels) {
+    for (const { at, kind, w = 1, h = 1 } of built) {
       // The top layer is centred on the feet: cell (0, 0, 0) spans −V/2 … V/2 around them.
       const base: Vec3 = [
         (at[0] - 0.5 + (1 - w) / 2) * V,
@@ -312,6 +337,7 @@
       }
     }
 
+    if (stage < 3) return;
     // The lantern's glow.
     const lamp = rot([LAMP[0] * V, (LAMP[1] + 0.6) * V, LAMP[2] * V]);
     const [gx, gy] = [ox + lamp[0] * s, oy + lamp[1] * s];
@@ -326,7 +352,7 @@
 
   $effect(() => {
     // Repaint after the theme's variables have reached the page.
-    void [themes.active, canvas, scale, pitch, yaw];
+    void [themes.active, canvas, scale, pitch, yaw, stage];
     const id = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(id);
   });

@@ -7,6 +7,7 @@
   import { router } from "../stores/router.svelte";
   import { ui } from "../stores/ui.svelte";
   import { toasts } from "../stores/toasts.svelte";
+  import { dialogs } from "../stores/dialogs.svelte";
   import { commands, errorMessage, instanceVersionLabel, type Instance } from "../api";
   import { formatPlayTime, formatRelative, t } from "../i18n/index.svelte";
 
@@ -45,6 +46,53 @@
   const updatable = $derived(
     Object.entries(app.contentUpdates).reduce((n, [id, c]) => n + (app.running[id] ? 0 : c), 0),
   );
+
+  // Right-click on a card: the common actions without opening the instance.
+  let menu = $state<{ inst: Instance; x: number; y: number } | null>(null);
+  function openMenu(e: MouseEvent, inst: Instance) {
+    e.preventDefault();
+    // Keep the menu inside the window.
+    menu = {
+      inst,
+      x: Math.min(e.clientX, window.innerWidth - 232),
+      y: Math.min(e.clientY, window.innerHeight - 300),
+    };
+  }
+  async function run(fn: () => Promise<unknown>, success?: string) {
+    menu = null;
+    try {
+      await fn();
+      if (success) toasts.success(success);
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+  async function clone(inst: Instance) {
+    menu = null;
+    const name = await dialogs.prompt({
+      title: t("instances.cloneTitle"),
+      value: t("instances.cloneName", { name: inst.name }),
+    });
+    if (!name) return;
+    await run(async () => {
+      await commands.cloneInstance(inst.id, name);
+      await app.refreshInstances();
+    });
+  }
+  async function remove(inst: Instance) {
+    menu = null;
+    const ok = await dialogs.confirm({
+      title: t("instances.deleteTitle", { name: inst.name }),
+      text: t("instances.deleteText"),
+      confirmLabel: t("common.delete"),
+      danger: true,
+    });
+    if (!ok) return;
+    await run(async () => {
+      await commands.deleteInstance(inst.id);
+      await app.refreshInstances();
+    });
+  }
 
   async function importPack() {
     const file = await openDialog({
@@ -126,7 +174,7 @@
       {#each list as inst (inst.id)}
         {@const running = !!app.running[inst.id]}
         {@const busy = app.isBusy(inst.id)}
-        <article class="tile card" class:running data-tilt>
+        <article class="tile card" class:running data-tilt oncontextmenu={(e) => openMenu(e, inst)}>
           <button class="open" onclick={() => router.go("instance", { id: inst.id })} aria-label={inst.name}
           ></button>
           <button
@@ -169,9 +217,104 @@
   {/if}
 </div>
 
+<svelte:window
+  onkeydown={(e) => e.key === "Escape" && (menu = null)}
+  onblur={() => (menu = null)}
+  onresize={() => (menu = null)}
+/>
+{#if menu}
+  {@const inst = menu.inst}
+  {@const isRunning = !!app.running[inst.id]}
+  <div
+    class="menu-back"
+    role="presentation"
+    onclick={() => (menu = null)}
+    oncontextmenu={(e) => (e.preventDefault(), (menu = null))}
+  ></div>
+  <div class="menu card raised" role="menu" style:left="{menu.x}px" style:top="{menu.y}px">
+    <div class="menu-title truncate">{inst.name}</div>
+    <button
+      role="menuitem"
+      disabled={app.isBusy(inst.id) && !isRunning}
+      onclick={() => run(() => (isRunning ? app.stop(inst.id) : app.launch(inst.id)))}
+      ><Icon name={isRunning ? "stop" : "play"} size={16} />{t(
+        isRunning ? "common.stop" : "common.play",
+      )}</button
+    >
+    <button role="menuitem" onclick={() => ((menu = null), router.go("instance", { id: inst.id }))}
+      ><Icon name="arrowRight" size={16} />{t("common.open")}</button
+    >
+    <button role="menuitem" onclick={() => run(() => commands.openFolder({ kind: "gameDir", id: inst.id }))}
+      ><Icon name="folder" size={16} />{t("common.openFolder")}</button
+    >
+    <button role="menuitem" onclick={() => run(() => app.toggleFavorite(inst.id))}
+      ><Icon name="star" size={16} />{t(
+        inst.favorite ? "instances.unfavorite" : "instances.favorite",
+      )}</button
+    >
+    <button role="menuitem" onclick={() => clone(inst)}
+      ><Icon name="copy" size={16} />{t("instances.clone")}</button
+    >
+    <button
+      role="menuitem"
+      onclick={() => run(() => commands.createShortcut(inst.id), t("instances.shortcutCreated"))}
+      ><Icon name="link" size={16} />{t("instances.shortcut")}</button
+    >
+    <hr class="divider" />
+    <button role="menuitem" class="danger-text" onclick={() => remove(inst)}
+      ><Icon name="trash" size={16} />{t("common.delete")}</button
+    >
+  </div>
+{/if}
+
 <ImportLaunchersModal bind:open={launchersOpen} />
 
 <style>
+  .menu-back {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+  }
+  .menu {
+    position: fixed;
+    z-index: 41;
+    width: 14rem;
+    padding: 0.35rem;
+    background: var(--c-surface);
+    display: flex;
+    flex-direction: column;
+    animation: fade-up var(--dur) var(--ease);
+  }
+  .menu-title {
+    padding: 0.35rem 0.65rem 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: var(--c-text-muted);
+  }
+  .menu button {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.65rem;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--c-text);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .menu button:hover:not(:disabled),
+  .menu button:focus-visible {
+    background: var(--c-hover);
+  }
+  .menu button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .menu .danger-text {
+    color: var(--c-danger);
+  }
   .toolbar {
     margin-bottom: var(--sp-3);
   }
