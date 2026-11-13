@@ -334,6 +334,11 @@ textarea {
   background: var(--c-accent);
   border-color: transparent;
   color: var(--c-accent-text);
+  /* The launcher's own shape: main buttons are blocks with a darker lower edge. */
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.2);
+}
+.btn.primary:active:not(:disabled) {
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.2);
 }
 .btn.primary:hover:not(:disabled) {
   background: var(--c-accent-hover);

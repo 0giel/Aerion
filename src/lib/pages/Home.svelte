@@ -376,6 +376,7 @@
     margin-bottom: 0.35rem;
     background: var(--c-accent);
     color: var(--c-accent-text);
+    box-shadow: inset 0 -4px 0 rgb(0 0 0 / 0.2);
   }
   .item.play:hover:not(:disabled) {
     background: var(--c-accent-hover);
@@ -500,17 +501,15 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--sp-2);
-    width: min(32rem, 100%);
+    max-width: 100%;
   }
   .action {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.35rem;
-    min-width: 6.5rem;
-    padding: 0.7rem 0.6rem;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
     border: 1px solid var(--c-border);
-    border-radius: var(--r-md);
+    border-radius: var(--r-sm);
     background: color-mix(in srgb, var(--c-surface) 70%, transparent);
     color: var(--c-text);
     font-size: 0.86rem;
