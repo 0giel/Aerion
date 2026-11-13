@@ -150,6 +150,7 @@ const pl: Dict = {
   },
   home: {
     greeting: "Witaj ponownie, {name}",
+    welcomeBack: "Witaj ponownie",
     greetingAnon: "Witaj w Aerionie",
     noInstance: "Brak instancji",
     starting: "Uruchamianie…",

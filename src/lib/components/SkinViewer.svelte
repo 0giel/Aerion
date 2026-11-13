@@ -14,6 +14,8 @@
     slim = false,
     scale = 9,
     follow = true,
+    pitch = -12,
+    ground = true,
   }: {
     skinUrl: string | null | undefined;
     capeUrl?: string | null;
@@ -22,6 +24,10 @@
     /** Turn the head towards the cursor (a response to the user's own input, so it also works
      *  with reduced motion — then without easing). */
     follow?: boolean;
+    /** View tilt in degrees (negative looks down on the player). */
+    pitch?: number;
+    /** Draw the soft shadow under the feet (off when the player stands on something drawn). */
+    ground?: boolean;
   } = $props();
 
   type Vec3 = [number, number, number];
@@ -333,7 +339,7 @@
     // Soft contact shadow under the feet.
     const [fx, fy] = point([0, 18, 0]);
     const rx = 7 * s;
-    ctx.setTransform(1, 0, 0, 0.24, ox + fx * s, oy + fy * s);
+    ctx.setTransform(1, 0, 0, ground ? 0.24 : Math.sin(rad(-pitch)), ox + fx * s, oy + fy * s);
     const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
     g.addColorStop(0, "rgba(0,0,0,0.38)");
     g.addColorStop(1, "rgba(0,0,0,0)");
@@ -376,7 +382,7 @@
   const animate = $derived(motion && ambient.active && !themes.lite);
   // Sway clock in ms; it only advances while animating, so pausing and resuming doesn't jump.
   let clock = 0;
-  const PITCH = -12;
+  const PITCH = $derived(pitch);
   const sway = () => {
     const k = (1 - Math.cos((Math.PI * clock) / 9000)) / 2;
     return [-32 + 60 * k, PITCH + 2 * k] as const;
@@ -486,7 +492,7 @@
 
   $effect(() => {
     // Track everything `draw` reads so a static model redraws on change.
-    void [geometry, skin, cape, scale, canvas];
+    void [geometry, skin, cape, scale, canvas, pitch];
     if (!animate) {
       // Reads `manual` and `yaw`, so dragging redraws a static model too.
       draw(...body(), head.yaw, head.pitch, clock);

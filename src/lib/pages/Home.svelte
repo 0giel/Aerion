@@ -3,7 +3,9 @@
   import Icon from "../components/Icon.svelte";
   import InstanceIcon from "../components/InstanceIcon.svelte";
   import SkinViewer from "../components/SkinViewer.svelte";
-  import Logo from "../components/Logo.svelte";
+  import SkyIsland from "../components/SkyIsland.svelte";
+  import { ambient } from "../stores/ambient.svelte";
+  import { themes } from "../theme/engine.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { ui } from "../stores/ui.svelte";
@@ -60,6 +62,20 @@
     };
   }
 
+  // The scene: the player on a floating island, clouds drifting behind. It only moves while the
+  // launcher is in use, and not at all in lite mode or with motion off.
+  const SCENE = 7;
+  const TILT = -20;
+  const CLOUDS = [
+    { x: 4, y: 16, k: 1, t: 95 },
+    { x: 62, y: 8, k: 0.7, t: 130 },
+    { x: 70, y: 58, k: 0.85, t: 110 },
+    { x: -4, y: 70, k: 0.6, t: 150 },
+  ];
+  const drift = $derived(
+    themes.active.motion.enabled && !themes.reducedMotion && !themes.lite && ambient.active,
+  );
+
   function play() {
     if (!current) {
       ui.newInstanceOpen = true;
@@ -95,11 +111,8 @@
     {#each blocks as b (b.id)}
       {#if b.id === "greeting"}
         <div class="brand">
-          <span class="logo"><Logo /></span>
-          <h1>Aerion</h1>
-          <p class="greet muted">
-            {account ? t("home.greeting", { name: account.username }) : t("home.greetingAnon")}
-          </p>
+          <p class="kicker">{account ? t("home.welcomeBack") : "Aerion"}</p>
+          <h1>{account ? account.username : t("home.greetingAnon")}</h1>
         </div>
       {:else if b.id === "play"}
         <div
@@ -234,15 +247,26 @@
 
   {#if layout.player !== "hidden"}
     <aside class="player fade-up" aria-label={account?.username ?? ""}>
-      <div class="player-name">{account?.username ?? "Steve"}</div>
-      <div class="underline"></div>
-      <SkinViewer
-        skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
-        capeUrl={account?.capeUrl}
-        follow={app.settings?.followCursor ?? true}
-        slim={account?.skinVariant === "slim"}
-        scale={9}
-      />
+      <div class="sky" class:still={!drift} aria-hidden="true">
+        <span class="glow"></span>
+        {#each CLOUDS as c, n (n)}
+          <span class="cloud" style:--x="{c.x}%" style:--y="{c.y}%" style:--k={c.k} style:--t="{c.t}s">
+            <i></i><i></i><i></i>
+          </span>
+        {/each}
+      </div>
+      <div class="stage" class:still={!drift} style:--u="{SCENE}px">
+        <div class="island"><SkyIsland scale={SCENE} pitch={TILT} /></div>
+        <SkinViewer
+          skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
+          capeUrl={account?.capeUrl}
+          follow={app.settings?.followCursor ?? true}
+          slim={account?.skinVariant === "slim"}
+          scale={SCENE}
+          pitch={TILT}
+          ground={false}
+        />
+      </div>
     </aside>
   {/if}
 
@@ -259,12 +283,12 @@
     position: relative;
     height: 100%;
     display: grid;
-    grid-template-columns: 1fr minmax(14rem, 32%);
+    grid-template-columns: 1fr minmax(22rem, 46%);
     padding: var(--sp-5) var(--sp-6);
     overflow: auto;
   }
   .home[data-player="left"] {
-    grid-template-columns: minmax(14rem, 32%) 1fr;
+    grid-template-columns: minmax(22rem, 46%) 1fr;
   }
   .home[data-player="left"] .player {
     order: -1;
@@ -285,32 +309,39 @@
   .main {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     gap: var(--sp-5);
     min-height: 26rem;
+    padding-left: var(--sp-5);
+  }
+  .home[data-player="hidden"] .main {
+    align-items: center;
+    padding-left: 0;
   }
   .brand {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
   }
-  .logo {
-    display: grid;
-    width: 4.2rem;
-    height: 4.2rem;
-    color: var(--c-text);
-    filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--c-accent) 35%, transparent));
-  }
-  .logo :global(svg) {
-    width: 100%;
-    height: 100%;
+  .kicker {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--c-accent);
   }
   h1 {
-    font-size: 2.1rem;
-    font-weight: 750;
-    letter-spacing: -0.03em;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.2vw, 3.1rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
   }
   .item {
     position: relative;
@@ -343,11 +374,26 @@
     font-weight: 700;
     padding: 0.85rem 1rem;
     margin-bottom: 0.35rem;
+    background: var(--c-accent);
+    color: var(--c-accent-text);
+  }
+  .item.play:hover:not(:disabled) {
+    background: var(--c-accent-hover);
+  }
+  .item.play .sub {
+    color: color-mix(in srgb, var(--c-accent-text) 72%, transparent);
+  }
+  .item.play.launching,
+  .item.play.running {
+    color: var(--c-text);
+  }
+  .item.play.launching {
     background: color-mix(in srgb, var(--c-accent) 20%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-accent) 35%, transparent);
   }
-  .item.play:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--c-accent) 30%, transparent);
+  .item.play.launching .sub,
+  .item.play.running .sub {
+    color: var(--c-text-muted);
   }
   .item.play {
     position: relative;
@@ -390,7 +436,7 @@
     gap: 0.55rem;
   }
   .play .main-label :global(.icon) {
-    color: var(--c-accent);
+    color: inherit;
   }
   .play.running .main-label :global(.icon) {
     color: var(--c-danger);
@@ -453,7 +499,6 @@
   .actions {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: var(--sp-2);
     width: min(32rem, 100%);
   }
@@ -552,23 +597,92 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-success) 25%, transparent);
   }
   .player {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 34rem;
   }
-  .player-name {
-    font-size: 1.15rem;
-    font-weight: 650;
+  .sky {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
-  .underline {
-    width: 2.2rem;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--c-text);
-    opacity: 0.7;
-    margin-bottom: 1.2rem;
+  .glow {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 34rem;
+    height: 34rem;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--c-accent) 26%, transparent),
+      color-mix(in srgb, var(--c-accent) 8%, transparent) 55%,
+      transparent
+    );
+  }
+  /* A cloud is three stacked slabs with square corners, like the ones in the game's sky. */
+  .cloud {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: calc(11rem * var(--k));
+    height: calc(3.3rem * var(--k));
+    opacity: calc(0.5 + 0.4 * var(--k));
+    animation: drift var(--t) steps(600) infinite alternate;
+  }
+  .cloud i {
+    position: absolute;
+    height: 34%;
+    background: color-mix(in srgb, var(--c-text) 13%, transparent);
+  }
+  .cloud i:nth-child(1) {
+    left: 22%;
+    right: 30%;
+    top: 0;
+  }
+  .cloud i:nth-child(2) {
+    left: 0;
+    right: 10%;
+    top: 33%;
+    background: color-mix(in srgb, var(--c-text) 10%, transparent);
+  }
+  .cloud i:nth-child(3) {
+    left: 12%;
+    right: 0;
+    top: 66%;
+    background: color-mix(in srgb, var(--c-text) 7%, transparent);
+  }
+  @keyframes drift {
+    to {
+      transform: translateX(4.5rem);
+    }
+  }
+  .stage {
+    position: relative;
+    margin-top: -7rem;
+    animation: hover 7s steps(70) infinite alternate;
+  }
+  @keyframes hover {
+    to {
+      transform: translateY(-7px);
+    }
+  }
+  .still .cloud,
+  .stage.still {
+    animation-play-state: paused;
+  }
+  /* The island's top centre sits exactly under the player's feet. */
+  .island {
+    position: absolute;
+    left: calc((11 - 40) * var(--u));
+    top: calc((18 + 16 * 0.9397 - 42) * var(--u));
+    pointer-events: none;
+  }
+  .stage > :global(.viewer) {
+    position: relative;
   }
   .fav-mark {
     display: inline-flex;

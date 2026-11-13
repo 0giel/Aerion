@@ -140,6 +140,7 @@ const en = {
   },
   home: {
     greeting: "Welcome back, {name}",
+    welcomeBack: "Welcome back",
     greetingAnon: "Welcome to Aerion",
     noInstance: "No instance yet",
     starting: "Starting…",

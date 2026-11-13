@@ -3,6 +3,23 @@
  * (see src/lib/theme/schema.ts and docs/THEMING.md) — components never hard-code them.
  */
 
+@font-face {
+  font-family: "Unbounded";
+  src: url("./assets/fonts/unbounded-latin-ext.woff2") format("woff2");
+  font-weight: 200 900;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+2C60-2C7F;
+}
+@font-face {
+  font-family: "Unbounded";
+  src: url("./assets/fonts/unbounded-latin.woff2") format("woff2");
+  font-weight: 200 900;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
+}
+
 :root {
   /* Fallback tokens (Amber, the default theme) until the theme engine runs. */
   --c-bg: #16171b;
@@ -26,6 +43,7 @@
   --r-xl: 22px;
   --font: system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
+  --font-display: "Unbounded", var(--font);
   --fs: 14px;
   --scale: 1;
   --blur: 18px;
@@ -111,7 +129,9 @@ h4 {
   letter-spacing: -0.01em;
 }
 h1 {
-  font-size: 1.75rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
 }
 h2 {
   font-size: 1.3rem;
