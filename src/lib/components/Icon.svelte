@@ -17,8 +17,8 @@
   fill="none"
   stroke="currentColor"
   stroke-width={stroke}
-  stroke-linecap="round"
-  stroke-linejoin="round"
+  stroke-linecap={name.startsWith("nav") ? "square" : "round"}
+  stroke-linejoin={name.startsWith("nav") ? "miter" : "round"}
   role={label ? "img" : undefined}
   aria-label={label}
   aria-hidden={label ? undefined : "true"}

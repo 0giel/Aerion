@@ -16,18 +16,18 @@ export interface NavDef {
 }
 
 export const NAV: NavDef[] = [
-  { id: "home", page: "home", icon: "home", key: "nav.home", visible: true, locked: true },
-  { id: "instances", page: "instances", icon: "grid", key: "nav.instances", visible: true },
-  { id: "mods", page: "mods", icon: "package", key: "nav.mods", visible: true },
-  { id: "skins", page: "skins", icon: "shirt", key: "nav.skins", visible: true },
-  { id: "friends", page: "friends", icon: "users", key: "nav.friends", visible: true },
-  { id: "stats", page: "stats", icon: "chart", key: "nav.stats", visible: true },
-  { id: "screenshots", page: "screenshots", icon: "image", key: "nav.screenshots", visible: true },
-  { id: "performance", page: "performance", icon: "cpu", key: "nav.performance", visible: true },
+  { id: "home", page: "home", icon: "navHome", key: "nav.home", visible: true, locked: true },
+  { id: "instances", page: "instances", icon: "navInstances", key: "nav.instances", visible: true },
+  { id: "mods", page: "mods", icon: "navMods", key: "nav.mods", visible: true },
+  { id: "skins", page: "skins", icon: "navSkins", key: "nav.skins", visible: true },
+  { id: "friends", page: "friends", icon: "navFriends", key: "nav.friends", visible: true },
+  { id: "stats", page: "stats", icon: "navStats", key: "nav.stats", visible: true },
+  { id: "screenshots", page: "screenshots", icon: "navShots", key: "nav.screenshots", visible: true },
+  { id: "performance", page: "performance", icon: "navPerf", key: "nav.performance", visible: true },
   // The account button at the bottom of the sidebar opens Accounts too.
-  { id: "accounts", page: "accounts", icon: "user", key: "nav.accounts", visible: false },
-  { id: "console", page: "console", icon: "terminal", key: "nav.console", visible: true },
-  { id: "settings", page: "settings", icon: "settings", key: "nav.settings", visible: true, locked: true },
+  { id: "accounts", page: "accounts", icon: "navAccount", key: "nav.accounts", visible: false },
+  { id: "console", page: "console", icon: "navConsole", key: "nav.console", visible: true },
+  { id: "settings", page: "settings", icon: "navSettings", key: "nav.settings", visible: true, locked: true },
 ];
 
 export interface HomeDef {

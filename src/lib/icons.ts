@@ -1,5 +1,29 @@
-// 24×24 stroke icons. Path data adapted from Lucide (https://lucide.dev), ISC License.
+// 24×24 stroke icons. Path data adapted from Lucide (https://lucide.dev), ISC License. The
+// `nav…` icons are Aerion's own: built from squares and steps, drawn with square line ends.
 export const ICONS: Record<string, string> = {
+  // A floating island with a flag: the home screen.
+  navHome: '<path d="M3 10h18v3h-3v3h-3v3h-2v2h-2v-2H9v-3H6v-3H3z"/><path d="M12 10V3h5v3h-5"/>',
+  // Stacked blocks.
+  navInstances:
+    '<rect x="3" y="12" width="9" height="9"/><rect x="12" y="12" width="9" height="9"/><rect x="7.5" y="3" width="9" height="9"/>',
+  // A puzzle piece.
+  navMods: '<path d="M4 9h5V4h6v5h5v4h-3v4h3v4H4z"/>',
+  // A player's face.
+  navSkins: '<rect x="4" y="4" width="16" height="16"/><path d="M8 11h2M14 11h2M9 16h6"/>',
+  // Two heads, one behind the other.
+  navFriends:
+    '<rect x="3" y="9" width="11" height="11"/><path d="M9 6V4h12v12h-4"/><path d="M6.5 14h1M10 14h1"/>',
+  navStats: '<path d="M4 20v-6h4v6M10 20V9h4v11M16 20V4h4v16M2 20h20"/>',
+  // A picture of stepped hills under a square sun.
+  navShots:
+    '<rect x="3" y="4" width="18" height="16"/><path d="M3 17h4v-3h3v-3h3v3h3v3h5"/><rect x="15.5" y="7.5" width="1.5" height="1.5"/>',
+  navPerf:
+    '<rect x="6" y="6" width="12" height="12"/><rect x="10" y="10" width="4" height="4"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/>',
+  navAccount: '<rect x="8" y="3" width="8" height="8"/><path d="M4 21v-6h16v6"/>',
+  navConsole: '<rect x="3" y="4" width="18" height="16"/><path d="m7 9 3 3-3 3M12 15h5"/>',
+  // A square cog.
+  navSettings:
+    '<path d="M10 3h4v3h4v4h3v4h-3v4h-4v3h-4v-3H6v-4H3v-4h3V6h4z"/><rect x="10" y="10" width="4" height="4"/>',
   home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
   package:

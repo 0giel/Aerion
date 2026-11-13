@@ -34,9 +34,9 @@
   );
   const actions = [
     { key: "home.actions.newInstance", icon: "plus", run: () => (ui.newInstanceOpen = true) },
-    { key: "home.actions.mods", icon: "package", run: () => router.go("mods") },
-    { key: "home.actions.skins", icon: "shirt", run: () => router.go("skins") },
-    { key: "home.actions.stats", icon: "chart", run: () => router.go("stats") },
+    { key: "home.actions.mods", icon: "navMods", run: () => router.go("mods") },
+    { key: "home.actions.skins", icon: "navSkins", run: () => router.go("skins") },
+    { key: "home.actions.stats", icon: "navStats", run: () => router.go("stats") },
   ];
 
   // The Play button leans towards the cursor, and a burst of sparks marks the game starting.
@@ -72,6 +72,16 @@
     { x: 70, y: 58, k: 0.85, t: 110 },
     { x: -4, y: 70, k: 0.6, t: 150 },
   ];
+  // By the computer's clock: a square sun by day, a moon and stars from evening to morning.
+  const night = (() => {
+    const h = new Date().getHours();
+    return h >= 20 || h < 6;
+  })();
+  const STARS = Array.from({ length: 14 }, (_, n) => ({
+    x: (n * 37 + 11) % 97,
+    y: (n * 53 + 7) % 62,
+    s: 2 + (n % 3),
+  }));
   const drift = $derived(
     themes.active.motion.enabled && !themes.reducedMotion && !themes.lite && ambient.active,
   );
@@ -249,6 +259,12 @@
     <aside class="player fade-up" aria-label={account?.username ?? ""}>
       <div class="sky" class:still={!drift} aria-hidden="true">
         <span class="glow"></span>
+        <span class="orb" class:night></span>
+        {#if night}
+          {#each STARS as st, n (n)}
+            <span class="star" style:left="{st.x}%" style:top="{st.y}%" style:--s="{st.s}px"></span>
+          {/each}
+        {/if}
         {#each CLOUDS as c, n (n)}
           <span class="cloud" style:--x="{c.x}%" style:--y="{c.y}%" style:--k={c.k} style:--t="{c.t}s">
             <i></i><i></i><i></i>
@@ -634,6 +650,31 @@
       color-mix(in srgb, var(--c-accent) 8%, transparent) 55%,
       transparent
     );
+  }
+  /* The sun is a square, as it should be in a world of blocks; at night it is a paler moon. */
+  .orb {
+    position: absolute;
+    left: 14%;
+    top: 9%;
+    width: 3.4rem;
+    height: 3.4rem;
+    background: color-mix(in srgb, var(--c-accent) 70%, #fff);
+    box-shadow: 0 0 3.5rem 0.6rem color-mix(in srgb, var(--c-accent) 38%, transparent);
+    opacity: 0.85;
+  }
+  .orb.night {
+    width: 2.6rem;
+    height: 2.6rem;
+    background: color-mix(in srgb, var(--c-text) 82%, var(--c-accent));
+    box-shadow: 0 0 2.5rem 0.3rem color-mix(in srgb, var(--c-text) 22%, transparent);
+    opacity: 0.75;
+  }
+  .star {
+    position: absolute;
+    width: var(--s);
+    height: var(--s);
+    background: var(--c-text);
+    opacity: 0.45;
   }
   /* A cloud is three stacked slabs with square corners, like the ones in the game's sky. */
   .cloud {

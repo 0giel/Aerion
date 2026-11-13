@@ -405,6 +405,13 @@
 {/if}
 
 <style>
+  /* Many results, one screen: the install button is quiet until its row is pointed at. */
+  .results :global(.quick.btn.primary:not(:hover):not(:focus-visible)) {
+    background: var(--c-accent-soft);
+    color: var(--c-accent);
+    box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--c-accent) 22%, transparent);
+  }
+
   .mods {
     display: flex;
     flex-direction: column;
