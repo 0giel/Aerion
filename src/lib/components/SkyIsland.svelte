@@ -141,11 +141,26 @@
         }
       }
 
-    // The waterfall: a thin sheet from the end of the channel down past the island.
-    let edge = 3;
-    while (inside(4, edge)) edge++;
-    for (let y = 0; y < 10; y++)
-      list.push({ at: [4, y, edge], kind: "fall", box: [0.06, 0, 0, 0.94, 1, 0.2] });
+    // Waterfalls: wherever the pond reaches the island's edge, a thin sheet of water falls from
+    // that side down past the island.
+    const spills: [number, number, Box][] = [
+      [0, 1, [0.06, 0, 0, 0.94, 1, 0.22]],
+      [0, -1, [0.06, 0, 0.78, 0.94, 1, 1]],
+      [1, 0, [0, 0, 0.06, 0.34, 1, 1]],
+      [-1, 0, [0.66, 0, 0.06, 1, 1, 1]],
+    ];
+    for (let x = -8; x <= 8; x++)
+      for (let z = -8; z <= 8; z++) {
+        if (!pond(x, z)) continue;
+        for (const [dx, dz, box] of spills) {
+          if (inside(x + dx, z + dz)) continue;
+          for (let y = 0; y < 10; y++) {
+            // The sheet starts at the water's level, a little below the bank.
+            const sheet: Box = y ? box : [box[0], 0.18, box[2], box[3], box[4], box[5]];
+            list.push({ at: [x + dx, y, z + dz], kind: "fall", box: sheet });
+          }
+        }
+      }
 
     // The tree: a trunk and a rounded crown.
     const tree: Vec3 = [-5, -rise(-5, -2), -2];
@@ -367,7 +382,7 @@
           const lip = 0.28 + hash(at[0], at[2], 21) * 0.4;
           add(0, lip, palette.grass, true);
           add(lip, 1, palette.dirt);
-        } else if (kind === "fall" && nz === 1) {
+        } else if (kind === "fall" && ny === 0) {
           // Streaks: every other stretch of the sheet is a touch lighter.
           add(0, 1, at[1] % 2 ? palette.fall : mix(palette.fall, [255, 255, 255], 0.2));
         } else {
