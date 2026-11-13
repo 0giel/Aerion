@@ -280,6 +280,10 @@
     flex-direction: column;
     gap: var(--sp-4);
   }
+  /* A readable column: a name and its buttons stay within one glance and one short move. */
+  .friends > :global(*) {
+    max-width: 54rem;
+  }
   .page-header {
     flex-wrap: wrap;
     align-items: baseline;

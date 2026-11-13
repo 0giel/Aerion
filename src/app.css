@@ -100,6 +100,8 @@ body {
   color: var(--c-text);
   font-family: var(--font);
   line-height: 1.45;
+  /* Digits of equal width: counters and times don't jitter as they change. */
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   user-select: none;
@@ -608,9 +610,27 @@ kbd,
   display: grid;
   place-items: center;
   text-align: center;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
   padding: var(--sp-6) var(--sp-4);
   color: var(--c-text-muted);
+}
+/* An empty page is often the first thing a new player sees: it gets room and a clear mark, not
+   a thin strip. The icon stands on a block, like the current page in the menu. */
+.empty.card {
+  min-height: min(20rem, 48vh);
+  align-content: center;
+}
+.empty > .icon {
+  box-sizing: content-box;
+  padding: 0.85rem;
+  border-radius: var(--r-md);
+  background: var(--c-hover);
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
+  color: var(--c-text);
+}
+.empty > p,
+.empty > span {
+  max-width: 46ch;
 }
 
 .skeleton {

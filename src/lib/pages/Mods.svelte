@@ -539,6 +539,7 @@
     gap: 0.5rem;
   }
   .desc {
+    max-width: 78ch;
     display: -webkit-box;
     -webkit-line-clamp: 1;
     line-clamp: 1;

@@ -881,11 +881,13 @@
     position: sticky;
     top: calc(-1 * var(--sp-5));
     z-index: 3;
-    padding: var(--sp-2) 0;
-    margin-bottom: var(--sp-2);
-    /* Same width as the cards, so the fade does not read as a bar across the page. */
+    margin-bottom: var(--sp-3);
+    /* A bar of its own, as wide as the cards below it. */
     max-width: 52rem;
-    background: linear-gradient(var(--c-bg) 70%, transparent);
+    padding: var(--sp-2);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
   }
   .body {
     max-width: 52rem;
