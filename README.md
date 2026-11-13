@@ -189,6 +189,12 @@ Get the latest version from [Releases](https://github.com/0giel/Aerion/releases/
 themselves. The Windows installer isn't signed by Microsoft yet, so SmartScreen may warn you: choose
 "More info", then "Run anyway".
 
+### Code signing policy
+
+An application for free code signing is being prepared; current Windows releases are not signed
+with that certificate yet. How releases are built, what will be signed and who approves it:
+[Code signing policy](https://0giel.github.io/Aerion/code-signing.html).
+
 ## Status
 
 Version 1.0.0, made by one person and open source under the GPL-3.0. Microsoft sign-in is approved

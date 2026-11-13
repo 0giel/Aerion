@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Aerion — Code signing policy</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css?v=dev">
+</head>
+<body>
+  <header class="top"><div class="wrap bar"><a class="brand" href="./"><img src="assets/icon.png" alt="" width="28" height="28"><span>Aerion</span></a><button id="lang" class="lang" type="button" style="margin-left:auto" aria-label="Language / Język">EN</button></div></header>
+  <main class="wrap doc">
+    <article data-only="pl">
+      <h1>Podpisywanie kodu (Code signing policy)</h1>
+      <p class="fine">Ostatnia aktualizacja: 13 listopada 2026</p>
+      <p><strong>Stan:</strong> wniosek o darmowe podpisywanie jest w przygotowaniu. Obecne wydania na Windows nie są jeszcze podpisane tym certyfikatem, dlatego SmartScreen może pokazać ostrzeżenie.</p>
+      <p>Po przyjęciu projektu: Free code signing provided by <a href="https://about.signpath.io">SignPath.io</a>, certificate by <a href="https://signpath.org">SignPath Foundation</a>.</p>
+      <h2>Co jest podpisywane</h2>
+      <ul>
+        <li>Pliki Aeriona na Windows: instalator <code>Aerion_x.y.z_x64-setup.exe</code>, <code>AerionSetup.exe</code> oraz zawarte w nich programy <code>aerion.exe</code> i <code>AerionUninstall.exe</code>.</li>
+        <li>Wyłącznie pliki zbudowane z kodu w <a href="https://github.com/0giel/Aerion">publicznym repozytorium</a>. Projekt nie zawiera zamkniętych składników. Licencja: <a href="https://github.com/0giel/Aerion/blob/main/LICENSE">GPL-3.0</a>.</li>
+      </ul>
+      <h2>Jak powstaje wydanie</h2>
+      <ul>
+        <li>Wydania buduje automatycznie GitHub Actions z oznaczonej wersji kodu (<a href="https://github.com/0giel/Aerion/blob/main/.github/workflows/release.yml">release.yml</a>). Nikt nie buduje ich ręcznie na własnym komputerze.</li>
+        <li>Każde podpisanie wymaga ręcznego zatwierdzenia przez osobę z roli „Approvers”.</li>
+        <li><code>AerionSetup.exe</code> pobiera instalator Aeriona tylko z wydań tego projektu na GitHubie i przed uruchomieniem sprawdza jego podpis. Gdy w systemie brakuje składnika WebView2, instalator pobiera go od Microsoftu.</li>
+        <li>Aerion instaluje się w folderze użytkownika, bez uprawnień administratora, i ma własne odinstalowanie.</li>
+      </ul>
+      <h2>Zespół i role</h2>
+      <ul>
+        <li>Committers and reviewers: <a href="https://github.com/0giel">0giel</a></li>
+        <li>Approvers: <a href="https://github.com/0giel">0giel</a></li>
+      </ul>
+      <p>Zmiany od osób spoza zespołu są przeglądane przed włączeniem. Konta zespołu używają logowania dwuetapowego.</p>
+      <h2>Prywatność</h2>
+      <p>Aerion nie zbiera danych i łączy się tylko z usługami potrzebnymi do działania. Szczegóły: <a href="privacy.html">polityka prywatności</a>.</p>
+      <h2>Zgłaszanie problemów</h2>
+      <p>Jeśli podpisany plik Aeriona zachowuje się podejrzanie, napisz na <a href="mailto:aerion.launcher@proton.me">aerion.launcher@proton.me</a> albo zgłoś to w <a href="https://github.com/0giel/Aerion/issues">issues</a>.</p>
+    </article>
+    <article data-only="en" hidden>
+      <h1>Code signing policy</h1>
+      <p class="fine">Last updated: November 13, 2026</p>
+      <p><strong>Status:</strong> the application for free code signing is being prepared. Current Windows releases are not yet signed with this certificate, so SmartScreen may show a warning.</p>
+      <p>Once the project is accepted: Free code signing provided by <a href="https://about.signpath.io">SignPath.io</a>, certificate by <a href="https://signpath.org">SignPath Foundation</a>.</p>
+      <h2>What is signed</h2>
+      <ul>
+        <li>Aerion's Windows files: the installer <code>Aerion_x.y.z_x64-setup.exe</code>, <code>AerionSetup.exe</code>, and the programs inside them, <code>aerion.exe</code> and <code>AerionUninstall.exe</code>.</li>
+        <li>Only files built from the code in the <a href="https://github.com/0giel/Aerion">public repository</a>. The project has no proprietary components. License: <a href="https://github.com/0giel/Aerion/blob/main/LICENSE">GPL-3.0</a>.</li>
+      </ul>
+      <h2>How a release is made</h2>
+      <ul>
+        <li>Releases are built automatically by GitHub Actions from a tagged version of the code (<a href="https://github.com/0giel/Aerion/blob/main/.github/workflows/release.yml">release.yml</a>). Nobody builds them by hand on their own computer.</li>
+        <li>Every signing request needs manual approval by a person in the “Approvers” role.</li>
+        <li><code>AerionSetup.exe</code> downloads Aerion's installer only from this project's GitHub releases and checks its signature before running it. When the WebView2 component is missing, the installer downloads it from Microsoft.</li>
+        <li>Aerion installs into the user's folder, without administrator rights, and has its own uninstaller.</li>
+      </ul>
+      <h2>Team and roles</h2>
+      <ul>
+        <li>Committers and reviewers: <a href="https://github.com/0giel">0giel</a></li>
+        <li>Approvers: <a href="https://github.com/0giel">0giel</a></li>
+      </ul>
+      <p>Changes from people outside the team are reviewed before they are merged. Team accounts use multi-factor authentication.</p>
+      <h2>Privacy</h2>
+      <p>Aerion collects no data and connects only to the services it needs to work. Details: <a href="privacy.html">privacy policy</a>.</p>
+      <h2>Reporting problems</h2>
+      <p>If a signed Aerion file behaves suspiciously, write to <a href="mailto:aerion.launcher@proton.me">aerion.launcher@proton.me</a> or report it in <a href="https://github.com/0giel/Aerion/issues">issues</a>.</p>
+    </article>
+  </main>
+  <script>
+    (function () {
+      var get = function () { try { return localStorage.getItem("lang"); } catch (e) { return null; } };
+      var lang = get() || ((navigator.language || "pl").toLowerCase().indexOf("pl") === 0 ? "pl" : "en");
+      function show() {
+        document.documentElement.lang = lang;
+        document.querySelectorAll("[data-only]").forEach(function (n) { n.hidden = n.dataset.only !== lang; });
+        document.getElementById("lang").textContent = lang === "en" ? "PL" : "EN";
+        document.title = lang === "en" ? "Aerion — Code signing policy" : "Aerion — podpisywanie kodu (Code signing policy)";
+      }
+      document.getElementById("lang").addEventListener("click", function () {
+        lang = lang === "en" ? "pl" : "en";
+        try { localStorage.setItem("lang", lang); } catch (e) {}
+        show();
+      });
+      show();
+    })();
+  </script>
+</body>
+</html>

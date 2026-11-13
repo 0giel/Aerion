@@ -61,7 +61,7 @@
     "q.4q": "Where do I report a bug or an idea?", "q.4a": "On the Discord, in the report and ideas channels, or in Issues on GitHub.",
     "c.title": "Ready to play your way?", "c.get": "Download Aerion",
     "foot.disclaimer": "Unofficial product. Aerion is not approved by or associated with Mojang or Microsoft. “Minecraft” is a trademark of Mojang Synergies AB.",
-    "foot.p": "Product", "foot.releases": "Releases", "foot.c": "Community", "foot.bug": "Report a bug", "foot.l": "Information", "foot.license": "GPL-3.0 license", "foot.contact": "Contact",
+    "foot.p": "Product", "foot.releases": "Releases", "foot.c": "Community", "foot.bug": "Report a bug", "foot.l": "Information", "foot.signing": "Code signing policy", "foot.license": "GPL-3.0 license", "foot.contact": "Contact",
   };
   const DL = {
     pl: { win: "Pobierz dla Windows", linux: "Pobierz dla Linuksa", any: "Pobierz", version: "Wersja {v}", date: "wydana {d}", notes: "Co nowego", copied: "Skopiowano", failed: "Nie udało się odczytać listy plików. Przyciski prowadzą do strony wydania na GitHubie.", loading: "Sprawdzam najnowszą wersję…" },
