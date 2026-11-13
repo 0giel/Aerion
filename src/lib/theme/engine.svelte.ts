@@ -31,7 +31,7 @@ const FALLBACK: Theme = {
     border: "#ffffff17",
     text: "#ecebf3",
     textMuted: "#a9a8b6",
-    textFaint: "#74737f",
+    textFaint: "#8b8a98",
     accent: "#a395ff",
     accentText: "#140f2e",
     success: "#4ade80",

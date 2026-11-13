@@ -311,9 +311,14 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    gap: var(--sp-5);
+    gap: var(--sp-4);
     min-height: 26rem;
     padding-left: var(--sp-5);
+    /* Every block shares one width, so their left and right edges line up. */
+    --col: min(35rem, 100%);
+  }
+  .main > :global(*) {
+    width: var(--col);
   }
   .home[data-player="hidden"] .main {
     align-items: center;
@@ -447,7 +452,6 @@
     flex-direction: column;
     align-items: stretch;
     gap: 0.4rem;
-    width: min(26rem, 100%);
   }
   :global([data-spring="on"]) .play-row {
     transition: transform var(--dur-slow) var(--spring);
@@ -499,20 +503,23 @@
   }
   .actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: var(--sp-2);
-    max-width: 100%;
   }
   .action {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.8rem;
-    border: 1px solid var(--c-border);
-    border-radius: var(--r-sm);
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+    white-space: nowrap;
+    padding: 0.5rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: var(--r-md);
     background: color-mix(in srgb, var(--c-surface) 70%, transparent);
     color: var(--c-text);
-    font-size: 0.86rem;
+    font-size: 0.84rem;
     cursor: pointer;
     transition:
       border-color var(--dur) var(--ease),
@@ -523,7 +530,13 @@
     border-color: var(--c-accent);
     background: color-mix(in srgb, var(--c-accent) 12%, transparent);
   }
+  /* The accent is kept for the main action; secondary icons take it only when pointed at. */
   .action :global(.icon) {
+    color: var(--c-text-muted);
+    transition: color var(--dur) var(--ease);
+  }
+  .action:hover :global(.icon),
+  .action:focus-visible :global(.icon) {
     color: var(--c-accent);
   }
   .summary {
@@ -692,10 +705,9 @@
   }
   .recent {
     display: flex;
-    width: 100%;
     flex-direction: column;
     gap: var(--sp-2);
-    padding-top: var(--sp-3);
+    padding-top: var(--sp-4);
   }
   .cards {
     display: grid;
@@ -707,6 +719,8 @@
     align-items: center;
     gap: 0.6rem;
     padding: 0.55rem 0.7rem;
+    border-color: transparent;
+    background: color-mix(in srgb, var(--c-surface) 78%, transparent);
     cursor: pointer;
     text-align: left;
     transition:

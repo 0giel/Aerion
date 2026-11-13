@@ -246,6 +246,13 @@
     align-self: flex-start;
     margin-top: auto;
   }
+  /* One loud button per screen ("New instance"): Play on a card is quiet until the card is
+     pointed at or the button has focus. */
+  .tile:not(:hover) .play.primary:not(:focus-visible) {
+    background: var(--c-accent-soft);
+    color: var(--c-accent);
+    box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--c-accent) 22%, transparent);
+  }
   .star {
     position: absolute;
     top: var(--sp-2);
