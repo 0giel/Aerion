@@ -49,6 +49,7 @@
     "s.1t": "Sign in", "s.1d": "With the Microsoft account that owns Minecraft: Java Edition.",
     "s.2t": "Create an instance", "s.2d": "Pick a game version and turn on the Aerion mod. The launcher downloads Java by itself.",
     "s.3t": "Play", "s.3d": "Press Play. Right Shift in the game opens the HUD editor.",
+    "d.signing": "Code signing on Windows: the project is applying for free code signing by the SignPath Foundation. <a href=\"code-signing.html\">Code signing policy</a>.",
     "d.updates": "You don't have to download updates by hand: the launcher and the mod update themselves.",
     "q.title": "Questions",
     "q.7q": "How much does it cost?", "q.7a": "The launcher and the mod are free. You only need to own Minecraft: Java Edition.",
