@@ -220,12 +220,21 @@
     flex-direction: column;
     gap: 0.25rem;
     width: 13.5rem;
+    /* A panel of its own, clear of the window's edges, like the island on the home screen. */
+    margin: var(--float);
     padding: var(--sp-4) var(--sp-3) var(--sp-3);
-    background: color-mix(in srgb, var(--c-surface) calc(var(--glass) * 70%), transparent);
+    background: color-mix(in srgb, var(--c-surface) calc(var(--glass) * 80%), transparent);
     -webkit-backdrop-filter: blur(var(--blur));
     backdrop-filter: blur(var(--blur));
-    border-right: 1px solid var(--c-border);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
     transition: width var(--dur) var(--ease);
+  }
+  .navslot {
+    --float: 0.6rem;
+    /* The block behind the icon of the current page. */
+    --tile: calc(var(--nav-icon, 20px) + 0.7rem);
   }
   .nav.collapsed {
     width: 4.25rem;
@@ -235,9 +244,10 @@
     align-items: center;
     gap: 0.6rem;
     padding: 0 0.45rem 0.9rem;
-    font-weight: 750;
-    font-size: 1.12rem;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.02rem;
+    letter-spacing: -0.01em;
   }
   .logo {
     display: grid;
@@ -290,18 +300,43 @@
     background: var(--c-accent-soft);
     color: var(--c-text);
   }
-  .item[aria-current="page"]::before {
+  /* Main pages: no pill. The icon sits on a block that turns solid on the current page. */
+  .items .item:hover,
+  .items .item[aria-current="page"] {
+    background: transparent;
+  }
+  .items .item::before,
+  .slider::before {
     content: "";
     position: absolute;
-    left: -0.75rem;
-    top: 25%;
-    bottom: 25%;
-    width: 3px;
-    border-radius: 3px;
-    background: var(--c-accent);
+    left: calc(0.75rem - 0.35rem);
+    top: 50%;
+    width: var(--tile);
+    height: var(--tile);
+    margin-top: calc(var(--tile) / -2);
+    border-radius: var(--r-sm);
+    background: transparent;
+    transition: background var(--dur) var(--ease);
   }
-  .item[aria-current="page"] :global(.icon) {
-    color: var(--c-accent);
+  .items .item:hover::before {
+    background: var(--c-hover);
+  }
+  .items .item[aria-current="page"]::before,
+  .slider::before {
+    background: var(--c-accent);
+    /* A darker lower edge makes it read as a block, not a flat square. */
+    box-shadow:
+      inset 0 -3px 0 rgb(0 0 0 / 0.2),
+      0 4px 14px color-mix(in srgb, var(--c-accent) 30%, transparent);
+  }
+  .items .item :global(.icon) {
+    position: relative;
+  }
+  .items .item[aria-current="page"] :global(.icon) {
+    color: var(--c-accent-text);
+  }
+  .items .item[aria-current="page"] .label {
+    font-weight: 680;
   }
   .palette kbd {
     margin-left: auto;
@@ -320,10 +355,14 @@
     flex: 1;
   }
   .account {
-    height: 2.9rem;
+    height: 3rem;
+    margin: 0.2rem 0;
     padding: 0 0.5rem;
     gap: 0.6rem;
     color: var(--c-text);
+    font-weight: 650;
+    background: color-mix(in srgb, var(--c-surface-2) 70%, transparent);
+    box-shadow: inset 0 0 0 1px var(--c-border);
   }
   .tools {
     display: flex;
@@ -342,10 +381,12 @@
     overflow-y: auto;
   }
   .section {
-    padding: 0 0.6rem 0.2rem;
-    font-size: 0.72rem;
+    padding: 0 0.6rem 0.3rem;
+    font-family: var(--font-display);
+    font-size: 0.62rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.14em;
     color: var(--c-text-faint);
   }
   .fav {
@@ -377,6 +418,11 @@
   .collapsed .account {
     justify-content: center;
     padding: 0;
+  }
+  .collapsed .items .item::before,
+  .collapsed .slider::before {
+    left: 50%;
+    margin-left: calc(var(--tile) / -2);
   }
   .collapsed .brand {
     justify-content: center;
@@ -410,7 +456,7 @@
   .navslot.rail {
     position: relative;
     z-index: 30;
-    width: 4.25rem;
+    width: calc(4.25rem + 2 * var(--float));
   }
   .navslot.rail > .nav {
     position: absolute;
@@ -448,24 +494,12 @@
     position: absolute;
     left: 0;
     top: 0;
-    border-radius: var(--r-md);
-    background: var(--c-accent-soft);
     pointer-events: none;
     will-change: transform;
     transition:
       transform var(--dur-slow) var(--spring),
       width var(--dur-slow) var(--spring),
       height var(--dur-slow) var(--spring);
-  }
-  .slider::before {
-    content: "";
-    position: absolute;
-    left: -0.75rem;
-    top: 25%;
-    bottom: 25%;
-    width: 3px;
-    border-radius: 3px;
-    background: var(--c-accent);
   }
   .items {
     position: relative;
@@ -477,7 +511,8 @@
     background: transparent;
   }
   .sliding .items .item[aria-current="page"]::before {
-    display: none;
+    background: transparent;
+    box-shadow: none;
   }
   .sliding .item :global(.icon) {
     transition: transform var(--dur) var(--spring);
@@ -503,17 +538,6 @@
     }
   }
 
-  /* Menu on the right. */
-  [data-side="right"] .nav {
-    border-right: 0;
-    border-left: 1px solid var(--c-border);
-  }
-  [data-side="right"] .item[aria-current="page"]::before,
-  [data-side="right"] .slider::before {
-    left: auto;
-    right: -0.75rem;
-  }
-
   /* Menu on the top or the bottom: a row. */
   [data-side="top"] .nav,
   [data-side="bottom"] .nav {
@@ -523,12 +547,6 @@
     width: auto;
     height: 3.6rem;
     padding: 0 var(--sp-4);
-    border-right: 0;
-    border-bottom: 1px solid var(--c-border);
-  }
-  [data-side="bottom"] .nav {
-    border-bottom: 0;
-    border-top: 1px solid var(--c-border);
   }
   [data-side="top"] .brand,
   [data-side="bottom"] .brand {
@@ -543,22 +561,6 @@
     width: 1px;
     height: auto;
     margin: 0.7rem 0.3rem;
-  }
-  [data-side="top"] .item[aria-current="page"]::before,
-  [data-side="top"] .slider::before,
-  [data-side="bottom"] .item[aria-current="page"]::before,
-  [data-side="bottom"] .slider::before {
-    left: 25%;
-    right: 25%;
-    top: auto;
-    bottom: -0.55rem;
-    width: auto;
-    height: 3px;
-  }
-  [data-side="bottom"] .item[aria-current="page"]::before,
-  [data-side="bottom"] .slider::before {
-    bottom: auto;
-    top: -0.55rem;
   }
   /* A row has no room for the search label, its shortcut or the account name. */
   [data-side="top"] .palette .label,
