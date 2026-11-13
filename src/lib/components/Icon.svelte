@@ -7,6 +7,8 @@
     stroke = 2,
     label,
   }: { name: string; size?: number; stroke?: number; label?: string } = $props();
+  // Phosphor icons are filled shapes; the few Lucide ones left are strokes.
+  const filled = $derived((ICONS[name] ?? "").startsWith("<g "));
 </script>
 
 <svg
@@ -15,7 +17,7 @@
   height={size}
   viewBox="0 0 24 24"
   fill="none"
-  stroke={name.startsWith("nav") ? "none" : "currentColor"}
+  stroke={filled ? "none" : "currentColor"}
   stroke-width={stroke}
   stroke-linecap="round"
   stroke-linejoin="round"

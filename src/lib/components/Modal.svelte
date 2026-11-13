@@ -136,4 +136,10 @@
       transform: translateY(8px) scale(0.98);
     }
   }
+  /* Window titles share the page titles' typeface. */
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.12rem;
+    font-weight: 700;
+  }
 </style>
