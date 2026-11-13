@@ -27,7 +27,18 @@
   type Vec3 = [number, number, number];
   type Box = [number, number, number, number, number, number];
   type Kind =
-    "grass" | "dirt" | "stone" | "deep" | "trunk" | "leaf" | "bush" | "water" | "fall" | "post" | "gem";
+    | "grass"
+    | "dirt"
+    | "stone"
+    | "deep"
+    | "trunk"
+    | "leaf"
+    | "bush"
+    | "water"
+    | "fall"
+    | "post"
+    | "iron"
+    | "gem";
   interface Voxel {
     at: Vec3;
     kind: Kind;
@@ -48,6 +59,7 @@
     leaf: 2,
     bush: 2,
     post: 3,
+    iron: 3,
     gem: 3,
   };
 
@@ -57,7 +69,7 @@
   const YAW = 28;
   /** Radius of the island's top in cubes. */
   const R = 6.4;
-  /** The lantern's cell and the cell of its light. */
+  /** The cell of the lantern's light (it stands on the grass two cells below). */
   const LAMP: Vec3 = [-5, -3, 1];
 
   /** Repeatable pseudo-random number in 0..1 for a grid cell. */
@@ -158,10 +170,24 @@
     ] as Vec3[])
       if (inside(bush[0] + x, bush[2] + z))
         list.push({ at: [bush[0] + x, bush[1] - y, bush[2] + z], kind: "bush" });
-    // The lantern: a post with a glowing block on top.
-    for (const y of [-1, -2])
-      list.push({ at: [LAMP[0], y, LAMP[2]], kind: "post", box: [0.4, 0, 0.4, 0.6, 1, 0.6] });
-    list.push({ at: [LAMP[0], LAMP[1], LAMP[2]], kind: "gem", box: [0.18, 0.3, 0.18, 0.82, 1, 0.82] });
+    // The lantern: a wooden post carrying a lit glass block between a dark base and a dark roof
+    // with a knob on top. Heights are in cubes above the grass; a part may span two cells.
+    const part = (kind: Kind, half: number, from: number, to: number) => {
+      for (let cell = Math.floor(from); cell < to; cell++) {
+        const [low, high] = [Math.max(from, cell) - cell, Math.min(to, cell + 1) - cell];
+        list.push({
+          at: [LAMP[0], -1 - cell, LAMP[2]],
+          kind,
+          box: [0.5 - half, 1 - high, 0.5 - half, 0.5 + half, 1 - low, 0.5 + half],
+        });
+      }
+    };
+    part("post", 0.15, 0, 1.55);
+    part("iron", 0.36, 1.55, 1.72);
+    part("gem", 0.26, 1.72, 2.4);
+    part("iron", 0.4, 2.4, 2.58);
+    part("iron", 0.12, 2.58, 2.74);
+
     // Small islands drifting around the big one.
     const islet = (cx: number, cy: number, cz: number, size: number) => {
       // An upside-down cone: each layer down is narrower than the one above.
@@ -238,7 +264,8 @@
       bush: mix(grass, [40, 116, 64], 0.5),
       water: mix([84, 168, 236], accent, 0.14),
       fall: mix([160, 214, 248], accent, 0.1),
-      post: [74, 66, 64],
+      post: [124, 88, 60],
+      iron: [52, 50, 58],
       gem: glowing,
     };
     const dusk: Rgb = [70, 92, 156];
@@ -314,7 +341,9 @@
         const add = (from: number, to: number, base0: Rgb, edge?: boolean) => {
           let tone = base0;
           if (night && kind !== "gem") tone = mix(tone, dusk, 0.1);
-          if (glow > 0 && kind !== "gem") tone = mix(tone, glowing, glow * 0.42);
+          // The lantern lights the ground around it, not its own post and frame.
+          if (glow > 0 && kind !== "gem" && kind !== "post" && kind !== "iron")
+            tone = mix(tone, glowing, glow * 0.42);
           const k = (night && kind !== "gem" ? 0.92 : 1) * light * (1 + glow * 0.3);
           const pts = side.corners.map((q) =>
             rot([
@@ -377,7 +406,7 @@
 
     if (!lit) return;
     // The lantern's halo.
-    const lamp = rot([LAMP[0] * V, (LAMP[1] + 0.65) * V, LAMP[2] * V]);
+    const lamp = rot([LAMP[0] * V, (LAMP[1] + 0.95) * V, LAMP[2] * V]);
     const [gx, gy] = at2(lamp);
     const halo = ctx.createRadialGradient(gx, gy, 0, gx, gy, (night ? 13 : 8) * s);
     halo.addColorStop(0, `rgba(${accent.map(Math.round).join(",")},${night ? 0.3 : 0.24})`);
