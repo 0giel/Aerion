@@ -27,20 +27,7 @@
   type Vec3 = [number, number, number];
   type Box = [number, number, number, number, number, number];
   type Kind =
-    | "grass"
-    | "dirt"
-    | "stone"
-    | "deep"
-    | "rock"
-    | "trunk"
-    | "leaf"
-    | "bush"
-    | "water"
-    | "fall"
-    | "post"
-    | "gem"
-    | "bloomA"
-    | "bloomB";
+    "grass" | "dirt" | "stone" | "deep" | "trunk" | "leaf" | "bush" | "water" | "fall" | "post" | "gem";
   interface Voxel {
     at: Vec3;
     kind: Kind;
@@ -57,12 +44,9 @@
     grass: 1,
     water: 1,
     fall: 1,
-    rock: 1,
     trunk: 2,
     leaf: 2,
     bush: 2,
-    bloomA: 2,
-    bloomB: 2,
     post: 3,
     gem: 3,
   };
@@ -162,7 +146,7 @@
           if (far > 3.05) continue;
           list.push({ at: [tree[0] + x, tree[1] - 6 + y, tree[2] + z], kind: "leaf" });
         }
-    // A bush on the terrace and a stone by the pond.
+    // A bush on the terrace.
     const bush: Vec3 = [5, -rise(5, -2), -2];
     for (const [x, y, z] of [
       [0, 1, 0],
@@ -174,26 +158,12 @@
     ] as Vec3[])
       if (inside(bush[0] + x, bush[2] + z))
         list.push({ at: [bush[0] + x, bush[1] - y, bush[2] + z], kind: "bush" });
-    list.push({ at: [5, -1, 2], kind: "rock", box: [0.1, 0.35, 0.15, 0.9, 1, 0.85] });
     // The lantern: a post with a glowing block on top.
     for (const y of [-1, -2])
       list.push({ at: [LAMP[0], y, LAMP[2]], kind: "post", box: [0.4, 0, 0.4, 0.6, 1, 0.6] });
     list.push({ at: [LAMP[0], LAMP[1], LAMP[2]], kind: "gem", box: [0.18, 0.3, 0.18, 0.82, 1, 0.82] });
-    // Flowers, placed by hand where they are seen.
-    const flowers: [number, number, Kind][] = [
-      [-3, 4, "bloomA"],
-      [-1, 5, "bloomB"],
-      [1, 4, "bloomA"],
-      [-6, 0, "bloomB"],
-      [-2, -4, "bloomA"],
-      [5, 0, "bloomB"],
-    ];
-    for (const [x, z, kind] of flowers)
-      if (inside(x, z) && !pond(x, z))
-        list.push({ at: [x, -rise(x, z) - 1, z], kind, box: [0.32, 0.62, 0.32, 0.68, 1, 0.68] });
-
     // Small islands drifting around the big one.
-    const islet = (cx: number, cy: number, cz: number, size: number, flower?: Kind) => {
+    const islet = (cx: number, cy: number, cz: number, size: number) => {
       // An upside-down cone: each layer down is narrower than the one above.
       for (let y = 0; y < 6; y++)
         for (let x = -3; x <= 3; x++)
@@ -205,11 +175,9 @@
               far: true,
             });
           }
-      if (flower)
-        list.push({ at: [cx, cy - 1, cz], kind: flower, box: [0.32, 0.62, 0.32, 0.68, 1, 0.68], far: true });
     };
     islet(-8, 7, -1, 1.5);
-    islet(7, 7, 2, 2.1, "bloomA");
+    islet(7, 7, 2, 2.1);
     islet(9, -6, -3, 1.5);
     return list;
   })();
@@ -265,7 +233,6 @@
       dirt: mix([140, 98, 66], bg, 0.12),
       stone: mix([156, 160, 176], surface, 0.36),
       deep: mix([118, 121, 138], surface, 0.44),
-      rock: mix([170, 174, 188], surface, 0.25),
       trunk: [112, 80, 56],
       leaf: mix(accent, [255, 255, 255], 0.06),
       bush: mix(grass, [40, 116, 64], 0.5),
@@ -273,8 +240,6 @@
       fall: mix([160, 214, 248], accent, 0.1),
       post: [74, 66, 64],
       gem: glowing,
-      bloomA: [248, 246, 240],
-      bloomB: mix(accent, [255, 255, 255], 0.35),
     };
     const dusk: Rgb = [70, 92, 156];
 
@@ -290,7 +255,7 @@
     const oy = ISLAND.feet[1] * s;
 
     const built = voxels.filter((v) => (v.far ? 3 : STAGE[v.kind]) <= stage);
-    // Full cubes hide the faces between them; small things (flowers, the lantern) hide nothing.
+    // Full cubes hide the faces between them; small things (the lantern, the water) hide nothing.
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup, not UI state
     const filled = new Set(built.filter((v) => !v.box).map((v) => v.at.join(",")));
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup, not UI state
