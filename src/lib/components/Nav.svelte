@@ -233,7 +233,10 @@
   }
   .navslot {
     --float: 0.6rem;
-    /* The block behind the icon of the current page. */
+  }
+  .nav {
+    /* The block behind the icon of the current page. It is worked out here, on the element that
+       carries the icon size; on a parent it would not see that size. */
     --tile: calc(var(--nav-icon, 20px) + 0.7rem);
   }
   .nav.collapsed {
