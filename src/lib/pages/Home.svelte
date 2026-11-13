@@ -676,8 +676,8 @@
   /* The island's top centre sits exactly under the player's feet. */
   .island {
     position: absolute;
-    left: calc((11 - 40) * var(--u));
-    top: calc((18 + 16 * 0.9397 - 42) * var(--u));
+    left: calc((11 - 46) * var(--u));
+    top: calc((18 + 16 * 0.9397 - 50) * var(--u));
     pointer-events: none;
   }
   .stage > :global(.viewer) {
