@@ -1,29 +1,27 @@
 // 24×24 stroke icons. Path data adapted from Lucide (https://lucide.dev), ISC License. The
-// `nav…` icons are Aerion's own: built from squares and steps, drawn with square line ends.
+// `nav…` icons are filled pixel icons from Pixelarticons (https://pixelarticons.com), MIT License,
+// Copyright (c) 2019 Gerrit Halfmann.
 export const ICONS: Record<string, string> = {
-  // A floating island with a flag: the home screen.
-  navHome: '<path d="M3 10h18v3h-3v3h-3v3h-2v2h-2v-2H9v-3H6v-3H3z"/><path d="M12 10V3h5v3h-5"/>',
-  // Stacked blocks.
+  navHome:
+    '<path d="M14 2h-4v2H8v2H6v2H4v2H2v2h2v10h7v-6h2v6h7V12h2v-2h-2V8h-2V6h-2V4h-2V2zm0 2v2h2v2h2v2h2v2h-2v8h-3v-6H9v6H6v-8H4v-2h2V8h2V6h2V4h4z" fill="currentColor"/>',
   navInstances:
-    '<rect x="3" y="12" width="9" height="9"/><rect x="12" y="12" width="9" height="9"/><rect x="7.5" y="3" width="9" height="9"/>',
-  // A puzzle piece.
-  navMods: '<path d="M4 9h5V4h6v5h5v4h-3v4h3v4H4z"/>',
-  // A player's face.
-  navSkins: '<rect x="4" y="4" width="16" height="16"/><path d="M8 11h2M14 11h2M9 16h6"/>',
-  // Two heads, one behind the other.
+    '<path d="M2 2h20v20H2V2zm2 2v4h4V4H4zm6 0v4h4V4h-4zm6 0v4h4V4h-4zm4 6h-4v4h4v-4zm0 6h-4v4h4v-4zm-6 4v-4h-4v4h4zm-6 0v-4H4v4h4zm-4-6h4v-4H4v4zm6-4v4h4v-4h-4z" fill="currentColor"/>',
+  navMods:
+    '<path d="M22 4H2v6h2v10h16V10h2V4zM6 10h12v8H6v-8zm14-4v2H4V6h16zm-5 6H9v2h6v-2z" fill="currentColor"/>',
+  navSkins: '<path d="M10 2h4v4h-4V2zM3 7h18v2h-6v13h-2v-6h-2v6H9V9H3V7z" fill="currentColor"/>',
   navFriends:
-    '<rect x="3" y="9" width="11" height="11"/><path d="M9 6V4h12v12h-4"/><path d="M6.5 14h1M10 14h1"/>',
-  navStats: '<path d="M4 20v-6h4v6M10 20V9h4v11M16 20V4h4v16M2 20h20"/>',
-  // A picture of stepped hills under a square sun.
+    '<path d="M11 0H5v2H3v6h2v2h6V8H5V2h6V0zm0 2h2v6h-2V2zM0 14h2v4h12v2H0v-6zm2 0h12v-2H2v2zm14 0h-2v6h2v-6zM15 0h4v2h-4V0zm4 8h-4v2h4V8zm0-6h2v6h-2V2zm5 12h-2v4h-4v2h6v-6zm-6-2h4v2h-4v-2z" fill="currentColor"/>',
+  navStats: '<path d="M13 5h2v14h-2V5zm-2 4H9v10h2V9zm-4 4H5v6h2v-6zm12 0h-2v6h2v-6z" fill="currentColor"/>',
   navShots:
-    '<rect x="3" y="4" width="18" height="16"/><path d="M3 17h4v-3h3v-3h3v3h3v3h5"/><rect x="15.5" y="7.5" width="1.5" height="1.5"/>',
+    '<path d="M4 3H2v18h20V3H4zm16 2v14H4V5h16zm-6 4h-2v2h-2v2H8v2H6v2h2v-2h2v-2h2v-2h2v2h2v2h2v-2h-2v-2h-2V9zM8 7H6v2h2V7z" fill="currentColor"/>',
   navPerf:
-    '<rect x="6" y="6" width="12" height="12"/><rect x="10" y="10" width="4" height="4"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/>',
-  navAccount: '<rect x="8" y="3" width="8" height="8"/><path d="M4 21v-6h16v6"/>',
-  navConsole: '<rect x="3" y="4" width="18" height="16"/><path d="m7 9 3 3-3 3M12 15h5"/>',
-  // A square cog.
+    '<path d="M15 5H9v2H5v2H3v2H1v6h2v2h2v-2H3v-6h2V9h4V7h6V5zm8 6h-2v6h-2v2h2v-2h2v-6zm-13 2h4v4h-4v-4zm6-2h-2v2h2v-2zm2-2v2h-2V9h2zm0 0V7h2v2h-2z" fill="currentColor"/>',
+  navAccount:
+    '<path d="M15 2H9v2H7v6h2V4h6V2zm0 8H9v2h6v-2zm0-6h2v6h-2V4zM4 16h2v-2h12v2H6v4h12v-4h2v6H4v-6z" fill="currentColor"/>',
+  navConsole:
+    '<path d="M8 5h2v2H8V5zM6 7h2v2H6V7zM4 9h2v2H4V9zm-2 2h2v2H2v-2zm2 2h2v2H4v-2zm2 2h2v2H6v-2zm2 2h2v2H8v-2zm8-12h-2v2h2V5zm2 2h-2v2h2V7zm2 2h-2v2h2V9zm2 2h-2v2h2v-2zm-2 2h-2v2h2v-2zm-2 2h-2v2h2v-2zm-2 2h-2v2h2v-2z" fill="currentColor"/>',
   navSettings:
-    '<path d="M10 3h4v3h4v4h3v4h-3v4h-4v3h-4v-3H6v-4H3v-4h3V6h4z"/><rect x="10" y="10" width="4" height="4"/>',
+    '<path d="M3 8h4m0 0V6h4v2M7 8v2h4V8m0 0h10M3 16h10m0 0v-2h4v2m-4 0v2h4v-2m0 0h4" stroke="currentColor" stroke-width="2" stroke-linecap="square"/>',
   home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
   package:
