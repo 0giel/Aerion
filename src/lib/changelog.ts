@@ -9,6 +9,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.0",
+    notes: {
+      pl: [
+        "Nowy wygląd: na ekranie Start twoja postać stoi na latającej wyspie w kolorach motywu, w nocy ze świecącą latarnią.",
+        "Menu boczne jako osobny panel, nowe ikony i czcionka nagłówków.",
+        "Prawy przycisk na karcie instancji otwiera szybkie akcje: graj, folder, klonuj, usuń.",
+        "Czytelniejszy drobny tekst i spokojniejsze przyciski na listach.",
+      ],
+      en: [
+        "A new look: on the Start screen your player stands on a floating island in the theme's colours, with a glowing lantern at night.",
+        "The sidebar is a panel of its own, with new icons and a new heading typeface.",
+        "Right-click an instance card for quick actions: play, folder, clone, delete.",
+        "Easier-to-read small print and calmer buttons in lists.",
+      ],
+    },
+  },
+  {
     version: "1.0.8",
     notes: {
       pl: ["Status na Discordzie działa też z Discordem zainstalowanym jako Flatpak lub Snap."],

@@ -798,7 +798,8 @@ const pl: Dict = {
     discord: "Discord",
     reportIssue: "Zgłoś problem",
     thirdParty:
-      "Wykorzystuje Tauri, Svelte, biblioteki Rust oraz ikony zaadaptowane z Lucide (ISC). Pliki gry są pobierane z serwerów Mojang.",
+      "Wykorzystuje Tauri, Svelte, biblioteki Rust, ikony Phosphor (MIT) i Lucide (ISC) oraz krój Unbounded (SIL OFL 1.1). Pliki gry są pobierane z serwerów Mojang.",
+    licenses: "Licencje ikon i kroju pisma",
     userAgent: "Identyfikacja w sieci",
   },
   themeEditor: {

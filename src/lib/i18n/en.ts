@@ -751,7 +751,8 @@ const en = {
     discord: "Discord",
     reportIssue: "Report a problem",
     thirdParty:
-      "Uses Tauri, Svelte, Rust crates and icons adapted from Lucide (ISC). Game files are downloaded from Mojang's servers.",
+      "Uses Tauri, Svelte, Rust crates, icons from Phosphor (MIT) and Lucide (ISC) and the Unbounded typeface (SIL OFL 1.1). Game files are downloaded from Mojang's servers.",
+    licenses: "Licences of the icons and typeface",
     userAgent: "Network identity",
   },
   themeEditor: {

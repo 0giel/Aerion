@@ -176,6 +176,12 @@
   // Sections scroll in below the sticky chip row, which wraps to two lines on narrow windows.
   let tocHeight = $state(0);
 
+  // The full licence texts are only loaded when someone opens them.
+  let licenseText = $state("");
+  async function loadLicenses() {
+    if (!licenseText) licenseText = (await import("../../assets/licenses/THIRD_PARTY.txt?raw")).default;
+  }
+
   async function newPage() {
     const name = await dialogs.prompt({ title: t("widgets.newPage"), placeholder: t("widgets.pageName") });
     if (!name?.trim()) return;
@@ -862,6 +868,10 @@
           <Icon name="info" size={18} /><span class="small">{t("app.disclaimer")}</span>
         </div>
         <p class="small faint">{t("settings.thirdParty")}</p>
+        <details class="licenses" ontoggle={loadLicenses}>
+          <summary class="small faint">{t("settings.licenses")}</summary>
+          {#if licenseText}<pre class="tiny selectable">{licenseText}</pre>{/if}
+        </details>
         <p class="tiny faint">
           {t("settings.userAgent")}: <code class="selectable">{app.info?.userAgent}</code>
         </p>
@@ -887,7 +897,7 @@
     padding: var(--sp-2);
     border: 1px solid var(--c-border);
     border-radius: var(--r-lg);
-    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    background: var(--c-surface);
   }
   .body {
     max-width: 52rem;
@@ -1002,5 +1012,16 @@
   .about .logo :global(svg) {
     width: 100%;
     height: 100%;
+  }
+  .licenses pre {
+    max-height: 18rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    padding: var(--sp-2);
+    border-radius: var(--r-sm);
+    background: var(--c-hover);
+  }
+  .licenses summary {
+    cursor: pointer;
   }
 </style>
