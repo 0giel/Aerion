@@ -5,16 +5,15 @@
 
 Writes mod/common/src/main/resources/aerionpack/assets/aerion/textures/font/badges.png: one square
 picture per badge, left to right in the order of the font's characters U+E000... (see
-assets/aerion/font/badges.json). Each badge is a coloured block with a darker lower edge, the
-launcher's own shape, with an icon on it (Phosphor, MIT; the bug net from game-icons.net,
-CC BY 3.0). Commit the result.
+assets/aerion/font/badges.json). Each badge is just an icon in the badge's colour (Phosphor, MIT;
+the bug net from game-icons.net, CC BY 3.0). Commit the result.
 """
 
 import io
 from pathlib import Path
 
 import cairosvg
-from PIL import Image, ImageDraw
+from PIL import Image
 
 # Pixels per badge. The game draws font pictures without smoothing, so far more than the size it
 # shows them at only adds shimmer; 48 stays sharp from small to large interface scales.
@@ -41,7 +40,7 @@ BADGES = [
 
 # Thin line icons get a stroke of their own colour (in view box units) and more room, so they hold
 # up at the small size the game shows them at.
-BOLD = {"net": (22, 0.8)}
+BOLD = {"net": (14, 1.0)}
 
 
 def icon(name: str, size: int, rgb: tuple) -> Image.Image:
@@ -56,19 +55,8 @@ def icon(name: str, size: int, rgb: tuple) -> Image.Image:
 def badge(name: str, rgb: tuple) -> Image.Image:
     n = CELL * 4  # drawn large, then scaled down smoothly
     im = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    radius, edge = int(n * 0.2), int(n * 0.09)
-    d = ImageDraw.Draw(im)
-    d.rounded_rectangle((0, 0, n - 1, n - 1), radius, fill=tuple(int(c * 0.62) for c in rgb) + (255,))
-    d.rounded_rectangle((0, 0, n - 1, n - 1 - edge), radius, fill=rgb + (255,))
-    # A soft light on the upper half, so the block isn't flat.
-    light = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    ImageDraw.Draw(light).rounded_rectangle((0, 0, n - 1, (n - edge) // 2), radius, fill=(255, 255, 255, 34))
-    mask = Image.new("L", (n, n), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, n - 1, n - 1 - edge), radius, fill=255)
-    im.alpha_composite(Image.composite(light, Image.new("RGBA", (n, n), (0, 0, 0, 0)), mask))
-    # The icon in a dark shade of the badge colour, like text on the launcher's accent buttons.
-    ic = icon(name, int(n * (BOLD[name][1] if name in BOLD else 0.62)), tuple(int(c * 0.22) for c in rgb))
-    im.alpha_composite(ic, ((n - ic.width) // 2, (n - edge - ic.height) // 2))
+    ic = icon(name, int(n * (BOLD[name][1] if name in BOLD else 0.94)), rgb)
+    im.alpha_composite(ic, ((n - ic.width) // 2, (n - ic.height) // 2))
     return im.resize((CELL, CELL), Image.LANCZOS)
 
 

@@ -146,4 +146,4 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 By Delapouite, https://game-icons.net/1x1/delapouite/bug-net.html
 Licensed under Creative Commons Attribution 3.0 (CC BY 3.0),
 https://creativecommons.org/licenses/by/3.0/
-Changed: drawn with a thicker outline, in a dark green, on a badge.
+Changed: drawn with a thicker outline, in green.

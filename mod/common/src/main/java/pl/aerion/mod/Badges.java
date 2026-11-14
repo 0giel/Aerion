@@ -48,8 +48,8 @@ public final class Badges {
 	private Badges() {}
 
 	private static MutableComponent picture(char c) {
-		// White, so the picture keeps its own colours; no text shadow, the picture has its own edge.
-		return Component.literal(String.valueOf(c)).withStyle(s -> s.withFont(FONT).withColor(0xFFFFFF).withoutShadow());
+		// White, so the picture keeps its own colours; it gets the text's shadow like a letter.
+		return Component.literal(String.valueOf(c)).withStyle(s -> s.withFont(FONT).withColor(0xFFFFFF));
 	}
 
 	private static MutableComponent icon(String glyph, int rgb) {
