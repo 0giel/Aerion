@@ -9,6 +9,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.2",
+    notes: {
+      pl: [
+        "W grze: strzałki i płomienie w piecach oraz bąbelki w stole alchemicznym mają kolory motywu zamiast szarych pasków.",
+        "EntityCulling w modach przyspieszających: gra nie rysuje stworzeń i skrzyń, których i tak nie widać.",
+        "Ekran tytułowy 1.21.11: przycisk „Host a world” nie zasłania już ikonki ułatwień dostępu.",
+        "Postać na ekranie Start mniej odchyla głowę, gdy kursor jest wysoko albo nisko.",
+      ],
+      en: [
+        "In game: the arrows and flames of furnaces and the brewing stand's bubbles are in the theme's colours instead of grey bars.",
+        "EntityCulling joins the performance mods: the game skips mobs and chests you can't see anyway.",
+        "1.21.11 title screen: the “Host a world” button no longer covers the accessibility button.",
+        "The player on the Start screen tilts their head less when the cursor is high or low.",
+      ],
+    },
+  },
+  {
     version: "1.1.1",
     notes: {
       pl: [

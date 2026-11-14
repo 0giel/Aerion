@@ -23,9 +23,9 @@ pub struct BoostMod {
 
 /// The pack, most important first. Only mods that keep vanilla gameplay, have stable releases
 /// and were checked in game together with the Aerion mod (its themed menus and inventories) on
-/// 26.3 and 1.21.11. Candidates waiting for that check: ModernFix (`nmDcB62a`), EntityCulling
-/// (`NNAgCjsB`).
-pub const PACK: [BoostMod; 4] = [
+/// 26.3 and 1.21.11. Left out: ModernFix (`nmDcB62a`), which has no Fabric build for these
+/// versions.
+pub const PACK: [BoostMod; 5] = [
     BoostMod {
         project_id: "AANobbMI",
         title: "Sodium",
@@ -45,6 +45,11 @@ pub const PACK: [BoostMod; 4] = [
         project_id: "5ZwdcRci",
         title: "ImmediatelyFast",
         mod_ids: &["immediatelyfast"],
+    },
+    BoostMod {
+        project_id: "NNAgCjsB",
+        title: "EntityCulling",
+        mod_ids: &["entityculling"],
     },
 ];
 
