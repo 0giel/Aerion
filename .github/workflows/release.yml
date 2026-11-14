@@ -17,11 +17,29 @@ jobs:
   check:
     name: Tag matches the version
     runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.draft.outputs.id }}
     steps:
       - uses: actions/checkout@v4
       - run: |
           version=$(node -p "require('./src-tauri/tauri.conf.json').version")
           [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME, but tauri.conf.json says $version"; exit 1; }
+      # One draft for both builds. When each build made its own (1.1.1: both finished within
+      # seconds), the files and latest.json ended up split across two drafts.
+      - name: The draft release
+        id: draft
+        shell: bash
+        run: |
+          id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\" and .draft) | .id" | head -n1)
+          if [ -z "$id" ]; then
+            gh release create "$GITHUB_REF_NAME" --draft --verify-tag --title "Aerion ${GITHUB_REF_NAME#v}" \
+              --notes "What's new: see the launcher's changelog. / Co nowego: lista zmian w launcherze."
+            id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\" and .draft) | .id" | head -n1)
+          fi
+          [ -n "$id" ] || { echo "::error::no draft release for $GITHUB_REF_NAME"; exit 1; }
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     name: Build (${{ matrix.name }})
@@ -85,6 +103,7 @@ jobs:
           # An identifier, not a secret: a repository variable or a secret both work.
           LAUNCHER_MSA_CLIENT_ID: ${{ vars.LAUNCHER_MSA_CLIENT_ID || secrets.LAUNCHER_MSA_CLIENT_ID }}
         with:
+          releaseId: ${{ needs.check.outputs.release_id }}
           tagName: ${{ github.ref_name }}
           releaseName: Aerion __VERSION__
           releaseBody: "What's new: see the launcher's changelog. / Co nowego: lista zmian w launcherze."
@@ -95,9 +114,13 @@ jobs:
         if: runner.os == 'Windows' && steps.setup.outcome == 'success'
         continue-on-error: true
         shell: bash
-        run: gh release upload "$GITHUB_REF_NAME" installer/target/release/AerionSetup.exe --clobber
+        run: |
+          url=$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq .upload_url | sed 's/{.*//')
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/octet-stream" \
+            --data-binary @installer/target/release/AerionSetup.exe "$url?name=AerionSetup.exe" > /dev/null
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.check.outputs.release_id }}
       # The finished program must contain the identifier; otherwise this job fails and the draft
       # release must not be published.
       - name: The build contains the client ID
@@ -112,3 +135,16 @@ jobs:
           echo "client ID found in $bin"
         env:
           LAUNCHER_MSA_CLIENT_ID: ${{ vars.LAUNCHER_MSA_CLIENT_ID || secrets.LAUNCHER_MSA_CLIENT_ID }}
+
+  # latest.json from both builds' signatures, written once both are done: whichever build finished
+  # last could otherwise leave a file with only its own platform.
+  updater:
+    name: latest.json for every platform
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/updater-json.py "${{ needs.check.outputs.release_id }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
