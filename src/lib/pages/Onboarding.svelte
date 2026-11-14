@@ -319,7 +319,7 @@
   }
   .logo {
     display: grid;
-    width: 4.5rem;
+    width: 6.3rem;
     height: 4.5rem;
     color: var(--c-accent);
   }

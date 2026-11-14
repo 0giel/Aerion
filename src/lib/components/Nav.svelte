@@ -477,8 +477,9 @@
 
   /* Icon size follows the setting. */
   .logo {
-    width: calc(var(--nav-icon) * 1.45);
-    height: calc(var(--nav-icon) * 1.45);
+    /* The mark is about 1.4 times as wide as tall. */
+    width: calc(var(--nav-icon) * 1.85);
+    height: calc(var(--nav-icon) * 1.32);
   }
   .item {
     height: calc(var(--nav-icon) + 1.3rem);

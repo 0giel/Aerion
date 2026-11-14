@@ -1005,8 +1005,8 @@
   }
   .about .logo {
     display: grid;
-    width: 3rem;
-    height: 3rem;
+    width: 4rem;
+    height: 2.85rem;
     color: var(--c-accent);
   }
   .about .logo :global(svg) {

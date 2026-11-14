@@ -27,8 +27,8 @@
     height: 100%;
   }
   .logo {
-    width: 3rem;
-    height: 3rem;
+    width: 4rem;
+    height: 2.85rem;
     flex: none;
     color: var(--c-text);
   }
