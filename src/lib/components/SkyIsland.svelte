@@ -298,9 +298,9 @@
 
     const built = voxels.filter((v) => (v.far ? 3 : STAGE[v.kind]) <= stage);
     // Full cubes hide the faces between them; small things (the lantern, the water) hide nothing.
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup, not UI state
+
     const filled = new Set(built.filter((v) => !v.box).map((v) => v.at.join(",")));
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local lookup, not UI state
+
     const falling = new Set(built.filter((v) => v.kind === "fall").map((v) => v.at.join(",")));
     const has = (x: number, y: number, z: number) => filled.has(`${x},${y},${z}`);
     const seen = SIDES.filter((side) => rot(side.n)[2] > 1e-6);

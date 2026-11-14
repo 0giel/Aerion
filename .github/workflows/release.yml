@@ -147,4 +147,3 @@ jobs:
       - run: python3 scripts/updater-json.py "${{ needs.check.outputs.release_id }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
