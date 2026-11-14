@@ -30,11 +30,13 @@ jobs:
         id: draft
         shell: bash
         run: |
+          # A draft made a moment ago may not show in the list yet: the id comes from the reply
+          # that creates it; the list is only for a re-run, when the draft already exists.
           id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\" and .draft) | .id" | head -n1)
           if [ -z "$id" ]; then
-            gh release create "$GITHUB_REF_NAME" --draft --verify-tag --title "Aerion ${GITHUB_REF_NAME#v}" \
-              --notes "What's new: see the launcher's changelog. / Co nowego: lista zmian w launcherze."
-            id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\" and .draft) | .id" | head -n1)
+            id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --method POST \
+              -f tag_name="$GITHUB_REF_NAME" -f name="Aerion ${GITHUB_REF_NAME#v}" -F draft=true \
+              -f body="What's new: see the launcher's changelog. / Co nowego: lista zmian w launcherze." --jq .id)
           fi
           [ -n "$id" ] || { echo "::error::no draft release for $GITHUB_REF_NAME"; exit 1; }
           echo "id=$id" >> "$GITHUB_OUTPUT"
