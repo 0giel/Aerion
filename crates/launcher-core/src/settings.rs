@@ -64,7 +64,8 @@ pub struct LayoutPrefs {
     pub home: Vec<LayoutItem>,
     /// `right`, `left` or `hidden`.
     pub home_player: String,
-    /// Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`.
+    /// Where the menu sits: `theme` (what the theme says), `left`, `right`, `top`, `bottom` or
+    /// `hotbar` (a row of slots floating over the bottom).
     pub nav_side: String,
     /// `theme` (what the theme says), `fixed`, `hover` (a slim rail that opens under the cursor)
     /// or `icons` (icons only).
@@ -76,6 +77,9 @@ pub struct LayoutPrefs {
     pub nav_gaps: Option<Vec<String>>,
     /// Springy clicks, entrances, a sliding highlight and the other effects: `theme`, `on` or `off`.
     pub effects: String,
+    /// Shape of cards and buttons: `soft` (rounded, see-through; the default) or `block` (nearly
+    /// square corners, solid panels and hard shadows, like blocks).
+    pub card_style: String,
 }
 
 impl Default for LayoutPrefs {
@@ -90,6 +94,7 @@ impl Default for LayoutPrefs {
             nav_icon_size: 0,
             nav_gaps: None,
             effects: "theme".into(),
+            card_style: "soft".into(),
         }
     }
 }

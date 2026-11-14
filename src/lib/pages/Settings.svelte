@@ -401,6 +401,19 @@
           </div>
         </div>
         <div class="field">
+          <span class="label">{t("settings.ui.cardStyle")}</span>
+          <span class="small muted">{t("settings.ui.cardStyleHint")}</span>
+          <div class="segmented wrap" role="group" aria-label={t("settings.ui.cardStyle")}>
+            {#each ["soft", "block"] as const as v (v)}
+              <button
+                type="button"
+                aria-pressed={layout.cardStyle === v}
+                onclick={() => void layout.setCardStyle(v)}>{t(`settings.ui.cardStyles.${v}`)}</button
+              >
+            {/each}
+          </div>
+        </div>
+        <div class="field">
           <span class="label">{t("settings.ui.springy")}</span>
           <span class="small muted">{t("settings.ui.springyHint")}</span>
           <div class="segmented wrap" role="group" aria-label={t("settings.ui.springy")}>

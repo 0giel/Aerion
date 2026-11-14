@@ -124,6 +124,11 @@ class Layout {
     return this.effectsPref === "theme" ? themes.active.motion.effects : this.effectsPref === "on";
   }
 
+  /** Cards and buttons: rounded and see-through (`soft`, the default) or block-shaped. */
+  get cardStyle(): "soft" | "block" {
+    return app.settings?.layout.cardStyle === "block" ? "block" : "soft";
+  }
+
   private async save(patch: Partial<NonNullable<typeof app.settings>["layout"]>) {
     const current = app.settings?.layout;
     if (!current) return;
@@ -156,6 +161,9 @@ class Layout {
   }
   setEffects(v: "theme" | "on" | "off") {
     return this.save({ effects: v });
+  }
+  setCardStyle(v: "soft" | "block") {
+    return this.save({ cardStyle: v });
   }
   resetNav() {
     return this.save({

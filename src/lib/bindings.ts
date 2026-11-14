@@ -1527,7 +1527,10 @@ export type LayoutPrefs_Deserialize = {
 	home?: LayoutItem[],
 	/**  `right`, `left` or `hidden`. */
 	homePlayer?: string,
-	/**  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`. */
+	/**
+	 *  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top`, `bottom` or
+	 *  `hotbar` (a row of slots floating over the bottom).
+	 */
 	navSide?: string,
 	/**
 	 *  `theme` (what the theme says), `fixed`, `hover` (a slim rail that opens under the cursor)
@@ -1540,6 +1543,11 @@ export type LayoutPrefs_Deserialize = {
 	navGaps?: string[] | null,
 	/**  Springy clicks, entrances, a sliding highlight and the other effects: `theme`, `on` or `off`. */
 	effects?: string,
+	/**
+	 *  Shape of cards and buttons: `soft` (rounded, see-through; the default) or `block` (nearly
+	 *  square corners, solid panels and hard shadows, like blocks).
+	 */
+	cardStyle?: string,
 };
 
 /**
@@ -1553,7 +1561,10 @@ export type LayoutPrefs_Serialize = {
 	home: LayoutItem[],
 	/**  `right`, `left` or `hidden`. */
 	homePlayer: string,
-	/**  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top` or `bottom`. */
+	/**
+	 *  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top`, `bottom` or
+	 *  `hotbar` (a row of slots floating over the bottom).
+	 */
 	navSide: string,
 	/**
 	 *  `theme` (what the theme says), `fixed`, `hover` (a slim rail that opens under the cursor)
@@ -1566,6 +1577,11 @@ export type LayoutPrefs_Serialize = {
 	navGaps?: string[],
 	/**  Springy clicks, entrances, a sliding highlight and the other effects: `theme`, `on` or `off`. */
 	effects: string,
+	/**
+	 *  Shape of cards and buttons: `soft` (rounded, see-through; the default) or `block` (nearly
+	 *  square corners, solid panels and hard shadows, like blocks).
+	 */
+	cardStyle: string,
 };
 
 export type License = License_Serialize | License_Deserialize;

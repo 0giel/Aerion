@@ -817,3 +817,28 @@ kbd,
 [data-lite="on"] .content .card {
   animation: none !important;
 }
+
+/* Card shape "Blocks" (Settings → Appearance): nearly square corners, solid panels and hard
+   shadows instead of soft see-through ones. The !important beats the theme's own values, which
+   are set inline on the root. */
+[data-cards="block"] {
+  --r-sm: 2px !important;
+  --r-md: 3px !important;
+  --r-lg: 4px !important;
+  --r-xl: 6px !important;
+  --glass: 1 !important;
+  --shadow-md: 0 4px 0 rgb(0 0 0 / calc(var(--shadow-a) * 0.9)) !important;
+  --shadow-lg: 0 8px 0 rgb(0 0 0 / var(--shadow-a)) !important;
+}
+[data-cards="block"] .card {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--c-text) 6%, transparent),
+    0 4px 0 rgb(0 0 0 / calc(var(--shadow-a) * 0.75));
+}
+[data-cards="block"] .btn:not(.ghost):not(.primary) {
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.22);
+}
+[data-cards="block"] .btn:not(.ghost):active:not(:disabled) {
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.22);
+  transform: translateY(2px);
+}

@@ -102,6 +102,7 @@
     themes.apply();
     themes.lite = app.settings?.liteMode === true;
     document.documentElement.dataset.lite = themes.lite ? "on" : "off";
+    document.documentElement.dataset.cards = layout.cardStyle;
     document.documentElement.dataset.spring =
       layout.springy && themes.active.motion.enabled && !themes.reducedMotion ? "on" : "off";
   });

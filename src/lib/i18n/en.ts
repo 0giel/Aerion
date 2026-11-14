@@ -681,6 +681,9 @@ const en = {
       iconSize: "Menu icon size",
       effects: { theme: "From theme", on: "On", off: "Off" },
       iconSizeTheme: "From theme",
+      cardStyle: "Card shape",
+      cardStyleHint: "Blocks: square cards and buttons with hard shadows, no see-through panels.",
+      cardStyles: { soft: "Soft", block: "Blocks" },
       springy: "Animations and effects",
       springyHint:
         "Springy clicks and pop-ins, a sliding menu highlight, click rings, tilting cards and sparks. ‘From theme’ respects a system request for fewer animations (on Windows: Settings → Accessibility → Visual effects); ‘On’ turns them on regardless.",

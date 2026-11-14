@@ -718,6 +718,9 @@ const pl: Dict = {
       iconSize: "Rozmiar ikon w menu",
       effects: { theme: "Z motywu", on: "Wł.", off: "Wył." },
       iconSizeTheme: "Z motywu",
+      cardStyle: "Kształt kart",
+      cardStyleHint: "Klocki: kanciaste karty i przyciski z twardym cieniem, bez przezroczystości.",
+      cardStyles: { soft: "Miękkie", block: "Klocki" },
       springy: "Animacje i efekty",
       springyHint:
         "Sprężyste kliknięcia i wskakiwanie, przesuwające się podświetlenie menu, fale po kliknięciu, przechylane karty i iskry. „Z motywu” słucha prośby systemu o mniej animacji (w Windowsie: Ustawienia → Ułatwienia dostępu → Efekty wizualne → Efekty animacji); „Wł.” włącza je mimo to.",
