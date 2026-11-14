@@ -9,6 +9,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.3",
+    notes: {
+      pl: [
+        "Nowe logo Aeriona: kostka ze skrzydłami i iskrą, w launcherze, w ikonie aplikacji i na ekranie tytułowym gry.",
+        "Wyspa na ekranie Start zależy od instancji: łąka, zima, pustynia albo nether. Wybierzesz ją w ustawieniach instancji albo zostawisz według nazwy.",
+      ],
+      en: [
+        "A new Aerion logo: a block with wings and a sparkle, in the launcher, the app icon and the game's title screen.",
+        "The island on the Start screen follows the instance: a meadow, winter, a desert or the nether. Choose it in the instance's settings or let its name decide.",
+      ],
+    },
+  },
+  {
     version: "1.1.2",
     notes: {
       pl: [
