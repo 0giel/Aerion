@@ -163,7 +163,32 @@ public final class Containers {
 
 	/** True for the pictures of container panels (inventory, chest, furnace, creative tabs...). */
 	private static boolean isPanel(Identifier id) {
-		return id != null && id.getPath().startsWith("textures/gui/container/");
+		if (id == null) return false;
+		String p = id.getPath();
+		return p.startsWith("textures/gui/container/") || p.startsWith("textures/gui/sprites/container/");
+	}
+
+	/** Sprites drawn over a panel from the panel's own greys: the furnaces' arrow and flame, the
+	 *  brewing stand's arrow and bubbles, the villager's trade arrow. */
+	private static boolean isPanelSprite(String path) {
+		return path.startsWith("container/")
+				&& (path.endsWith("/burn_progress")
+						|| path.endsWith("/lit_progress")
+						|| path.endsWith("/brew_progress")
+						|| path.endsWith("/bubbles")
+						|| path.endsWith("/trade_arrow"));
+	}
+
+	/**
+	 * The recoloured picture of a panel sprite, to be drawn as an ordinary texture instead of the
+	 * game's grey one, or null to let the game draw its own.
+	 */
+	public static Identifier spriteTexture(Identifier sprite) {
+		if (sprite == null || !isPanelSprite(sprite.getPath())) return null;
+		Identifier png = Identifier.fromNamespaceAndPath(
+				sprite.getNamespace(), "textures/gui/sprites/" + sprite.getPath() + ".png");
+		Identifier made = texture(png);
+		return made == png ? null : made;
 	}
 
 	/** The picture to draw instead of the game's `id`: the same one recoloured, or `id` itself. */
@@ -193,7 +218,7 @@ public final class Containers {
 			}
 			if (img == null) throw new IllegalStateException("not an image");
 			int w = img.getWidth(), h = img.getHeight();
-			int[] px = img.getRGB(0, 0, w, h, null, 0, w);
+			int[] px = pixels(img);
 			for (int i = 0; i < px.length; i++) px[i] = remap(px[i], l.ramp);
 			Textures.registerPixels(made, w, h, px);
 			if (m != null) RETIRED.add(new Retired(m.id, System.currentTimeMillis()));
@@ -204,6 +229,33 @@ public final class Containers {
 			AerionClient.LOG.warn("Aerion UI: can't recolour {}: {}", id, e.toString());
 			return id;
 		}
+	}
+
+	/**
+	 * The picture's pixels as ARGB. Greyscale PNGs (the furnace's progress arrow is one) are read
+	 * from their raw samples: Java converts a grey colour space on the way to RGB and would return
+	 * #C6 as about #E5, which then lands on the wrong colour of the ramp.
+	 */
+	private static int[] pixels(BufferedImage img) {
+		int w = img.getWidth(), h = img.getHeight();
+		java.awt.image.ColorModel cm = img.getColorModel();
+		if (cm.getColorSpace().getType() != java.awt.color.ColorSpace.TYPE_GRAY) {
+			return img.getRGB(0, 0, w, h, null, 0, w);
+		}
+		java.awt.image.Raster raster = img.getRaster();
+		int bands = raster.getNumBands();
+		int max = (1 << cm.getComponentSize(0)) - 1;
+		int[] sample = new int[bands];
+		int[] px = new int[w * h];
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				raster.getPixel(x, y, sample);
+				int g = sample[0] * 255 / max;
+				int a = bands > 1 ? sample[1] * 255 / max : 255;
+				px[y * w + x] = a << 24 | g << 16 | g << 8 | g;
+			}
+		}
+		return px;
 	}
 
 	/** Greys go along the ramp (vanilla anchor → new colour); anything with a colour is left alone. */

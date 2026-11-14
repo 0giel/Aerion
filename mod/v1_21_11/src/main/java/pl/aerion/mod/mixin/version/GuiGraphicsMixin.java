@@ -1,12 +1,15 @@
 package pl.aerion.mod.mixin.version;
 
 import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import pl.aerion.mod.Containers;
 
@@ -41,5 +44,24 @@ abstract class GuiGraphicsMixin {
 			ordinal = 2)
 	private int aerion$title(int color) {
 		return Containers.text(color);
+	}
+
+	/** Progress arrows, flames and bubbles drawn partly (as far as the work has got): from the
+	 *  recoloured picture of the sprite, so they match the themed panel. */
+	@Inject(method = "blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIIIIII)V", at = @At("HEAD"), cancellable = true)
+	private void aerion$partialSprite(RenderPipeline pipeline, Identifier sprite, int spriteW, int spriteH, int u, int v, int x, int y, int w, int h, int color, CallbackInfo ci) {
+		Identifier made = Containers.spriteTexture(sprite);
+		if (made == null) return;
+		((GuiGraphics) (Object) this).blit(pipeline, made, x, y, (float) u, (float) v, w, h, spriteW, spriteH, color);
+		ci.cancel();
+	}
+
+	/** The same for such sprites drawn whole (the villager's trade arrow). */
+	@Inject(method = "blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIII)V", at = @At("HEAD"), cancellable = true)
+	private void aerion$wholeSprite(RenderPipeline pipeline, Identifier sprite, int x, int y, int w, int h, int color, CallbackInfo ci) {
+		Identifier made = Containers.spriteTexture(sprite);
+		if (made == null) return;
+		((GuiGraphics) (Object) this).blit(pipeline, made, x, y, 0f, 0f, w, h, w, h, color);
+		ci.cancel();
 	}
 }
