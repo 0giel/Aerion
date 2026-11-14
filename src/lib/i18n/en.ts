@@ -180,6 +180,14 @@ const en = {
     suggest: "The launcher runs slowly here. Turn on lite mode? It switches off the heaviest effects.",
     enable: "Turn on",
   },
+  boost: {
+    title: "Performance mods",
+    missing: "More FPS, same gameplay. Missing: {mods}.",
+    add: "Add",
+    done: "{name}: added {mods}.",
+    unavailable: "Not available for this version yet: {mods}.",
+    nothing: "{name}: the performance mods are already there.",
+  },
   updateAll: {
     title: "Mod updates",
     button: "Update everything ({n})",
@@ -860,6 +868,7 @@ const en = {
       export: "Exporting",
       update: "Updating content",
       updateAll: "Updating mods",
+      boost: "Adding performance mods",
       verify: "Verifying files",
       modpack: "Installing modpack",
     },
@@ -1171,6 +1180,7 @@ const en = {
       setMemory: "Set {size}",
       memorySet: "{name}: memory set to {size}.",
       openMods: "Open mods",
+      addBoost: "Add performance mods",
     },
     tipsTitle: "Tips",
     tips: {

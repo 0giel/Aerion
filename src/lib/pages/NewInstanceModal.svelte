@@ -5,7 +5,7 @@
   import Icon from "../components/Icon.svelte";
   import Advanced from "../components/Advanced.svelte";
   import IconPicker from "../components/IconPicker.svelte";
-  import { installBundled, OPTIMIZATION, waitForTasks } from "../bundled";
+  import { installBundled, waitForTasks } from "../bundled";
   import Switch from "../components/Switch.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
@@ -31,8 +31,16 @@
   let loader = $state<LoaderKind>("vanilla");
   /** "Fabric + Aerion": Fabric with the Aerion mod switched on. */
   let withAerion = $state(false);
-  /** Sodium, Lithium, FerriteCore and ImmediatelyFast with the Aerion mod (see lib/bundled.ts). */
+  /** The performance pack (Fabric and Quilt), see lib/bundled.ts. */
   let optimize = $state(true);
+  let packNames = $state("");
+  $effect(() => {
+    void commands
+      .boostPack()
+      .then((n) => (packNames = n.join(", ")))
+      .catch(() => {});
+  });
+  const canOptimize = $derived(loader === "fabric" || loader === "quilt");
   /** New instances share the game settings unless the player says otherwise. */
   let sharedOptions = $state(true);
   const aerionVersions = $derived(app.info?.aerionModVersions ?? []);
@@ -128,14 +136,15 @@
         // The instance exists either way; a bad image only costs the custom icon.
         await commands.importInstanceIcon(inst.id, iconFile).catch((e) => toasts.error(errorMessage(e)));
       }
-      // e4mc and its dependencies come with the Aerion mod; a failure leaves a normal instance.
-      const bundled = inst.aerionMod
-        ? await installBundled(inst.id, optimize).catch(() => [] as string[])
-        : [];
+      // e4mc comes with the Aerion mod, the performance pack with Fabric and Quilt when wanted.
+      // It runs in the background; a failure leaves a normal instance.
+      const bundled = installBundled(inst.id, inst.aerionMod, canOptimize && optimize).catch(
+        () => [] as string[],
+      );
       await app.refreshInstances();
       await app.saveSettings({ lastInstance: inst.id });
       open = false;
-      if (play) void waitForTasks(bundled).then(() => app.launch(inst.id));
+      if (play) void bundled.then(waitForTasks).then(() => app.launch(inst.id));
       else router.go("instance", { id: inst.id });
     } catch (e) {
       toasts.error(errorMessage(e));
@@ -224,10 +233,11 @@
           ><Icon name="cpu" size={14} />{t("loaders.horizon")}</button
         >
       </div>
-      {#if withAerion}<span class="hint">{t("newInstance.aerionHint")}</span>
+      {#if withAerion}<span class="hint">{t("newInstance.aerionHint")}</span>{/if}
+      {#if canOptimize}
         <Switch
           label={t("newInstance.optimize")}
-          hint={t("newInstance.optimizeHint", { mods: OPTIMIZATION.map((m) => m.name).join(", ") })}
+          hint={t("newInstance.optimizeHint", { mods: packNames })}
           bind:checked={optimize}
         />{/if}
       {#if loader === "horizon"}<span class="hint">{t("newInstance.horizonHint")}</span>{/if}

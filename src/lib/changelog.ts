@@ -15,11 +15,13 @@ export const CHANGELOG: ChangelogEntry[] = [
         "Lista wyboru instancji pod przyciskiem Graj nie chowa się już pod kartami na ekranie Start.",
         "Pewniejszy start gry: ustawienia Javy z systemu nie nadpisują już pamięci ustawionej w launcherze, a wersja AppImage nie podsuwa grze swoich bibliotek.",
         "Na Javie 21 i nowszej gra dostaje moduł, z którego korzystają niektóre mody przyspieszające (np. C2ME).",
+        "Mody przyspieszające (Sodium, Lithium, FerriteCore, ImmediatelyFast) jednym kliknięciem w każdej instancji Fabric i Quilt: przy tworzeniu, w zakładce Zawartość i przy podpowiedzi o niskim FPS w Wydajności.",
       ],
       en: [
         "The instance list under the Play button no longer hides behind the cards on the Start screen.",
         "A more reliable game start: Java settings from the system no longer override the memory set in the launcher, and the AppImage no longer hands its own libraries to the game.",
         "On Java 21 and newer the game gets a module some performance mods use (C2ME, for one).",
+        "Performance mods (Sodium, Lithium, FerriteCore, ImmediatelyFast) in one click for every Fabric and Quilt instance: when you create it, in the Content tab and next to the low-FPS hint on the Performance page.",
       ],
     },
   },

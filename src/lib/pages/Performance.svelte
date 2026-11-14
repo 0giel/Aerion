@@ -321,11 +321,18 @@
                       >{t("perf.hints.setMemory", { size: size(Number(h.params.suggest)) })}</button
                     >
                   {:else if h.kind === "noSodium" && app.instances.some((i) => i.id === session.instanceId)}
-                    <button
-                      class="btn sm"
-                      onclick={() => router.go("instance", { id: session.instanceId, tab: "content" })}
-                      >{t("perf.hints.openMods")}</button
-                    >
+                    {@const loader = app.instances.find((i) => i.id === session.instanceId)?.loader}
+                    {#if loader === "fabric" || loader === "quilt"}
+                      <button class="btn sm" onclick={() => app.installBoost(session.instanceId)}
+                        >{t("perf.hints.addBoost")}</button
+                      >
+                    {:else}
+                      <button
+                        class="btn sm"
+                        onclick={() => router.go("instance", { id: session.instanceId, tab: "content" })}
+                        >{t("perf.hints.openMods")}</button
+                      >
+                    {/if}
                   {/if}
                 </li>
               {/each}

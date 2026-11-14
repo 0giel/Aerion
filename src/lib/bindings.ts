@@ -120,6 +120,19 @@ export const commands = {
 	 */
 	planContentInstall: (instanceId: string, provider: Provider, projectId: string, versionId: string | null, kind: ContentKind) => __TAURI_INVOKE<InstallPlan_Serialize>("plan_content_install", { instanceId, provider, projectId, versionId, kind }),
 	installContent: (instanceId: string, provider: Provider, projectId: string, versionId: string | null, kind: ContentKind, optional: string[], title: string | null) => __TAURI_INVOKE<string>("install_content", { instanceId, provider, projectId, versionId, kind, optional, title }),
+	/**  The names of the performance pack's mods, for the switch in "New instance". */
+	boostPack: () => __TAURI_INVOKE<string[]>("boost_pack"),
+	/**
+	 *  The performance pack against an instance: each mod and whether it is already there; `None`
+	 *  when the pack isn't offered for the instance's loader.
+	 */
+	boostStatus: (instanceId: string) => __TAURI_INVOKE<BoostItem[] | null>("boost_status", { instanceId }),
+	/**
+	 *  Install the missing mods of the performance pack (with what they require) as one task. A mod
+	 *  without a release for this version is skipped, not an error; the task's result lists what was
+	 *  added, what was already there and what isn't available.
+	 */
+	installBoostPack: (instanceId: string) => __TAURI_INVOKE<string>("install_boost_pack", { instanceId }),
 	listContent: (instanceId: string) => __TAURI_INVOKE<ContentEntry_Serialize[]>("list_content", { instanceId }),
 	setContentEnabled: (instanceId: string, kind: ContentKind, fileName: string, enabled: boolean) => __TAURI_INVOKE<null>("set_content_enabled", { instanceId, kind, fileName, enabled }),
 	removeContent: (instanceId: string, kind: ContentKind, fileName: string) => __TAURI_INVOKE<null>("remove_content", { instanceId, kind, fileName }),
@@ -434,6 +447,13 @@ export type BackupInfo = {
 };
 
 export type BodyFormat = "markdown" | "html";
+
+/**  One mod of the pack and whether the instance already has it. */
+export type BoostItem = {
+	projectId: string,
+	title: string,
+	present: boolean,
+};
 
 export type Category = Category_Serialize | Category_Deserialize;
 

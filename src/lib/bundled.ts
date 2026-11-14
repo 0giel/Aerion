@@ -1,5 +1,4 @@
-// Mods installed together with the Aerion mod in a new "Fabric + Aerion" instance, from Modrinth on
-// the player's computer (Aerion redistributes none of them). They are ordinary content afterwards:
+// Mods installed together with a new instance, from Modrinth on the player's computer (Aerion redistributes none of them). They are ordinary content afterwards:
 // listed, updated and removable in the instance's Content tab.
 import { commands } from "./api";
 import { app } from "./stores/app.svelte";
@@ -8,25 +7,25 @@ import { app } from "./stores/app.svelte";
 const E4MC = "qANg5Jrr";
 
 /**
- * Speed without changing how the game plays, all checked with the Aerion mod on 26.3 and 1.21.11:
- * Sodium (rendering), Lithium (game logic, made to match vanilla), FerriteCore (memory) and
- * ImmediatelyFast (HUD, text and interface drawing). None needs another mod.
+ * New-instance extras, one after the other (two tasks writing the content list at once could
+ * lose an entry): e4mc for "Fabric + Aerion" (it pulls in Fabric API), then the performance pack
+ * when wanted (`installBoostPack`: its mods are listed in launcher-core `mods::boost::PACK`).
+ * Resolves with the task ids once every task has started; failures leave a normal instance.
  */
-export const OPTIMIZATION = [
-  { id: "AANobbMI", name: "Sodium" },
-  { id: "gvQqBUqZ", name: "Lithium" },
-  { id: "uXXizFIs", name: "FerriteCore" },
-  { id: "5ZwdcRci", name: "ImmediatelyFast" },
-] as const;
-
-/**
- * One install task: e4mc (it pulls in Fabric API), plus the optimization mods when wanted. A mod
- * without a version for this game is skipped rather than failing the rest. Returns the task ids.
- */
-export async function installBundled(instanceId: string, optimize: boolean): Promise<string[]> {
-  const extra = optimize ? OPTIMIZATION.map((m) => m.id) : [];
-  const title = ["e4mc", ...(optimize ? OPTIMIZATION.map((m) => m.name) : [])].join(", ");
-  return [await commands.installContent(instanceId, "modrinth", E4MC, null, "mod", extra, title)];
+export async function installBundled(
+  instanceId: string,
+  aerion: boolean,
+  optimize: boolean,
+): Promise<string[]> {
+  const ids: string[] = [];
+  if (aerion) {
+    ids.push(await commands.installContent(instanceId, "modrinth", E4MC, null, "mod", [], "e4mc"));
+  }
+  if (optimize) {
+    await waitForTasks(ids);
+    ids.push(await commands.installBoostPack(instanceId));
+  }
+  return ids;
 }
 
 /** Resolves when none of the tasks is still running (or after `timeoutMs`). */

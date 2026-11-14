@@ -1,5 +1,6 @@
 //! Mod platforms (Modrinth, CurseForge) behind one model, plus installed-content management.
 
+pub mod boost;
 pub mod content;
 pub mod curseforge;
 pub mod health;

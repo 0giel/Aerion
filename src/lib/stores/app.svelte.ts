@@ -177,6 +177,16 @@ class AppStore {
         }
         break;
       }
+      case "boost": {
+        const r: { added: string[]; present: string[]; unavailable: string[] } | null = task.result
+          ? JSON.parse(task.result)
+          : null;
+        const name = task.subject ?? "";
+        if (r?.added.length) toasts.success(t("boost.done", { name, mods: r.added.join(", ") }));
+        else if (!r?.unavailable.length) toasts.info(t("boost.nothing", { name }));
+        if (r?.unavailable.length) toasts.info(t("boost.unavailable", { mods: r.unavailable.join(", ") }));
+        break;
+      }
       case "upgrade": {
         void this.refreshInstances();
         const id: string | null = task.result ? JSON.parse(task.result) : null;
@@ -202,6 +212,15 @@ class AppStore {
 
   private replaceInstance(inst: Instance) {
     this.instances = this.instances.map((i) => (i.id === inst.id ? inst : i));
+  }
+
+  /** Add the missing performance mods to an instance (one background task). */
+  async installBoost(id: string) {
+    try {
+      await commands.installBoostPack(id);
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
   }
 
   async toggleFavorite(id: string) {

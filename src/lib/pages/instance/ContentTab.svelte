@@ -15,6 +15,7 @@
     commands,
     errorMessage,
     providerImg,
+    type BoostItem,
     type ContentEntry,
     type ContentKind,
     type Instance,
@@ -55,9 +56,17 @@
   let replacingOpen = $state(false);
   let depProject = $state.raw<ProjectSummary | null>(null);
 
+  /** The performance pack against this instance (`null` where it isn't offered). */
+  let boost = $state.raw<BoostItem[] | null>(null);
+  const boostMissing = $derived(boost?.filter((b) => !b.present) ?? []);
+  const boostRunning = $derived(
+    app.tasks.some((x) => x.instanceId === instance.id && x.kind === "boost" && x.status === "running"),
+  );
+
   async function load() {
     try {
       entries = await commands.listContent(instance.id);
+      boost = await commands.boostStatus(instance.id).catch(() => null);
       if (instance.loader !== "vanilla") issues = await commands.checkModHealth(instance.id);
       // Updates found in the background are shown without another check.
       if (updates === null) {
@@ -79,7 +88,9 @@
   $effect(() => {
     const done = app.tasks.filter(
       (x) =>
-        x.instanceId === instance.id && x.status === "done" && (x.kind === "install" || x.kind === "update"),
+        x.instanceId === instance.id &&
+        x.status === "done" &&
+        (x.kind === "install" || x.kind === "update" || x.kind === "boost"),
     ).length;
     if (done) void load();
   });
@@ -288,6 +299,23 @@
       >
     </div>
   </div>
+
+  {#if kind === "mod" && boostMissing.length}
+    <div class="boost card row">
+      <span class="boost-icon"><Icon name="cpu" size={18} /></span>
+      <div class="col grow" style="min-width:0">
+        <strong class="small">{t("boost.title")}</strong>
+        <span class="tiny muted"
+          >{t("boost.missing", { mods: boostMissing.map((b) => b.title).join(", ") })}</span
+        >
+      </div>
+      <button class="btn sm primary" disabled={boostRunning} onclick={() => app.installBoost(instance.id)}
+        >{#if boostRunning}<span class="spinner sm"></span>{:else}<Icon name="plus" size={15} />{/if}{t(
+          "boost.add",
+        )}</button
+      >
+    </div>
+  {/if}
 
   <div class="row wrap">
     <input
@@ -533,5 +561,20 @@
   }
   .switch-mini[aria-checked="true"] span {
     left: calc(100% - 1.05rem);
+  }
+  .boost {
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .boost-icon {
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    flex: none;
+    border-radius: var(--r-sm);
+    background: var(--c-accent-soft);
+    color: var(--c-accent);
   }
 </style>

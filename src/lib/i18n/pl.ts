@@ -191,6 +191,14 @@ const pl: Dict = {
     suggest: "Launcher działa tu wolno. Włączyć tryb lekki? Wyłączy najcięższe efekty.",
     enable: "Włącz",
   },
+  boost: {
+    title: "Mody przyspieszające",
+    missing: "Więcej FPS bez zmian w rozgrywce. Brakuje: {mods}.",
+    add: "Dodaj",
+    done: "{name}: dodano {mods}.",
+    unavailable: "Jeszcze niedostępne dla tej wersji: {mods}.",
+    nothing: "{name}: mody przyspieszające już są.",
+  },
   updateAll: {
     title: "Aktualizacje modów",
     button: "Zaktualizuj wszystko ({n})",
@@ -913,6 +921,7 @@ const pl: Dict = {
       export: "Eksportowanie",
       update: "Aktualizowanie zawartości",
       updateAll: "Aktualizowanie modów",
+      boost: "Dodawanie modów przyspieszających",
       verify: "Sprawdzanie plików",
       modpack: "Instalowanie modpacka",
     },
@@ -1230,6 +1239,7 @@ const pl: Dict = {
       setMemory: "Ustaw {size}",
       memorySet: "{name}: pamięć ustawiona na {size}.",
       openMods: "Otwórz mody",
+      addBoost: "Dodaj mody przyspieszające",
     },
     tips: {
       lowMemory:

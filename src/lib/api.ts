@@ -44,6 +44,7 @@ export type ProjectVersion = B.ProjectVersion_Serialize;
 export type Provider = B.Provider;
 export type ContentKind = B.ContentKind;
 export type ContentEntry = B.ContentEntry_Serialize;
+export type BoostItem = B.BoostItem;
 export type UpdateInfo = B.UpdateInfo_Serialize;
 export type InstallPlan = B.InstallPlan_Serialize;
 export type Category = B.Category_Serialize;

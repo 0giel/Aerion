@@ -6,6 +6,7 @@ use launcher_core::accounts::SecretStore;
 use launcher_core::instances::ModpackInfo;
 use launcher_core::loaders::LoaderKind;
 use launcher_core::modpacks::{self, ImportResult};
+use launcher_core::mods::boost::{self, BoostItem, BoostResult};
 use launcher_core::mods::content::{BackupInfo, ContentEntry, ContentRef, UpdateInfo, UpgradePlan};
 use launcher_core::mods::curseforge::CurseForge;
 use launcher_core::mods::merge_pages;
@@ -146,6 +147,126 @@ async fn make_plan(
             .await
         }
     }
+}
+
+/// The names of the performance pack's mods, for the switch in "New instance".
+#[tauri::command]
+#[specta::specta]
+pub fn boost_pack() -> Vec<String> {
+    boost::PACK.iter().map(|m| m.title.to_owned()).collect()
+}
+
+/// The performance pack against an instance: each mod and whether it is already there; `None`
+/// when the pack isn't offered for the instance's loader.
+#[tauri::command]
+#[specta::specta]
+pub async fn boost_status(
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CmdResult<Option<Vec<BoostItem>>> {
+    let inst = state.instances.get(&instance_id).await?;
+    if !boost::supports(inst.loader) {
+        return Ok(None);
+    }
+    let mods = state.instances.game_dir_of(&inst)?.join("mods");
+    let recorded = recorded_modrinth_projects(&state, &instance_id).await?;
+    Ok(Some(
+        launcher_core::util::blocking(move || Ok(boost::status(&mods, &recorded))).await?,
+    ))
+}
+
+/// Modrinth project ids the launcher itself installed into the instance.
+async fn recorded_modrinth_projects(
+    state: &AppState,
+    instance_id: &str,
+) -> launcher_core::Result<HashSet<String>> {
+    Ok(state
+        .instances
+        .content(instance_id)?
+        .installed_projects()
+        .await
+        .into_iter()
+        .filter(|(p, _)| *p == Provider::Modrinth)
+        .map(|(_, id)| id)
+        .collect())
+}
+
+/// Install the missing mods of the performance pack (with what they require) as one task. A mod
+/// without a release for this version is skipped, not an error; the task's result lists what was
+/// added, what was already there and what isn't available.
+#[tauri::command]
+#[specta::specta]
+pub async fn install_boost_pack(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+) -> CmdResult<String> {
+    let inst = state.instances.get(&instance_id).await?;
+    if !boost::supports(inst.loader) {
+        return Err(
+            launcher_core::Error::Invalid("pack not offered for this loader".into()).into(),
+        );
+    }
+    let app2 = app.clone();
+    let iid = instance_id.clone();
+    Ok(state.tasks.spawn(
+        &app,
+        "boost",
+        "task.boost",
+        Some(inst.name.clone()),
+        Some(instance_id),
+        move |ctx| async move {
+            let state = app2.state::<AppState>();
+            ctx.stage("stage.resolve", None);
+            let mods = state.instances.game_dir_of(&inst)?.join("mods");
+            let recorded = recorded_modrinth_projects(&state, &iid).await?;
+            let items =
+                launcher_core::util::blocking(move || Ok(boost::status(&mods, &recorded))).await?;
+            let mut result = BoostResult::default();
+            let mut all = InstallPlan::default();
+            let mut planned: HashSet<(Provider, String)> = HashSet::new();
+            for item in items {
+                if item.present {
+                    result.present.push(item.title);
+                    continue;
+                }
+                match make_plan(
+                    &state,
+                    &iid,
+                    Provider::Modrinth,
+                    &item.project_id,
+                    None,
+                    ContentKind::Mod,
+                    &planned,
+                )
+                .await
+                {
+                    Ok(plan) if !plan.install.is_empty() => {
+                        for f in plan.install {
+                            if planned.insert((Provider::Modrinth, f.project_id.clone())) {
+                                all.install.push(f);
+                            }
+                        }
+                        result.added.push(item.title);
+                    }
+                    Ok(_) => result.present.push(item.title),
+                    Err(e) => {
+                        tracing::info!(mod = %item.title, error = %e, "pack mod not available");
+                        result.unavailable.push(item.title);
+                    }
+                }
+            }
+            if !all.install.is_empty() {
+                all.provider = Some(Provider::Modrinth);
+                let content = state.instances.content(&iid)?;
+                let engine = state.engine().await;
+                content
+                    .install(&engine.downloader, &all, ContentKind::Mod, &ctx)
+                    .await?;
+            }
+            Ok(serde_json::to_string(&result).ok())
+        },
+    ))
 }
 
 /// What will be installed: the best compatible file plus required dependencies; optional
