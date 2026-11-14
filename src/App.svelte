@@ -136,23 +136,33 @@
     }, 300);
   });
 
-  // Once, a few seconds after start: if the effects run slowly here, suggest lite mode.
+  // Once per computer, a few seconds after the first start: if the effects run slowly here,
+  // suggest lite mode. It used to run on every start, and its second of moving blur made the
+  // first page switches after start-up stutter.
   let probed = false;
   $effect(() => {
     if (!app.ready || !app.settings || probed) return;
     if (app.settings.liteMode || app.settings.litePrompted) return;
     probed = true;
+    let forced = false;
+    try {
+      // A test hook: localStorage "aerion.probe" = "slow" shows the suggestion at once.
+      forced = localStorage.getItem("aerion.probe") === "slow";
+      if (!forced && localStorage.getItem("aerion.probed") === "1") return;
+    } catch {
+      /* storage unavailable: test as before */
+    }
     setTimeout(async () => {
-      let slow = false;
-      try {
-        // A test hook: localStorage "aerion.probe" = "slow" shows the suggestion at once.
-        slow = localStorage.getItem("aerion.probe") === "slow";
-      } catch {
-        /* storage unavailable */
-      }
+      let slow = forced;
       if (!slow) {
         const ms = await measureFrames();
-        slow = ms !== null && ms >= SLOW_MS;
+        if (ms === null) return;
+        try {
+          localStorage.setItem("aerion.probed", "1");
+        } catch {
+          /* storage unavailable */
+        }
+        slow = ms >= SLOW_MS;
       }
       if (!slow || !app.settings || app.settings.liteMode) return;
       await app.saveSettings({ litePrompted: true });
