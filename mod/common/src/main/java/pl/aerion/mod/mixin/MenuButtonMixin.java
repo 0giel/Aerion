@@ -35,9 +35,14 @@ abstract class MenuButtonMixin extends Screen {
 						b -> Game.setScreen(new EditorScreen(new HudEditor(), self)))
 				.bounds(width - 64, 4, 60, 20)
 				.build());
-		int[] card = self instanceof TitleScreen && MenuLook.player() ? TitleCard.place(width, height) : null;
+		java.util.List<int[]> own = new java.util.ArrayList<>();
+		for (var child : children()) {
+			if (child instanceof net.minecraft.client.gui.components.AbstractWidget wd && wd.visible) {
+				own.add(new int[] {wd.getX(), wd.getY(), wd.getWidth(), wd.getHeight()});
+			}
+		}
+		int[] card = self instanceof TitleScreen && MenuLook.player() ? TitleCard.place(width, height, own) : null;
 		if (card != null) {
-			int w = width, h = height;
 			int[] b = TitleCard.button(card);
 			Button host = Button.builder(Component.literal(Lang.tr("aerion.host.button")), x -> Host.start(self))
 					.bounds(b[0], b[1], b[2], b[3])
@@ -50,7 +55,7 @@ abstract class MenuButtonMixin extends Screen {
 			// button's alpha, and the model (drawn opaque) appears once the fade is done.
 			addRenderableOnly(Painter.of(g -> {
 				model.visible = host.getAlpha() >= 0.98f;
-				TitleCard.draw(g, w, h, host.getAlpha());
+				TitleCard.draw(g, card, host.getAlpha());
 			}));
 			addRenderableWidget(model);
 			addRenderableWidget(host);

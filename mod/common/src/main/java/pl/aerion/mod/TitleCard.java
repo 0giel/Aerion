@@ -15,13 +15,34 @@ public final class TitleCard {
 	private static final int PAD = 6, NAME = 12, HINT = 9, BUTTON = 20, GAP = 4;
 	private static final int MIN_MODEL = 50, MAX_MODEL = 128, HINT_FROM = 72;
 
-	/** x, y, width, height of the card, the model's height, and 1 when the hint line is shown. */
-	public static int[] place(int width, int height) {
+	/**
+	 * x, y, width, height of the card, the model's height, and 1 when the hint line is shown.
+	 * {@code blockers} are the screen's own widgets (x, y, width, height): when one sits in the
+	 * card's way (the small accessibility button beside the buttons), the card ends above it.
+	 */
+	public static int[] place(int width, int height, java.util.List<int[]> blockers) {
+		int bottom = height - 13;
+		int[] c = place(width, height, bottom);
+		for (int i = 0; i < 3 && c != null; i++) {
+			int limit = bottom;
+			for (int[] b : blockers) {
+				boolean across = b[0] < c[0] + c[2] && b[0] + b[2] > c[0];
+				boolean under = b[1] < c[1] + c[3] && b[1] + b[3] > c[1];
+				if (across && under) limit = Math.min(limit, b[1] - GAP);
+			}
+			if (limit >= bottom) return c;
+			bottom = limit;
+			c = place(width, height, bottom);
+		}
+		return c;
+	}
+
+	private static int[] place(int width, int height, int bottom) {
 		int left = width / 2 + 100 + 6, room = width - 4 - left;
 		// From the logo's height down: the splash sits under the logo, so this side is free.
 		int top = 30;
-		// Room above the bottom lines of text (version and copyright).
-		int free = height - 13 - top, base = 2 * PAD + NAME + GAP + BUTTON;
+		// Room down to `bottom` (above the version and copyright lines, or a widget in the way).
+		int free = bottom - top, base = 2 * PAD + NAME + GAP + BUTTON;
 		// A little under the full height, so the player doesn't crowd the logo.
 		int model = Math.min(MAX_MODEL, (free - base - HINT) * 85 / 100);
 		boolean hint = model >= HINT_FROM;
@@ -46,8 +67,7 @@ public final class TitleCard {
 		return new int[] {c[0] + PAD, c[1] + c[3] - PAD - BUTTON, c[2] - 2 * PAD, BUTTON};
 	}
 
-	public static void draw(Gfx g, int width, int height, float alpha) {
-		int[] c = place(width, height);
+	public static void draw(Gfx g, int[] c, float alpha) {
 		if (c == null) return;
 		Theme t = AerionClient.theme();
 		int a = Math.round(Math.max(0f, Math.min(1f, alpha)) * 255);
