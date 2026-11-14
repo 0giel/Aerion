@@ -64,9 +64,9 @@ function merge<T extends { id: string; visible: boolean; locked?: boolean }>(
 }
 
 export type PlayerSide = "right" | "left" | "hidden";
-export type NavSide = "theme" | "left" | "right" | "top" | "bottom";
+export type NavSide = "theme" | "left" | "right" | "top" | "bottom" | "hotbar";
 export type NavMode = "fixed" | "hover" | "icons";
-export const NAV_SIDES: NavSide[] = ["theme", "left", "right", "top", "bottom"];
+export const NAV_SIDES: NavSide[] = ["theme", "left", "right", "top", "bottom", "hotbar"];
 export const NAV_MODES: NavMode[] = ["fixed", "hover", "icons"];
 
 class Layout {

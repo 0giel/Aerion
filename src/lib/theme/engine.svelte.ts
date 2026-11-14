@@ -161,7 +161,7 @@ class ThemeEngine {
   }
 
   /** The user's own menu position (overrides the theme's); null follows the theme. */
-  sideOverride: Theme["layout"]["sidebar"] | null = null;
+  sideOverride: Theme["layout"]["sidebar"] | "hotbar" | null = null;
 
   setPreview(theme: Theme | null, css: string | null = null) {
     this.preview = theme;

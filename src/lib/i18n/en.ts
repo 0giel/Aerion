@@ -668,7 +668,14 @@ const en = {
     ui: {
       title: "Interface",
       navSide: "Menu position",
-      sides: { theme: "From theme", left: "Left", right: "Right", top: "Top", bottom: "Bottom" },
+      sides: {
+        theme: "From theme",
+        left: "Left",
+        right: "Right",
+        top: "Top",
+        bottom: "Bottom",
+        hotbar: "Hotbar",
+      },
       navMode: "Menu style",
       modes: { theme: "From theme", fixed: "Full", hover: "Opens on hover", icons: "Icons only" },
       iconSize: "Menu icon size",

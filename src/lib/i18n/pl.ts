@@ -712,7 +712,7 @@ const pl: Dict = {
     ui: {
       title: "Interfejs",
       navSide: "Położenie menu",
-      sides: { theme: "Z motywu", left: "Lewo", right: "Prawo", top: "Góra", bottom: "Dół" },
+      sides: { theme: "Z motywu", left: "Lewo", right: "Prawo", top: "Góra", bottom: "Dół", hotbar: "Pasek" },
       navMode: "Styl menu",
       modes: { theme: "Z motywu", fixed: "Pełne", hover: "Rozwija się po najechaniu", icons: "Same ikony" },
       iconSize: "Rozmiar ikon w menu",

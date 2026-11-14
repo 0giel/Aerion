@@ -285,6 +285,13 @@
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
   }
+  :global([data-sidebar="hotbar"]) .shell {
+    grid-template-columns: 1fr;
+  }
+  :global([data-sidebar="hotbar"]) .content {
+    /* Room for the bar floating over the bottom. */
+    padding-bottom: 4.6rem;
+  }
   .content {
     /* Always the last track, also when the navigation is hidden (onboarding, splash). */
     grid-column: -2;

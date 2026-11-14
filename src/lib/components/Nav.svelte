@@ -21,7 +21,8 @@
   const favorites = $derived(layout.navFavorites ? app.instances.filter((i) => i.favorite).slice(0, 6) : []);
 
   const side = $derived(layout.side);
-  const horizontal = $derived(side === "top" || side === "bottom");
+  const hotbar = $derived(side === "hotbar");
+  const horizontal = $derived(side === "top" || side === "bottom" || hotbar);
   const mode = $derived(horizontal ? "fixed" : layout.mode);
   const spring = $derived(layout.springy && themes.active.motion.enabled && !themes.reducedMotion);
   let hovered = $state(false);
@@ -77,8 +78,34 @@
     (p === "instances" && router.page === "instance") ||
     (p === "settings" && router.page === "themeEditor");
   const runningCount = $derived(Object.keys(app.running).length);
+
+  // Hotbar: keys 1–9 pick a slot, like in the game (not while typing), and the wheel over the bar
+  // moves the selection.
+  const pages = $derived(items.map((i) => i.page));
+  function typing(e: Event) {
+    const el = e.target as HTMLElement | null;
+    return !!el?.closest("input, textarea, select, [contenteditable=''], [contenteditable='true'], dialog");
+  }
+  function onkey(e: KeyboardEvent) {
+    if (!hotbar || e.ctrlKey || e.metaKey || e.altKey || typing(e)) return;
+    if (/^[1-9]$/.test(e.key) && pages[Number(e.key) - 1]) {
+      router.go(pages[Number(e.key) - 1]);
+      e.preventDefault();
+    }
+  }
+  let wheelAt = 0;
+  function onwheel(e: WheelEvent) {
+    if (!hotbar || !pages.length || Date.now() - wheelAt < 120) return;
+    wheelAt = Date.now();
+    const now = pages.findIndex((p) => active(p));
+    const next = (Math.max(now, 0) + (e.deltaY > 0 ? 1 : -1) + pages.length) % pages.length;
+    router.go(pages[next]);
+    e.preventDefault();
+  }
   const account = $derived(app.selectedAccount);
 </script>
+
+<svelte:window onkeydown={onkey} />
 
 <div
   class="navslot"
@@ -102,7 +129,7 @@
       <span class="logo"><Logo /></span>
       <span class="name">Aerion</span>
     </div>
-    <div class="items" bind:this={itemsEl}>
+    <div class="items" bind:this={itemsEl} {onwheel}>
       {#if spring && slide}
         <span
           class="slider"
@@ -122,6 +149,7 @@
         >
           <Icon name={item.icon} size={layout.iconSize} />
           <span class="label">{t(item.key)}</span>
+          {#if hotbar && n < 9}<span class="num" aria-hidden="true">{n + 1}</span>{/if}
           {#if item.page === "console" && runningCount > 0}<span class="dot" aria-label={t("console.running")}
             ></span>{/if}
         </button>
@@ -590,5 +618,131 @@
   [data-side="top"] .dot,
   [data-side="bottom"] .dot {
     left: 1.6rem;
+  }
+
+  /* Hotbar: a row of square slots floating over the bottom of the page, like the game's own bar.
+     The account sits apart on the left (the off-hand slot), search on the right. */
+  .navslot[data-side="hotbar"] {
+    position: absolute;
+    left: 50%;
+    bottom: 0.75rem;
+    z-index: 30;
+    transform: translateX(-50%);
+  }
+  [data-side="hotbar"] .nav {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    --slot: calc(var(--nav-icon) + 1.45rem);
+    height: auto;
+    margin: 0;
+    padding: 0.3rem;
+    gap: 0.3rem;
+    overflow: visible;
+    border-radius: var(--r-sm);
+    background: color-mix(in srgb, var(--c-bg) 82%, transparent);
+    box-shadow: 0 4px 0 rgb(0 0 0 / 0.35);
+  }
+  [data-side="hotbar"] .brand,
+  [data-side="hotbar"] .favs,
+  [data-side="hotbar"] .palette .label,
+  [data-side="hotbar"] .palette kbd,
+  [data-side="hotbar"] .spacer,
+  [data-side="hotbar"] .tools,
+  [data-side="hotbar"] .account .label {
+    display: none;
+  }
+  [data-side="hotbar"] .items {
+    flex-direction: row;
+    gap: 0.2rem;
+  }
+  [data-side="hotbar"] .item,
+  [data-side="hotbar"] .account {
+    width: var(--slot);
+    height: var(--slot);
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--c-surface-2) 85%, transparent);
+    box-shadow:
+      inset 0 0 0 1px var(--c-border),
+      inset 0 -3px 0 rgb(0 0 0 / 0.22);
+    overflow: visible;
+  }
+  [data-side="hotbar"] .account {
+    order: -1;
+    margin-right: 0.45rem;
+  }
+  [data-side="hotbar"] .palette {
+    margin-left: 0.45rem;
+  }
+  [data-side="hotbar"] .items .item::before {
+    display: none;
+  }
+  [data-side="hotbar"] .items .item:hover {
+    background: var(--c-hover);
+    color: var(--c-text);
+  }
+  /* The chosen slot: a raised accent block with a frame, a little bigger than the rest. */
+  [data-side="hotbar"] .items .item[aria-current="page"] {
+    z-index: 1;
+    background: var(--c-accent);
+    box-shadow:
+      0 0 0 2px var(--c-text),
+      inset 0 -4px 0 rgb(0 0 0 / 0.22),
+      0 6px 16px color-mix(in srgb, var(--c-accent) 35%, transparent);
+    transform: translateY(-3px);
+    transition: transform var(--dur) var(--spring, var(--ease));
+  }
+  [data-side="hotbar"] .items .label {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.7rem);
+    display: none;
+    padding: 0.3rem 0.6rem;
+    transform: translateX(-50%);
+    border-radius: 3px;
+    background: var(--c-bg);
+    box-shadow:
+      inset 0 0 0 1px var(--c-border),
+      0 3px 0 rgb(0 0 0 / 0.3);
+    color: var(--c-text);
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+  /* The name of the chosen page shows above the bar, the hovered one instead while pointing. */
+  [data-side="hotbar"] .items .item[aria-current="page"] .label,
+  [data-side="hotbar"] .items .item:hover .label {
+    display: block;
+  }
+  [data-side="hotbar"] .items:hover .item[aria-current="page"]:not(:hover) .label {
+    display: none;
+  }
+  .num {
+    position: absolute;
+    right: 0.2rem;
+    bottom: 0.1rem;
+    font-family: var(--font-display);
+    font-size: 0.56rem;
+    font-weight: 700;
+    color: var(--c-text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  [aria-current="page"] > .num {
+    color: var(--c-accent-text);
+    opacity: 0.75;
+  }
+  [data-side="hotbar"] .gap {
+    width: 2px;
+    margin: 0.5rem 0.15rem;
+  }
+  [data-side="hotbar"] .dot {
+    left: auto;
+    right: 0.2rem;
+    top: 0.2rem;
   }
 </style>
