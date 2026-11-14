@@ -98,8 +98,8 @@ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
-Phosphor Icons (interface icons, src/lib/icons.ts)
----------------------------------------------------
+Phosphor Icons (interface icons, src/lib/icons.ts; the badge pictures of the Aerion mod)
+------------------------------------------------------------------------------------------
 MIT License
 
 Copyright (c) 2023 Phosphor Icons

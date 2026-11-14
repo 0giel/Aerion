@@ -11,22 +11,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
 import pl.aerion.mod.hud.HudConfig;
 
 /**
  * Badges next to players' names (above their heads and in the player list). The launcher writes
  * `-Daerion.badges=<file>`: {uuid without dashes: badge id}, fetched from the Aerion repository.
- * The icons are pixel glyphs of the game's own font, so they match its look.
+ * The icons are pictures in the mod's own font ({@code aerion:badges}, from its built-in resource
+ * pack); if that pack didn't load, the game's own pixel glyphs stand in.
  */
 public final class Badges {
-	/** Badge id → icon and colour; ids the file has but this version doesn't know are skipped. */
+	private static final FontDescription FONT = new FontDescription.Resource(Identifier.fromNamespaceAndPath("aerion", "badges"));
+	/** Badge id → picture in the badge font; ids the file has but this version doesn't know are skipped. */
 	private static final Map<String, MutableComponent> ICONS = Map.of(
+			"creator", picture('\uE000'),
+			"bugHunter", picture('\uE001'),
+			"tester", picture('\uE002'),
+			"contributor", picture('\uE003'));
+	/** The game's own glyphs, used when the built-in pack isn't there. */
+	private static final Map<String, MutableComponent> GLYPHS = Map.of(
 			"creator", icon("⭐", 0xFFC83D),
 			"bugHunter", icon("⛏", 0x5BE37A),
 			"tester", icon("🧪", 0x55D6FF),
 			"contributor", icon("❤", 0xFF6FA8));
+	/** Set when the built-in resource pack was created. */
+	static volatile boolean packReady;
 
 	private static Path file;
 	private static long modified = Long.MIN_VALUE;
@@ -34,6 +46,11 @@ public final class Badges {
 	private static volatile Map<UUID, List<String>> players = Map.of();
 
 	private Badges() {}
+
+	private static MutableComponent picture(char c) {
+		// White, so the picture keeps its own colours; no text shadow, the picture has its own edge.
+		return Component.literal(String.valueOf(c)).withStyle(s -> s.withFont(FONT).withColor(0xFFFFFF).withoutShadow());
+	}
 
 	private static MutableComponent icon(String glyph, int rgb) {
 		return Component.literal(glyph).withColor(rgb);
@@ -98,6 +115,6 @@ public final class Badges {
 			if ("none".equals(pick)) return name;
 			if (owned.contains(pick)) shown = pick;
 		}
-		return Component.empty().append(ICONS.get(shown)).append(" ").append(name);
+		return Component.empty().append((packReady ? ICONS : GLYPHS).get(shown)).append(" ").append(name);
 	}
 }

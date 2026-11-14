@@ -4,6 +4,7 @@
 	"plugin": "pl.aerion.mod.MixinGate",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"BuiltInPackSourceMixin",
 		"ClientLanguageMixin",
 		"DebugRendererMixin",
 		"EntityMixin",

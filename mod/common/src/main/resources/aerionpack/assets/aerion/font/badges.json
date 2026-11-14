@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "aerion:font/badges.png",
+      "height": 8,
+      "ascent": 7,
+      "chars": [
+        "\ue000\ue001\ue002\ue003"
+      ]
+    }
+  ]
+}
