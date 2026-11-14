@@ -1,6 +1,19 @@
 <script lang="ts" module>
   /** The drawing's size in model units and where the player's feet stand on it. */
   export const ISLAND = { width: 80, height: 92, feet: [40, 44] as const };
+
+  /** The kinds of island (the same list as launcher-core `instances::ISLANDS`). */
+  export type Biome = "meadow" | "snow" | "desert" | "nether";
+  export const BIOMES: Biome[] = ["meadow", "snow", "desert", "nether"];
+
+  /** The island an instance gets when the player hasn't chosen one: from words in its name. */
+  export function biomeFor(name: string): Biome {
+    const n = name.toLowerCase();
+    if (/pvp|nether|hardcore|bedwars|skywars|duel|piek/.test(n)) return "nether";
+    if (/snow|winter|ice|frost|zim|śnie|sniez|lód|lod/.test(n)) return "snow";
+    if (/desert|sand|dune|pustyn|piask/.test(n)) return "desert";
+    return "meadow";
+  }
 </script>
 
 <script lang="ts">
@@ -14,7 +27,10 @@
     pitch = -20,
     stage = 3,
     night = false,
+    biome = "meadow",
   }: {
+    /** Which island: grass and a tree, snow and a spruce, sand and cacti, or the nether. */
+    biome?: Biome;
     /** CSS pixels per model unit (the same unit as the player model: one skin pixel). */
     scale?: number;
     pitch?: number;
@@ -38,7 +54,10 @@
     | "fall"
     | "post"
     | "iron"
-    | "gem";
+    | "gem"
+    | "ice"
+    | "needle"
+    | "cactus";
   interface Voxel {
     at: Vec3;
     kind: Kind;
@@ -61,6 +80,9 @@
     post: 3,
     iron: 3,
     gem: 3,
+    ice: 1,
+    needle: 2,
+    cactus: 2,
   };
 
   /** Edge of one cube in model units. */
@@ -93,7 +115,7 @@
    *  Laid out for the view: the tree stands back on the left, a terrace rises behind the player,
    *  the pond spills over the front on the right, the lantern lights the near left. Nothing tall
    *  stands in front of the player, who is drawn over the island. */
-  const voxels: Voxel[] = (() => {
+  function build(biome: Biome): Voxel[] {
     const list: Voxel[] = [];
     const radius = (x: number, z: number) => Math.hypot(x, z) + (noise(x / 2.4, z / 2.4, 5) - 0.5) * 1.1;
     const inside = (x: number, z: number) => radius(x, z) <= R;
@@ -131,12 +153,14 @@
         for (let y = -up; y < depth; y++) {
           const d = y + up;
           let kind: Kind;
-          if (d === 0) kind = pond(x, z) ? "water" : "grass";
+          if (d === 0) kind = pond(x, z) ? (biome === "snow" ? "ice" : "water") : "grass";
           else if (d <= soil) kind = "dirt";
           else kind = y > 4 ? "deep" : "stone";
           // Water lies a little below the bank.
           list.push(
-            kind === "water" ? { at: [x, y, z], kind, box: [0, 0.18, 0, 1, 1, 1] } : { at: [x, y, z], kind },
+            kind === "water" || kind === "ice"
+              ? { at: [x, y, z], kind, box: [0, 0.18, 0, 1, 1, 1] }
+              : { at: [x, y, z], kind },
           );
         }
       }
@@ -149,9 +173,10 @@
       [1, 0, [0, 0, 0.06, 0.34, 1, 1]],
       [-1, 0, [0.66, 0, 0.06, 1, 1, 1]],
     ];
+    // A frozen pond doesn't spill.
     for (let x = -8; x <= 8; x++)
       for (let z = -8; z <= 8; z++) {
-        if (!pond(x, z)) continue;
+        if (biome === "snow" || !pond(x, z)) continue;
         for (const [dx, dz, box] of spills) {
           if (inside(x + dx, z + dz)) continue;
           for (let y = 0; y < 10; y++) {
@@ -162,29 +187,75 @@
         }
       }
 
-    // The tree: a trunk and a rounded crown.
+    // The tree: a rounded crown on the meadow, a spruce in the snow, a cactus in the desert and a
+    // huge fungus in the nether.
     const tree: Vec3 = [-5, -rise(-5, -2), -2];
-    for (let n = 1; n <= 3; n++)
-      list.push({ at: [tree[0], tree[1] - n, tree[2]], kind: "trunk", box: [0.12, 0, 0.12, 0.88, 1, 0.88] });
-    for (let x = -3; x <= 3; x++)
-      for (let z = -3; z <= 3; z++)
-        for (let y = -3; y <= 2; y++) {
-          const far = Math.hypot(x, y * 1.15 + 0.2, z) + hash(x + 50, z, y) * 0.45;
-          if (far > 3.05) continue;
-          list.push({ at: [tree[0] + x, tree[1] - 6 + y, tree[2] + z], kind: "leaf" });
-        }
-    // A bush on the terrace.
+    const trunk = (h: number, kind: Kind = "trunk", half = 0.38) => {
+      for (let n = 1; n <= h; n++)
+        list.push({
+          at: [tree[0], tree[1] - n, tree[2]],
+          kind,
+          box: [0.5 - half, 0, 0.5 - half, 0.5 + half, 1, 0.5 + half],
+        });
+    };
+    if (biome === "snow") {
+      trunk(2);
+      // Layers of needles, wide at the bottom and narrowing to a tip.
+      const layers = [2.3, 1.8, 1.5, 1.1, 0.7, 0.3];
+      layers.forEach((r, i) => {
+        for (let x = -3; x <= 3; x++)
+          for (let z = -3; z <= 3; z++)
+            if (Math.hypot(x, z) <= r + (i % 2 ? 0.15 : 0))
+              list.push({ at: [tree[0] + x, tree[1] - 3 - i, tree[2] + z], kind: "needle" });
+      });
+    } else if (biome === "desert") {
+      for (let n = 1; n <= 4; n++)
+        list.push({ at: [tree[0], tree[1] - n, tree[2]], kind: "cactus", box: [0.1, 0, 0.1, 0.9, 1, 0.9] });
+      // An arm to the side.
+      list.push({
+        at: [tree[0] + 1, tree[1] - 2, tree[2]],
+        kind: "cactus",
+        box: [0, 0.3, 0.2, 0.7, 0.7, 0.8],
+      });
+      list.push({
+        at: [tree[0] + 1, tree[1] - 3, tree[2]],
+        kind: "cactus",
+        box: [0.15, 0, 0.15, 0.75, 1, 0.75],
+      });
+    } else {
+      trunk(biome === "nether" ? 4 : 3, "trunk", biome === "nether" ? 0.42 : 0.38);
+      // A rounded crown; in the nether, a flat-bottomed cap like a fungus.
+      const cap = biome === "nether";
+      for (let x = -3; x <= 3; x++)
+        for (let z = -3; z <= 3; z++)
+          for (let y = -3; y <= 2; y++) {
+            if (cap && y > 0) continue;
+            const far = Math.hypot(x, y * (cap ? 1.6 : 1.15) + 0.2, z) + hash(x + 50, z, y) * 0.45;
+            if (far > (cap ? 3.25 : 3.05)) continue;
+            list.push({ at: [tree[0] + x, tree[1] - (cap ? 6 : 6) + y, tree[2] + z], kind: "leaf" });
+          }
+    }
+    // A bush on the terrace (a small cactus in the desert).
     const bush: Vec3 = [5, -rise(5, -2), -2];
-    for (const [x, y, z] of [
-      [0, 1, 0],
-      [1, 1, 0],
-      [-1, 1, 0],
-      [0, 1, 1],
-      [0, 1, -1],
-      [0, 2, 0],
-    ] as Vec3[])
-      if (inside(bush[0] + x, bush[2] + z))
-        list.push({ at: [bush[0] + x, bush[1] - y, bush[2] + z], kind: "bush" });
+    if (biome === "desert") {
+      for (let n = 1; n <= 2; n++)
+        list.push({
+          at: [bush[0], bush[1] - n, bush[2]],
+          kind: "cactus",
+          box: [0.15, 0, 0.15, 0.85, 1, 0.85],
+        });
+    } else {
+      for (const [x, y, z] of [
+        [0, 1, 0],
+        [1, 1, 0],
+        [-1, 1, 0],
+        [0, 1, 1],
+        [0, 1, -1],
+        [0, 2, 0],
+      ] as Vec3[])
+        if (inside(bush[0] + x, bush[2] + z))
+          list.push({ at: [bush[0] + x, bush[1] - y, bush[2] + z], kind: "bush" });
+    }
     // The lantern: a wooden post carrying a lit glass block between a dark base and a dark roof
     // with a knob on top. Heights are in cubes above the grass; a part may span two cells.
     const part = (kind: Kind, half: number, from: number, to: number) => {
@@ -221,7 +292,8 @@
     islet(7, 7, 2, 2.1);
     islet(9, -6, -3, 1.5);
     return list;
-  })();
+  }
+  const voxels = $derived(build(biome));
 
   let canvas: HTMLCanvasElement | undefined = $state();
 
@@ -267,22 +339,52 @@
     const accent = token("--c-accent", [251, 191, 36]);
     const bg = token("--c-bg", [22, 23, 27]);
     const surface = token("--c-surface-3", [49, 51, 59]);
-    const grass = mix([104, 190, 84], accent, 0.22);
     const glowing = mix(accent, [255, 255, 255], 0.45);
-    const palette: Record<Kind, Rgb> = {
-      grass,
+    const meadowGrass = mix([104, 190, 84], accent, 0.22);
+    // One palette per kind of island; the leaves and the light always take the theme's colour.
+    const base: Record<Kind, Rgb> = {
+      grass: meadowGrass,
       dirt: mix([140, 98, 66], bg, 0.12),
       stone: mix([156, 160, 176], surface, 0.36),
       deep: mix([118, 121, 138], surface, 0.44),
       trunk: [112, 80, 56],
       leaf: mix(accent, [255, 255, 255], 0.06),
-      bush: mix(grass, [40, 116, 64], 0.5),
+      bush: mix(meadowGrass, [40, 116, 64], 0.5),
       water: mix([84, 168, 236], accent, 0.14),
       fall: mix([160, 214, 248], accent, 0.1),
       post: [124, 88, 60],
       iron: [52, 50, 58],
       gem: glowing,
+      ice: [170, 206, 240],
+      needle: mix([46, 92, 66], accent, 0.12),
+      cactus: mix([76, 140, 60], accent, 0.08),
     };
+    const lava: Rgb = mix([250, 120, 30], accent, 0.15);
+    const palette: Record<Kind, Rgb> =
+      biome === "snow"
+        ? { ...base, grass: [238, 244, 250], bush: mix([46, 92, 66], [238, 244, 250], 0.25) }
+        : biome === "desert"
+          ? {
+              ...base,
+              grass: [226, 206, 140],
+              dirt: [208, 176, 110],
+              stone: mix([196, 160, 104], surface, 0.2),
+              water: mix([70, 180, 200], accent, 0.1),
+            }
+          : biome === "nether"
+            ? {
+                ...base,
+                grass: mix([150, 34, 42], accent, 0.18),
+                dirt: [112, 44, 44],
+                stone: mix([60, 50, 58], surface, 0.25),
+                deep: mix([44, 36, 44], surface, 0.25),
+                trunk: [150, 60, 70],
+                leaf: mix([176, 30, 40], accent, 0.3),
+                bush: [120, 22, 30],
+                water: lava,
+                fall: mix(lava, [255, 210, 120], 0.25),
+              }
+            : base;
     const dusk: Rgb = [70, 92, 156];
 
     const [sy, cy] = [Math.sin(rad(YAW)), Math.cos(rad(YAW))];
@@ -319,7 +421,7 @@
       const base: Vec3 = [(at[0] - 0.5 + x0) * V, (at[1] + y0) * V, (at[2] - 0.5 + z0) * V];
       const size: Vec3 = [(x1 - x0) * V, (y1 - y0) * V, (z1 - z0) * V];
       const grain =
-        kind === "leaf" || kind === "bush"
+        kind === "leaf" || kind === "bush" || kind === "needle"
           ? 0.9 + hash(at[0], at[2], at[1]) * 0.16
           : 0.965 + hash(at[0], at[2], at[1]) * 0.07;
       // Lighter and darker patches of grass.
@@ -351,6 +453,8 @@
         }
         if (!top && at[1] > 0) light *= Math.max(0.6, 1 - at[1] * 0.045);
         if (kind === "gem") light = 1.12;
+        // Lava glows by itself.
+        if (biome === "nether" && (kind === "water" || kind === "fall")) light = Math.max(light, 1.05);
 
         /** One quad of this face, between two heights of the cube (0 top, 1 bottom). */
         const add = (from: number, to: number, base0: Rgb, edge?: boolean) => {
@@ -368,7 +472,14 @@
             ]),
           );
           // Falling water thins out and fades into the sky.
-          const alpha = kind === "fall" ? Math.max(0.1, 0.78 - at[1] * 0.075) : kind === "water" ? 0.94 : 1;
+          // Water thins out as it falls; lava stays thick.
+          const lavaLike = biome === "nether";
+          const alpha =
+            kind === "fall"
+              ? Math.max(lavaLike ? 0.45 : 0.1, (lavaLike ? 0.95 : 0.78) - at[1] * 0.075)
+              : kind === "water" && !lavaLike
+                ? 0.94
+                : 1;
           faces.push({
             pts,
             depth: pts.reduce((n, p) => n + p[2], 0) / 4 + (box ? 0.01 : 0),
@@ -434,7 +545,7 @@
 
   $effect(() => {
     // Repaint after the theme's variables have reached the page.
-    void [themes.active, canvas, scale, pitch, stage, night];
+    void [themes.active, canvas, scale, pitch, stage, night, voxels];
     const id = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(id);
   });

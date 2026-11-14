@@ -24,6 +24,7 @@
   import type { AutoPlan, WorldInfo } from "../../bindings";
   import { autoSummary } from "../../javaAuto";
   import { t } from "../../i18n/index.svelte";
+  import { BIOMES, biomeFor } from "../../components/SkyIsland.svelte";
 
   let { instance, onremove }: { instance: Instance; onremove: () => void } = $props();
 
@@ -279,6 +280,21 @@
         class="textarea"
         bind:value={draft.notes}
         rows="2"></textarea>
+    </div>
+    <div class="field">
+      <span class="label">{t("instance.settings.island")}</span>
+      <div class="segmented" role="group" aria-label={t("instance.settings.island")}>
+        <button type="button" aria-pressed={!draft.island} onclick={() => (draft.island = null)}
+          >{t("instance.settings.islandAuto")}
+          <span class="faint">({t(`instance.settings.islands.${biomeFor(draft.name)}`)})</span></button
+        >
+        {#each BIOMES as b (b)}
+          <button type="button" aria-pressed={draft.island === b} onclick={() => (draft.island = b)}
+            >{t(`instance.settings.islands.${b}`)}</button
+          >
+        {/each}
+      </div>
+      <span class="hint">{t("instance.settings.islandHint")}</span>
     </div>
   </section>
 

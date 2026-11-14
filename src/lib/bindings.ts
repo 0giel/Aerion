@@ -1360,6 +1360,11 @@ export type Instance_Deserialize = {
 	gameDir?: string | null,
 	/**  Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder. */
 	icon?: string | null,
+	/**
+	 *  The island the player stands on in the launcher's home screen while this instance is
+	 *  chosen: one of [`ISLANDS`]; `None` = picked from the instance's name.
+	 */
+	island?: string | null,
 	/**  Pinned by the user: listed first and shown under "Favourites". */
 	favorite?: boolean,
 	group?: string | null,
@@ -1415,6 +1420,11 @@ export type Instance_Serialize = {
 	gameDir: string | null,
 	/**  Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder. */
 	icon: string | null,
+	/**
+	 *  The island the player stands on in the launcher's home screen while this instance is
+	 *  chosen: one of [`ISLANDS`]; `None` = picked from the instance's name.
+	 */
+	island: string | null,
 	/**  Pinned by the user: listed first and shown under "Favourites". */
 	favorite: boolean,
 	group: string | null,

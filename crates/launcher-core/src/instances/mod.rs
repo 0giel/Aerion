@@ -41,6 +41,9 @@ pub struct ModpackInfo {
     pub version_name: Option<String>,
 }
 
+/// Islands the home screen can show for an instance.
+pub const ISLANDS: [&str; 4] = ["meadow", "snow", "desert", "nether"];
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase", default)]
@@ -75,6 +78,9 @@ pub struct Instance {
     pub game_dir: Option<PathBuf>,
     /// Built-in icon key (`grass`, `diamond`, …) or `file:<name>` inside the instance folder.
     pub icon: Option<String>,
+    /// The island the player stands on in the launcher's home screen while this instance is
+    /// chosen: one of [`ISLANDS`]; `None` = picked from the instance's name.
+    pub island: Option<String>,
     /// Pinned by the user: listed first and shown under "Favourites".
     pub favorite: bool,
     pub group: Option<String>,
@@ -117,6 +123,7 @@ impl Default for Instance {
             join_world: None,
             game_dir: None,
             icon: None,
+            island: None,
             favorite: false,
             group: None,
             tags: vec![],
@@ -395,6 +402,11 @@ impl InstanceManager {
         if let Some(icon) = &edited.icon {
             validate_icon(icon)?;
         }
+        if let Some(island) = &edited.island
+            && !ISLANDS.contains(&island.as_str())
+        {
+            return Err(Error::Invalid(format!("unknown island {island}")));
+        }
         // Changing version or loader invalidates the installed profile.
         if edited.game_version != current.game_version
             || edited.loader != current.loader
@@ -638,6 +650,30 @@ mod tests {
             aerion_mod: false,
             shared_options: false,
         }
+    }
+
+    #[tokio::test]
+    async fn island_is_one_of_the_known_ones() {
+        let dir = tempfile::tempdir().unwrap();
+        let m = InstanceManager::new(dir.path().join("instances"));
+        let a = m.create(spec("A")).await.unwrap();
+        assert_eq!(a.island, None);
+        let snowy = m
+            .update(Instance {
+                island: Some("snow".into()),
+                ..a.clone()
+            })
+            .await
+            .unwrap();
+        assert_eq!(snowy.island.as_deref(), Some("snow"));
+        assert!(
+            m.update(Instance {
+                island: Some("moon".into()),
+                ..a
+            })
+            .await
+            .is_err()
+        );
     }
 
     #[tokio::test]

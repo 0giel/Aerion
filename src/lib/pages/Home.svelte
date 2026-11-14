@@ -3,7 +3,7 @@
   import Icon from "../components/Icon.svelte";
   import InstanceIcon from "../components/InstanceIcon.svelte";
   import SkinViewer from "../components/SkinViewer.svelte";
-  import SkyIsland, { ISLAND } from "../components/SkyIsland.svelte";
+  import SkyIsland, { ISLAND, biomeFor, type Biome } from "../components/SkyIsland.svelte";
   import { ambient } from "../stores/ambient.svelte";
   import { themes } from "../theme/engine.svelte";
   import { app } from "../stores/app.svelte";
@@ -65,6 +65,10 @@
   // The scene: the player on a floating island, clouds drifting behind. It only moves while the
   // launcher is in use, and not at all in lite mode or with motion off.
   const TILT = -20;
+  /** The chosen instance's island: its own choice, or one matching its name. */
+  const biome = $derived<Biome>(
+    current ? ((current.island as Biome | null) ?? biomeFor(current.name)) : "meadow",
+  );
   // The scene fills the space it gets: bigger on a big window, smaller on a small one.
   let room = $state({ w: 0, h: 0 });
   const SCENE = $derived(
@@ -309,7 +313,7 @@
         style:margin-left="{(-ISLAND.width * SCENE) / 2}px"
         style:margin-top="{(-ISLAND.height * SCENE) / 2}px"
       >
-        <div class="island"><SkyIsland scale={SCENE} pitch={TILT} {night} /></div>
+        <div class="island"><SkyIsland scale={SCENE} pitch={TILT} {night} {biome} /></div>
         <div class="figure" style:left="{figure.left}px" style:top="{figure.top}px">
           <SkinViewer
             skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
