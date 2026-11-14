@@ -23,6 +23,8 @@ pub struct LaunchOptions {
     pub game_dir: PathBuf,
     pub java: PathBuf,
     pub java_major: u32,
+    /// The runtime ships the Vector API module (`jdk.incubator.vector`), see [`has_vector_api`].
+    pub vector_api: bool,
     pub max_memory_mb: u32,
     pub min_memory_mb: Option<u32>,
     pub preset: JvmPreset,
@@ -167,6 +169,17 @@ pub fn build_command(
     // Make the console readable regardless of the OS code page (ignored by older JVMs).
     args.push("-Dstdout.encoding=UTF-8".into());
     args.push("-Dstderr.encoding=UTF-8".into());
+    // The Vector API, used by some performance mods (C2ME, for one). It is an incubator module:
+    // a JVM without it refuses to start, so it is only added when the runtime lists it.
+    if opts.vector_api
+        && opts.java_major >= 21
+        && !opts
+            .extra_jvm_args
+            .iter()
+            .any(|a| a.contains(VECTOR_MODULE))
+    {
+        args.push(format!("--add-modules={VECTOR_MODULE}"));
+    }
     args.extend(opts.extra_jvm_args.iter().cloned());
     args.extend(jvm_args(version, &env, &vars));
     if let Some(l) = &prepared.logging_arg {
@@ -220,6 +233,29 @@ pub struct GameExit {
     pub duration_secs: u64,
 }
 
+/// The incubator module with the Vector API.
+const VECTOR_MODULE: &str = "jdk.incubator.vector";
+
+/// Whether the Java at `java` (its `bin/java`) ships the Vector API module, read from the
+/// `MODULES` line of `<home>/release`. Unknown (no such file, e.g. some custom builds) counts as
+/// no: the flag is only an extra, never worth a game that doesn't start.
+pub fn has_vector_api(java: &Path) -> bool {
+    let Some(home) = java.parent().and_then(Path::parent) else {
+        return false;
+    };
+    std::fs::read_to_string(home.join("release")).is_ok_and(|r| release_lists_vector(&r))
+}
+
+fn release_lists_vector(release: &str) -> bool {
+    release.lines().any(|l| {
+        l.strip_prefix("MODULES=").is_some_and(|m| {
+            m.trim_matches('"')
+                .split_whitespace()
+                .any(|x| x == VECTOR_MODULE)
+        })
+    })
+}
+
 /// Run the game until it exits (or `stop` is cancelled), streaming parsed log lines.
 /// `on_spawn` receives the game's process id once it is running (for resource monitoring).
 pub async fn run(
@@ -230,6 +266,9 @@ pub async fn run(
 ) -> Result<GameExit> {
     tokio::fs::create_dir_all(&spec.cwd).await.at(&spec.cwd)?;
     let mut cmd = crate::util::process::command(&spec.program);
+    // `_JAVA_OPTIONS` from the system would override the launcher's memory and GC flags (the JVM
+    // reads it after the command line). An instance's own environment can still set it.
+    cmd.env_remove("_JAVA_OPTIONS");
     cmd.args(&spec.args)
         .current_dir(&spec.cwd)
         .envs(spec.env.iter().cloned())
@@ -375,6 +414,7 @@ mod tests {
             game_dir: PathBuf::from(game_dir),
             java: PathBuf::from("/java/bin/java"),
             java_major: 25,
+            vector_api: true,
             max_memory_mb: 4096,
             min_memory_mb: None,
             preset: JvmPreset::Standard,
@@ -422,6 +462,52 @@ mod tests {
         assert!(a.windows(2).any(|w| w == ["--width", "1280"]));
         assert!(a.iter().all(|x| !x.contains("${")), "{a:?}");
         assert!(!spec.redacted().contains("secret-access-token"));
+        // Java 25 gets the Vector API module, once, before the player's own flags.
+        let vector = a
+            .iter()
+            .position(|x| x == "--add-modules=jdk.incubator.vector")
+            .unwrap();
+        assert!(vector < custom);
+    }
+
+    #[test]
+    fn vector_api_only_where_the_runtime_has_it() {
+        let p = prepared("26.3.json");
+        let paths = Paths::at(PathBuf::from("/data"), false);
+        let env = Environment::for_os(Os::Linux, Arch::X64);
+        let has = |major: u32, vector: bool, extra: Vec<String>| {
+            let mut o = options("/g");
+            o.java_major = major;
+            o.vector_api = vector;
+            o.extra_jvm_args = extra;
+            build_command(&p, &o, &paths, &env)
+                .args
+                .iter()
+                .filter(|x| x.contains("jdk.incubator.vector"))
+                .count()
+        };
+        assert_eq!(has(17, true, vec![]), 0);
+        assert_eq!(has(21, true, vec![]), 1);
+        assert_eq!(has(30, true, vec![]), 1);
+        // A runtime without the module (a trimmed custom Java) must still start.
+        assert_eq!(has(25, false, vec![]), 0);
+        // A player who adds it by hand doesn't get it twice.
+        assert_eq!(
+            has(21, true, vec!["--add-modules=jdk.incubator.vector".into()]),
+            1
+        );
+    }
+
+    #[test]
+    fn reads_the_vector_module_from_release() {
+        assert!(release_lists_vector(
+            "JAVA_VERSION=\"25.0.1\"\nMODULES=\"java.base jdk.incubator.vector jdk.zipfs\"\n"
+        ));
+        assert!(!release_lists_vector(
+            "JAVA_VERSION=\"21.0.7\"\nMODULES=\"java.base java.desktop\"\n"
+        ));
+        assert!(!release_lists_vector("JAVA_VERSION=\"21\"\n"));
+        assert!(!has_vector_api(Path::new("/nonexistent/bin/java")));
     }
 
     #[test]

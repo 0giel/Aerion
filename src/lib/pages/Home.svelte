@@ -539,6 +539,9 @@
   }
   .play-row {
     position: relative;
+    /* The row is moved (it leans towards the cursor), which makes it a layer of its own; it has
+       to sit above the cards below it, or they cover the instance list that opens from it. */
+    z-index: 6;
     display: flex;
     gap: 2px;
   }

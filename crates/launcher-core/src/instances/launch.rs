@@ -337,6 +337,12 @@ pub async fn plan(
         game_dir: game_dir.clone(),
         java: java.path.clone(),
         java_major: java.major,
+        vector_api: crate::util::blocking({
+            let p = java.path.clone();
+            move || Ok(crate::game::launch::has_vector_api(&p))
+        })
+        .await
+        .unwrap_or(false),
         max_memory_mb,
         min_memory_mb: inst.min_memory_mb.or(settings.min_memory_mb),
         preset,

@@ -79,6 +79,7 @@ async fn main() {
         game_dir: game_dir.clone(),
         java: java.path.clone(),
         java_major: java.major,
+        vector_api: launcher_core::game::launch::has_vector_api(&java.path),
         max_memory_mb: 3072,
         min_memory_mb: None,
         preset: JvmPreset::Standard,
