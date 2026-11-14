@@ -397,6 +397,9 @@
   let head = { yaw: 0, pitch: 0 };
   /** Distance (CSS px) of the virtual eye plane: smaller = the head turns sooner. */
   const DEPTH = 420;
+  /** How far the head tilts back and forward at most (degrees). */
+  const HEAD_UP = 15;
+  const HEAD_DOWN = 22;
   /** Easing time constant: the head covers ~95 % of a turn in 3× this. */
   const EASE_MS = 45;
   /** While the head turns, the model redraws on every display frame (measured ~41 fps here,
@@ -410,7 +413,10 @@
     // (dragged round) can't look at the viewer; its head stays straight instead of twisting.
     const yaw = ((((aim.x - bodyYaw) % 360) + 540) % 360) - 180;
     if (Math.abs(yaw) > 90) return { yaw: 0, pitch: 0 };
-    return { yaw: clamp(yaw, 60), pitch: clamp(aim.y - bodyPitch, 35) };
+    // The view looks down on the player, so a head tilted far shows mostly its top and seems to
+    // come off the neck: the tilt stays small both ways.
+    const pitch = Math.max(-HEAD_DOWN, Math.min(HEAD_UP, aim.y - bodyPitch));
+    return { yaw: clamp(yaw, 45), pitch };
   }
 
   /** Advance sway and head easing by `dt` ms and draw. Returns whether the head still moves. */
