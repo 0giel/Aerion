@@ -1,6 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="150 140 760 760" aria-hidden="true">
-  <polygon points="512.0,262.0 757.8,398.0 512.0,534.0 266.2,398.0" fill="currentColor"/>
-  <polygon points="259.2,410.1 499.9,555.0 505.0,835.9 264.3,691.0" fill="currentColor" opacity="0.78"/>
-  <polygon points="524.1,555.0 764.8,410.1 759.7,691.0 519.0,835.9" fill="currentColor" opacity="0.56"/>
-  <polygon points="792.0,172.0 804.1,237.9 870.0,250.0 804.1,262.1 792.0,328.0 779.9,262.1 714.0,250.0 779.9,237.9" fill="currentColor"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.74 4.66 96.51 96.51" aria-hidden="true">
+  <polygon points="24.60,42.27 3.60,36.75 9.45,43.25 24.60,46.50" fill="currentColor" opacity="0.95"/>
+  <polygon points="24.60,50.10 8.10,45.00 13.50,51.00 24.60,54.00" fill="currentColor" opacity="0.8"/>
+  <polygon points="24.60,57.92 13.60,53.25 18.55,58.75 24.60,61.50" fill="currentColor" opacity="0.66"/>
+  <polygon points="75.40,42.27 96.40,36.75 90.55,43.25 75.40,46.50" fill="currentColor" opacity="0.95"/>
+  <polygon points="75.40,50.10 91.90,45.00 86.50,51.00 75.40,54.00" fill="currentColor" opacity="0.8"/>
+  <polygon points="75.40,57.92 86.40,53.25 81.45,58.75 75.40,61.50" fill="currentColor" opacity="0.66"/>
+  <polygon points="27.14,47.41 49.47,60.30 49.47,86.09 27.14,73.20" fill="currentColor" opacity="0.78"/>
+  <polygon points="72.86,47.41 50.53,60.30 50.53,86.09 72.86,73.20" fill="currentColor" opacity="0.56"/>
+  <polygon points="50.00,33.61 72.33,46.50 50.00,59.39 27.67,46.50" fill="currentColor"/>
+  <polygon points="50.00,19.75 51.34,24.91 56.50,26.25 51.34,27.59 50.00,32.75 48.66,27.59 43.50,26.25 48.66,24.91" fill="currentColor"/>
 </svg>

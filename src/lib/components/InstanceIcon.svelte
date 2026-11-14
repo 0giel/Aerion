@@ -1,5 +1,7 @@
 <script lang="ts">
-  import Logo from "./Logo.svelte";
+  // The default instance icon is the plain cube (the logo before its wings), which reads better
+  // at small sizes than the full mark.
+  import cube from "../../assets/cube.svg?raw";
   import { instanceIconUrl, textureUrl, type LoaderKind } from "../api";
   import { iconTexture } from "../instanceIcons";
 
@@ -36,7 +38,8 @@
   {:else if texture && !broken}
     <img class="texture" src={textureUrl(texture)} alt="" onerror={() => (broken = true)} />
   {:else}
-    <span class="glyph"><Logo /></span>
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- static SVG bundled with the app, not user input -->
+    <span class="glyph">{@html cube}</span>
   {/if}
 </div>
 
