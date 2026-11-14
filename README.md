@@ -11,10 +11,10 @@
 (Windows and Linux), with its own in-game mod: a full HUD you arrange with the mouse, dozens of
 settings for every module, and your launcher theme inside Minecraft's menus.
 
-**Highlights:** no data collection · 24 HUD modules and elements, each with its own look ·
-drag-and-resize HUD layout · hitboxes, sound editor, overlays, crosshair, waypoints ·
-theme editor with live preview · Fabric, Quilt, Forge, NeoForge · Modrinth mods and modpacks ·
-one-click crash fixes · automatic updates.
+**Highlights:** no data collection · a Start screen with your player on a floating island ·
+24 HUD modules and elements, each with its own look · drag-and-resize HUD layout · theme editor
+with live preview · Fabric, Quilt, Forge, NeoForge · Modrinth mods and modpacks · performance mods
+in one click · one-click crash fixes · automatic updates.
 
 > **Unofficial product.** Aerion is not approved by or associated with Mojang or Microsoft.
 > "Minecraft" is a trademark of Mojang Synergies AB.
@@ -23,19 +23,32 @@ one-click crash fixes · automatic updates.
 
 ![Home screen](docs/screenshots/home.png)
 
-## New in 1.0.0
+## Quick start
 
-- **HUD profiles:** separate layouts for PvP, building or survival, switched with a key or by
-  themselves when you join a server you assigned to a profile.
-- **In-game map** (M): click to add a waypoint; a death point, Nether/Overworld positions,
-  sharing a point in chat.
-- **Key editor** in the game with a keyboard that shows conflicts, and a shared one in the launcher.
-- **Friends** with skin faces and a *Join* button for worlds hosted through e4mc.
-- **Screenshot gallery** of every instance, **after-game performance summary**, and moving all
-  settings to another computer in one file.
-- **Badges** next to names in the game, for example for players who report bugs.
-- The mod **updates itself** between launcher releases, and launcher updates download in the
-  background.
+1. **Download.** Windows: [`AerionSetup.exe`](https://github.com/0giel/Aerion/releases/latest/download/AerionSetup.exe)
+   (fetches the newest version, checks its signature and starts the launcher). Linux, in a terminal:
+
+   ```sh
+   curl -fsSL https://0giel.github.io/Aerion/install.sh | sh
+   ```
+
+   Other files (`.AppImage`, `.deb`, the classic Windows installer) are on the
+   [Releases](https://github.com/0giel/Aerion/releases/latest) page.
+2. **Sign in** with the Microsoft account that owns Minecraft: Java Edition.
+3. **Create an instance** with *Fabric + Aerion*, press **Play**, then **Right Shift** in the game to
+   arrange your HUD.
+
+## What's new
+
+- **A new look (1.1):** your player stands on a floating island on the Start screen, in the
+  colours of your theme, with a winter, desert or nether island for each instance. A new logo, a
+  sidebar of its own and new icons.
+- **Performance mods in one click (1.1.1):** Sodium, Lithium, FerriteCore, ImmediatelyFast and
+  EntityCulling for any Fabric or Quilt instance, from Modrinth, when you create it or later in its
+  Content tab. Mods you already have, or turned off, are left alone.
+- **In the game (1.1.2):** furnaces' and the brewing stand's progress in your theme's colours.
+- Earlier: HUD profiles, an in-game map with waypoints, a key editor, friends with a *Join* button,
+  a screenshot gallery, an after-game performance summary and badges.
 
 ![HUD profiles](docs/screenshots/profiles.png)
 
@@ -185,8 +198,8 @@ The launcher can edit the HUD as well:
 ## Download
 
 Get the latest version from [Releases](https://github.com/0giel/Aerion/releases/latest):
-`Aerion_x.y.z_x64-setup.exe` for Windows, `.AppImage` or `.deb` for Linux. Installed copies update
-themselves. The Windows installer isn't signed by Microsoft yet, so SmartScreen may warn you: choose
+`AerionSetup.exe` (or the classic `Aerion_x.y.z_x64-setup.exe`) for Windows, the one-command
+installer, `.AppImage` or `.deb` for Linux. Installed copies update themselves. The Windows installer isn't signed by Microsoft yet, so SmartScreen may warn you: choose
 "More info", then "Run anyway".
 
 ### Code signing policy
@@ -197,7 +210,7 @@ with that certificate yet. How releases are built, what will be signed and who a
 
 ## Status
 
-Version 1.0.0, made by one person and open source under the GPL-3.0. Microsoft sign-in is approved
+Actively developed by one person and open source under the GPL-3.0 ([latest release](https://github.com/0giel/Aerion/releases/latest)). Microsoft sign-in is approved
 by Mojang. Bug reports and ideas are welcome in [issues](https://github.com/0giel/Aerion/issues).
 
 ## Building from source

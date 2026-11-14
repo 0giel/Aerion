@@ -33,7 +33,7 @@
         <a href="#faq" data-i18n="nav.faq">FAQ</a>
       </nav>
       <button id="lang" class="lang" type="button" aria-label="Language / Język">EN</button>
-      <a class="btn primary sm" href="#download" data-i18n="nav.get">Pobierz</a>
+      <a class="btn primary sm quiet" id="top-dl" href="#download" data-i18n="nav.get">Pobierz</a>
     </div>
   </header>
 
@@ -135,9 +135,9 @@
           <ul class="ticks">
             <li data-i18n="m.1">Fabric, Quilt, Forge i NeoForge</li>
             <li data-i18n="m.2">Java pobierana automatycznie</li>
-            <li data-i18n="m.3">Nowa instancja może od razu dostać mody optymalizacyjne:</li>
+            <li data-i18n="m.3">Mody przyspieszające jednym kliknięciem w każdej instancji Fabric i Quilt:</li>
           </ul>
-          <p class="modlist"><a href="https://modrinth.com/mod/sodium">Sodium</a><a href="https://modrinth.com/mod/lithium">Lithium</a><a href="https://modrinth.com/mod/ferrite-core">FerriteCore</a><a href="https://modrinth.com/mod/immediatelyfast">ImmediatelyFast</a></p>
+          <p class="modlist"><a href="https://modrinth.com/mod/sodium">Sodium</a><a href="https://modrinth.com/mod/lithium">Lithium</a><a href="https://modrinth.com/mod/ferrite-core">FerriteCore</a><a href="https://modrinth.com/mod/immediatelyfast">ImmediatelyFast</a><a href="https://modrinth.com/mod/entityculling">EntityCulling</a></p>
         </div>
       </div>
     </section>
@@ -189,7 +189,7 @@
           <details class="more" id="more-exe"><summary data-i18n="d.more">Inne sposoby instalacji</summary>
           <article class="file" data-file="exe">
             <div class="file-info"><strong data-i18n="d.exeT">Instalator Windows</strong><span class="meta" data-i18n="d.exeD">Windows 10 lub 11, 64-bit. Bez uprawnień administratora.</span><span class="meta" data-size></span></div>
-            <a class="btn primary" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
+            <a class="btn soft" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
             <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
           </article>
           </details>
@@ -208,14 +208,14 @@
             </article>
             <article class="file" data-file="appimage">
               <div class="file-info"><strong>AppImage</strong><span class="meta" data-i18n="d.appD">Większość dystrybucji, bez instalacji. 64-bit.</span><span class="meta" data-size></span></div>
-              <a class="btn primary" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
+              <a class="btn soft" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
               <div class="cmd"><code data-cmd="appimage"></code><button type="button" class="copy-btn" data-i18n="d.copy">Kopiuj</button></div>
               <p class="meta" data-i18n-html="d.appN">Po pobraniu uruchom to polecenie w folderze z plikiem. Jeśli system zgłosi brak FUSE, zainstaluj pakiet <code>libfuse2</code>.</p>
               <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>
             </article>
             <article class="file" data-file="deb">
               <div class="file-info"><strong>.deb</strong><span class="meta" data-i18n="d.debD">Ubuntu, Debian, Mint, Zorin i pokrewne. 64-bit.</span><span class="meta" data-size></span></div>
-              <a class="btn" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
+              <a class="btn soft" data-dl href="https://github.com/0giel/Aerion/releases/latest" data-i18n="d.get">Pobierz</a>
               <div class="cmd"><code data-cmd="deb"></code><button type="button" class="copy-btn" data-i18n="d.copy">Kopiuj</button></div>
               <p class="meta" data-i18n="d.debN">Po pobraniu uruchom to polecenie w folderze z plikiem. Zależności zainstalują się same.</p>
               <details class="sum" hidden><summary data-i18n="d.verify">Suma SHA-256</summary><code data-sha></code></details>

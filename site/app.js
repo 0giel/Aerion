@@ -20,7 +20,7 @@
     "th.text": "Pick a theme or build your own in an editor with live preview. Its colours reach the game menus too, and the menu's position, style and animations are set in the theme.",
     "m.title": "Mods without the hunt",
     "m.text": "Add mods and packs from Modrinth and CurseForge with one button, together with what they require.",
-    "m.1": "Fabric, Quilt, Forge and NeoForge", "m.2": "Java downloaded automatically", "m.3": "A new instance can start with optimization mods:",
+    "m.1": "Fabric, Quilt, Forge and NeoForge", "m.2": "Java downloaded automatically", "m.3": "Performance mods in one click for every Fabric and Quilt instance:",
     "f.title": "And everything else",
     "f.1t": "HUD profiles", "f.1d": "Separate layouts for PvP, building and survival, switched with a key or by themselves when you join a server.",
     "f.2t": "Map and waypoints", "f.2d": "An in-game map, waypoints added with a click, a death point and sharing coordinates.",
@@ -218,6 +218,11 @@
   tablist(osTabs, showOs);
   if (os === "linux") showOs($("tab-linux"));
   if (os === "mobile" || os === "mac") $("no-desktop").hidden = false;
+
+  // One loud button at a time: the header's Download stays soft while the hero's is in view.
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([e]) => $("top-dl").classList.toggle("quiet", e.isIntersecting)).observe($("hero-dl"));
+  }
 
   $("hero-dl").addEventListener("click", () => {
     if (!$("hero-dl").getAttribute("href").startsWith("#")) setTimeout(() => $("download").scrollIntoView(), 400);
