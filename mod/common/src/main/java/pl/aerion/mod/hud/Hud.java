@@ -451,22 +451,6 @@ public final class Hud {
 				return List.of(format(c.opt("format", "{combo} Combo"), "combo", n));
 			}
 		});
-		MODULES.put("saturation", new Lines() {
-			private float value(Ctx c) {
-				return c.player() == null ? 5f : c.player().getFoodData().getSaturationLevel();
-			}
-
-			List<String> lines(Ctx c) {
-				String v = String.format("%.1f", value(c));
-				return List.of(c.flag("label", true) ? Lang.tr("aerion.hud.saturation") + " " + v : v);
-			}
-
-			@Override
-			int color(Ctx c, int line) {
-				float v = value(c);
-				return c.flag("colored", true) ? graded(v >= 5, v > 0) : c.style().text();
-			}
-		});
 		MODULES.put("stopwatch", new Lines() {
 			List<String> lines(Ctx c) {
 				long ms = c.preview() && Stopwatch.millis() == 0 ? 83_400 : Stopwatch.millis();

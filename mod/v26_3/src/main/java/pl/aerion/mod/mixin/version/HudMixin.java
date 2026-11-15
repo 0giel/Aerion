@@ -24,6 +24,12 @@ abstract class HudMixin {
 		pl.aerion.mod.hud.Hud.render(new Gfx(g), false);
 	}
 
+	/** Saturation and the held food's value on the hunger bar. */
+	@Inject(method = "extractFood", at = @At("TAIL"))
+	private void aerion$food(GuiGraphicsExtractor g, net.minecraft.world.entity.player.Player player, int top, int right, CallbackInfo ci) {
+		pl.aerion.mod.features.FoodOverlay.draw(new Gfx(g), player, top, right);
+	}
+
 	@Inject(method = "extractVignette", at = @At("HEAD"), cancellable = true)
 	private void aerion$vignette(CallbackInfo ci) {
 		if (Overlays.hidden("vignette")) ci.cancel();

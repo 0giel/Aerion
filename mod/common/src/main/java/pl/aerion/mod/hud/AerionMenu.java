@@ -48,7 +48,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "chunkBorders", "ownName", "tntTimer", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -127,7 +127,6 @@ public final class AerionMenu implements Page {
 			Map.entry("death", List.of(Option.toggle("distance", true))),
 			Map.entry("reach", List.of(Option.format("{reach} m", "3.12 m", "Reach: {reach}", "Reach: 3.12", "{reach}", "3.12"), Option.toggle("hideIdle", false))),
 			Map.entry("combo", List.of(Option.format("{combo} Combo", "3 Combo", "Combo: {combo}", "Combo: 3", "x{combo}", "x3"), Option.toggle("hideZero", true))),
-			Map.entry("saturation", List.of(Option.toggle("label", true), Option.toggle("colored", true))),
 			Map.entry("server", List.of(Option.toggle("hideSingle", false))),
 			Map.entry("session", List.of(Option.toggle("label", true))),
 			Map.entry("day", List.of(Option.toggle("time", true))),
@@ -163,6 +162,7 @@ public final class AerionMenu implements Page {
 					Option.colour("color", "#ffffff"), Option.toggle("outline", true), Option.toggle("dot", false),
 					Option.toggle("target", false), Option.colour("targetColor", "#ff5555"), Option.toggle("attack", true))),
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
+			Map.entry("food", List.of(Option.toggle("saturation", true), Option.toggle("preview", true))),
 			Map.entry("hitboxes", List.of(
 					Option.colour("color", "#ffffff"), Option.toggle("reach", true), Option.colour("reachColor", "#ff5555"),
 					Option.number("width", 2, 1, 6), Option.number("fill", 0, 0, 100), Option.number("range", 48, 8, 128),

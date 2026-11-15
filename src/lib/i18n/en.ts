@@ -1363,7 +1363,6 @@ const en = {
       playerList: "Player list",
       reach: "Reach",
       combo: "Combo counter",
-      saturation: "Saturation",
       stopwatch: "Stopwatch",
       server: "Server address",
       cooldowns: "Cooldowns",
@@ -1413,7 +1412,6 @@ const en = {
       minimap: "A terrain map around you — no player or mob radar.",
       reach: "How far your last hit reached.",
       combo: "Hits in a row before you get hit back.",
-      saturation: "Hidden food: until it runs out, the hunger bar doesn't drop.",
       stopwatch: "A stopwatch on one key (set it in the game): start, stop, and start again from zero.",
       server: "The address of the server you play on.",
       cooldowns: "Items you have to wait for: ender pearl, chorus fruit, a disabled shield.",
@@ -1427,10 +1425,6 @@ const en = {
       combo: {
         format: "Format ({combo})",
         hideZero: "Hide at zero",
-      },
-      saturation: {
-        label: "Show label",
-        colored: "Color by amount",
       },
       server: {
         hideSingle: "Hide in singleplayer",
@@ -1673,6 +1667,8 @@ const en = {
       ownNameHint: "Your name and badge above your head when the camera is behind you.",
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
+      food: "Food on the hunger bar",
+      foodHint: "A gold rim shows saturation; held food blinks where it would fill (like AppleSkin).",
       fullbrightHint: "See in the dark; the key switches it off and on for a moment.",
     },
   },

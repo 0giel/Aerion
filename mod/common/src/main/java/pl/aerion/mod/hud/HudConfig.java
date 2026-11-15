@@ -58,7 +58,6 @@ public final class HudConfig {
 			  "playerList":{"enabled":false,"x":992,"y":300,"scale":100},
 			  "reach":{"enabled":false,"x":500,"y":620,"scale":100},
 			  "combo":{"enabled":false,"x":500,"y":680,"scale":100},
-			  "saturation":{"enabled":false,"x":8,"y":560,"scale":100},
 			  "stopwatch":{"enabled":false,"x":700,"y":90,"scale":100},
 			  "server":{"enabled":false,"x":8,"y":200,"scale":100},
 			  "cooldowns":{"enabled":false,"x":700,"y":560,"scale":100}},
@@ -67,7 +66,7 @@ public final class HudConfig {
 			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false},"lightLevels":{"enabled":false},
 			  "blockOutline":{"enabled":false},"chat":{"enabled":false},"perspective":{"enabled":false},"fovKey":{"enabled":false},
 			  "worldLook":{"enabled":false},"hitColor":{"enabled":false},"screens":{"enabled":false},"inventory":{"enabled":true},"menus":{"enabled":true},"waypoints":{"enabled":false},"badges":{"enabled":true},
-			  "chunkBorders":{"enabled":false},"ownName":{"enabled":false},"tntTimer":{"enabled":false}}}
+			  "chunkBorders":{"enabled":false},"ownName":{"enabled":false},"tntTimer":{"enabled":false},"food":{"enabled":true}}}
 			""";
 
 	public static HudConfig defaults() {

@@ -1415,7 +1415,6 @@ const pl: Dict = {
       playerList: "Lista graczy",
       reach: "Zasięg uderzenia",
       combo: "Licznik combo",
-      saturation: "Nasycenie",
       stopwatch: "Stoper",
       server: "Adres serwera",
       cooldowns: "Odnowienia",
@@ -1465,7 +1464,6 @@ const pl: Dict = {
       minimap: "Mapa terenu wokół ciebie — bez radaru graczy i mobów.",
       reach: "Jak daleko sięgnęło twoje ostatnie uderzenie.",
       combo: "Trafienia z rzędu, zanim ktoś trafi ciebie.",
-      saturation: "Ukryte najedzenie: dopóki go starcza, pasek głodu nie spada.",
       stopwatch: "Stoper pod jednym klawiszem (ustawisz go w grze): start, stop i znów od zera.",
       server: "Adres serwera, na którym grasz.",
       cooldowns: "Przedmioty, na które trzeba poczekać: perła, owoc refrenu, zablokowana tarcza.",
@@ -1479,10 +1477,6 @@ const pl: Dict = {
       combo: {
         format: "Format ({combo})",
         hideZero: "Ukryj przy zerze",
-      },
-      saturation: {
-        label: "Pokaż podpis",
-        colored: "Kolor zależny od ilości",
       },
       server: {
         hideSingle: "Ukryj w grze jednoosobowej",
@@ -1724,6 +1718,8 @@ const pl: Dict = {
       ownNameHint: "Twój nick i odznaka nad głową, gdy kamera jest za tobą.",
       tntTimer: "Odliczanie TNT",
       tntTimerHint: "Sekundy do wybuchu nad podpalonym TNT w pobliżu.",
+      food: "Jedzenie na pasku głodu",
+      foodHint: "Złoty obrys pokazuje nasycenie, a trzymane jedzenie miga tam, ile uzupełni (jak AppleSkin).",
       fullbrightHint: "Widzisz w ciemności; klawisz wyłącza i włącza na chwilę.",
     },
   },

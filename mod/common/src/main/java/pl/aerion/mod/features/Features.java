@@ -35,7 +35,7 @@ public final class Features {
 	/** Every HUD module; each can have a key that switches it on and off. */
 	public static final String[] MODULE_IDS = {
 		"fps", "coords", "direction", "speed", "cps", "keystrokes", "armor", "totems", "items", "potions", "death", "armorWarn", "ping", "clock", "session", "day", "light", "memory", "packs", "minimap", "toggles", "bossbar", "scoreboard", "chatbox",
-		"blockInfo", "fpsGraph", "playerList", "reach", "combo", "saturation", "stopwatch", "server", "cooldowns"
+		"blockInfo", "fpsGraph", "playerList", "reach", "combo", "stopwatch", "server", "cooldowns"
 	};
 
 	private static KeyMapping[] keys;

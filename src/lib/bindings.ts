@@ -1085,6 +1085,11 @@ export type HudFeatures_Deserialize = {
 	ownName?: FeatureOptions_Deserialize,
 	/**  Seconds left above lit TNT nearby. */
 	tntTimer?: FeatureOptions_Deserialize,
+	/**
+	 *  Saturation and the held food's value on the hunger bar (`options.saturation`,
+	 *  `options.preview`); on unless switched off.
+	 */
+	food?: OnFeature_Deserialize,
 };
 
 export type HudFeatures_Serialize = {
@@ -1128,6 +1133,11 @@ export type HudFeatures_Serialize = {
 	ownName: FeatureOptions_Serialize,
 	/**  Seconds left above lit TNT nearby. */
 	tntTimer: FeatureOptions_Serialize,
+	/**
+	 *  Saturation and the held food's value on the hunger bar (`options.saturation`,
+	 *  `options.preview`); on unless switched off.
+	 */
+	food: OnFeature_Serialize,
 };
 
 export type HudModule = HudModule_Serialize | HudModule_Deserialize;

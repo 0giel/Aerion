@@ -214,6 +214,9 @@ pub struct HudFeatures {
     pub own_name: FeatureOptions,
     /// Seconds left above lit TNT nearby.
     pub tnt_timer: FeatureOptions,
+    /// Saturation and the held food's value on the hunger bar (`options.saturation`,
+    /// `options.preview`); on unless switched off.
+    pub food: OnFeature,
 }
 
 /// A saved HUD layout (e.g. PvP, building) the player switches to with a key, in the menus, or
@@ -281,7 +284,6 @@ const MODULES: &[(&str, bool, u16, u16)] = &[
     ("playerList", false, 992, 300),
     ("reach", false, 500, 620),
     ("combo", false, 500, 680),
-    ("saturation", false, 8, 560),
     ("stopwatch", false, 700, 90),
     ("server", false, 8, 200),
     ("cooldowns", false, 700, 560),
@@ -487,6 +489,7 @@ impl HudConfig {
                 &self.features.chunk_borders.options,
                 &self.features.own_name.options,
                 &self.features.tnt_timer.options,
+                &self.features.food.options,
             ]
             .iter()
             .all(|o| o.iter().all(|(k, v)| k.len() <= 200 && v.len() <= 64));

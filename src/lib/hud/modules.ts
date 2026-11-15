@@ -39,7 +39,6 @@ export const MODULE_IDS = [
   "playerList",
   "reach",
   "combo",
-  "saturation",
   "stopwatch",
   "server",
   "cooldowns",
@@ -163,10 +162,6 @@ export const FIELDS: Record<string, Field[]> = {
     { key: "format", type: "text", def: "{combo} Combo" },
     { key: "hideZero", type: "toggle", def: "1" },
   ],
-  saturation: [
-    { key: "label", type: "toggle", def: "1" },
-    { key: "colored", type: "toggle", def: "1" },
-  ],
   server: [{ key: "hideSingle", type: "toggle", def: "0" }],
   playerList: [
     { key: "max", type: "number", def: "10", min: 1, max: 50 },
@@ -258,8 +253,6 @@ export function sample(id: string, opt: (key: string, def: string) => string): s
       return [fill(opt("format", "{reach} m"), { reach: "3.12" })];
     case "combo":
       return [fill(opt("format", "{combo} Combo"), { combo: 3 })];
-    case "saturation":
-      return ["5.0"];
     case "stopwatch":
       return ["1:23.4"];
     case "server":
