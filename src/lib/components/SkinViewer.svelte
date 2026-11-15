@@ -2,8 +2,8 @@
   // Player model drawn on a 2D canvas (no WebGL, no libraries, no CSS 3D — WebKitGTK without GPU
   // compositing flattens `preserve-3d`). Each body part is a cuboid; every face is an affine
   // image of its skin UV rectangle under an orthographic projection. Back faces are culled and
-  // the rest painted far-to-near. Faces are shaded by pre-darkened copies of the texture, so a
-  // frame costs the same as unshaded drawing.
+  // the rest painted far-to-near. Faces are shaded by darkened cut-outs of their part of the texture,
+  // made once and reused, so a frame costs the same as unshaded drawing.
   import { imgUrl } from "../api";
   import { themes } from "../theme/engine.svelte";
   import { ambient, onAmbientFrame } from "../stores/ambient.svelte";
@@ -55,8 +55,9 @@
 
   const WIDTH = 22;
   const HEIGHT = 36;
-  /** Shading levels: multiplied brightness of each pre-darkened texture copy. */
-  const SHADES = [1, 0.9, 0.8, 0.7, 0.6];
+  /** Shading levels: multiplied brightness of each pre-darkened texture copy. Small steps, so
+   *  turning the model changes the light smoothly instead of in visible jumps. */
+  const SHADES = Array.from({ length: 17 }, (_, i) => 1 - i * 0.025);
   /** Light from the upper left front (y points down). */
   const LIGHT: Vec3 = (() => {
     const l: Vec3 = [-0.42, -0.55, 0.72];
@@ -69,21 +70,50 @@
   let cape = $state.raw<HTMLCanvasElement[] | null>(null);
   let legacy = $state(false);
 
-  /** Copies of an image darkened to each shade (only opaque pixels: `source-atop`). */
+  /** The image as a canvas; faces are cut out of it and darkened when first drawn. */
   function shaded(img: HTMLImageElement): HTMLCanvasElement[] {
-    return SHADES.map((b) => {
-      const c = document.createElement("canvas");
-      c.width = img.naturalWidth;
-      c.height = img.naturalHeight;
-      const x = c.getContext("2d")!;
-      x.drawImage(img, 0, 0);
-      if (b < 1) {
-        x.globalCompositeOperation = "source-atop";
-        x.fillStyle = `rgba(0,0,0,${(1 - b).toFixed(2)})`;
-        x.fillRect(0, 0, c.width, c.height);
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    c.getContext("2d")!.drawImage(img, 0, 0);
+    return [c];
+  }
+
+  /**
+   * One face's part of a texture, cut out into its own image. Drawing a part of a bigger image
+   * can pick up pixels just outside it at the edges (GPU canvases do), which shows as thin lines
+   * of the neighbouring faces' colours around the outer layer; a cut-out has no neighbours.
+   */
+  const pieces = new WeakMap<HTMLCanvasElement, Map<string, HTMLCanvasElement>>();
+  function piece(
+    tex: HTMLCanvasElement,
+    shade: number,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+  ): HTMLCanvasElement {
+    let cut = pieces.get(tex);
+    // A plain cache, read while drawing; nothing reacts to it.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    if (!cut) pieces.set(tex, (cut = new Map()));
+    const key = `${shade}:${x},${y},${w},${h}`;
+    let c = cut.get(key);
+    if (!c) {
+      c = document.createElement("canvas");
+      c.width = Math.max(1, w);
+      c.height = Math.max(1, h);
+      const g = c.getContext("2d")!;
+      g.drawImage(tex, x, y, w, h, 0, 0, w, h);
+      // Darken only the opaque pixels (`source-atop`).
+      if (SHADES[shade] < 1) {
+        g.globalCompositeOperation = "source-atop";
+        g.fillStyle = `rgba(0,0,0,${(1 - SHADES[shade]).toFixed(3)})`;
+        g.fillRect(0, 0, w, h);
       }
-      return c;
-    });
+      cut.set(key, c);
+    }
+    return c;
   }
 
   function load(
@@ -286,7 +316,7 @@
     const oy = (cssH / 2) * dpr;
     const pose = poses(headYaw, headPitch, t);
 
-    const visible: { face: Face; depth: number; shade: number; kind: Kind }[] = [];
+    const visible: { face: Face; depth: number; shade: number; kind: Kind; outer: boolean }[] = [];
     for (const { part, outer, faces } of geometry) {
       const p = pose[part.kind];
       for (const raw of faces) {
@@ -322,6 +352,7 @@
           depth: point(centre)[2] + (outer ? 0.01 : 0),
           shade,
           kind: part.kind,
+          outer,
         });
       }
     }
@@ -349,7 +380,7 @@
     ctx.fillRect(-rx, -rx, 2 * rx, 2 * rx);
 
     const blank = skin ? "" : getComputedStyle(c).getPropertyValue("--c-surface-3").trim() || "#444";
-    for (const { face, shade, kind } of visible) {
+    for (const { face, shade, kind, outer } of visible) {
       const tex = kind === "cape" ? cape : skin;
       // HD textures: scale texture coordinates from the 64-px layout.
       const k = tex ? tex[0].width / 64 : 1;
@@ -367,8 +398,10 @@
         oy + o[1] * s,
       );
       if (tex) {
-        // A hair of overlap hides seams between neighbouring faces.
-        ctx.drawImage(tex[shade], tu * k, tv * k, tw * k, th * k, -0.02, -0.02, tw + 0.04, th + 0.04);
+        // A hair of overlap hides seams between neighbouring faces of the body; the outer layer
+        // floats above it and is drawn at its true size, so its edges don't stand out.
+        const e = outer ? 0 : 0.02;
+        ctx.drawImage(piece(tex[0], shade, tu * k, tv * k, tw * k, th * k), -e, -e, tw + 2 * e, th + 2 * e);
       } else {
         ctx.fillStyle = blank;
         ctx.fillRect(0, 0, tw, th);
