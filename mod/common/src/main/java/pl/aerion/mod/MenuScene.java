@@ -42,6 +42,28 @@ public final class MenuScene {
 		return opt("scene", "aurora");
 	}
 
+	private static final String[] SCENES = {"aurora", "panorama", "world"};
+
+	/** The next background in turn (the button on the title screen), saved like any setting. */
+	public static String nextScene() {
+		String now = mode();
+		int i = java.util.Arrays.asList(SCENES).indexOf(now);
+		String next = SCENES[(i + 1) % SCENES.length];
+		JsonObject f = menus();
+		if (f != null) {
+			JsonObject o = f.has("options") && f.get("options").isJsonObject() ? f.getAsJsonObject("options") : new JsonObject();
+			o.addProperty("scene", next);
+			f.add("options", o);
+			AerionClient.saveHud();
+		}
+		return next;
+	}
+
+	/** Whether a picture of the player's world exists yet (before the first game there is none). */
+	public static boolean hasWorldPicture() {
+		return Files.exists(file());
+	}
+
 	/** The game's panorama stays, with the theme laid over it. */
 	public static boolean vanillaPanorama() {
 		return "panorama".equals(mode());

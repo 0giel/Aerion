@@ -27,6 +27,15 @@ abstract class MenuButtonMixin extends Screen {
 		super(title);
 	}
 
+	private static Component sceneLabel(String scene) {
+		return Component.literal(Lang.tr("aerion.menu.scene").replace("{name}", Lang.tr("aerion.choice." + scene)));
+	}
+
+	private static net.minecraft.client.gui.components.Tooltip sceneTip(String scene) {
+		String key = "world".equals(scene) && !pl.aerion.mod.MenuScene.hasWorldPicture() ? "aerion.menu.sceneWorldSoon" : "aerion.menu.sceneHint";
+		return net.minecraft.client.gui.components.Tooltip.create(Component.literal(Lang.tr(key)));
+	}
+
 	@Inject(method = "init", at = @At("TAIL"))
 	private void aerion$menuButton(CallbackInfo ci) {
 		Screen self = this;
@@ -35,6 +44,18 @@ abstract class MenuButtonMixin extends Screen {
 						b -> Game.setScreen(new EditorScreen(new HudEditor(), self)))
 				.bounds(width - 64, 4, 60, 20)
 				.build());
+		if (self instanceof TitleScreen) {
+			// The menu background, switched in turn: aurora, the game's panorama, the player's world.
+			Button scene = Button.builder(sceneLabel(pl.aerion.mod.MenuScene.mode()), b -> {
+						String next = pl.aerion.mod.MenuScene.nextScene();
+						b.setMessage(sceneLabel(next));
+						b.setTooltip(sceneTip(next));
+					})
+					.bounds(width - 64 - 6 - 104, 4, 104, 20)
+					.tooltip(sceneTip(pl.aerion.mod.MenuScene.mode()))
+					.build();
+			addRenderableWidget(scene);
+		}
 		java.util.List<int[]> own = new java.util.ArrayList<>();
 		for (var child : children()) {
 			if (child instanceof net.minecraft.client.gui.components.AbstractWidget wd && wd.visible) {
