@@ -180,7 +180,7 @@ class Layout {
     return this.save({
       nav: [],
       navFavorites: true,
-      navSide: "theme",
+      navSide: "hotbar",
       navMode: "theme",
       navIconSize: 0,
       navGaps: undefined,

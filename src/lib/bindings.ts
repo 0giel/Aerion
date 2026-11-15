@@ -1550,8 +1550,9 @@ export type LayoutPrefs_Deserialize = {
 	/**  `right`, `left` or `hidden`. */
 	homePlayer?: string,
 	/**
-	 *  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top`, `bottom` or
-	 *  `hotbar` (a row of slots floating over the bottom).
+	 *  Where the menu sits: `hotbar` (a row of slots floating over the bottom; the default for
+	 *  new settings), `theme` (what the theme says), `left`, `right`, `top` or `bottom`. Settings
+	 *  saved before keep what they had.
 	 */
 	navSide?: string,
 	/**
@@ -1589,8 +1590,9 @@ export type LayoutPrefs_Serialize = {
 	/**  `right`, `left` or `hidden`. */
 	homePlayer: string,
 	/**
-	 *  Where the menu sits: `theme` (what the theme says), `left`, `right`, `top`, `bottom` or
-	 *  `hotbar` (a row of slots floating over the bottom).
+	 *  Where the menu sits: `hotbar` (a row of slots floating over the bottom; the default for
+	 *  new settings), `theme` (what the theme says), `left`, `right`, `top` or `bottom`. Settings
+	 *  saved before keep what they had.
 	 */
 	navSide: string,
 	/**

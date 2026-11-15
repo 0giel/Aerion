@@ -64,8 +64,9 @@ pub struct LayoutPrefs {
     pub home: Vec<LayoutItem>,
     /// `right`, `left` or `hidden`.
     pub home_player: String,
-    /// Where the menu sits: `theme` (what the theme says), `left`, `right`, `top`, `bottom` or
-    /// `hotbar` (a row of slots floating over the bottom).
+    /// Where the menu sits: `hotbar` (a row of slots floating over the bottom; the default for
+    /// new settings), `theme` (what the theme says), `left`, `right`, `top` or `bottom`. Settings
+    /// saved before keep what they had.
     pub nav_side: String,
     /// `theme` (what the theme says), `fixed`, `hover` (a slim rail that opens under the cursor)
     /// or `icons` (icons only).
@@ -92,7 +93,7 @@ impl Default for LayoutPrefs {
             nav_favorites: true,
             home: vec![],
             home_player: "right".into(),
-            nav_side: "theme".into(),
+            nav_side: "hotbar".into(),
             nav_mode: "theme".into(),
             nav_icon_size: 0,
             nav_gaps: None,

@@ -9,6 +9,8 @@
   import { toasts } from "../stores/toasts.svelte";
   import { commands, errorMessage } from "../api";
   import { i18n, LOCALES, t } from "../i18n/index.svelte";
+  import { themes } from "../theme/engine.svelte";
+  import { layout, type NavSide } from "../stores/layout.svelte";
 
   let step = $state(0);
   /** The scene beside the card: pixels per model unit, and the view's tilt. */
@@ -22,7 +24,8 @@
   let latest = $state("");
   let clientId = $state("");
   const steps = [
-    "onboarding.welcome",
+    "onboarding.stepWelcome",
+    "onboarding.stepLook",
     "onboarding.stepAccount",
     "onboarding.stepInstance",
     "onboarding.stepPlay",
@@ -46,13 +49,22 @@
     try {
       await commands.loginMicrosoft();
       await app.refreshAccounts();
-      step = 2;
+      step = 3;
     } catch (e) {
       toasts.error(errorMessage(e));
     } finally {
       busy = false;
     }
   }
+
+  /** Where the menu can sit, each with a small drawing of the window. */
+  const MENUS: { side: Exclude<NavSide, "theme">; key: string }[] = [
+    { side: "hotbar", key: "onboarding.menus.hotbar" },
+    { side: "left", key: "onboarding.menus.left" },
+    { side: "top", key: "onboarding.menus.top" },
+  ];
+  /** The menu as it will look: the player's choice, or the theme's when they never chose. */
+  const menu = $derived(layout.side);
 
   async function saveClientId() {
     await app.saveSettings({ msaClientId: clientId.trim() || null });
@@ -72,7 +84,7 @@
       });
       await app.refreshInstances();
       await app.saveSettings({ lastInstance: inst.id });
-      step = 3;
+      step = 4;
     } catch (e) {
       toasts.error(errorMessage(e));
     } finally {
@@ -87,9 +99,9 @@
     <span class="glow"></span>
     <div class="stage" style:width="{ISLAND.width * SCENE}px" style:height="{ISLAND.height * SCENE}px">
       {#key step}
-        <div class="island pop"><SkyIsland scale={SCENE} pitch={TILT} stage={step} /></div>
+        <div class="island pop"><SkyIsland scale={SCENE} pitch={TILT} stage={Math.max(0, step - 1)} /></div>
       {/key}
-      <div class="figure" class:shown={step === 3} style:left="{figure.left}px" style:top="{figure.top}px">
+      <div class="figure" class:shown={step === 4} style:left="{figure.left}px" style:top="{figure.top}px">
         <SkinViewer
           skinUrl={app.selectedAccount?.skinUrl ?? DEFAULT_SKIN}
           capeUrl={app.selectedAccount?.capeUrl}
@@ -120,11 +132,64 @@
               onclick={() => app.saveSettings({ language: l.id })}>{l.name}</button
             >{/each}
         </div>
-        <button class="btn primary lg" onclick={() => (step = app.accounts?.accounts.length ? 2 : 1)}
+        <button class="btn primary lg" onclick={() => (step = 1)}
           >{t("onboarding.start")}<Icon name="chevronRight" size={18} /></button
         >
       </div>
     {:else if step === 1}
+      <div class="col gap-4">
+        <div class="col gap-2">
+          <h2>{t("onboarding.stepLook")}</h2>
+          <p class="muted">{t("onboarding.stepLookText")}</p>
+        </div>
+        <div class="col gap-2">
+          <span class="label">{t("onboarding.theme")}</span>
+          <div class="looks">
+            {#each themes.builtins as th (th.id)}
+              <button
+                class="look"
+                aria-pressed={!app.settings?.themeFollowSystem && app.settings?.theme === th.id}
+                title={th.name}
+                onclick={() => app.saveSettings({ theme: th.id, themeFollowSystem: false })}
+              >
+                <span
+                  class="swatch"
+                  style:background={th.background.type === "gradient" && th.background.gradient
+                    ? th.background.gradient
+                    : th.colors.bg}
+                >
+                  <span class="dot" style:background={th.colors.surface}></span>
+                  <span class="dot" style:background={th.colors.accent}></span>
+                </span>
+                <span class="small truncate">{th.name}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+        <div class="col gap-2">
+          <span class="label">{t("onboarding.menu")}</span>
+          <div class="menus">
+            {#each MENUS as m (m.side)}
+              <button class="menu" aria-pressed={menu === m.side} onclick={() => layout.setNavSide(m.side)}>
+                <span class="window" data-side={m.side} aria-hidden="true">
+                  <span class="bar"
+                    >{#each [0, 1, 2, 3] as n (n)}<i></i>{/each}</span
+                  >
+                  <span class="screen"></span>
+                </span>
+                <span class="small">{t(m.key)}</span>
+              </button>
+            {/each}
+          </div>
+          <p class="tiny faint">{t("onboarding.lookLater")}</p>
+        </div>
+        <div class="row">
+          <button class="btn primary lg" onclick={() => (step = app.accounts?.accounts.length ? 3 : 2)}
+            >{t("common.next")}<Icon name="chevronRight" size={18} /></button
+          >
+        </div>
+      </div>
+    {:else if step === 2}
       <div class="col gap-3">
         <h2>{t("onboarding.stepAccount")}</h2>
         <p class="muted">{t("onboarding.stepAccountText")}</p>
@@ -149,21 +214,21 @@
           <button class="btn primary lg" onclick={signIn} disabled={busy || !app.accounts?.clientIdConfigured}
             ><Icon name="user" size={18} />{busy ? t("accounts.signingIn") : t("accounts.signIn")}</button
           >
-          <button class="btn ghost" onclick={() => (step = 2)}>{t("onboarding.skip")}</button>
+          <button class="btn ghost" onclick={() => (step = 3)}>{t("onboarding.skip")}</button>
         </div>
       </div>
-    {:else if step === 2}
+    {:else if step === 3}
       <div class="col gap-3">
         <h2>{t("onboarding.stepInstance")}</h2>
         <p class="muted">{t("onboarding.stepInstanceText")}</p>
         {#if app.instances.length}
-          <button class="btn primary" onclick={() => (step = 3)}>{t("common.next")}</button>
+          <button class="btn primary" onclick={() => (step = 4)}>{t("common.next")}</button>
         {:else}
           <div class="row">
             <button class="btn primary lg" onclick={createInstance} disabled={busy || !latest}
               ><Icon name="plus" size={18} />Minecraft {latest}</button
             >
-            <button class="btn ghost" onclick={() => (step = 3)}>{t("onboarding.later")}</button>
+            <button class="btn ghost" onclick={() => (step = 4)}>{t("onboarding.later")}</button>
           </div>
         {/if}
       </div>
@@ -204,6 +269,106 @@
   }
   .disclaimer {
     grid-area: note;
+  }
+  .looks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+    gap: var(--sp-2);
+  }
+  .menus {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+  .look,
+  .menu {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    background: var(--c-surface-2, transparent);
+    color: var(--c-text);
+    text-align: center;
+    cursor: pointer;
+  }
+  .look:hover,
+  .menu:hover {
+    border-color: color-mix(in srgb, var(--c-text) 30%, var(--c-border));
+  }
+  .look[aria-pressed="true"],
+  .menu[aria-pressed="true"] {
+    border-color: var(--c-accent);
+    box-shadow: 0 0 0 2px var(--c-accent-soft);
+  }
+  .look .swatch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    height: 2.6rem;
+    border-radius: calc(var(--r-lg) - 0.3rem);
+    background-size: cover;
+  }
+  .look .dot {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.3rem;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  }
+  /* A tiny window: where the menu sits in it. */
+  .window {
+    position: relative;
+    flex: none;
+    display: flex;
+    gap: 3px;
+    height: 3.6rem;
+    padding: 4px;
+    border-radius: calc(var(--r-lg) - 0.3rem);
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+  }
+  .window .screen {
+    flex: 1;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--c-text) 8%, transparent);
+  }
+  .window .bar {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--c-text) 16%, transparent);
+  }
+  .window .bar i {
+    width: 7px;
+    height: 5px;
+    border-radius: 1px;
+    background: var(--c-text-muted);
+  }
+  .window .bar i:first-child {
+    background: var(--c-accent);
+  }
+  .window[data-side="top"] {
+    flex-direction: column;
+  }
+  .window[data-side="top"] .bar {
+    flex-direction: row;
+  }
+  .window[data-side="hotbar"] .bar {
+    position: absolute;
+    left: 50%;
+    bottom: 5px;
+    transform: translateX(-50%);
+    flex-direction: row;
+    background: color-mix(in srgb, var(--c-text) 22%, transparent);
+  }
+  .window[data-side="hotbar"] .bar i {
+    width: 6px;
+    height: 6px;
   }
   .scene {
     grid-area: scene;
