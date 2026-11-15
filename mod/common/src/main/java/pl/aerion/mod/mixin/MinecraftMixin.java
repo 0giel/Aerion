@@ -31,6 +31,6 @@ abstract class MinecraftMixin {
 	/** No block breaking behind a panel while the button is held. */
 	@Inject(method = "continueAttack", at = @At("HEAD"), cancellable = true)
 	private void aerion$panelHold(boolean down, CallbackInfo ci) {
-		if (Features.mirrorsActive() && Mirrors.aim() != null) ci.cancel();
+		if (Features.mirrorsActive() && (Mirrors.holding() || Mirrors.aim() != null)) ci.cancel();
 	}
 }

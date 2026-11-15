@@ -58,7 +58,36 @@ public final class Mirrors {
 	}
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private static final int FPS = 12, MAX_WIDTH = 1280;
+	/** The player's settings (Aerion menu → Features → Windows in the world). */
+	private static com.google.gson.JsonObject options() {
+		pl.aerion.mod.hud.HudConfig cfg = AerionClient.hud();
+		return cfg == null ? null : cfg.feature("mirrors");
+	}
+
+	private static String opt(String key, String fallback) {
+		com.google.gson.JsonObject f = options();
+		return f == null ? fallback : pl.aerion.mod.hud.HudConfig.opt(f, key, fallback);
+	}
+
+	private static int fps() {
+		try {
+			return Math.max(2, Math.min(30, Integer.parseInt(opt("fps", "12"))));
+		} catch (NumberFormatException e) {
+			return 12;
+		}
+	}
+
+	private static int maxWidth() {
+		return switch (opt("quality", "medium")) {
+			case "low" -> 640;
+			case "high" -> 1920;
+			default -> 1280;
+		};
+	}
+
+	private static boolean showBar() {
+		return !"0".equals(opt("handle", "1"));
+	}
 	private static WindowSource source;
 	private static boolean sourceTried;
 	private static List<Panel> panels = new ArrayList<>();
@@ -66,7 +95,7 @@ public final class Mirrors {
 	private static JsonObject file;
 	private static ScheduledExecutorService worker;
 	private static int serial;
-	private static long lastResolve;
+	private static long lastResolve, lastCapture;
 
 	public static synchronized WindowSource source() {
 		if (!sourceTried) {
@@ -126,6 +155,7 @@ public final class Mirrors {
 		panel.title = w.title();
 		panel.cls = w.cls();
 		panel.win = w.id();
+		panel.curved = !"0".equals(opt("curved", "1"));
 		putInFront(panel, p, 2.2f);
 		synchronized (Mirrors.class) {
 			all().add(panel);
@@ -145,6 +175,14 @@ public final class Mirrors {
 		panel.radius = distance;
 	}
 
+	/** Moves a panel along its own up direction by `d` blocks. */
+	private static void lift(Panel p, float d) {
+		double yaw = Math.toRadians(p.yaw), pitch = Math.toRadians(p.pitch);
+		p.x += -Math.sin(pitch) * Math.sin(yaw) * d;
+		p.y += Math.cos(pitch) * d;
+		p.z += Math.sin(pitch) * Math.cos(yaw) * d;
+	}
+
 	public static void remove(Panel panel) {
 		synchronized (Mirrors.class) {
 			all().remove(panel);
@@ -162,7 +200,8 @@ public final class Mirrors {
 			t.setDaemon(true);
 			return t;
 		});
-		worker.scheduleWithFixedDelay(Mirrors::captureAll, 0, 1000 / FPS, TimeUnit.MILLISECONDS);
+		// Ticks often; each panel is read at the chosen rate.
+		worker.scheduleWithFixedDelay(Mirrors::captureAll, 0, 30, TimeUnit.MILLISECONDS);
 	}
 
 	/** On the capture thread: a new picture for every panel whose window is found. */
@@ -174,6 +213,9 @@ public final class Mirrors {
 				list = loadedKey != null && mc.level != null ? new ArrayList<>(panels) : List.of();
 			}
 			if (list.isEmpty() || mc.isPaused()) return;
+			long due = 1000L / fps();
+			if (System.currentTimeMillis() - lastCapture < due) return;
+			lastCapture = System.currentTimeMillis();
 			WindowSource src = source();
 			if (src == null) return;
 			long now = System.currentTimeMillis();
@@ -183,7 +225,7 @@ public final class Mirrors {
 			for (Panel p : list) {
 				if (p.win == 0 && wins != null) p.win = find(wins, p);
 				if (p.win == 0 || p.pending != null) continue;
-				WindowSource.Frame f = src.capture(p.win, MAX_WIDTH);
+				WindowSource.Frame f = src.capture(p.win, maxWidth());
 				if (f == null) {
 					// The window is gone or hidden: look for it again later.
 					if (!src.list().stream().anyMatch(w -> w.id() == p.win)) p.win = 0;
@@ -244,7 +286,15 @@ public final class Mirrors {
 			pose.mulPose(new Matrix4f().rotateY((float) Math.toRadians(-p.yaw)).rotateX((float) Math.toRadians(p.pitch)));
 			float w = p.width, h = p.height();
 			out.submitCustomGeometry(pose, RenderTypes.text(p.tex), (pp, vc) -> quads(pp, vc, p, w, h, 0xFFFFFFFF));
-			if (aim != null && aim.panel == p) {
+			if (showBar() || grabbed == p) {
+				Panel bar = p;
+				boolean overBar = grabbed == p || (aim != null && aim.panel == p && aim.part == Part.BAR);
+				boolean overClose = aim != null && aim.panel == p && aim.part == Part.CLOSE;
+				int accent = AerionClient.theme() != null ? AerionClient.theme().accent : 0xFF7AA2FF;
+				out.submitCustomGeometry(pose, RenderTypes.text(BAR), (pp, vc) -> handle(pp, vc, bar, overBar ? accent : 0xD0E8E8E8));
+				out.submitCustomGeometry(pose, RenderTypes.text(CLOSE), (pp, vc) -> closer(pp, vc, bar, overClose ? 0xFFFF5A5A : 0xD0E8E8E8));
+			}
+			if (aim != null && aim.panel == p && aim.part == Part.PANEL) {
 				Panel dot = p;
 				out.submitCustomGeometry(pose, RenderTypes.text(DOT), (pp, vc) -> cursor(pp, vc, dot, aim.u, aim.v));
 			}
@@ -283,6 +333,51 @@ public final class Mirrors {
 		vc.addVertex(pose, q[0], q[1], q[2]).setColor(color).setUv(u, v).setLight(BRIGHT);
 	}
 
+	/** The bar under a panel (to take it and move it) and the close button beside it, in blocks. */
+	private static final float BAR_GAP = 0.07f, BAR_H = 0.075f, CLOSE_D = 0.13f;
+
+	private static float barWidth(Panel p) {
+		return Math.max(0.35f, Math.min(0.9f, p.width * 0.3f));
+	}
+
+	/** Where the bar and the close button are, as (u0, v0, u1, v1) of the panel. */
+	private static float[] barBox(Panel p) {
+		float w = p.width, h = p.height(), bw = barWidth(p);
+		float v0 = 1 + BAR_GAP / h;
+		return new float[] {0.5f - bw / 2 / w, v0, 0.5f + bw / 2 / w, v0 + BAR_H / h};
+	}
+
+	private static float[] closeBox(Panel p) {
+		float w = p.width, h = p.height(), bw = barWidth(p);
+		float u0 = 0.5f + (bw / 2 + 0.06f) / w;
+		float v0 = 1 + (BAR_GAP + BAR_H / 2 - CLOSE_D / 2) / h;
+		return new float[] {u0, v0, u0 + CLOSE_D / w, v0 + CLOSE_D / h};
+	}
+
+	private static void handle(PoseStack.Pose pose, VertexConsumer vc, Panel p, int color) {
+		box(pose, vc, p, barBox(p), color);
+	}
+
+	private static void closer(PoseStack.Pose pose, VertexConsumer vc, Panel p, int color) {
+		box(pose, vc, p, closeBox(p), color);
+	}
+
+	/** A picture over the box (u0, v0, u1, v1) of the panel, both sides. */
+	private static void box(PoseStack.Pose pose, VertexConsumer vc, Panel p, float[] b, int color) {
+		if (!dotReady) return;
+		float[] a = at(p, b[0], b[1], 0), c = at(p, b[2], b[1], 0), d = at(p, b[2], b[3], 0), e = at(p, b[0], b[3], 0);
+		vertex(vc, pose, a, 0, 0, color);
+		vertex(vc, pose, e, 0, 1, color);
+		vertex(vc, pose, d, 1, 1, color);
+		vertex(vc, pose, c, 1, 0, color);
+		vertex(vc, pose, c, 1, 0, color);
+		vertex(vc, pose, d, 1, 1, color);
+		vertex(vc, pose, e, 0, 1, color);
+		vertex(vc, pose, a, 0, 0, color);
+	}
+
+	private static final Identifier BAR = Identifier.fromNamespaceAndPath("aerion", "mirror/bar");
+	private static final Identifier CLOSE = Identifier.fromNamespaceAndPath("aerion", "mirror/close");
 	private static final Identifier DOT = Identifier.fromNamespaceAndPath("aerion", "mirror/dot");
 	private static boolean dotReady;
 
@@ -310,13 +405,38 @@ public final class Mirrors {
 			}
 		}
 		Textures.registerPixels(DOT, n, n, px);
+		// The bar: a white pill, smoothed at its ends.
+		int bw = 128, bh = 16;
+		int[] bar = new int[bw * bh];
+		for (int y = 0; y < bh; y++) {
+			for (int x = 0; x < bw; x++) {
+				double cx = Math.max(bh / 2.0, Math.min(bw - bh / 2.0, x + 0.5)), d = Math.hypot(x + 0.5 - cx, y + 0.5 - bh / 2.0);
+				double a = Math.max(0, Math.min(1, bh / 2.0 - d));
+				if (a > 0) bar[y * bw + x] = ((int) (a * 255) << 24) | 0xFFFFFF;
+			}
+		}
+		Textures.registerPixels(BAR, bw, bh, bar);
+		// The close button: a white disc with a cut-out ×.
+		int[] close = new int[n * n];
+		for (int y = 0; y < n; y++) {
+			for (int x = 0; x < n; x++) {
+				double fx = x + 0.5 - n / 2.0, fy = y + 0.5 - n / 2.0, d = Math.hypot(fx, fy);
+				double disc = Math.max(0, Math.min(1, n / 2.0 - 0.5 - d));
+				double cross = Math.min(Math.abs(fx - fy), Math.abs(fx + fy)) / Math.sqrt(2);
+				boolean onCross = cross < 1.6 && Math.abs(fx) < n * 0.22 && Math.abs(fy) < n * 0.22;
+				if (disc > 0 && !onCross) close[y * n + x] = ((int) (disc * 255) << 24) | 0xFFFFFF;
+			}
+		}
+		Textures.registerPixels(CLOSE, n, n, close);
 		dotReady = true;
 	}
 
 	// --- Aiming -------------------------------------------------------------------------------
 
 	/** Where the player looks on a panel. */
-	public record Hit(Panel panel, float u, float v, double distance) {}
+	public enum Part { PANEL, BAR, CLOSE }
+
+	public record Hit(Panel panel, float u, float v, double distance, Part part) {}
 
 	/** The panel under the crosshair, nearest first; null when none. */
 	public static Hit aim() {
@@ -364,9 +484,16 @@ public final class Mirrors {
 			u = (float) (a * p.radius / w + 0.5);
 			v = (float) (0.5 - hy / h);
 		}
-		if (u < 0 || u > 1 || v < 0 || v > 1) return null;
 		ensureDot();
-		return new Hit(p, u, v, t);
+		if (u >= 0 && u <= 1 && v >= 0 && v <= 1) return new Hit(p, u, v, t, Part.PANEL);
+		if (showBar() || grabbed == p) {
+			// A little more room than drawn, so the bar is easy to catch.
+			float[] b = barBox(p), c = closeBox(p);
+			float pad = 0.04f / p.height();
+			if (u >= b[0] && u <= b[2] && v >= b[1] - pad && v <= b[3] + pad) return new Hit(p, u, v, t, Part.BAR);
+			if (u >= c[0] && u <= c[2] && v >= c[1] && v <= c[3]) return new Hit(p, u, v, t, Part.CLOSE);
+		}
+		return null;
 	}
 
 	/** A world direction in the panel's space. */
@@ -384,11 +511,30 @@ public final class Mirrors {
 
 	private static Panel grabbed;
 	private static double grabDistance;
+	/** Taken by the bar with the mouse (let go with the button), not with the move key. */
+	private static boolean byBar;
+
+	private static void take(Panel p, boolean bar) {
+		LocalPlayer pl = Minecraft.getInstance().player;
+		if (pl == null) return;
+		grabbed = p;
+		byBar = bar;
+		grabDistance = pl.getEyePosition().distanceTo(new Vec3(p.x, p.y, p.z));
+	}
 
 	/** A click while looking at a panel goes to its window; true when it was taken. */
 	public static boolean click(int button) {
 		Hit h = aim();
 		if (h == null) return false;
+		if (h.part == Part.CLOSE) {
+			if (button == 0) remove(h.panel);
+			return true;
+		}
+		if (h.part == Part.BAR) {
+			// Held by the bar: it follows the look while the button is down.
+			if (button == 0) take(h.panel, true);
+			return true;
+		}
 		WindowSource src = source();
 		if (src != null && h.panel.win != 0) src.click(h.panel.win, h.u, h.v, button);
 		return true;
@@ -408,23 +554,27 @@ public final class Mirrors {
 	}
 
 	/** Called every tick with the state of the grab key: a held panel follows the look. */
-	public static void tick(Minecraft mc, boolean grabKey) {
-		if (mc.player == null) {
+	public static void tick(Minecraft mc, boolean grabKey, boolean on) {
+		if (mc.player == null || !on) {
 			grabbed = null;
 			return;
 		}
+		// The world's saved panels come back as soon as it is joined.
+		if (!all().isEmpty()) start();
+		boolean held = byBar ? mc.options.keyAttack.isDown() && pl.aerion.mod.platform.Game.screen() == null : grabKey;
 		if (grabKey && grabbed == null) {
 			Hit h = aim();
-			if (h != null) {
-				grabbed = h.panel;
-				Vec3 eye = mc.player.getEyePosition();
-				grabDistance = eye.distanceTo(new Vec3(grabbed.x, grabbed.y, grabbed.z));
-			}
-		} else if (!grabKey && grabbed != null) {
+			if (h != null) take(h.panel, false);
+		} else if (!held && grabbed != null) {
 			grabbed = null;
+			byBar = false;
 			save();
 		}
-		if (grabbed != null) putInFront(grabbed, mc.player, (float) grabDistance);
+		if (grabbed != null) {
+			putInFront(grabbed, mc.player, (float) grabDistance);
+			// Held by the bar, the bar stays under the crosshair: the panel sits above it.
+			if (byBar) lift(grabbed, grabbed.height() / 2 + BAR_GAP + BAR_H / 2);
+		}
 	}
 
 	public static boolean holding() {

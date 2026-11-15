@@ -449,7 +449,7 @@ public final class Features {
 			}
 		}
 		boolean mirrorsOn = HudConfig.bool(feature("mirrors"), "enabled", false);
-		pl.aerion.mod.mirror.Mirrors.tick(mc, mirrorsOn && Game.screen() == null && mirrorGrab.isDown());
+		pl.aerion.mod.mirror.Mirrors.tick(mc, mirrorsOn && Game.screen() == null && mirrorGrab.isDown(), mirrorsOn);
 		while (mirrorType.consumeClick()) {
 			long win = mirrorsOn && Game.screen() == null ? pl.aerion.mod.mirror.Mirrors.aimedWindow() : 0;
 			if (win != 0) {

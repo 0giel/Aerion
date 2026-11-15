@@ -74,7 +74,26 @@ public final class MirrorsPage implements Page {
 			}
 		}
 		y += 8;
-		Txt.draw(g, Lang.tr("aerion.mirrors.keys"), x, y + 4, 6.5f, muted);
+		for (String line : wrap(Lang.tr("aerion.mirrors.keys"), w)) {
+			Txt.draw(g, line, x, y + 4, 6.5f, muted);
+			y += 10;
+		}
+	}
+
+	private static List<String> wrap(String s, int width) {
+		List<String> lines = new ArrayList<>();
+		StringBuilder line = new StringBuilder();
+		for (String word : s.split(" ")) {
+			String next = line.isEmpty() ? word : line + " " + word;
+			if (Txt.width(next, 6.5f) > width && !line.isEmpty()) {
+				lines.add(line.toString());
+				line = new StringBuilder(word);
+			} else {
+				line = new StringBuilder(next);
+			}
+		}
+		if (!line.isEmpty()) lines.add(line.toString());
+		return lines;
 	}
 
 	private void small(Gfx g, int bx, int by, int bw, String label, int mx, int my, int fill, int ink, Runnable run) {
