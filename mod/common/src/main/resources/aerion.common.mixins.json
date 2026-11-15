@@ -14,6 +14,7 @@
 		"HurtCamMixin",
 		"ItemStackMixin",
 		"ContainerContentsMixin",
+		"ScreenClickMixin",
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",

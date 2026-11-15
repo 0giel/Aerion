@@ -508,6 +508,8 @@ public final class Lang {
 			Map.entry("aerion.opt.waypoints.nether", new String[] {"Show across the Nether (x/8)", "Pokazuj przez Nether (x/8)"}),
 			Map.entry("aerion.waypoint.death", new String[] {"Death", "Śmierć"}),
 			Map.entry("aerion.waypoint.share", new String[] {"Share in chat", "Wyślij na czat"}),
+			Map.entry("aerion.waypoint.addShared", new String[] {"Add this waypoint", "Dodaj ten punkt trasy"}),
+			Map.entry("aerion.waypoint.added", new String[] {"Waypoint added", "Dodano punkt trasy"}),
 			Map.entry("aerion.waypoint.onMap", new String[] {"Show on map", "Pokaż na mapie"}),
 			Map.entry("aerion.waypoint.moveHere", new String[] {"Move here", "Przenieś tutaj"}),
 			Map.entry("aerion.opt.waypoints.scale", new String[] {"Label size", "Rozmiar napisów"}),

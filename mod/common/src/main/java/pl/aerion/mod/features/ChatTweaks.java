@@ -28,6 +28,7 @@ public final class ChatTweaks {
 
 	/** The message as shown; `removeLast` takes the previous copy away when a repeat is counted. */
 	public static Component process(Component message, Runnable removeLast) {
+		message = WaypointCodes.decorate(message);
 		String plain = message.getString();
 		Component shown = message;
 		if (flag("stack", true) && plain.equals(last)) {

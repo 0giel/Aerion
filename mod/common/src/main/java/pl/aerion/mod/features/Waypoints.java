@@ -152,6 +152,21 @@ public final class Waypoints {
 		return w;
 	}
 
+	/** A point someone shared, under its own name (nothing when this world has none loaded). */
+	public static Point addNamed(String name, int x, int y, int z, String dimension) {
+		if (key() == null) return null;
+		all();
+		Point w = new Point();
+		w.name = name.length() > 32 ? name.substring(0, 32) : name;
+		w.x = x;
+		w.y = y;
+		w.z = z;
+		w.dimension = dimension;
+		points.add(w);
+		save();
+		return w;
+	}
+
 	public static String dimension(LocalPlayer p) {
 		return p.level().dimension().identifier().toString();
 	}
