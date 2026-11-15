@@ -293,3 +293,16 @@ footer { border-top: 1px solid var(--line); }
   *, *::before, *::after { transition: none !important; }
   .js .reveal { opacity: 1; transform: none; }
 }
+
+/* Players' themes: a tile each, with a code to paste in the launcher. */
+.gal-title { margin: 3rem 0 0.3rem; font-size: 1.15rem; }
+.gal-text { color: var(--muted); font-size: 0.92rem; margin: 0.2rem 0 1rem; }
+.gal-text a { color: var(--accent); }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 0.8rem; text-align: left; }
+.gal-card { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.7rem; border: 1px solid var(--line-2); border-radius: 12px; background: var(--surface); }
+.gal-card p { margin: 0; color: var(--muted); font-size: 0.85rem; flex: 1; }
+.gal-by { color: var(--muted); font-size: 0.78rem; }
+.gal-card .btn { margin-top: 0.3rem; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+.gal-swatch { display: grid; place-items: center; height: 4.2rem; border-radius: 8px; }
+.gal-swatch span { display: flex; justify-content: flex-end; align-items: flex-end; width: 62%; height: 52%; padding: 0.3rem; border-radius: 6px; }
+.gal-swatch i { width: 1.6rem; height: 0.55rem; border-radius: 4px; }

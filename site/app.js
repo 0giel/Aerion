@@ -18,6 +18,9 @@
     "rules.3": "Anchors to the screen's corners, so a layout works at any window size", "rules.4": "A separate look for each module, or one ready-made style for all",
     "th.title": "A look that's yours",
     "th.text": "Pick a theme or build your own in an editor with live preview. Its colours reach the game menus too, and the menu's position, style and animations are set in the theme.",
+    "gal.title": "Themes from players",
+    "gal.text": "Copy a code and paste it in the launcher: Settings → Appearance → “Paste theme code”.",
+    "gal.submit": "Add your theme",
     "m.title": "Mods without the hunt",
     "m.text": "Add mods and packs from Modrinth and CurseForge with one button, together with what they require.",
     "m.1": "Fabric, Quilt, Forge and NeoForge", "m.2": "Java downloaded automatically", "m.3": "Performance mods in one click for every Fabric and Quilt instance:",
@@ -294,6 +297,64 @@
     });
   });
 
+  // --- gallery: the same themes the launcher offers, each as a code to paste ---------------------
+  const GALLERY = "https://raw.githubusercontent.com/0giel/Aerion/main/themes/";
+  const b64url = (bytes) => {
+    let bin = "";
+    for (const b of bytes) bin += String.fromCharCode(b);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  };
+  /** The launcher's theme code ("aerion1:", deflate, base64url) without CSS or background files. */
+  async function themeCode(theme) {
+    const { $schema: _schema, css: _css, ...t } = theme;
+    if (t.background && typeof t.background === "object") {
+      const b = { ...t.background };
+      if (b.type === "image" || b.type === "video") b.type = typeof b.gradient === "string" ? "gradient" : "color";
+      b.asset = null;
+      t.background = b;
+    }
+    const data = new Blob([JSON.stringify(t)]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+    return "aerion1:" + b64url(new Uint8Array(await new Response(data).arrayBuffer()));
+  }
+  const text = (tag, cls, s) => { const n = document.createElement(tag); if (cls) n.className = cls; n.textContent = s; return n; };
+  async function loadGallery() {
+    const box = $("gallery");
+    if (!box || !("CompressionStream" in window)) return;
+    try {
+      const index = await (await fetch(GALLERY + "index.json")).json();
+      for (const th of index.themes || []) {
+        if (!/^[\w-]+\.json$/.test(th.file || "")) continue;
+        const p = th.preview || {};
+        const card = document.createElement("article");
+        card.className = "gal-card";
+        const sw = document.createElement("div");
+        sw.className = "gal-swatch";
+        sw.style.background = p.bg || "#222";
+        const panel = document.createElement("span");
+        panel.style.background = p.surface || "#333";
+        const dot = document.createElement("i");
+        dot.style.background = p.accent || "#888";
+        panel.append(dot);
+        sw.append(panel);
+        const btn = text("button", "btn sm", lang() === "en" ? "Copy code" : "Kopiuj kod");
+        btn.type = "button";
+        btn.addEventListener("click", async () => {
+          try {
+            const theme = await (await fetch(GALLERY + th.file)).json();
+            await navigator.clipboard.writeText(await themeCode(theme));
+            btn.textContent = lang() === "en" ? "Copied" : "Skopiowano";
+          } catch {
+            btn.textContent = lang() === "en" ? "Try again" : "Spróbuj jeszcze raz";
+          }
+        });
+        card.append(sw, text("strong", "", th.name || th.id), text("span", "gal-by", th.author || ""), text("p", "", th.description || ""), btn);
+        box.append(card);
+      }
+    } catch {
+      box.remove();
+    }
+  }
+
   // --- sections appear once -------------------------------------------------------------------
   const targets = [...document.querySelectorAll(".reveal")];
   if ("IntersectionObserver" in window) {
@@ -309,4 +370,5 @@
   $("lang").addEventListener("click", () => applyLang(lang() === "en" ? "pl" : "en"));
   applyLang(store.get(localStorage, "lang") || ((navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en"));
   loadRelease();
+  loadGallery();
 })();
