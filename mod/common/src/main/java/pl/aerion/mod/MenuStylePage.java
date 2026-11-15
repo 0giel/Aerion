@@ -25,6 +25,8 @@ public final class MenuStylePage implements Page {
 	private final List<Slider> sliders = new ArrayList<>();
 	private Slider dragging;
 	private int scroll, contentH, viewH;
+	/** The scrolled part: what is drawn there only takes clicks inside it (not under the footer). */
+	private int clipTop, clipBottom, contentFrom, contentTo;
 	private float slideIn;
 	private long opened = System.nanoTime();
 
@@ -87,6 +89,9 @@ public final class MenuStylePage implements Page {
 		closeButton(g, x0 + W - 22, top + 5, mouseX, mouseY);
 		viewH = h - 34 - 28;
 		g.scissor(x0, top + 26, x0 + W, top + 26 + viewH);
+		clipTop = top + 26;
+		clipBottom = top + 26 + viewH;
+		contentFrom = hits.size();
 		int y = top + 30 - scroll, x = x0 + PAD, w = W - 2 * PAD;
 		int startY = y;
 
@@ -145,6 +150,7 @@ public final class MenuStylePage implements Page {
 		}
 		contentH = y - startY + 8;
 		g.endScissor();
+		contentTo = hits.size();
 
 		// Footer: done.
 		int fy = top + h - 26;
@@ -250,14 +256,17 @@ public final class MenuStylePage implements Page {
 
 	@Override
 	public boolean pressed(double x, double y, int button) {
+		boolean inView = y >= clipTop && y < clipBottom;
 		for (Slider s : sliders) {
-			if (inside((int) x, (int) y, s.x, s.y, s.w, 14)) {
+			if (inView && inside((int) x, (int) y, s.x, s.y, s.w, 14)) {
 				dragging = s;
 				drag(x);
 				return false;
 			}
 		}
-		for (Hit h : hits) {
+		for (int i = 0; i < hits.size(); i++) {
+			Hit h = hits.get(i);
+			if (i >= contentFrom && i < contentTo && !inView) continue;
 			if (inside((int) x, (int) y, h.x, h.y, h.w, h.h)) {
 				h.run.run();
 				boolean close = closeNow;

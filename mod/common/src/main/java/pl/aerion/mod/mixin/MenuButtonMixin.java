@@ -40,8 +40,9 @@ abstract class MenuButtonMixin extends Screen {
 		for (var child : children()) {
 			if (!(child instanceof net.minecraft.client.gui.components.AbstractWidget wd) || !wd.visible) continue;
 			int cx = wd.getX() + wd.getWidth() / 2;
-			// The main column only: not the version and copyright lines along the bottom edge.
-			if (Math.abs(cx - mid) > 110 || wd.getY() >= height - 20) continue;
+			// The main column only (with the small icons beside its rows, as on 1.21.11): not the
+			// version and copyright lines along the bottom edge.
+			if (Math.abs(cx - mid) > 120 || wd.getY() >= height - 20) continue;
 			column.add(wd);
 			boolean isRealms = wd.getMessage().getString().equals(realmsText);
 			boolean isIcon = wd.getWidth() == 20 && wd.getHeight() == 20;
