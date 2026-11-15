@@ -214,6 +214,13 @@ export const commands = {
 	listSkins: () => __TAURI_INVOKE<SavedSkin[]>("list_skins"),
 	/**  Add a PNG picked by the user to the library. */
 	addSkin: (path: string, name: string, variant: SkinVariant) => __TAURI_INVOKE<SavedSkin>("add_skin", { path, name, variant }),
+	/**
+	 *  A skin's picture for the skin editor: a saved one (`id`) or one on Mojang's texture server
+	 *  (`url`, e.g. the account's current skin or the default one). PNG bytes.
+	 */
+	skinPng: (id: string | null, url: string | null) => __TAURI_INVOKE<number[]>("skin_png", { id, url }),
+	/**  Save a skin made in the skin editor (PNG bytes) to the library. */
+	addSkinPng: (png: number[], name: string, variant: SkinVariant) => __TAURI_INVOKE<SavedSkin>("add_skin_png", { png, name, variant }),
 	/**  Copy an account's current skin into the library. */
 	saveAccountSkin: (accountId: string, name: string) => __TAURI_INVOKE<SavedSkin>("save_account_skin", { accountId, name }),
 	updateSkin: (id: string, name: string, variant: SkinVariant) => __TAURI_INVOKE<SavedSkin>("update_skin", { id, name, variant }),

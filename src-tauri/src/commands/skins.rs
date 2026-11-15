@@ -65,6 +65,52 @@ pub async fn add_skin(
     Ok(state.skins.add(&name, variant, &png).await?)
 }
 
+/// A skin's picture for the skin editor: a saved one (`id`) or one on Mojang's texture server
+/// (`url`, e.g. the account's current skin or the default one). PNG bytes.
+#[tauri::command]
+#[specta::specta]
+pub async fn skin_png(
+    state: State<'_, AppState>,
+    id: Option<String>,
+    url: Option<String>,
+) -> CmdResult<Vec<u8>> {
+    if let Some(id) = id {
+        return Ok(state.skins.read(&id).await?);
+    }
+    let url = url
+        .as_deref()
+        .and_then(skins::mojang_texture_url)
+        .ok_or_else(|| launcher_core::Error::Invalid("not a Minecraft skin address".into()))?;
+    let engine = state.engine.read().await;
+    let resp = check(engine.http.send(|c| c.get(&url)).await?).await?;
+    let bytes = resp.bytes().await.map_err(launcher_core::Error::from)?;
+    if bytes.len() as u64 > MAX_READ {
+        return Err(launcher_core::Error::FileTooLarge {
+            max_kb: MAX_READ / 1024,
+        }
+        .into());
+    }
+    Ok(bytes.to_vec())
+}
+
+/// Save a skin made in the skin editor (PNG bytes) to the library.
+#[tauri::command]
+#[specta::specta]
+pub async fn add_skin_png(
+    state: State<'_, AppState>,
+    png: Vec<u8>,
+    name: String,
+    variant: SkinVariant,
+) -> CmdResult<SavedSkin> {
+    if png.len() as u64 > MAX_READ {
+        return Err(launcher_core::Error::FileTooLarge {
+            max_kb: MAX_READ / 1024,
+        }
+        .into());
+    }
+    Ok(state.skins.add(&name, variant, &png).await?)
+}
+
 /// Copy an account's current skin into the library.
 #[tauri::command]
 #[specta::specta]

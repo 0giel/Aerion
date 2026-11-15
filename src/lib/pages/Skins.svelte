@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SkinEditor from "../components/SkinEditor.svelte";
   // Skin library + changing the skin and cape of the selected Microsoft account.
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { untrack } from "svelte";
@@ -54,6 +55,18 @@
 
   async function load() {
     library = await commands.listSkins().catch(() => []);
+  }
+
+  // The skin editor: started from a saved skin, the account's skin or the default one.
+  let drawOpen = $state(false);
+  let drawFrom = $state<{ id: string } | { url: string } | null>(null);
+  let drawName = $state("");
+  let drawVariant = $state<SkinVariant>("classic");
+  function draw(from: { id: string } | { url: string }, name: string, variant: SkinVariant) {
+    drawFrom = from;
+    drawName = name;
+    drawVariant = variant;
+    drawOpen = true;
   }
 
   $effect(() => {
@@ -211,6 +224,9 @@
 <div class="page">
   <header class="page-header">
     <h1 class="grow">{t("skins.title")}</h1>
+    <button class="btn" onclick={() => draw({ url: DEFAULT_SKIN }, "", "classic")}
+      ><Icon name="brush" size={16} />{t("skinEditor.newSkin")}</button
+    >
     <button class="btn primary" onclick={pick} disabled={busy === "add"}
       ><Icon name="plus" size={16} />{t("skins.add")}</button
     >
@@ -277,6 +293,17 @@
             <div class="row gap-2 wrap">
               <button class="btn sm" disabled={!account.skinUrl || !!busy} onclick={saveCurrent}
                 ><Icon name="download" size={14} />{t("skins.saveCurrent")}</button
+              >
+              <button
+                class="btn sm"
+                disabled={!account.skinUrl}
+                onclick={() =>
+                  account?.skinUrl &&
+                  draw(
+                    { url: account.skinUrl },
+                    account.username,
+                    account.skinVariant === "slim" ? "slim" : "classic",
+                  )}><Icon name="brush" size={14} />{t("skinEditor.editCurrent")}</button
               >
               <button class="btn sm ghost" disabled={!!busy} onclick={reset}
                 ><Icon name="undo" size={14} />{t("skins.reset")}</button
@@ -352,6 +379,9 @@
             <Icon name="user" size={32} />
             <p class="small muted">{t("skins.emptyLibrary")}</p>
             <button class="btn" onclick={pick}><Icon name="plus" size={15} />{t("skins.add")}</button>
+            <button class="btn" onclick={() => draw({ url: DEFAULT_SKIN }, "", "classic")}
+              ><Icon name="brush" size={15} />{t("skinEditor.newSkin")}</button
+            >
           </div>
         {:else}
           <div class="lib">
@@ -380,6 +410,13 @@
                         name="check"
                         size={14}
                       />{/if}{t("skins.wear")}</button
+                  >
+                  <button
+                    class="icon-btn sm"
+                    aria-label={t("skinEditor.open")}
+                    title={t("skinEditor.open")}
+                    onclick={() => draw({ id: s.id }, s.name, s.variant)}
+                    ><Icon name="brush" size={15} /></button
                   >
                   <button
                     class="icon-btn sm"
@@ -429,6 +466,17 @@
     <button class="btn primary" disabled={busy === "edit"} onclick={saveEdit}>{t("common.save")}</button>
   {/snippet}
 </Modal>
+
+<SkinEditor
+  bind:open={drawOpen}
+  source={drawFrom}
+  name={drawName}
+  variant={drawVariant}
+  onsaved={async (id) => {
+    await load();
+    selected = id;
+  }}
+/>
 
 <style>
   .alert {

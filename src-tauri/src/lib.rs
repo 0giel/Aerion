@@ -129,6 +129,8 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             commands::worlds::clear_options_template,
             commands::skins::list_skins,
             commands::skins::add_skin,
+            commands::skins::skin_png,
+            commands::skins::add_skin_png,
             commands::skins::save_account_skin,
             commands::skins::update_skin,
             commands::skins::delete_skin,
