@@ -47,6 +47,15 @@ public final class FoodOverlay {
 	 * at `top`.
 	 */
 	public static void draw(Gfx g, Player player, int top, int right) {
+		long started = System.nanoTime();
+		try {
+			paint(g, player, top, right);
+		} finally {
+			pl.aerion.mod.Cost.part("food").add(started);
+		}
+	}
+
+	private static void paint(Gfx g, Player player, int top, int right) {
 		HudConfig cfg = AerionClient.hud();
 		if (cfg == null || player == null) return;
 		JsonObject f = cfg.feature("food");

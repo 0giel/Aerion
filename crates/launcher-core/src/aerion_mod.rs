@@ -229,6 +229,13 @@ pub struct Status {
     pub heap_max_mb: Option<u32>,
     /// A world is open (not the menus).
     pub in_world: Option<bool>,
+    /// Processor time of the mod's own parts per frame over the last second (mods from 1.3 on).
+    pub cost_ms: Option<f32>,
+    /// The biggest of those parts by id (HUD module or feature).
+    #[serde(default)]
+    pub cost_parts: std::collections::BTreeMap<String, f32>,
+    /// Time on the mod's own threads per second (reading windows for the panels).
+    pub background_ms: Option<f32>,
     /// Milliseconds since the epoch when the mod wrote the file.
     time: i64,
 }

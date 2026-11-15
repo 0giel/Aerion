@@ -1216,8 +1216,15 @@ const en = {
     processPeak: "Whole process, peak",
     systemFree: "Least free on the computer: {size}",
     noFpsData: "FPS comes from the Aerion mod — turn it on in the instance to see FPS here.",
+    modCost: "Aerion mod processor time (per frame)",
+    modShare: "{share} of the frame",
+    modCostHint: "How long the mod’s parts took out of every frame, on average in a world.",
+    modBackground:
+      "Windows in the world read windows in the background for {ms} ms per second (this doesn’t slow frames).",
     hints: {
       allGood: "Nothing slowed this game down.",
+      aerionCost:
+        "The Aerion mod took {ms} ms of every frame ({share}% of the time); the most: {part}. Turn that part off or simplify its settings.",
       lowMemory: "Too little memory for this instance: it used {peak} of {max}. Give it {suggest}.",
       tooMuchMemory:
         "The instance used at most {peak} of {max}. {suggest} is enough — less memory means shorter garbage-collection pauses.",

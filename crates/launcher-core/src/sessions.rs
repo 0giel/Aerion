@@ -29,6 +29,20 @@ pub struct Sample {
     pub heap_max_mb: Option<u32>,
     pub process_mb: u32,
     pub system_free_mb: u32,
+    /// The mod's own processor time per frame, in a world (mods from 1.3 on).
+    pub cost_ms: Option<f32>,
+    pub cost_parts: BTreeMap<String, f32>,
+    pub background_ms: Option<f32>,
+}
+
+/// One part of the mod and the time it took per frame, on average.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct CostPart {
+    /// HUD module or feature id.
+    pub id: String,
+    pub ms: f32,
 }
 
 /// One tip, translated by the UI as `perf.hints.<kind>` with `params`.
@@ -61,6 +75,15 @@ pub struct SessionSummary {
     pub process_peak_mb: u32,
     pub system_total_mb: u32,
     pub system_free_min_mb: u32,
+    /// What the Aerion mod itself took per frame on average (ms), when the mod reports it.
+    #[serde(default)]
+    pub mod_cost_ms: Option<f32>,
+    /// Its biggest parts, largest first.
+    #[serde(default)]
+    pub mod_cost_parts: Vec<CostPart>,
+    /// Time on the mod's own threads (ms per second).
+    #[serde(default)]
+    pub mod_background_ms: Option<f32>,
     pub hints: Vec<Hint>,
 }
 
@@ -148,6 +171,7 @@ fn summarize(ctx: &Context, samples: &[Sample], ended: i64) -> Option<SessionSum
         .filter(|&m| m > 0)
         .unwrap_or(ctx.max_memory_mb);
     let free_min = samples.iter().map(|s| s.system_free_mb).min().unwrap_or(0);
+    let (cost, cost_parts, background) = mod_cost(samples);
 
     let mut hints = Vec::new();
     if let Some(peak) = heap_peak
@@ -207,6 +231,21 @@ fn summarize(ctx: &Context, samples: &[Sample], ended: i64) -> Option<SessionSum
             ));
         }
     }
+    // The mod's share of each frame: worth a word when it is both noticeable and a real part.
+    if let (Some(c), Some(a)) = (cost, fps_avg)
+        && a > 0
+        && c >= 2.0
+        && c * a as f32 >= 100.0
+    {
+        let mut params = vec![
+            ("ms", format!("{c:.1}")),
+            ("share", format!("{:.0}", c * a as f32 / 10.0)),
+        ];
+        if let Some(top) = cost_parts.first() {
+            params.push(("part", top.id.clone()));
+        }
+        hints.push(hint("aerionCost", "warn", &params));
+    }
     if hints.is_empty() && fps_avg.is_some() {
         hints.push(hint("allGood", "ok", &[]));
     }
@@ -224,8 +263,43 @@ fn summarize(ctx: &Context, samples: &[Sample], ended: i64) -> Option<SessionSum
         process_peak_mb: samples.iter().map(|s| s.process_mb).max().unwrap_or(0),
         system_total_mb: ctx.system_total_mb,
         system_free_min_mb: free_min,
+        mod_cost_ms: cost,
+        mod_cost_parts: cost_parts,
+        mod_background_ms: background,
         hints,
     })
+}
+
+/// The mod's average cost per frame, its five biggest parts and its background time, from the
+/// samples taken in a world where the mod reported them.
+fn mod_cost(samples: &[Sample]) -> (Option<f32>, Vec<CostPart>, Option<f32>) {
+    let measured: Vec<&Sample> = samples
+        .iter()
+        .filter(|s| s.fps.is_some() && s.cost_ms.is_some())
+        .collect();
+    if measured.is_empty() {
+        return (None, Vec::new(), None);
+    }
+    let n = measured.len() as f32;
+    let cost = measured.iter().filter_map(|s| s.cost_ms).sum::<f32>() / n;
+    let background = measured.iter().filter_map(|s| s.background_ms).sum::<f32>() / n;
+    let mut totals: BTreeMap<&str, f32> = BTreeMap::new();
+    for s in &measured {
+        for (id, ms) in &s.cost_parts {
+            *totals.entry(id).or_default() += ms;
+        }
+    }
+    let mut parts: Vec<CostPart> = totals
+        .into_iter()
+        .map(|(id, ms)| CostPart {
+            id: id.to_owned(),
+            ms: ms / n,
+        })
+        .filter(|p| p.ms >= 0.005)
+        .collect();
+    parts.sort_by(|a, b| b.ms.total_cmp(&a.ms));
+    parts.truncate(5);
+    (Some(cost), parts, Some(background))
 }
 
 /// Sample the game with process id `pid` until `done` is cancelled.
@@ -273,6 +347,12 @@ pub async fn record(
             heap_max_mb: status.as_ref().and_then(|s| s.heap_max_mb),
             process_mb: (process.memory() / MB) as u32,
             system_free_mb: (sys.available_memory() / MB) as u32,
+            cost_ms: status.as_ref().and_then(|s| s.cost_ms),
+            cost_parts: status
+                .as_ref()
+                .map(|s| s.cost_parts.clone())
+                .unwrap_or_default(),
+            background_ms: status.as_ref().and_then(|s| s.background_ms),
         });
         // A day of samples is plenty; keep memory bounded on very long sessions.
         if out.len() > 43_200 {
@@ -342,6 +422,7 @@ mod tests {
             heap_max_mb: Some(2048),
             process_mb: 3000,
             system_free_mb: 8000,
+            ..Sample::default()
         }
     }
     fn kinds(sum: &SessionSummary) -> Vec<&str> {
@@ -403,6 +484,34 @@ mod tests {
         let sum = summarize(&ctx(), &samples, 0).unwrap();
         assert_eq!(sum.fps_avg, None);
         assert_eq!(kinds(&sum), ["systemMemory"]);
+    }
+
+    #[test]
+    fn a_costly_mod_part_is_named() {
+        let cheap: Vec<Sample> = (0..100)
+            .map(|_| Sample {
+                cost_ms: Some(0.4),
+                cost_parts: BTreeMap::from([("fps".to_owned(), 0.3), ("clock".to_owned(), 0.1)]),
+                background_ms: Some(2.0),
+                ..s(120, 900)
+            })
+            .collect();
+        let sum = summarize(&ctx(), &cheap, 0).unwrap();
+        assert_eq!(kinds(&sum), ["allGood"]);
+        assert_eq!(sum.mod_cost_parts[0].id, "fps");
+        assert!((sum.mod_cost_ms.unwrap() - 0.4).abs() < 1e-4);
+
+        let costly: Vec<Sample> = (0..100)
+            .map(|_| Sample {
+                cost_ms: Some(3.0),
+                cost_parts: BTreeMap::from([("mirrors".to_owned(), 2.6), ("fps".to_owned(), 0.4)]),
+                ..s(60, 900)
+            })
+            .collect();
+        let sum = summarize(&ctx(), &costly, 0).unwrap();
+        assert_eq!(kinds(&sum), ["aerionCost"]);
+        assert_eq!(sum.hints[0].params["part"], "mirrors");
+        assert_eq!(sum.hints[0].params["share"], "18");
     }
 
     #[test]

@@ -195,7 +195,7 @@ public final class AerionClient implements ClientModInitializer {
 			Runtime rt = Runtime.getRuntime();
 			long heapMb = (rt.totalMemory() - rt.freeMemory()) >> 20;
 			String json = "{\"fps\":" + mc.getFps() + ",\"heapMb\":" + heapMb + ",\"heapMaxMb\":" + (rt.maxMemory() >> 20)
-					+ ",\"inWorld\":" + (mc.level != null) + ",\"time\":" + System.currentTimeMillis() + "}";
+					+ ",\"inWorld\":" + (mc.level != null) + Cost.report() + ",\"time\":" + System.currentTimeMillis() + "}";
 			Files.writeString(tmp, json, StandardCharsets.UTF_8);
 			Files.move(tmp, status, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
 		} catch (Exception e) {

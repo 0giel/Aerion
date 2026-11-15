@@ -222,6 +222,15 @@ public final class Mirrors {
 
 	/** On the capture thread: a new picture for every panel whose window is found. */
 	private static void captureAll() {
+		long started = System.nanoTime();
+		try {
+			captureEach();
+		} finally {
+			pl.aerion.mod.Cost.background(System.nanoTime() - started);
+		}
+	}
+
+	private static void captureEach() {
 		try {
 			Minecraft mc = Minecraft.getInstance();
 			List<Panel> list;
@@ -293,6 +302,15 @@ public final class Mirrors {
 
 	/** Called while the world's entities are drawn; the pose is relative to the camera. */
 	public static void submit(PoseStack pose, SubmitNodeCollector out) {
+		long started = System.nanoTime();
+		try {
+			draw(pose, out);
+		} finally {
+			pl.aerion.mod.Cost.part("mirrors").add(started);
+		}
+	}
+
+	private static void draw(PoseStack pose, SubmitNodeCollector out) {
 		List<Panel> list;
 		synchronized (Mirrors.class) {
 			if (panels.isEmpty() || loadedKey == null) return;

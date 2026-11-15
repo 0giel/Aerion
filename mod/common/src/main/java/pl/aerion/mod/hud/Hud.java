@@ -1218,6 +1218,7 @@ public final class Hud {
 		if (lastFrame != 0) dt = Math.min(0.1f, (now - lastFrame) / 1e9f);
 		lastFrame = now;
 		if (!preview && mc.player == null) ANIMS.clear();
+		if (!preview && mc.level != null) pl.aerion.mod.Cost.frame();
 		if (!preview && !Game.hudHidden() && mc.player != null) Overlays.draw(g);
 		// The editor draws the modules itself, also while the whole HUD is switched off.
 		if (!preview && (!cfg.enabled() || Game.hudHidden() || mc.player == null || Game.screen() instanceof EditorScreen)) return;
@@ -1228,6 +1229,7 @@ public final class Hud {
 			if (!HudConfig.bool(m, "enabled", false)) continue;
 			if (!preview && e.getValue() instanceof GameElement) continue;
 			Ctx c = new Ctx(mc, mc.player, m, style(cfg, m, t), t, preview);
+			long started = System.nanoTime();
 			try {
 				// Fades in and out when a situation shows or hides it (the editor always shows it).
 				Anim a = ANIMS.computeIfAbsent(e.getKey(), k -> new Anim());
@@ -1273,6 +1275,8 @@ public final class Hud {
 			} catch (RuntimeException ex) {
 				// One broken module must not take the whole HUD (or the frame) down.
 				AerionClient.warnOnce("hud." + e.getKey(), ex);
+			} finally {
+				if (!preview) pl.aerion.mod.Cost.part(e.getKey()).add(started);
 			}
 		}
 	}

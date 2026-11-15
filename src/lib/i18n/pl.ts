@@ -1268,8 +1268,15 @@ const pl: Dict = {
     processPeak: "Cały proces, szczyt",
     systemFree: "Najmniej wolnej na komputerze: {size}",
     noFpsData: "FPS pochodzi z moda Aerion — włącz go w instancji, żeby widzieć tu FPS.",
+    modCost: "Czas procesora w modzie Aerion (na klatkę)",
+    modShare: "{share} czasu klatki",
+    modCostHint: "Ile czasu z każdej klatki zabrały części moda, średnio w świecie.",
+    modBackground:
+      "Okna w świecie odczytywały okna w tle przez {ms} ms na sekundę (to nie spowalnia klatek).",
     hints: {
       allGood: "Nic nie spowalniało tej gry.",
+      aerionCost:
+        "Mod Aerion zabierał {ms} ms z każdej klatki ({share}% czasu); najwięcej: {part}. Wyłącz tę część albo uprość jej ustawienia.",
       lowMemory: "Ta instancja ma za mało RAM: użyła {peak} z {max}. Daj jej {suggest}.",
       tooMuchMemory:
         "Instancja użyła najwyżej {peak} z {max}. Wystarczy {suggest} — mniej pamięci to krótsze przycięcia od zbierania śmieci.",

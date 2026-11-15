@@ -10,7 +10,7 @@
   import { toasts } from "../stores/toasts.svelte";
   import { commands, errorMessage, events, type PerfSnapshot } from "../api";
   import type { Hint, SessionSummary_Serialize as SessionSummary } from "../bindings";
-  import { formatPlayTime, formatRelative, i18n, t } from "../i18n/index.svelte";
+  import { formatPlayTime, formatRelative, has, i18n, t } from "../i18n/index.svelte";
 
   const SLOTS = 60;
   let snap = $state.raw<PerfSnapshot | null>(null);
@@ -77,8 +77,17 @@
     sessions = [];
   }
 
+  /** A part of the mod by its HUD module or feature name. */
+  const partName = (id: string) =>
+    has(`hudEditor.modules.${id}`)
+      ? t(`hudEditor.modules.${id}` as never)
+      : has(`hudEditor.features.${id}`)
+        ? t(`hudEditor.features.${id}` as never)
+        : id;
+  const ms = (v: number) => `${n2.format(v)} ms`;
   const hintText = (h: Hint) => {
     const p: Record<string, string | number> = { ...h.params };
+    if ("part" in p) p.part = partName(String(p.part));
     for (const k of ["peak", "max", "suggest", "free"]) if (k in p) p[k] = size(Number(p[k]));
     return t(`perf.hints.${h.kind}` as never, p);
   };
@@ -95,8 +104,11 @@
   }
 
   const n1 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 1 }));
+  const n2 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 2 }));
   const n0 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 0 }));
   const pct = (v: number) => `${n0.format(v)}%`;
+  /** A share of the frame; small ones keep a decimal so they do not read as nothing. */
+  const share = (v: number) => (v < 1 ? `${n2.format(Math.max(v, 0.01))}%` : pct(v));
   const size = (mb: number) => (mb >= 1024 ? `${n1.format(mb / 1024)} GB` : `${n0.format(mb)} MB`);
   const ago = (s: number) => (s === 0 ? t("perf.now") : t("perf.secondsAgo", { n: s }));
 
@@ -308,6 +320,31 @@
           {#if session.fpsAvg === null}
             <span class="tiny muted">{t("perf.noFpsData")}</span>
           {/if}
+          {#if session.modCostMs !== null && session.modCostMs !== undefined}
+            {@const frame = session.fpsAvg ? 1000 / session.fpsAvg : null}
+            <div class="cost col gap-1">
+              <div class="row between wrap">
+                <span class="label">{t("perf.modCost")}</span>
+                <span class="small"
+                  ><strong>{ms(session.modCostMs)}</strong>
+                  {#if frame}<span class="muted">
+                      · {t("perf.modShare", { share: share((session.modCostMs / frame) * 100) })}</span
+                    >{/if}</span
+                >
+              </div>
+              {#each session.modCostParts as p (p.id)}
+                <div class="prog">
+                  <span class="truncate" title={p.id}>{partName(p.id)}</span>
+                  <Meter value={num(p.ms)} max={Math.max(session.modCostMs, 0.01)} label={partName(p.id)} />
+                  <span class="num">{ms(num(p.ms))}</span>
+                </div>
+              {/each}
+              <span class="tiny muted"
+                >{t("perf.modCostHint")}{#if session.modBackgroundMs && session.modBackgroundMs >= 1}
+                  {" " + t("perf.modBackground", { ms: n0.format(session.modBackgroundMs) })}{/if}</span
+              >
+            </div>
+          {/if}
           {#if session.hints.length}
             <ul class="hints">
               {#each session.hints as h (h.kind)}
@@ -377,6 +414,13 @@
 </div>
 
 <style>
+  .cost {
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--border);
+  }
+  .cost .prog {
+    grid-template-columns: minmax(0, 1fr) minmax(4rem, 2fr) auto;
+  }
   .perf {
     display: flex;
     flex-direction: column;

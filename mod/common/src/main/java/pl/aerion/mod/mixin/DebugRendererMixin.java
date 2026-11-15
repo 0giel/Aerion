@@ -20,12 +20,24 @@ abstract class DebugRendererMixin {
 	@Inject(method = "emitGizmos", at = @At("TAIL"))
 	private void aerion$hitboxes(Frustum frustum, double x, double y, double z, float partial, CallbackInfo ci) {
 		try {
+			long t = System.nanoTime();
 			Hitboxes.emit(partial);
+			pl.aerion.mod.Cost.part("hitboxes").add(t);
+			t = System.nanoTime();
 			LightLevels.emit();
+			pl.aerion.mod.Cost.part("lightLevels").add(t);
+			t = System.nanoTime();
 			BlockOutline.emit();
+			pl.aerion.mod.Cost.part("blockOutline").add(t);
+			t = System.nanoTime();
 			Waypoints.emit(partial);
+			pl.aerion.mod.Cost.part("waypoints").add(t);
+			t = System.nanoTime();
 			ChunkBorders.emit();
+			pl.aerion.mod.Cost.part("chunkBorders").add(t);
+			t = System.nanoTime();
 			TntTimer.emit(partial);
+			pl.aerion.mod.Cost.part("tntTimer").add(t);
 		} catch (RuntimeException e) {
 			AerionClient.warnOnce("hitboxes", e);
 		}

@@ -548,6 +548,13 @@ export type ContentUpdatesEvent = {
 	counts: { [key in string]: number },
 };
 
+/**  One part of the mod and the time it took per frame, on average. */
+export type CostPart = {
+	/**  HUD module or feature id. */
+	id: string,
+	ms: number | null,
+};
+
 export type CpuInfo = {
 	name: string,
 	cores: number,
@@ -2224,6 +2231,12 @@ export type SessionSummary_Deserialize = {
 	processPeakMb: number,
 	systemTotalMb: number,
 	systemFreeMinMb: number,
+	/**  What the Aerion mod itself took per frame on average (ms), when the mod reports it. */
+	modCostMs?: number | null,
+	/**  Its biggest parts, largest first. */
+	modCostParts?: CostPart[],
+	/**  Time on the mod's own threads (ms per second). */
+	modBackgroundMs?: number | null,
 	hints: Hint[],
 };
 
@@ -2243,6 +2256,12 @@ export type SessionSummary_Serialize = {
 	processPeakMb: number,
 	systemTotalMb: number,
 	systemFreeMinMb: number,
+	/**  What the Aerion mod itself took per frame on average (ms), when the mod reports it. */
+	modCostMs: number | null,
+	/**  Its biggest parts, largest first. */
+	modCostParts: CostPart[],
+	/**  Time on the mod's own threads (ms per second). */
+	modBackgroundMs: number | null,
 	hints: Hint[],
 };
 
