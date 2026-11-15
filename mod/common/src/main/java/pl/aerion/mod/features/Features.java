@@ -450,6 +450,7 @@ public final class Features {
 		}
 		Streamer.sync();
 		Effects.sync();
+		pl.aerion.mod.hud.MapMemory.tick(mc);
 		while (stopwatch.consumeClick()) Stopwatch.press();
 		while (mirrors.consumeClick()) {
 			if (Game.screen() == null && mc.player != null) {

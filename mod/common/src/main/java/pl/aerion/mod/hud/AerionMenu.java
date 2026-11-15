@@ -48,7 +48,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "streamer", "shulkerPreview", "effects", "wheel", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "streamer", "shulkerPreview", "effects", "wheel", "mapMemory", "badges"};
 	/** What a quick wheel slot can be (Features.WHEEL_ACTIONS). */
 	private static final String[] W = Features.WHEEL_ACTIONS.toArray(new String[0]);
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};

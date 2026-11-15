@@ -89,6 +89,7 @@ public final class MapPage implements Page {
 		int nx = Math.min(MAX_PIXELS, blocksW / step + 1), nz = Math.min(MAX_PIXELS, blocksH / step + 1);
 		int x0 = (int) Math.floor(cx - nx * step / 2.0), z0 = (int) Math.floor(cz - nz * step / 2.0);
 		int[] px = MapColors.sample(mc.level, x0, z0, nx, nz, step);
+		MapMemory.fill(px, x0, z0, nx, nz, step);
 		for (int i = 0; i < px.length; i++) if (px[i] == 0) px[i] = 0xFF161616;
 		Textures.registerPixels(TEXTURE, nx, nz, px);
 		texX = x0;

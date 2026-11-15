@@ -223,6 +223,8 @@ pub struct HudFeatures {
     pub effects: FeatureOptions,
     /// The quick wheel (`options.slot1`…`slot8`: an action each).
     pub wheel: FeatureOptions,
+    /// The map keeps the terrain the player has seen; on unless switched off.
+    pub map_memory: OnFeature,
     /// The computer's windows on panels in the world (test).
     pub mirrors: FeatureOptions,
     /// Saturation and the held food's value on the hunger bar (`options.saturation`,
@@ -504,6 +506,7 @@ impl HudConfig {
                 &self.features.shulker_preview.options,
                 &self.features.effects.options,
                 &self.features.wheel.options,
+                &self.features.map_memory.options,
                 &self.features.mirrors.options,
                 &self.features.food.options,
             ]

@@ -1717,6 +1717,8 @@ const en = {
       effectsHint: "The colour of the enchantment glint and fewer particles; set them in the in-game menu.",
       wheel: "Quick wheel",
       wheelHint: "Hold ` in game and point at an action; choose what is in it in the in-game menu.",
+      mapMemory: "Map remembers",
+      mapMemoryHint: "The map keeps the places you have explored (files in the game folder: aerion-map).",
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
       mirrors: "Windows in the world (test)",

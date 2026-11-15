@@ -1768,6 +1768,8 @@ const pl: Dict = {
       effectsHint: "Kolor połysku zaklęć i mniej cząsteczek; ustawisz je w menu w grze.",
       wheel: "Koło skrótów",
       wheelHint: "Przytrzymaj ` w grze i wskaż myszą akcję; co jest w kole, ustawisz w menu w grze.",
+      mapMemory: "Mapa pamięta",
+      mapMemoryHint: "Mapa zachowuje zwiedzone tereny (pliki w folderze gry: aerion-map).",
       tntTimer: "Odliczanie TNT",
       tntTimerHint: "Sekundy do wybuchu nad podpalonym TNT w pobliżu.",
       mirrors: "Okna w świecie (test)",

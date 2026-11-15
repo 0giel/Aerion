@@ -608,6 +608,8 @@ public final class Lang {
 			Map.entry("aerion.feature.tntTimer", new String[] {"TNT timer", "Odliczanie TNT"}),
 			Map.entry("aerion.feature.streamer", new String[] {"Streamer mode", "Tryb streamera"}),
 			Map.entry("aerion.feature.wheel", new String[] {"Quick wheel", "Koło skrótów"}),
+			Map.entry("aerion.feature.mapMemory", new String[] {"Map remembers", "Mapa pamięta"}),
+			Map.entry("aerion.desc.mapMemory", new String[] {"The map keeps the places you have been, also after leaving them.", "Mapa zachowuje miejsca, w których byłeś, także gdy już odejdziesz."}),
 			Map.entry("aerion.desc.wheel", new String[] {"Hold ` and point the mouse at what you want; let go to run it.", "Przytrzymaj ` i wskaż myszą, co chcesz; puść, by uruchomić."}),
 			Map.entry("key.aerion.wheel", new String[] {"Quick wheel (hold)", "Koło skrótów (przytrzymaj)"}),
 			Map.entry("aerion.choice.fullbright", new String[] {"Full brightness", "Pełna jasność"}),
