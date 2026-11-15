@@ -23,6 +23,9 @@ public final class MirrorsPage implements Page {
 	/** Small pictures of the windows, made in the background when the page opens. */
 	private final java.util.Map<Long, WindowSource.Frame> shots = new java.util.concurrent.ConcurrentHashMap<>();
 	private final java.util.Map<Long, net.minecraft.resources.Identifier> thumbs = new java.util.HashMap<>();
+	/** Program icons, read with the pictures. */
+	private final java.util.Map<Long, WindowSource.Frame> icons = new java.util.concurrent.ConcurrentHashMap<>();
+	private final java.util.Map<Long, net.minecraft.resources.Identifier> iconTextures = new java.util.HashMap<>();
 	private boolean shooting;
 	private static final int ROW_H = 34, THUMB_W = 52, THUMB_H = 28;
 	private int scroll;
@@ -42,6 +45,12 @@ public final class MirrorsPage implements Page {
 				List<WindowSource.Win> list = windows;
 				Thread t = new Thread(() -> {
 					for (WindowSource.Win win : list) {
+						try {
+							WindowSource.Frame icon = src.icon(win.id());
+							if (icon != null) icons.put(win.id(), icon);
+						} catch (Throwable ignored) {
+							// no icon for this one
+						}
 						try {
 							WindowSource.Frame f = src.capture(win.id(), 160);
 							if (f != null) shots.put(win.id(), f);
@@ -72,7 +81,9 @@ public final class MirrorsPage implements Page {
 			boolean over = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + ROW_H;
 			Draw.rounded(g, x, y, w, ROW_H, 4, over ? control : Colors.mix(surface, control, 0.5f));
 			thumb(g, win.id(), x + 4, y + 3);
-			Txt.draw(g, ellipsize(win.title(), w - 70 - THUMB_W - 8), x + THUMB_W + 12, y + ROW_H / 2f, 7.5f, text);
+			int tx = x + THUMB_W + 12;
+			if (icon(g, win.id(), tx, y + ROW_H / 2 - 6)) tx += 16;
+			Txt.draw(g, ellipsize(win.title(), x + w - 70 - tx), tx, y + ROW_H / 2f, 7.5f, text);
 			Txt.draw(g, Lang.tr("aerion.mirrors.place"), x + w - 56, y + ROW_H / 2f, 6.5f, over ? accent : muted);
 			buttons.add(new Button(x, y, w, ROW_H, () -> Mirrors.place(win)));
 			y += ROW_H + 3;
@@ -136,6 +147,20 @@ public final class MirrorsPage implements Page {
 		g.texture(tex, tx + (THUMB_W - dw) / 2, ty + (THUMB_H - dh) / 2, dw, dh, f.width(), f.height(), 0xFFFFFFFF);
 	}
 
+	/** The program's icon, 12 pixels; false when there is none (yet). */
+	private boolean icon(Gfx g, long id, int ix, int iy) {
+		WindowSource.Frame f = icons.get(id);
+		if (f == null) return false;
+		net.minecraft.resources.Identifier tex = iconTextures.get(id);
+		if (tex == null) {
+			tex = net.minecraft.resources.Identifier.fromNamespaceAndPath("aerion", "mirror/icon" + id);
+			pl.aerion.mod.platform.Textures.registerSmooth(tex, f.width(), f.height(), f.argb());
+			iconTextures.put(id, tex);
+		}
+		g.texture(tex, ix, iy, 12, 12, f.width(), f.height(), 0xFFFFFFFF);
+		return true;
+	}
+
 	private void small(Gfx g, int bx, int by, int bw, String label, int mx, int my, int fill, int ink, Runnable run) {
 		boolean over = mx >= bx && mx < bx + bw && my >= by && my < by + 12;
 		Draw.rounded(g, bx, by, bw, 12, 3, over ? Colors.mix(fill, 0xFFFFFFFF, 0.15f) : fill);
@@ -176,5 +201,7 @@ public final class MirrorsPage implements Page {
 	public void close() {
 		for (net.minecraft.resources.Identifier t : thumbs.values()) pl.aerion.mod.platform.Textures.release(t);
 		thumbs.clear();
+		for (net.minecraft.resources.Identifier t : iconTextures.values()) pl.aerion.mod.platform.Textures.release(t);
+		iconTextures.clear();
 	}
 }

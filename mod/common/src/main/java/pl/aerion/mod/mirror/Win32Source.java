@@ -28,6 +28,8 @@ final class Win32Source implements WindowSource {
 		User32Extra INSTANCE = Native.load("user32", User32Extra.class, com.sun.jna.win32.W32APIOptions.DEFAULT_OPTIONS);
 
 		boolean IsIconic(WinDef.HWND hwnd);
+
+		boolean DrawIconEx(WinDef.HDC hdc, int x, int y, WinDef.HICON icon, int w, int h, int step, com.sun.jna.Pointer brush, int flags);
 	}
 	private final int ownPid = Kernel32.INSTANCE.GetCurrentProcessId();
 
@@ -88,6 +90,51 @@ final class Win32Source implements WindowSource {
 			GDI32.INSTANCE.DeleteObject(bmp);
 			GDI32.INSTANCE.DeleteDC(mem);
 			u.ReleaseDC(h, screen);
+		}
+	}
+
+	private static final int WM_GETICON = 0x007F, ICON_BIG = 1, ICON_SMALL2 = 2, GCLP_HICON = -14, DI_NORMAL = 3, ICON_SIZE = 32;
+
+	/** The window's icon (asked of the window, else its class), drawn into 32×32 pixels. Untested. */
+	@Override
+	public Frame icon(long id) {
+		WinDef.HWND h = hwnd(id);
+		long handle = 0;
+		for (int kind : new int[] {ICON_BIG, ICON_SMALL2}) {
+			WinDef.DWORDByReference result = new WinDef.DWORDByReference();
+			u.SendMessageTimeout(h, WM_GETICON, new WinDef.WPARAM(kind), new WinDef.LPARAM(0), WinUser.SMTO_ABORTIFHUNG, 100, result);
+			handle = result.getValue().longValue();
+			if (handle != 0) break;
+		}
+		if (handle == 0) handle = u.GetClassLongPtr(h, GCLP_HICON).longValue();
+		if (handle == 0) return null;
+		WinDef.HICON icon = new WinDef.HICON(new com.sun.jna.Pointer(handle));
+		WinDef.HDC mem = GDI32.INSTANCE.CreateCompatibleDC(null);
+		WinGDI.BITMAPINFO info = new WinGDI.BITMAPINFO();
+		info.bmiHeader.biWidth = ICON_SIZE;
+		info.bmiHeader.biHeight = -ICON_SIZE;
+		info.bmiHeader.biPlanes = 1;
+		info.bmiHeader.biBitCount = 32;
+		info.bmiHeader.biCompression = WinGDI.BI_RGB;
+		com.sun.jna.ptr.PointerByReference bits = new com.sun.jna.ptr.PointerByReference();
+		WinDef.HBITMAP bmp = GDI32.INSTANCE.CreateDIBSection(mem, info, WinGDI.DIB_RGB_COLORS, bits, null, 0);
+		if (bmp == null || bits.getValue() == null) {
+			GDI32.INSTANCE.DeleteDC(mem);
+			return null;
+		}
+		var old = GDI32.INSTANCE.SelectObject(mem, bmp);
+		try {
+			if (!User32Extra.INSTANCE.DrawIconEx(mem, 0, 0, icon, ICON_SIZE, ICON_SIZE, 0, null, DI_NORMAL)) return null;
+			int[] px = bits.getValue().getIntArray(0, ICON_SIZE * ICON_SIZE);
+			boolean alpha = false;
+			for (int p : px) alpha |= (p >>> 24) != 0;
+			// Old icons without an alpha channel: whatever was drawn is opaque.
+			if (!alpha) for (int i = 0; i < px.length; i++) if ((px[i] & 0xFFFFFF) != 0) px[i] |= 0xFF000000;
+			return new Frame(ICON_SIZE, ICON_SIZE, px);
+		} finally {
+			GDI32.INSTANCE.SelectObject(mem, old);
+			GDI32.INSTANCE.DeleteObject(bmp);
+			GDI32.INSTANCE.DeleteDC(mem);
 		}
 	}
 

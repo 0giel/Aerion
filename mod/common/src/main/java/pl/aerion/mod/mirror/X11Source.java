@@ -87,6 +87,42 @@ final class X11Source implements WindowSource {
 		}
 	}
 
+	/** The icon from _NET_WM_ICON: of the sizes there, the one closest to 32 pixels. */
+	@Override
+	public synchronized Frame icon(long id) {
+		X11.AtomByReference type = new X11.AtomByReference();
+		IntByReference format = new IntByReference();
+		NativeLongByReference count = new NativeLongByReference(), rest = new NativeLongByReference();
+		PointerByReference data = new PointerByReference();
+		int r = x.XGetWindowProperty(display, new X11.Window(id), atom("_NET_WM_ICON"), new NativeLong(0), new NativeLong(1 << 20), false,
+				new X11.Atom(X11.AnyPropertyType), type, format, count, rest, data);
+		if (r != 0 || data.getValue() == null) return null;
+		try {
+			if (format.getValue() != 32) return null;
+			long n = count.getValue().longValue();
+			long at = 0, best = -1;
+			int bw = 0, bh = 0;
+			while (at + 2 <= n) {
+				int w = (int) data.getValue().getNativeLong(at * NativeLong.SIZE).longValue();
+				int h = (int) data.getValue().getNativeLong((at + 1) * NativeLong.SIZE).longValue();
+				if (w <= 0 || h <= 0 || w > 1024 || h > 1024 || at + 2 + (long) w * h > n) break;
+				if (best < 0 || Math.abs(w - 32) < Math.abs(bw - 32)) {
+					best = at + 2;
+					bw = w;
+					bh = h;
+				}
+				at += 2 + (long) w * h;
+			}
+			if (best < 0) return null;
+			int[] px = new int[bw * bh];
+			// Format 32 items are C longs in memory; the colour is in the low 32 bits (ARGB).
+			for (int i = 0; i < px.length; i++) px[i] = (int) data.getValue().getNativeLong((best + i) * NativeLong.SIZE).longValue();
+			return new Frame(bw, bh, px);
+		} finally {
+			x.XFree(data.getValue());
+		}
+	}
+
 	private String text(X11.Window w, String name) {
 		X11.AtomByReference type = new X11.AtomByReference();
 		IntByReference format = new IntByReference();

@@ -16,6 +16,11 @@ public interface WindowSource {
 	/** The windows that can be mirrored, without the game's own. */
 	List<Win> list();
 
+	/** The window's program icon, about 32 pixels; null when it has none. */
+	default Frame icon(long id) {
+		return null;
+	}
+
 	/** The window's picture, at most `maxWidth` pixels wide; null when it can't be read now. */
 	Frame capture(long id, int maxWidth);
 
