@@ -214,6 +214,8 @@ pub struct HudFeatures {
     pub own_name: FeatureOptions,
     /// Seconds left above lit TNT nearby.
     pub tnt_timer: FeatureOptions,
+    /// The computer's windows on panels in the world (test).
+    pub mirrors: FeatureOptions,
     /// Saturation and the held food's value on the hunger bar (`options.saturation`,
     /// `options.preview`); on unless switched off.
     pub food: OnFeature,
@@ -489,6 +491,7 @@ impl HudConfig {
                 &self.features.chunk_borders.options,
                 &self.features.own_name.options,
                 &self.features.tnt_timer.options,
+                &self.features.mirrors.options,
                 &self.features.food.options,
             ]
             .iter()

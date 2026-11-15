@@ -18,7 +18,8 @@
 		"ScreenMixin",
 		"SplashRendererMixin",
 		"TabListLookMixin",
-		"TooltipLookMixin"
+		"TooltipLookMixin",
+		"MirrorRenderMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

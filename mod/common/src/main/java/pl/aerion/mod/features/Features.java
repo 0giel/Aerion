@@ -39,7 +39,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch, mirrors, mirrorGrab, mirrorType;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -73,8 +73,11 @@ public final class Features {
 			ownName = new KeyMapping("key.aerion.ownName", InputConstants.UNKNOWN.getValue(), cat);
 			tntTimer = new KeyMapping("key.aerion.tntTimer", InputConstants.UNKNOWN.getValue(), cat);
 			stopwatch = new KeyMapping("key.aerion.stopwatch", InputConstants.UNKNOWN.getValue(), cat);
+			mirrors = new KeyMapping("key.aerion.mirrors", InputConstants.KEY_J, cat);
+			mirrorGrab = new KeyMapping("key.aerion.mirrorGrab", InputConstants.KEY_Y, cat);
+			mirrorType = new KeyMapping("key.aerion.mirrorType", InputConstants.KEY_U, cat);
 			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
-					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch));
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch, mirrors, mirrorGrab, mirrorType));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -148,6 +151,9 @@ public final class Features {
 			case "ownName" -> ownName;
 			case "tntTimer" -> tntTimer;
 			case "stopwatchStart" -> stopwatch;
+			case "mirrors" -> mirrors;
+			case "mirrorGrab" -> mirrorGrab;
+			case "mirrorType" -> mirrorType;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -410,6 +416,11 @@ public final class Features {
 		}
 	}
 
+	/** Whether panels of windows take clicks and the wheel now (feature on, no screen open). */
+	public static boolean mirrorsActive() {
+		return keys != null && Game.screen() == null && HudConfig.bool(feature("mirrors"), "enabled", false);
+	}
+
 	/** Called every client tick. */
 	public static void tick(Minecraft mc) {
 		if (keys == null) return;
@@ -426,6 +437,26 @@ public final class Features {
 		toggleOnKey(ownName, "ownName", false);
 		toggleOnKey(tntTimer, "tntTimer", false);
 		while (stopwatch.consumeClick()) Stopwatch.press();
+		while (mirrors.consumeClick()) {
+			if (Game.screen() == null && mc.player != null) {
+				// Opening the picker is a clear wish: the feature turns on with it.
+				JsonObject f = feature("mirrors");
+				if (!HudConfig.bool(f, "enabled", false)) {
+					f.addProperty("enabled", true);
+					AerionClient.saveHud();
+				}
+				Game.setScreen(new EditorScreen(new pl.aerion.mod.mirror.MirrorsPage(), null));
+			}
+		}
+		boolean mirrorsOn = HudConfig.bool(feature("mirrors"), "enabled", false);
+		pl.aerion.mod.mirror.Mirrors.tick(mc, mirrorsOn && Game.screen() == null && mirrorGrab.isDown());
+		while (mirrorType.consumeClick()) {
+			long win = mirrorsOn && Game.screen() == null ? pl.aerion.mod.mirror.Mirrors.aimedWindow() : 0;
+			if (win != 0) {
+				var hit = pl.aerion.mod.mirror.Mirrors.aim();
+				Game.setScreen(new EditorScreen(new pl.aerion.mod.mirror.TypePage(win, hit != null ? hit.panel().title : ""), null));
+			}
+		}
 		Combat.tick(mc);
 		toggleOnKey(lightLevels, "lightLevels", false);
 		toggleOnKey(blockOutline, "blockOutline", false);

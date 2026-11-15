@@ -1755,6 +1755,8 @@ const pl: Dict = {
       ownNameHint: "Twój nick i odznaka nad głową, gdy kamera jest za tobą.",
       tntTimer: "Odliczanie TNT",
       tntTimerHint: "Sekundy do wybuchu nad podpalonym TNT w pobliżu.",
+      mirrors: "Okna w świecie (test)",
+      mirrorsHint: "Okna z komputera na panelach w świecie gry. W grze: J wybiera okno, Y przenosi, U pisze.",
       food: "Jedzenie na pasku głodu",
       foodHint:
         "Złoty obrys pokazuje nasycenie, trzymane jedzenie miga tam, ile uzupełni, a opis przedmiotu podaje jego wartości (jak AppleSkin).",

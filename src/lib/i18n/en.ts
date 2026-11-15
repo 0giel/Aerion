@@ -1704,6 +1704,9 @@ const en = {
       ownNameHint: "Your name and badge above your head when the camera is behind you.",
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
+      mirrors: "Windows in the world (test)",
+      mirrorsHint:
+        "Your computer's windows on panels in the game world. In game: J picks a window, Y moves it, U types.",
       food: "Food on the hunger bar",
       foodHint:
         "A gold rim shows saturation, held food blinks where it would fill, and item tooltips show food values (like AppleSkin).",

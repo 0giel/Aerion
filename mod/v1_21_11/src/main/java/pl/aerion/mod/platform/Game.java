@@ -48,4 +48,9 @@ public final class Game {
 	public static void chat(net.minecraft.network.chat.Component message) {
 		Minecraft.getInstance().gui.getChat().addMessage(message);
 	}
+
+	/** Where the camera is this frame. */
+	public static net.minecraft.world.phys.Vec3 cameraPosition() {
+		return net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().position();
+	}
 }

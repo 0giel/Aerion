@@ -23,5 +23,6 @@ abstract class MouseHandlerMixin {
 	@Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
 	private void aerion$zoomScroll(long window, double dx, double dy, CallbackInfo ci) {
 		if (Features.zoomScroll(dy)) ci.cancel();
+		else if (Features.mirrorsActive() && pl.aerion.mod.mirror.Mirrors.scroll(dy)) ci.cancel();
 	}
 }

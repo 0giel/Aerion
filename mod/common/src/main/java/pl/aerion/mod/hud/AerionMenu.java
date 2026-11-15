@@ -48,7 +48,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "mirrors", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -1754,6 +1754,9 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.ownName"), Features.key("ownName"));
 		keyRow(Lang.tr("aerion.feature.tntTimer"), Features.key("tntTimer"));
 		keyRow(Lang.tr("key.aerion.stopwatch"), Features.key("stopwatchStart"));
+		keyRow(Lang.tr("key.aerion.mirrors"), Features.key("mirrors"));
+		keyRow(Lang.tr("key.aerion.mirrorGrab"), Features.key("mirrorGrab"));
+		keyRow(Lang.tr("key.aerion.mirrorType"), Features.key("mirrorType"));
 		keyRow(Lang.tr("aerion.waypoint.add"), Features.key("waypointAdd"));
 		keyRow(Lang.tr("aerion.map.title"), Features.key("map"));
 		keyRow(Lang.tr("key.aerion.profile"), Features.key("profile"));

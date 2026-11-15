@@ -43,6 +43,7 @@ server
 cooldowns
 chunkBorders
 ownName
+mirrors
 tntTimer
 armor
 clock
