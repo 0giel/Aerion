@@ -9,6 +9,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.2.0",
+    notes: {
+      pl: [
+        "Menu jako pasek na dole, jak w grze (klawisze 1–9 i kółko myszy). To nowe domyślne menu; przy pierwszym uruchomieniu wybierzesz motyw i miejsce menu.",
+        "Nowe opcje wyglądu: karty „Klocki” z kwadratowymi rogami oraz scena na ekranie Start: gracz z wyspą, sam gracz albo sama wyspa.",
+        "Mod: ładniejsza minimapa i mapa (kolory biomów, rzeźba terenu, głębokość wody, okrągła i obracana minimapa) oraz punkty z literą.",
+        "Mod: nowe moduły (zasięg ciosu, combo, stoper, adres serwera, odnowienie przedmiotów), granice chunków, odliczanie TNT i własny nick w trzeciej osobie.",
+        "Mod: jedzenie jak w AppleSkin: złoty obrys nasycenia, podgląd trzymanego jedzenia i wartości w opisie przedmiotu.",
+        "Mod: menu w stylu launchera i gładkie ikony odznak.",
+      ],
+      en: [
+        "The menu as a bar at the bottom, like in the game (keys 1–9 and the mouse wheel). It is the new default menu; on first start you pick the theme and where the menu sits.",
+        "New look options: “Blocks” cards with square corners, and the Start screen scene: the player on the island, the player only or the island only.",
+        "Mod: a nicer minimap and map (biome colours, relief, water depth, a round and turning minimap) and lettered waypoints.",
+        "Mod: new modules (reach, combo, stopwatch, server address, item cooldowns), chunk borders, a TNT timer and your own name in third person.",
+        "Mod: food like AppleSkin: a gold saturation rim, a preview of held food and food values in item tooltips.",
+        "Mod: menus in the launcher's style and smooth badge icons.",
+      ],
+    },
+  },
+  {
     version: "1.1.3",
     notes: {
       pl: [
