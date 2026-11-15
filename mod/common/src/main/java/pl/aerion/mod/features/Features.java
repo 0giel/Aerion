@@ -39,7 +39,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -73,6 +73,7 @@ public final class Features {
 			ownName = new KeyMapping("key.aerion.ownName", InputConstants.UNKNOWN.getValue(), cat);
 			tntTimer = new KeyMapping("key.aerion.tntTimer", InputConstants.UNKNOWN.getValue(), cat);
 			streamer = new KeyMapping("key.aerion.streamer", InputConstants.KEY_F7, cat);
+			wheel = new KeyMapping("key.aerion.wheel", InputConstants.KEY_GRAVE, cat);
 			stopwatch = new KeyMapping("key.aerion.stopwatch", InputConstants.UNKNOWN.getValue(), cat);
 			mirrors = new KeyMapping("key.aerion.mirrors", InputConstants.KEY_J, cat);
 			mirrorGrab = new KeyMapping("key.aerion.mirrorGrab", InputConstants.KEY_Y, cat);
@@ -80,7 +81,7 @@ public final class Features {
 			mirrorArrange = new KeyMapping("key.aerion.mirrorArrange", InputConstants.KEY_K, cat);
 			mirrorHide = new KeyMapping("key.aerion.mirrorHide", InputConstants.KEY_R, cat);
 			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
-					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide));
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -154,6 +155,7 @@ public final class Features {
 			case "ownName" -> ownName;
 			case "tntTimer" -> tntTimer;
 			case "streamer" -> streamer;
+			case "wheel" -> wheel;
 			case "stopwatchStart" -> stopwatch;
 			case "mirrors" -> mirrors;
 			case "mirrorGrab" -> mirrorGrab;
@@ -443,6 +445,9 @@ public final class Features {
 		toggleOnKey(ownName, "ownName", false);
 		toggleOnKey(tntTimer, "tntTimer", false);
 		while (streamer.consumeClick()) Streamer.toggle();
+		while (wheel.consumeClick()) {
+			if (Game.screen() == null && mc.player != null && on("wheel")) Game.setScreen(new EditorScreen(new pl.aerion.mod.hud.WheelPage(wheelSlots()), null));
+		}
 		Streamer.sync();
 		Effects.sync();
 		while (stopwatch.consumeClick()) Stopwatch.press();
@@ -534,6 +539,78 @@ public final class Features {
 			f.addProperty("enabled", next);
 			AerionClient.saveHud();
 			Game.overlayMessage(net.minecraft.network.chat.Component.literal(Lang.tr("aerion.feature.fovLock") + ": " + Lang.tr(next ? "aerion.state.on" : "aerion.state.off")));
+		}
+	}
+
+	// --- The quick wheel ----------------------------------------------------------------------
+	/** What a wheel slot can do, in the order offered in the menu ("none" leaves a slot out). */
+	public static final List<String> WHEEL_ACTIONS = List.of("none", "fullbright", "hitboxes", "chunkBorders", "lightLevels", "perspective", "waypoint", "map",
+			"profile", "mirrors", "streamer", "stopwatch");
+	private static final String[] WHEEL_DEFAULTS = {"fullbright", "hitboxes", "waypoint", "map", "perspective", "streamer"};
+
+	public static boolean isWheelKey(InputConstants.Key key) {
+		return wheel != null && !wheel.isUnbound() && wheel.saveString().equals(key.getName());
+	}
+
+	/** The wheel's slots from the settings (slot1…slot8), empty ones left out. */
+	private static List<String> wheelSlots() {
+		JsonObject f = feature("wheel");
+		List<String> out = new ArrayList<>();
+		for (int i = 0; i < 8; i++) {
+			String id = HudConfig.opt(f, "slot" + (i + 1), i < WHEEL_DEFAULTS.length ? WHEEL_DEFAULTS[i] : "none");
+			if (!"none".equals(id) && WHEEL_ACTIONS.contains(id)) out.add(id);
+		}
+		return out;
+	}
+
+	public static String wheelLabel(String id) {
+		return Lang.tr("aerion.choice." + id);
+	}
+
+	/** The icon (from the menu's icons) shown in a slot. */
+	public static String wheelIcon(String id) {
+		return switch (id) {
+			case "fullbright" -> "light";
+			case "perspective" -> "fovKey";
+			case "waypoint" -> "waypoints";
+			case "map" -> "minimap";
+			case "profile" -> "layout";
+			default -> id;
+		};
+	}
+
+	/** Runs what a wheel slot stands for (the same as its own key). */
+	public static void runWheel(String id) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		switch (id) {
+			case "fullbright" -> {
+				JsonObject f = feature("fullbright");
+				if (!HudConfig.bool(f, "enabled", false)) {
+					f.addProperty("enabled", true);
+					AerionClient.saveHud();
+				} else {
+					setBright(mc, !bright);
+				}
+			}
+			case "hitboxes", "chunkBorders", "lightLevels" -> {
+				JsonObject f = feature(id);
+				boolean next = !HudConfig.bool(f, "enabled", false);
+				f.addProperty("enabled", next);
+				AerionClient.saveHud();
+				Game.overlayMessage(Component.literal(Lang.tr("aerion.feature." + id) + ": " + Lang.tr(next ? "aerion.state.on" : "aerion.state.off")));
+			}
+			case "perspective" -> mc.options.setCameraType(mc.options.getCameraType().cycle());
+			case "waypoint" -> {
+				Waypoints.Point w = Waypoints.addHere(Lang.tr("aerion.waypoint.default"));
+				if (w != null) Game.overlayMessage(Component.literal(w.name + " (" + w.x + ", " + w.y + ", " + w.z + ")"));
+			}
+			case "map" -> Game.setScreen(new EditorScreen(new pl.aerion.mod.hud.MapPage(), null));
+			case "profile" -> pl.aerion.mod.hud.Profiles.cycle(AerionClient.hud());
+			case "mirrors" -> Game.setScreen(new EditorScreen(new pl.aerion.mod.mirror.MirrorsPage(), null));
+			case "streamer" -> Streamer.toggle();
+			case "stopwatch" -> Stopwatch.press();
+			default -> {}
 		}
 	}
 

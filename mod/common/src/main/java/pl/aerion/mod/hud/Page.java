@@ -33,6 +33,16 @@ public interface Page {
 		return false;
 	}
 
+	/** A key let go; true when the page used it. */
+	default boolean keyReleased(InputConstants.Key key) {
+		return false;
+	}
+
+	/** Whether the game (single player) pauses while the page is open. */
+	default boolean pauses() {
+		return true;
+	}
+
 	/** A typed character; true when the page used it. */
 	default boolean charTyped(int codepoint) {
 		return false;

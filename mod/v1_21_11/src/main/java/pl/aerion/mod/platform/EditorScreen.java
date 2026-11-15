@@ -97,6 +97,16 @@ public final class EditorScreen extends Screen {
 	}
 
 	@Override
+	public boolean keyReleased(KeyEvent e) {
+		return page.keyReleased(InputConstants.getKey(e)) || super.keyReleased(e);
+	}
+
+	@Override
+	public boolean isPauseScreen() {
+		return page.pauses();
+	}
+
+	@Override
 	public void onClose() {
 		page.close();
 		Game.setScreen(parent);

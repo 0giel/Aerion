@@ -1135,6 +1135,8 @@ export type HudFeatures_Deserialize = {
 	 *  (`options.particles`, %).
 	 */
 	effects?: FeatureOptions_Deserialize,
+	/**  The quick wheel (`options.slot1`…`slot8`: an action each). */
+	wheel?: FeatureOptions_Deserialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors?: FeatureOptions_Deserialize,
 	/**
@@ -1194,6 +1196,8 @@ export type HudFeatures_Serialize = {
 	 *  (`options.particles`, %).
 	 */
 	effects: FeatureOptions_Serialize,
+	/**  The quick wheel (`options.slot1`…`slot8`: an action each). */
+	wheel: FeatureOptions_Serialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors: FeatureOptions_Serialize,
 	/**

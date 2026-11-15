@@ -48,7 +48,9 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "streamer", "shulkerPreview", "effects", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "streamer", "shulkerPreview", "effects", "wheel", "badges"};
+	/** What a quick wheel slot can be (Features.WHEEL_ACTIONS). */
+	private static final String[] W = Features.WHEEL_ACTIONS.toArray(new String[0]);
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -166,6 +168,7 @@ public final class AerionMenu implements Page {
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
 			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.select("shape", "curve", "curve", "straight"), Option.toggle("handle", true))),
+			Map.entry("wheel", List.of(Option.select("slot1", "fullbright", W), Option.select("slot2", "hitboxes", W), Option.select("slot3", "waypoint", W), Option.select("slot4", "map", W), Option.select("slot5", "perspective", W), Option.select("slot6", "streamer", W), Option.select("slot7", "none", W), Option.select("slot8", "none", W))),
 			Map.entry("effects", List.of(Option.select("glint", "default", "default", "red", "gold", "green", "aqua", "blue", "pink", "white"), Option.number("particles", 100, 0, 100))),
 			Map.entry("food", List.of(Option.toggle("saturation", true), Option.toggle("preview", true), Option.toggle("tooltip", true))),
 			Map.entry("hitboxes", List.of(
@@ -1826,6 +1829,7 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.ownName"), Features.key("ownName"));
 		keyRow(Lang.tr("aerion.feature.tntTimer"), Features.key("tntTimer"));
 		keyRow(Lang.tr("aerion.feature.streamer"), Features.key("streamer"));
+		keyRow(Lang.tr("aerion.feature.wheel"), Features.key("wheel"));
 		keyRow(Lang.tr("key.aerion.stopwatch"), Features.key("stopwatchStart"));
 		keyRow(Lang.tr("key.aerion.mirrors"), Features.key("mirrors"));
 		keyRow(Lang.tr("key.aerion.mirrorGrab"), Features.key("mirrorGrab"));

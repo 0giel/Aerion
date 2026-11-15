@@ -47,6 +47,7 @@ mirrors
 tntTimer
 shulkerPreview
 effects
+wheel
 streamer
 armor
 clock

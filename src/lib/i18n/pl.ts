@@ -1766,6 +1766,8 @@ const pl: Dict = {
       shulkerPreviewHint: "Zawartość shulkera jako siatka przedmiotów w jego opisie.",
       effects: "Efekty",
       effectsHint: "Kolor połysku zaklęć i mniej cząsteczek; ustawisz je w menu w grze.",
+      wheel: "Koło skrótów",
+      wheelHint: "Przytrzymaj ` w grze i wskaż myszą akcję; co jest w kole, ustawisz w menu w grze.",
       tntTimer: "Odliczanie TNT",
       tntTimerHint: "Sekundy do wybuchu nad podpalonym TNT w pobliżu.",
       mirrors: "Okna w świecie (test)",

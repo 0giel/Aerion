@@ -1715,6 +1715,8 @@ const en = {
       shulkerPreviewHint: "What is inside a shulker box, as a grid of items in its tooltip.",
       effects: "Effects",
       effectsHint: "The colour of the enchantment glint and fewer particles; set them in the in-game menu.",
+      wheel: "Quick wheel",
+      wheelHint: "Hold ` in game and point at an action; choose what is in it in the in-game menu.",
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
       mirrors: "Windows in the world (test)",
