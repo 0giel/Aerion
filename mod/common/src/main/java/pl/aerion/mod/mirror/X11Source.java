@@ -26,6 +26,8 @@ final class X11Source implements WindowSource {
 		Pointer XGetImage(X11.Display d, X11.Window w, int x, int y, int width, int height, NativeLong planes, int format);
 
 		int XDestroyImage(Pointer image);
+
+		int XSetInputFocus(X11.Display d, X11.Window w, int revertTo, NativeLong time);
 	}
 
 	private static final int Z_PIXMAP = 2;
@@ -254,6 +256,48 @@ final class X11Source implements WindowSource {
 			String sym = cp == ' ' ? "space" : cp < 128 && Character.isLetterOrDigit(cp) ? String.valueOf((char) Character.toLowerCase(cp)) : String.format("U%04X", cp);
 			keysym(id, sym, Character.isUpperCase(cp) || SHIFTED.indexOf(cp) >= 0);
 		}
+		x.XFlush(display);
+	}
+
+	/** The game's own window: the biggest viewable one of this process. */
+	private X11.Window ownWindow() {
+		X11.Window best = null;
+		int area = 0;
+		for (X11.Window w : candidates()) {
+			long[] pid = longs(w, "_NET_WM_PID");
+			if (pid.length == 0 || pid[0] != ownPid) continue;
+			X11.XWindowAttributes a = new X11.XWindowAttributes();
+			if (x.XGetWindowAttributes(display, w, a) == 0 || a.map_state != X11.IsViewable) continue;
+			if (a.width * a.height > area) {
+				area = a.width * a.height;
+				best = w;
+			}
+		}
+		return best;
+	}
+
+	@Override
+	public synchronized void focusGame() {
+		X11.Window own = ownWindow();
+		if (own == null) return;
+		long id = own.longValue();
+		X11.Window w = new X11.Window(id);
+		// Ask the window manager first (as a pager would, so it isn't refused), then X itself.
+		X11.XEvent e = new X11.XEvent();
+		e.type = X11.ClientMessage;
+		e.xclient.type = X11.ClientMessage;
+		e.xclient.display = display;
+		e.xclient.window = w;
+		e.xclient.message_type = atom("_NET_ACTIVE_WINDOW");
+		e.xclient.format = 32;
+		e.xclient.data.setType(NativeLong[].class);
+		e.xclient.data.l[0] = new NativeLong(2);
+		e.xclient.data.l[1] = new NativeLong(0);
+		e.xclient.data.l[2] = new NativeLong(0);
+		e.setType(X11.XClientMessageEvent.class);
+		e.write();
+		x.XSendEvent(display, root, 0, new NativeLong(X11.SubstructureRedirectMask | X11.SubstructureNotifyMask), e);
+		Xlib.INSTANCE.XSetInputFocus(display, w, 2, new NativeLong(0));
 		x.XFlush(display);
 	}
 

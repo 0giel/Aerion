@@ -123,6 +123,28 @@ final class Win32Source implements WindowSource {
 	}
 
 	@Override
+	public void focusGame() {
+		// The game's own window: the biggest visible one of this process.
+		WinDef.HWND[] best = {null};
+		int[] area = {0};
+		u.EnumWindows((hwnd, data) -> {
+			if (!u.IsWindowVisible(hwnd)) return true;
+			IntByReference pid = new IntByReference();
+			u.GetWindowThreadProcessId(hwnd, pid);
+			if (pid.getValue() != ownPid) return true;
+			WinDef.RECT r = new WinDef.RECT();
+			u.GetWindowRect(hwnd, r);
+			int a = (r.right - r.left) * (r.bottom - r.top);
+			if (a > area[0]) {
+				area[0] = a;
+				best[0] = hwnd;
+			}
+			return true;
+		}, null);
+		if (best[0] != null) u.SetForegroundWindow(best[0]);
+	}
+
+	@Override
 	public void key(long id, String name) {
 		int vk = switch (name) {
 			case "enter" -> 0x0D;

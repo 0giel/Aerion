@@ -53,4 +53,5 @@ public final class Game {
 	public static net.minecraft.world.phys.Vec3 cameraPosition() {
 		return net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().position();
 	}
+
 }

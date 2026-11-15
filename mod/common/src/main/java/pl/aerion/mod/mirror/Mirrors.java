@@ -258,8 +258,14 @@ public final class Mirrors {
 		Textures.update(p.tex, f.width(), f.height(), f.argb());
 		p.aspect = f.height() / (float) f.width();
 		if (!p.sized) {
-			// A tall window would reach the ground: at most about 1.6 blocks high at first.
-			p.width = Math.min(p.width, 1.6f / p.aspect);
+			// The chosen height (Aerion menu, in tenths of a block), at most 2.4 blocks wide.
+			float target = 1.6f;
+			try {
+				target = Math.max(0.5f, Math.min(6f, Integer.parseInt(opt("size", "16")) / 10f));
+			} catch (NumberFormatException ignored) {
+				// keep the default
+			}
+			p.width = Math.min(target * 1.5f, target / p.aspect);
 			p.sized = true;
 			save();
 		}
@@ -293,6 +299,10 @@ public final class Mirrors {
 				int accent = AerionClient.theme() != null ? AerionClient.theme().accent : 0xFF7AA2FF;
 				out.submitCustomGeometry(pose, RenderTypes.text(BAR), (pp, vc) -> handle(pp, vc, bar, overBar ? accent : 0xD0E8E8E8));
 				out.submitCustomGeometry(pose, RenderTypes.text(CLOSE), (pp, vc) -> closer(pp, vc, bar, overClose ? 0xFFFF5A5A : 0xD0E8E8E8));
+				boolean overSmaller = aim != null && aim.panel == p && aim.part == Part.SMALLER;
+				boolean overBigger = aim != null && aim.panel == p && aim.part == Part.BIGGER;
+				out.submitCustomGeometry(pose, RenderTypes.text(MINUS), (pp, vc) -> box(pp, vc, bar, sizeBox(bar, false), overSmaller ? accent : 0xD0E8E8E8));
+				out.submitCustomGeometry(pose, RenderTypes.text(PLUS), (pp, vc) -> box(pp, vc, bar, sizeBox(bar, true), overBigger ? accent : 0xD0E8E8E8));
 			}
 			if (aim != null && aim.panel == p && aim.part == Part.PANEL) {
 				Panel dot = p;
@@ -354,6 +364,14 @@ public final class Mirrors {
 		return new float[] {u0, v0, u0 + CLOSE_D / w, v0 + CLOSE_D / h};
 	}
 
+	/** The − and + buttons left of the bar: + nearer the bar, − further out (so they read − +). */
+	private static float[] sizeBox(Panel p, boolean bigger) {
+		float w = p.width, h = p.height(), bw = barWidth(p);
+		float u1 = 0.5f - (bw / 2 + 0.06f + (bigger ? 0 : CLOSE_D + 0.04f)) / w;
+		float v0 = 1 + (BAR_GAP + BAR_H / 2 - CLOSE_D / 2) / h;
+		return new float[] {u1 - CLOSE_D / w, v0, u1, v0 + CLOSE_D / h};
+	}
+
 	private static void handle(PoseStack.Pose pose, VertexConsumer vc, Panel p, int color) {
 		box(pose, vc, p, barBox(p), color);
 	}
@@ -378,6 +396,8 @@ public final class Mirrors {
 
 	private static final Identifier BAR = Identifier.fromNamespaceAndPath("aerion", "mirror/bar");
 	private static final Identifier CLOSE = Identifier.fromNamespaceAndPath("aerion", "mirror/close");
+	private static final Identifier MINUS = Identifier.fromNamespaceAndPath("aerion", "mirror/minus");
+	private static final Identifier PLUS = Identifier.fromNamespaceAndPath("aerion", "mirror/plus");
 	private static final Identifier DOT = Identifier.fromNamespaceAndPath("aerion", "mirror/dot");
 	private static boolean dotReady;
 
@@ -428,13 +448,27 @@ public final class Mirrors {
 			}
 		}
 		Textures.registerPixels(CLOSE, n, n, close);
+		// − and +: white discs with the sign cut out.
+		for (boolean plus : new boolean[] {false, true}) {
+			int[] img = new int[n * n];
+			for (int y = 0; y < n; y++) {
+				for (int x = 0; x < n; x++) {
+					double fx = x + 0.5 - n / 2.0, fy = y + 0.5 - n / 2.0, d = Math.hypot(fx, fy);
+					double disc = Math.max(0, Math.min(1, n / 2.0 - 0.5 - d));
+					boolean line = Math.abs(fy) < 1.8 && Math.abs(fx) < n * 0.24;
+					boolean stem = plus && Math.abs(fx) < 1.8 && Math.abs(fy) < n * 0.24;
+					if (disc > 0 && !line && !stem) img[y * n + x] = ((int) (disc * 255) << 24) | 0xFFFFFF;
+				}
+			}
+			Textures.registerPixels(plus ? PLUS : MINUS, n, n, img);
+		}
 		dotReady = true;
 	}
 
 	// --- Aiming -------------------------------------------------------------------------------
 
 	/** Where the player looks on a panel. */
-	public enum Part { PANEL, BAR, CLOSE }
+	public enum Part { PANEL, BAR, CLOSE, SMALLER, BIGGER }
 
 	public record Hit(Panel panel, float u, float v, double distance, Part part) {}
 
@@ -492,6 +526,9 @@ public final class Mirrors {
 			float pad = 0.04f / p.height();
 			if (u >= b[0] && u <= b[2] && v >= b[1] - pad && v <= b[3] + pad) return new Hit(p, u, v, t, Part.BAR);
 			if (u >= c[0] && u <= c[2] && v >= c[1] && v <= c[3]) return new Hit(p, u, v, t, Part.CLOSE);
+			float[] s = sizeBox(p, false), g = sizeBox(p, true);
+			if (u >= s[0] && u <= s[2] && v >= s[1] && v <= s[3]) return new Hit(p, u, v, t, Part.SMALLER);
+			if (u >= g[0] && u <= g[2] && v >= g[1] && v <= g[3]) return new Hit(p, u, v, t, Part.BIGGER);
 		}
 		return null;
 	}
@@ -522,6 +559,36 @@ public final class Mirrors {
 		grabDistance = pl.getEyePosition().distanceTo(new Vec3(p.x, p.y, p.z));
 	}
 
+	/** When input last went to a window: the game keeps its focus and doesn't pause for a moment. */
+	private static volatile long lastInput;
+
+	/** True shortly after input was sent to a window (the game shouldn't pause then). */
+	public static boolean justSent() {
+		return System.currentTimeMillis() - lastInput < 1500;
+	}
+
+	/** After input, the clicked program may take the focus: take it back, now and a bit later. */
+	private static void refocus() {
+		lastInput = System.currentTimeMillis();
+		WindowSource src = source();
+		if (src == null) return;
+		Runnable back = () -> {
+			try {
+				src.focusGame();
+			} catch (Throwable e) {
+				AerionClient.warnOnce("mirror-focus", e);
+			}
+		};
+		start();
+		for (int ms : new int[] {40, 200, 600}) worker.schedule(back, ms, TimeUnit.MILLISECONDS);
+	}
+
+	/** Makes a panel bigger (`factor` > 1) or smaller, around its centre. */
+	public static void resize(Panel p, float factor) {
+		p.width = Math.max(0.3f, Math.min(12f, p.width * factor));
+		save();
+	}
+
 	/** A click while looking at a panel goes to its window; true when it was taken. */
 	public static boolean click(int button) {
 		Hit h = aim();
@@ -530,13 +597,20 @@ public final class Mirrors {
 			if (button == 0) remove(h.panel);
 			return true;
 		}
+		if (h.part == Part.SMALLER || h.part == Part.BIGGER) {
+			if (button == 0) resize(h.panel, h.part == Part.BIGGER ? 1.15f : 1 / 1.15f);
+			return true;
+		}
 		if (h.part == Part.BAR) {
 			// Held by the bar: it follows the look while the button is down.
 			if (button == 0) take(h.panel, true);
 			return true;
 		}
 		WindowSource src = source();
-		if (src != null && h.panel.win != 0) src.click(h.panel.win, h.u, h.v, button);
+		if (src != null && h.panel.win != 0) {
+			src.click(h.panel.win, h.u, h.v, button);
+			refocus();
+		}
 		return true;
 	}
 
@@ -549,7 +623,15 @@ public final class Mirrors {
 		Hit h = aim();
 		if (h == null) return false;
 		WindowSource src = source();
-		if (src != null && h.panel.win != 0) src.scroll(h.panel.win, h.u, h.v, (int) Math.signum(dy) * Math.max(1, (int) Math.round(Math.abs(dy))));
+		if (h.part != Part.PANEL) {
+			// The wheel over the bar resizes the panel.
+			resize(h.panel, dy > 0 ? 1.1f : 1 / 1.1f);
+			return true;
+		}
+		if (src != null && h.panel.win != 0) {
+			src.scroll(h.panel.win, h.u, h.v, (int) Math.signum(dy) * Math.max(1, (int) Math.round(Math.abs(dy))));
+			refocus();
+		}
 		return true;
 	}
 

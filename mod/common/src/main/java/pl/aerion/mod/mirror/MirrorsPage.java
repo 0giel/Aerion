@@ -62,8 +62,10 @@ public final class MirrorsPage implements Page {
 			y += 12;
 			for (Mirrors.Panel p : new ArrayList<>(panels)) {
 				Draw.rounded(g, x, y, w, 18, 4, Colors.mix(surface, control, 0.5f));
-				Txt.draw(g, ellipsize(p.title, w - 150), x + 8, y + 9, 7.5f, p.win != 0 ? text : muted);
+				Txt.draw(g, ellipsize(p.title, w - 190), x + 8, y + 9, 7.5f, p.win != 0 ? text : muted);
 				int bx = x + w - 136;
+				small(g, bx - 40, y + 3, 16, "-", mouseX, mouseY, control, text, () -> Mirrors.resize(p, 1 / 1.15f));
+				small(g, bx - 20, y + 3, 16, "+", mouseX, mouseY, control, text, () -> Mirrors.resize(p, 1.15f));
 				String shape = Lang.tr(p.curved ? "aerion.mirrors.curved" : "aerion.mirrors.flat");
 				small(g, bx, y + 3, 70, shape, mouseX, mouseY, control, text, () -> {
 					p.curved = !p.curved;

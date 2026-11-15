@@ -163,7 +163,7 @@ public final class AerionMenu implements Page {
 					Option.colour("color", "#ffffff"), Option.toggle("outline", true), Option.toggle("dot", false),
 					Option.toggle("target", false), Option.colour("targetColor", "#ff5555"), Option.toggle("attack", true))),
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
-			Map.entry("mirrors", List.of(Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
+			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.toggle("curved", true), Option.toggle("handle", true))),
 			Map.entry("food", List.of(Option.toggle("saturation", true), Option.toggle("preview", true), Option.toggle("tooltip", true))),
 			Map.entry("hitboxes", List.of(

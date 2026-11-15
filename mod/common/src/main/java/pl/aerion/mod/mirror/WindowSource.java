@@ -31,6 +31,12 @@ public interface WindowSource {
 	/** A special key: "enter", "backspace", "tab", "escape", "left", "right", "up", "down". */
 	void key(long id, String name);
 
+	/**
+	 * Gives the keyboard focus back to the game's window (the biggest one of this process): a
+	 * program that was clicked may take the focus, and the game would pause.
+	 */
+	void focusGame();
+
 	/** The source for this computer, or null when there is none (e.g. a Wayland-only desktop). */
 	static WindowSource forThisComputer() {
 		String os = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
