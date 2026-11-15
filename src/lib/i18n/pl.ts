@@ -1719,7 +1719,8 @@ const pl: Dict = {
       tntTimer: "Odliczanie TNT",
       tntTimerHint: "Sekundy do wybuchu nad podpalonym TNT w pobliżu.",
       food: "Jedzenie na pasku głodu",
-      foodHint: "Złoty obrys pokazuje nasycenie, a trzymane jedzenie miga tam, ile uzupełni (jak AppleSkin).",
+      foodHint:
+        "Złoty obrys pokazuje nasycenie, trzymane jedzenie miga tam, ile uzupełni, a opis przedmiotu podaje jego wartości (jak AppleSkin).",
       fullbrightHint: "Widzisz w ciemności; klawisz wyłącza i włącza na chwilę.",
     },
   },

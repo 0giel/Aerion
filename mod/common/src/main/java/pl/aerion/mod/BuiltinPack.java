@@ -23,6 +23,8 @@ import net.minecraft.server.packs.repository.PackSource;
  */
 public final class BuiltinPack {
 	private static Path root;
+	/** Set when the pack was created, so its fonts can be used. */
+	public static volatile boolean ready;
 
 	private BuiltinPack() {}
 
@@ -35,6 +37,7 @@ public final class BuiltinPack {
 			Pack pack = Pack.readMetaAndCreate(info, new PathPackResources.PathResourcesSupplier(path), PackType.CLIENT_RESOURCES,
 					new PackSelectionConfig(true, Pack.Position.TOP, false));
 			Badges.packReady = pack != null;
+			ready = pack != null;
 			return Optional.ofNullable(pack);
 		} catch (Exception e) {
 			AerionClient.LOG.warn("Aerion: built-in resources not loaded: {}", e.toString());

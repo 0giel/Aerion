@@ -3,10 +3,16 @@ package pl.aerion.mod.features;
 import com.google.gson.JsonObject;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import javax.imageio.ImageIO;
 import net.minecraft.client.Minecraft;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.entity.player.Player;
@@ -14,6 +20,7 @@ import net.minecraft.world.food.FoodData;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import pl.aerion.mod.AerionClient;
+import pl.aerion.mod.BuiltinPack;
 import pl.aerion.mod.hud.HudConfig;
 import pl.aerion.mod.platform.Gfx;
 import pl.aerion.mod.platform.Textures;
@@ -77,6 +84,49 @@ public final class FoodOverlay {
 				}
 			}
 		}
+	}
+
+	private static final FontDescription FONT = new FontDescription.Resource(Identifier.fromNamespaceAndPath("aerion", "food"));
+
+	/**
+	 * Adds a line under the item's name with what eating it gives: the hunger it fills as the
+	 * hunger bar's own drumsticks, and the saturation in gold.
+	 */
+	public static void tooltip(ItemStack stack, List<Component> lines) {
+		if (stack.isEmpty() || lines.isEmpty()) return;
+		HudConfig cfg = AerionClient.hud();
+		if (cfg == null) return;
+		JsonObject f = cfg.feature("food");
+		if (!HudConfig.bool(f, "enabled", true) || !"1".equals(HudConfig.opt(f, "tooltip", "1"))) return;
+		FoodProperties food = stack.get(DataComponents.FOOD);
+		if (food == null || (food.nutrition() <= 0 && food.saturation() <= 0)) return;
+		try {
+			lines.add(1, line(food.nutrition(), food.saturation()));
+		} catch (RuntimeException e) {
+			AerionClient.warnOnce("food-tooltip", e);
+		}
+	}
+
+	private static Component line(int nutrition, float saturation) {
+		MutableComponent out = Component.empty();
+		int n = Math.max(0, nutrition);
+		if (BuiltinPack.ready && n <= 20) {
+			// The bar's drumsticks, 8 apart like on the bar: a full one per 2 points, a half for 1.
+			StringBuilder icons = new StringBuilder();
+			for (int i = 0; i < n / 2; i++) icons.append(i > 0 ? "" : "");
+			if (n % 2 == 1) icons.append(n > 1 ? "" : "");
+			if (!icons.isEmpty()) out.append(Component.literal(icons.toString()).withStyle(s -> s.withFont(FONT).withColor(0xFFFFFF)));
+			out.append(Component.literal(" " + n).withStyle(ChatFormatting.GRAY));
+		} else {
+			out.append(Component.literal("🍖 " + n).withStyle(ChatFormatting.GRAY));
+		}
+		if (saturation > 0) out.append(Component.literal("  ✦ " + number(saturation)).withColor(GOLD & 0xFFFFFF));
+		return out;
+	}
+
+	private static String number(float v) {
+		String s = String.format(Locale.ROOT, "%.1f", v);
+		return s.endsWith(".0") ? s.substring(0, s.length() - 2) : s;
 	}
 
 	/** Food in the main hand, else in the off hand; null when neither is food. */

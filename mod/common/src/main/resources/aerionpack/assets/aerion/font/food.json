@@ -1,0 +1,28 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "minecraft:gui/sprites/hud/food_full.png",
+      "height": 9,
+      "ascent": 8,
+      "chars": [
+        "\ue010"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "minecraft:gui/sprites/hud/food_half.png",
+      "height": 9,
+      "ascent": 8,
+      "chars": [
+        "\ue011"
+      ]
+    },
+    {
+      "type": "space",
+      "advances": {
+        "\ue012": -2
+      }
+    }
+  ]
+}

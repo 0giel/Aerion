@@ -10,6 +10,7 @@
 		"DebugRendererMixin",
 		"EntityMixin",
 		"HurtCamMixin",
+		"ItemStackMixin",
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",

@@ -1668,7 +1668,8 @@ const en = {
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
       food: "Food on the hunger bar",
-      foodHint: "A gold rim shows saturation; held food blinks where it would fill (like AppleSkin).",
+      foodHint:
+        "A gold rim shows saturation, held food blinks where it would fill, and item tooltips show food values (like AppleSkin).",
       fullbrightHint: "See in the dark; the key switches it off and on for a moment.",
     },
   },
