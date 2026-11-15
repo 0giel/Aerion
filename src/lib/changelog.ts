@@ -4,7 +4,8 @@ import type { Locale } from "./i18n/index.svelte";
 
 export interface ChangelogEntry {
   version: string;
-  notes: Record<Locale, string[]>;
+  /** Polish and English always; other languages show English when they have no notes. */
+  notes: Record<"pl" | "en", string[]> & Partial<Record<Locale, string[]>>;
 }
 
 export const CHANGELOG: ChangelogEntry[] = [

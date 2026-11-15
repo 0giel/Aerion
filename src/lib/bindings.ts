@@ -2245,7 +2245,7 @@ export type SessionSummary_Serialize = {
 export type Settings = Settings_Serialize | Settings_Deserialize;
 
 export type Settings_Deserialize = {
-	/**  `pl`, `en`, or `None` to follow the system language. */
+	/**  `pl`, `en`, `de`, or `None` to follow the system language. */
 	language?: string | null,
 	theme?: string,
 	/**  Switch between `theme_light` / `theme_dark` with the OS appearance. */
@@ -2323,7 +2323,7 @@ export type Settings_Deserialize = {
 };
 
 export type Settings_Serialize = {
-	/**  `pl`, `en`, or `None` to follow the system language. */
+	/**  `pl`, `en`, `de`, or `None` to follow the system language. */
 	language: string | null,
 	theme: string,
 	/**  Switch between `theme_light` / `theme_dark` with the OS appearance. */

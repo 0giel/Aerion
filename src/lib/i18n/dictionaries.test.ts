@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import en from "./en";
 import pl from "./pl";
+import de from "./de";
 import { MC_ICONS, iconLabelKey } from "../instanceIcons";
 // The engine's error codes and crash kinds, read from the Rust sources so a new code without a
 // translation fails here.
@@ -40,6 +41,7 @@ const sources = import.meta.glob(["../**/*.svelte", "../**/*.ts", "../../*.svelt
 
 const enLeaves = leaves(en as unknown as Tree);
 const plLeaves = leaves(pl as unknown as Tree);
+const deLeaves = leaves(de as unknown as Tree);
 
 describe("translations", () => {
   it("contain every literal key used with t()", () => {
@@ -59,6 +61,16 @@ describe("translations", () => {
   it("contain every instance icon name", () => {
     const keys = MC_ICONS.map(iconLabelKey);
     expect(keys.filter((k) => !enLeaves.has(k))).toEqual([]);
+  });
+
+  it("German (partial) has only keys English has, with the same placeholders", () => {
+    expect([...deLeaves.keys()].filter((k) => !enLeaves.has(k))).toEqual([]);
+    const mismatched = [...deLeaves].filter(([k, v]) => {
+      const a = placeholders(enLeaves.get(k)!);
+      const b = placeholders(v);
+      return [...a].sort().join() !== [...b].sort().join();
+    });
+    expect(mismatched.map(([k]) => k)).toEqual([]);
   });
 
   it("have the same keys", () => {

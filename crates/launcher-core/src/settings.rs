@@ -158,7 +158,7 @@ impl Default for GameUiPrefs {
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
-    /// `pl`, `en`, or `None` to follow the system language.
+    /// `pl`, `en`, `de`, or `None` to follow the system language.
     pub language: Option<String>,
     pub theme: String,
     /// Switch between `theme_light` / `theme_dark` with the OS appearance.

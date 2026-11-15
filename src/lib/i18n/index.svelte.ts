@@ -1,23 +1,31 @@
 import en, { type Dict, type Plural } from "./en";
 import pl from "./pl";
+import de from "./de";
 
-const dicts: Record<Locale, Dict> = { en, pl };
-export type Locale = "en" | "pl";
+/** Polish and English are complete; German is a beta and falls back to English where it is short. */
+const dicts: Record<Locale, unknown> = { en, pl, de } satisfies Record<Locale, Dict | typeof de>;
+export type Locale = "en" | "pl" | "de";
 export const LOCALES: { id: Locale; name: string }[] = [
   { id: "pl", name: "Polski" },
   { id: "en", name: "English" },
+  { id: "de", name: "Deutsch (beta)" },
 ];
+const IDS = LOCALES.map((l) => l.id);
 
 export function systemLocale(): Locale {
   const langs = navigator.languages?.length ? navigator.languages : [navigator.language];
-  return langs.some((l) => l?.toLowerCase().startsWith("pl")) ? "pl" : "en";
+  for (const l of langs) {
+    const id = l?.toLowerCase().slice(0, 2) as Locale;
+    if (IDS.includes(id)) return id;
+  }
+  return "en";
 }
 
 class I18n {
   locale = $state<Locale>(systemLocale());
 
   set(pref: string | null | undefined) {
-    this.locale = pref === "pl" || pref === "en" ? pref : systemLocale();
+    this.locale = IDS.includes(pref as Locale) ? (pref as Locale) : systemLocale();
     document.documentElement.lang = this.locale;
   }
 }
