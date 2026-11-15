@@ -1,8 +1,8 @@
 Third-party material in the Aerion launcher's interface
 ========================================================
 
-Unbounded (heading typeface, src/assets/fonts/unbounded-*.woff2)
------------------------------------------------------------------
+Unbounded (heading typeface, src/assets/fonts/unbounded-*.woff2; the Aerion mod's heading text image)
+-----------------------------------------------------------------------------------------------------
 Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
@@ -98,8 +98,8 @@ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
-Phosphor Icons (interface icons, src/lib/icons.ts; the badge pictures of the Aerion mod)
-------------------------------------------------------------------------------------------
+Phosphor Icons (interface icons, src/lib/icons.ts; the Aerion mod's menu icons and badge pictures)
+--------------------------------------------------------------------------------------------------
 MIT License
 
 Copyright (c) 2023 Phosphor Icons
