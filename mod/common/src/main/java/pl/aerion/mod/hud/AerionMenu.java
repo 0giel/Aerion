@@ -43,7 +43,8 @@ public final class AerionMenu implements Page {
 	private static final int[] SWATCHES = {
 		0xFFFFFFFF, 0xFF000000, 0xFFFF5555, 0xFFFFAA33, 0xFFFFE25A, 0xFF55DD77, 0xFF55AAFF, 0xFFB98CFF
 	};
-	private static final float TEXT = 8f, SMALL = 7f, TITLE = 10f;
+	/** Unbounded is wider than Inter, so headings in it are a size smaller. */
+	private static final float TEXT = 8f, SMALL = 7f, HEADING = 9f;
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
@@ -611,7 +612,7 @@ public final class AerionMenu implements Page {
 		if (animationsOn() && navTargetY >= 0) {
 			navY = navY < 0 ? navTargetY : navY + (navTargetY - navY) * Math.min(1f, dt * 14f);
 			if (Math.abs(navTargetY - navY) < 0.3f) navY = navTargetY;
-			Draw.rounded(g, nx, Math.round(navY), SIDE - 10, 16, 3, accent);
+			block(nx + 2, Math.round(navY) + 1, 14, 14, accent);
 		}
 		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + gap;
 		ny = navHead(nx, ny, "aerion.navhead.mods");
@@ -640,7 +641,7 @@ public final class AerionMenu implements Page {
 
 	private int navHead(int nx, int ny, String key) {
 		if (navCompact) return ny;
-		Txt.draw(g, Lang.tr(key).toUpperCase(Locale.ROOT), nx + 4, ny + 4, 6f, Colors.mix(sidebar, muted, 0.75f));
+		Txt.Display.draw(g, Lang.tr(key).toUpperCase(Locale.ROOT), nx + 4, ny + 4, 5f, Colors.mix(sidebar, muted, 0.85f));
 		return ny + 10;
 	}
 
@@ -660,15 +661,15 @@ public final class AerionMenu implements Page {
 		int w = SIDE - 10, h = 16;
 		boolean on = section == which, over = inside(nx, ny, w, h);
 		float glow = ease("nav" + which, over ? 1 : 0);
-		// The open section is filled with the accent (a pill that slides there), the others light up under the pointer.
+		// As in the launcher: the open section's icon sits on an accent block (it slides there), its
+		// name turns bright; the others light up under the pointer.
 		boolean slide = animationsOn() && navY >= 0;
 		if (on) navTargetY = ny;
 		float cover = slide ? Math.max(0f, 1f - Math.abs(navY - ny) / (h + 2f)) : on ? 1f : 0f;
-		if (on && !slide) Draw.rounded(g, nx, ny, w, h, 3, over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent);
-		else if (glow > 0 && cover < 0.5f) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
-		int fg = Colors.mix(over ? text : muted, accentText, cover);
-		Icons.draw(g, icon, nx + 5, ny + 3, 10, fg);
-		Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, fg);
+		if (glow > 0) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
+		if (on && !slide) block(nx + 2, ny + 1, 14, 14, accent);
+		Icons.draw(g, icon, nx + 5, ny + 3, 10, Colors.mix(over ? text : muted, accentText, cover));
+		Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, on || over ? text : muted);
 		hit(nx, ny, w, h, f -> {
 			section = which;
 			detail = null;
@@ -691,7 +692,7 @@ public final class AerionMenu implements Page {
 			case GAME -> "game";
 			case LOOK -> "look";
 		};
-		Txt.draw(g, Lang.tr("aerion.nav." + key), mx, my + 6, TITLE, text);
+		Txt.Display.draw(g, Lang.tr("aerion.nav." + key), mx, my + 6, HEADING, text);
 		Txt.draw(g, Lang.tr("aerion.hint." + key), mx, my + 18, SMALL, muted);
 		return 34;
 	}
@@ -702,7 +703,7 @@ public final class AerionMenu implements Page {
 		if (docked) {
 			// No list to go back to: the layout behind is where another module is picked.
 			Icons.draw(g, id, mx, my + 1, 12, accent);
-			Txt.draw(g, ellipsize(name(id), w - 46), mx + 16, my + 7, TITLE, text);
+			Txt.Display.draw(g, ellipsize(name(id), w - 46), mx + 16, my + 7, HEADING, text);
 		} else {
 			iconButton(mx, my, 14, "back", () -> {
 				detail = null;
@@ -711,7 +712,7 @@ public final class AerionMenu implements Page {
 				scroll = 0;
 			});
 			Icons.draw(g, id, mx + 19, my + 1, 12, text);
-			Txt.draw(g, name(id), mx + 35, my + 7, TITLE, text);
+			Txt.Display.draw(g, name(id), mx + 35, my + 7, HEADING, text);
 		}
 		boolean on = enabled(cfg, id);
 		switchAt("head" + id, mx + w - 22, my + 2, on);
@@ -779,8 +780,9 @@ public final class AerionMenu implements Page {
 			String label = Lang.tr("aerion.filter." + f);
 			int w = Math.round(Txt.width(label, SMALL)) + 14;
 			boolean on = f.equals(listFilter), over = inside(bx, y, w, 14);
-			Draw.rounded(g, bx, y, w, 14, 3, on ? accent : over ? control : tile);
-			Txt.center(g, label, bx + w / 2f, y + 7, SMALL, on ? accentText : over ? text : muted);
+			// The chosen filter is marked softly; the accent is kept for what switches things on.
+			Draw.rounded(g, bx, y, w, 14, 3, on ? Colors.mix(tile, accent, 0.28f) : over ? control : tile);
+			Txt.center(g, label, bx + w / 2f, y + 7, SMALL, on || over ? text : muted);
 			hit(bx, y, w, 14, fr -> {
 				listFilter = f;
 				scroll = 0;
@@ -909,19 +911,22 @@ public final class AerionMenu implements Page {
 		y += ((items.size() + cols - 1) / cols) * (ch + GAP);
 	}
 
-	/** A big icon over a band with the name; the band is the accent while the tile is on. */
+	/**
+	 * A big icon over a band with the name. A tile that is on shows it with its switch and an icon in
+	 * the accent; the band stays quiet, so a page of switched-on tiles isn't a wall of colour.
+	 */
 	private void tileAt(HudConfig cfg, String id, int cx, int cy, int w, int h) {
 		boolean on = enabled(cfg, id), over = inside(cx, cy, w, h);
 		float lift = ease("tile" + id, over ? 1 : 0);
 		if (animationsOn()) cy -= Math.round(lift * 2f);
 		int band = 15;
 		Draw.rounded(g, cx, cy, w, h, 4, Colors.mix(tile, control, lift));
-		int bandColor = on ? (over ? Colors.mix(accent, 0xFFFFFFFF, 0.08f) : accent) : Colors.mix(control, track, lift);
+		int bandColor = Colors.mix(control, track, lift);
 		Draw.rounded(g, cx, cy + h - band, w, band, 4, bandColor);
 		g.fill(cx, cy + h - band, cx + w, cy + h - band + 4, bandColor);
 		int icon = 16;
-		Icons.draw(g, id, cx + (w - icon) / 2f, cy + (h - band - icon) / 2f, icon, on ? text : muted);
-		Txt.center(g, ellipsize(name(id), w - 8, SMALL), cx + w / 2f, cy + h - band / 2f, SMALL, on ? accentText : over ? text : muted);
+		Icons.draw(g, id, cx + (w - icon) / 2f, cy + (h - band - icon) / 2f, icon, on ? accent : muted);
+		Txt.center(g, ellipsize(name(id), w - 8, SMALL), cx + w / 2f, cy + h - band / 2f, SMALL, on || over ? text : muted);
 		int sx = cx + w - 24, sy = cy + 5;
 		switchAt("tile" + id, sx, sy, on);
 		hit(sx - 3, cy, 27, 16, f -> {
@@ -1849,9 +1854,19 @@ public final class AerionMenu implements Page {
 
 	private void button(int bx, int by, int w, int h, String label, boolean on, Runnable action) {
 		boolean over = inside(bx, by, w, h);
-		Draw.rounded(g, bx, by, w, h, 3, body(on, over));
+		if (on) block(bx, by, w, h, body(true, over));
+		else Draw.rounded(g, bx, by, w, h, 3, body(false, over));
 		Txt.center(g, label, bx + w / 2f, by + h / 2f, TEXT, on ? accentText : text);
 		hit(bx, by, w, h, f -> action.run(), false);
+	}
+
+	/**
+	 * The launcher's own shape: a solid block with a darker lower edge (main buttons, the open
+	 * section's icon tile).
+	 */
+	private void block(int bx, int by, int w, int h, int color) {
+		Draw.rounded(g, bx, by, w, h, 3, Colors.mix(color, 0xFF000000, 0.22f));
+		Draw.rounded(g, bx, by, w, h - 2, 3, color);
 	}
 
 	private void smallButton(int bx, int by, int w, int h, String label, boolean on, Runnable action) {
@@ -1887,7 +1902,7 @@ public final class AerionMenu implements Page {
 		cardKey = section + ":" + detail + ":" + sub + ":" + cardIndex++;
 		cardTop = y;
 		if (title != null) {
-			Txt.draw(g, title.toUpperCase(Locale.ROOT), x + 2, y + 5, 6.5f, muted);
+			Txt.Display.draw(g, title.toUpperCase(Locale.ROOT), x + 2, y + 5, 5.5f, muted);
 			y += 13;
 		}
 	}
@@ -2025,8 +2040,9 @@ public final class AerionMenu implements Page {
 			String v = values[i];
 			int cx = sx + i * w;
 			boolean on = v.equals(current), over = inside(cx, y, w, h);
-			if (on) Draw.rounded(g, cx + 1, y + 1, w - 2, h - 2, 2, accent);
-			Txt.center(g, labels[i], cx + w / 2f, y + h / 2f, SMALL, on ? accentText : over ? text : muted);
+			// The chosen part is lifted, not filled with the accent: it is a choice, not an action.
+			if (on) Draw.rounded(g, cx + 1, y + 1, w - 2, h - 2, 2, Colors.mix(track, accent, 0.3f));
+			Txt.center(g, labels[i], cx + w / 2f, y + h / 2f, SMALL, on || over ? text : muted);
 			hit(cx, y, w, h, f -> {
 				set.accept(v);
 				changed = true;
