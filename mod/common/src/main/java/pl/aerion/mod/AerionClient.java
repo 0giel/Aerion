@@ -56,6 +56,24 @@ public final class AerionClient implements ClientModInitializer {
 		return theme;
 	}
 
+	/**
+	 * Ask the launcher for another theme: it switches to it and writes the theme file again, which
+	 * this mod then reads like any other change. Nothing happens while the launcher is closed.
+	 */
+	public static void requestTheme(String id) {
+		if (file == null || id == null || id.isEmpty()) return;
+		try {
+			Path req = file.resolveSibling("theme-request.json");
+			JsonObject o = new JsonObject();
+			o.addProperty("id", id);
+			Path tmp = file.resolveSibling("theme-request.json.tmp");
+			Files.writeString(tmp, o.toString());
+			Files.move(tmp, req, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+		} catch (Exception e) {
+			LOG.warn("Aerion UI: can't ask for theme {}: {}", id, e.toString());
+		}
+	}
+
 	/** HUD layout and features (defaults until the launcher has written hud.json). */
 	public static HudConfig hud() {
 		return hud;

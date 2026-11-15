@@ -74,6 +74,38 @@ pub struct GameTheme {
     /// Absolute path of that picture for the mod; set by [`write_theme`], ignored from callers.
     #[serde(default)]
     pub background_file: Option<String>,
+    /// The launcher's id of this theme, so the mod can mark it among `choices`.
+    #[serde(default)]
+    pub id: String,
+    /// Every theme the player has, for picking one in the game's menu (the mod asks for it with
+    /// [`THEME_REQUEST`]; the launcher switches and writes this file again).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub choices: Vec<GameThemeChoice>,
+}
+
+/// A theme the game's menu offers: enough to draw its tile.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "specta", derive(specta::Type))]
+#[serde(rename_all = "camelCase")]
+pub struct GameThemeChoice {
+    pub id: String,
+    pub name: String,
+    pub bg: String,
+    pub surface: String,
+    pub accent: String,
+}
+
+/// The file the mod writes (`{"id": "<theme id>"}`) to ask the launcher for another theme.
+pub const THEME_REQUEST: &str = "theme-request.json";
+
+/// The theme the game asked for, if it did: the request is read once and removed.
+pub fn take_theme_request(paths: &Paths) -> Option<String> {
+    let path = paths.aerion_mod_dir().join(THEME_REQUEST);
+    let text = std::fs::read_to_string(&path).ok()?;
+    let _ = std::fs::remove_file(&path);
+    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    let id = value.get("id")?.as_str()?;
+    (!id.is_empty() && id.len() <= 64 && !id.contains(['/', '\\', '\0'])).then(|| id.to_owned())
 }
 
 fn yes() -> bool {
@@ -212,6 +244,20 @@ pub fn read_status(paths: &Paths, instance_id: &str) -> Option<Status> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn theme_request_is_read_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::at(dir.path().to_path_buf(), false);
+        std::fs::create_dir_all(paths.aerion_mod_dir()).unwrap();
+        let file = paths.aerion_mod_dir().join(THEME_REQUEST);
+        std::fs::write(&file, r#"{"id":"emerald"}"#).unwrap();
+        assert_eq!(take_theme_request(&paths).as_deref(), Some("emerald"));
+        assert!(!file.exists());
+        assert_eq!(take_theme_request(&paths), None);
+        std::fs::write(&file, r#"{"id":"../x"}"#).unwrap();
+        assert_eq!(take_theme_request(&paths), None);
+    }
 
     #[test]
     fn background_only_for_existing_pictures() {

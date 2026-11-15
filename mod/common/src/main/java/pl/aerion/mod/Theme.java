@@ -7,6 +7,13 @@ import com.google.gson.JsonObject;
 /** Colours of the launcher theme, as ARGB ints, resolved by the launcher into theme.json. */
 public final class Theme {
 	public final String name;
+	/** The launcher's id of this theme ("" from launchers before 1.2.1). */
+	public final String id;
+	/** Every theme the player has, to pick one from the game's menu (empty when not sent). */
+	public final java.util.List<Choice> choices;
+
+	/** A theme offered in the menu: its id, name and the colours of its tile. */
+	public record Choice(String id, String name, int bg, int surface, int accent) {}
 	public final boolean light;
 	public final int bg;
 	public final int surface;
@@ -63,6 +70,20 @@ public final class Theme {
 			dim = 0f;
 		}
 		backgroundDim = dim;
+		id = str(o, "id", "");
+		java.util.List<Choice> list = new java.util.ArrayList<>();
+		try {
+			if (o.has("choices")) {
+				for (var e : o.getAsJsonArray("choices")) {
+					JsonObject c = e.getAsJsonObject();
+					list.add(new Choice(str(c, "id", ""), str(c, "name", "?"), color(str(c, "bg", null), 0xFF101010),
+							color(str(c, "surface", null), 0xFF202020), color(str(c, "accent", null), 0xFF7AA2FF)));
+				}
+			}
+		} catch (RuntimeException e) {
+			list.clear();
+		}
+		choices = java.util.List.copyOf(list);
 	}
 
 	public static Theme parse(JsonObject o) {

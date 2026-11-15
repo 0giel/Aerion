@@ -13,6 +13,10 @@ use tauri_specta::Event;
 #[derive(Debug, Clone, Serialize, Type, Event)]
 pub struct ThemesChangedEvent;
 
+/// The game asked for another theme from its menu (the theme's id).
+#[derive(Debug, Clone, Serialize, Type, Event)]
+pub struct GameThemeRequestEvent(pub String);
+
 pub fn valid_id(id: &str) -> bool {
     let mut chars = id.chars();
     matches!(chars.next(), Some(c) if c.is_ascii_lowercase() || c.is_ascii_digit())
@@ -103,6 +107,48 @@ pub fn watch(app: AppHandle, dir: PathBuf) {
                     }
                 }
                 let _ = ThemesChangedEvent.emit(&app);
+            }
+        })
+        .ok();
+}
+
+/// Watch the Aerion mod's folder for a theme picked in the game's menu and hand it to the UI,
+/// which switches the theme and writes the game's theme file again.
+pub fn watch_game_requests(app: AppHandle, paths: launcher_core::paths::Paths) {
+    std::thread::Builder::new()
+        .name("game-theme-requests".into())
+        .spawn(move || {
+            let dir = paths.aerion_mod_dir();
+            if let Err(e) = std::fs::create_dir_all(&dir) {
+                return tracing::debug!(error = %e, "no Aerion mod folder");
+            }
+            let (tx, rx) = std::sync::mpsc::channel();
+            let mut watcher = match notify::recommended_watcher(tx) {
+                Ok(w) => w,
+                Err(e) => return tracing::warn!(error = %e, "game theme watcher unavailable"),
+            };
+            if let Err(e) = watcher.watch(&dir, RecursiveMode::NonRecursive) {
+                return tracing::warn!(error = %e, "cannot watch the Aerion mod folder");
+            }
+            // A request left from before (the game asked while the launcher was closed).
+            if let Some(id) = launcher_core::aerion_mod::take_theme_request(&paths) {
+                let _ = GameThemeRequestEvent(id).emit(&app);
+            }
+            while let Ok(event) = rx.recv() {
+                let ours = event.as_ref().is_ok_and(|e| {
+                    e.paths.iter().any(|p| {
+                        p.file_name()
+                            .is_some_and(|n| n == launcher_core::aerion_mod::THEME_REQUEST)
+                    })
+                });
+                if !ours || !changes_files(&event) {
+                    continue;
+                }
+                // Let the game finish writing.
+                std::thread::sleep(Duration::from_millis(100));
+                if let Some(id) = launcher_core::aerion_mod::take_theme_request(&paths) {
+                    let _ = GameThemeRequestEvent(id).emit(&app);
+                }
             }
         })
         .ok();

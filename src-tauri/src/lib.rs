@@ -164,6 +164,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             crate::games::GameStateEvent,
             crate::games::GameLogEvent,
             crate::themes::ThemesChangedEvent,
+            crate::themes::GameThemeRequestEvent,
             crate::commands::updates::AppUpdateProgressEvent,
             crate::content_watch::ContentUpdatesEvent,
         ])
@@ -351,9 +352,11 @@ pub fn run(platform_notes: Vec<String>) {
             let state = tauri::async_runtime::block_on(AppState::init()).map_err(|e| e.to_string())?;
             let themes_dir = state.paths.themes_dir();
             let cache = state.paths.image_cache_dir();
+            let mod_paths = state.paths.clone();
             app.manage(state);
             themes::install_schema(&themes_dir);
             themes::watch(app.handle().clone(), themes_dir);
+            themes::watch_game_requests(app.handle().clone(), mod_paths);
             presence::start(app.handle().clone());
             tauri::async_runtime::spawn(protocols::trim_image_cache(cache));
             tauri::async_runtime::spawn(content_watch::run(app.handle().clone()));

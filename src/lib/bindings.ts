@@ -279,6 +279,7 @@ export const events = {
 	contentUpdatesEvent: makeEvent<ContentUpdatesEvent, ContentUpdatesEvent>("content-updates-event"),
 	gameLogEvent: makeEvent<GameLogEvent_Serialize, GameLogEvent_Deserialize>("game-log-event"),
 	gameStateEvent: makeEvent<GameStateEvent_Serialize, GameStateEvent_Deserialize>("game-state-event"),
+	gameThemeRequestEvent: makeEvent<GameThemeRequestEvent, GameThemeRequestEvent>("game-theme-request-event"),
 	taskEvent: makeEvent<TaskEvent_Serialize, TaskEvent_Deserialize>("task-event"),
 	themesChangedEvent: makeEvent<ThemesChangedEvent, ThemesChangedEvent>("themes-changed-event"),
 };
@@ -844,6 +845,18 @@ export type GameStateEvent_Serialize = {
 /**  Colours the mod uses, resolved by the launcher from the active theme (the mod parses no CSS). */
 export type GameTheme = GameTheme_Serialize | GameTheme_Deserialize;
 
+/**  A theme the game's menu offers: enough to draw its tile. */
+export type GameThemeChoice = {
+	id: string,
+	name: string,
+	bg: string,
+	surface: string,
+	accent: string,
+};
+
+/**  The game asked for another theme from its menu (the theme's id). */
+export type GameThemeRequestEvent = string;
+
 /**  Colours the mod uses, resolved by the launcher from the active theme (the mod parses no CSS). */
 export type GameTheme_Deserialize = {
 	name: string,
@@ -882,6 +895,13 @@ export type GameTheme_Deserialize = {
 	backgroundDim?: number | null,
 	/**  Absolute path of that picture for the mod; set by [`write_theme`], ignored from callers. */
 	backgroundFile?: string | null,
+	/**  The launcher's id of this theme, so the mod can mark it among `choices`. */
+	id?: string,
+	/**
+	 *  Every theme the player has, for picking one in the game's menu (the mod asks for it with
+	 *  [`THEME_REQUEST`]; the launcher switches and writes this file again).
+	 */
+	choices?: GameThemeChoice[],
 };
 
 /**  Colours the mod uses, resolved by the launcher from the active theme (the mod parses no CSS). */
@@ -922,6 +942,13 @@ export type GameTheme_Serialize = {
 	backgroundDim: number | null,
 	/**  Absolute path of that picture for the mod; set by [`write_theme`], ignored from callers. */
 	backgroundFile: string | null,
+	/**  The launcher's id of this theme, so the mod can mark it among `choices`. */
+	id: string,
+	/**
+	 *  Every theme the player has, for picking one in the game's menu (the mod asks for it with
+	 *  [`THEME_REQUEST`]; the launcher switches and writes this file again).
+	 */
+	choices?: GameThemeChoice[],
 };
 
 /**  What the Aerion mod changes in the game (Settings → Appearance → In game). */

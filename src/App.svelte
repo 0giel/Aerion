@@ -21,7 +21,7 @@
   import { router, type Page } from "./lib/stores/router.svelte";
   import { ui } from "./lib/stores/ui.svelte";
   import { toasts } from "./lib/stores/toasts.svelte";
-  import { commands, errorMessage, IS_WINDOWS, themeAssetUrl } from "./lib/api";
+  import { commands, errorMessage, events, IS_WINDOWS, themeAssetUrl } from "./lib/api";
   import { media } from "./lib/stores/media.svelte";
   import { gameFrames } from "./lib/gameVideo";
   import { t } from "./lib/i18n/index.svelte";
@@ -56,6 +56,10 @@
 
   onMount(() => {
     const stopFx = initFx();
+    // A theme picked in the game's menu: switch to it here; the game gets it with the theme file.
+    const stopRequests = events.gameThemeRequestEvent.listen((e) => {
+      if (themes.find(e.payload)) void app.saveSettings({ theme: e.payload, themeFollowSystem: false });
+    });
     void (async () => {
       await app.init();
       void commands.frontendLog("info", `UI ready (${app.fatal ? `failed: ${app.fatal}` : "ok"})`);
@@ -75,6 +79,7 @@
     return () => {
       stopFx();
       void unlisten.then((f) => f());
+      void stopRequests.then((f) => f());
     };
   });
 
@@ -123,7 +128,13 @@
 
   $effect(() => {
     if (!app.ready || !app.settings) return;
-    const theme = toGameTheme(themes.active, app.settings.gameUi, app.settings.liteMode, videoFrames);
+    const theme = toGameTheme(
+      themes.active,
+      app.settings.gameUi,
+      app.settings.liteMode,
+      videoFrames,
+      themes.all,
+    );
     // Only a real change is written: a reload of the same theme mustn't keep postponing it.
     const json = JSON.stringify(theme);
     clearTimeout(gameThemeTimer);

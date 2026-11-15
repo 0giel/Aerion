@@ -1228,6 +1228,7 @@ public final class AerionMenu implements Page {
 	/** What the game's own screens look like: themed buttons, background and player, and the inventory. */
 	private void gamePage() {
 		HudConfig cfg = AerionClient.hud();
+		themePicker();
 		JsonObject menus = cfg.feature("menus");
 		beginCard(Lang.tr("aerion.sec.menus"));
 		for (Option o : OPTIONS.get("menus")) option(menus, o, "menus");
@@ -1238,6 +1239,34 @@ public final class AerionMenu implements Page {
 		toggle(Lang.tr("aerion.panel.enabled"), HudConfig.bool(inv, "enabled", true), v -> inv.addProperty("enabled", v));
 		for (Option o : OPTIONS.get("inventory")) option(inv, o, "inventory");
 		note(Lang.tr("aerion.desc.inventory"));
+		endCard();
+	}
+
+	/** The player's themes as tiles; a click asks the launcher to switch to that one. */
+	private void themePicker() {
+		Theme t = AerionClient.theme();
+		if (t == null || t.choices.isEmpty()) return;
+		beginCard(Lang.tr("aerion.sec.theme"));
+		beginRow("themes");
+		int tw = 62, th = 30, gap = 4;
+		int perRow = Math.max(1, (colW + gap) / (tw + gap));
+		int startY = y;
+		for (int i = 0; i < t.choices.size(); i++) {
+			Theme.Choice c = t.choices.get(i);
+			int tx = x + (i % perRow) * (tw + gap), ty = startY + (i / perRow) * (th + gap);
+			boolean on = c.id().equals(t.id) || (t.id.isEmpty() && c.name().equals(t.name));
+			boolean over = inside(tx, ty, tw, th);
+			if (on) Draw.rounded(g, tx - 1, ty - 1, tw + 2, th + 2, 5, accent);
+			Draw.rounded(g, tx, ty, tw, th, 4, c.bg());
+			Draw.rounded(g, tx + 5, ty + 5, 9, 9, 2, c.surface());
+			Draw.rounded(g, tx + 16, ty + 5, 9, 9, 2, c.accent());
+			if (over && !on) Draw.outline(g, tx, ty, tw, th, Colors.alpha(text, 0x80));
+			Txt.draw(g, ellipsize(c.name(), tw - 10), tx + 5, ty + th - 8, SMALL, Colors.luminance(c.bg()) > 0.55f ? 0xFF1A1A1A : 0xFFF2F2F2);
+			if (!on) hit(tx, ty, tw, th, f -> AerionClient.requestTheme(c.id()), false);
+		}
+		y = startY + ((t.choices.size() + perRow - 1) / perRow) * (th + gap) - gap;
+		endRow();
+		note(Lang.tr("aerion.hint.theme"));
 		endCard();
 	}
 

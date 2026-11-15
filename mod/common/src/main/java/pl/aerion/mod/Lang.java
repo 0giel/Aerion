@@ -193,6 +193,8 @@ public final class Lang {
 			Map.entry("aerion.opt.menus.buttons", new String[] {"Custom buttons and sliders", "Własne przyciski i suwaki"}),
 			Map.entry("aerion.opt.menus.background", new String[] {"Custom background", "Własne tło"}),
 			Map.entry("aerion.opt.menus.player", new String[] {"Player on the title screen", "Gracz na ekranie głównym"}),
+			Map.entry("aerion.sec.theme", new String[] {"Theme", "Motyw"}),
+			Map.entry("aerion.hint.theme", new String[] {"Switches the launcher's theme too.", "Zmienia też motyw launchera."}),
 			Map.entry("aerion.opt.menus.hotbar", new String[] {"Hotbar in the theme", "Pasek przedmiotów w motywie"}),
 			Map.entry("aerion.opt.menus.tooltips", new String[] {"Item tooltips in the theme", "Opisy przedmiotów w motywie"}),
 			Map.entry("aerion.opt.menus.chat", new String[] {"Chat in the theme", "Czat w motywie"}),

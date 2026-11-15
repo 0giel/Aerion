@@ -38,7 +38,7 @@ public final class Colors {
 		return (al << 24) | (r << 16) | (g << 8) | bl;
 	}
 
-	static float luminance(int c) {
+	public static float luminance(int c) {
 		return (0.2126f * ((c >> 16) & 0xFF) + 0.7152f * ((c >> 8) & 0xFF) + 0.0722f * (c & 0xFF)) / 255f;
 	}
 

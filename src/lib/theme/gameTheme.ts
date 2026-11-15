@@ -11,6 +11,8 @@ export function toGameTheme(
   prefs: GameUiPrefs,
   lite = false,
   videoFrames: string | null = null,
+  /** Every theme the player has, offered in the game's menu. */
+  choices: Theme[] = [],
 ): GameTheme {
   const c = t.colors;
   const b = t.background;
@@ -46,5 +48,13 @@ export function toGameTheme(
           : null,
     backgroundDim: b.dim,
     backgroundFile: null,
+    id: t.id,
+    choices: choices.map((c) => ({
+      id: c.id,
+      name: c.name,
+      bg: c.colors.bg,
+      surface: c.colors.surface,
+      accent: c.colors.accent,
+    })),
   };
 }
