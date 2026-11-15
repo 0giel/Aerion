@@ -157,7 +157,7 @@ public final class MapPage implements Page {
 		MapMarks.arrow(g, screenX(player.getX()), screenY(player.getZ()), Math.atan2(-Math.sin(a), -Math.cos(a)), 8f, Colors.alpha(accent, 255));
 		g.endScissor();
 		Txt.center(g, "N", mapX + mapW / 2f, mapY + 6, 7, 0xFFFFFFFF);
-		if (insideMap(mouseX, mouseY)) {
+		if (insideMap(mouseX, mouseY) && !pl.aerion.mod.features.Streamer.active()) {
 			String at = "X " + (int) Math.floor(blockX(mouseX)) + "   Z " + (int) Math.floor(blockZ(mouseY));
 			Draw.rounded(g, mapX + 4, mapY + mapH - 14, Math.round(Txt.width(at, 7)) + 8, 11, 2, 0xA0000000);
 			Txt.draw(g, at, mapX + 8, mapY + mapH - 8.5f, 7, 0xFFFFFFFF);
@@ -171,7 +171,7 @@ public final class MapPage implements Page {
 		int x = mapX + 8, y = panelY + 6;
 		String name = naming ? selected.name + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : "") : selected.name;
 		Txt.draw(g, name, x, y + 5, 9, text);
-		Txt.draw(g, selected.x + ", " + selected.y + ", " + selected.z, x, y + 19, 7, muted);
+		if (!pl.aerion.mod.features.Streamer.active()) Txt.draw(g, selected.x + ", " + selected.y + ", " + selected.z, x, y + 19, 7, muted);
 		int sx = mapX + mapW / 2 - SWATCHES.length * 7;
 		for (int i = 0; i < SWATCHES.length; i++) {
 			int bx = sx + i * 14;

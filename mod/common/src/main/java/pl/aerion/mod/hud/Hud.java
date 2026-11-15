@@ -1072,7 +1072,7 @@ public final class Hud {
 			players.sort(Comparator.comparing(pi -> pi.getProfile().name().toLowerCase(Locale.ROOT)));
 			for (PlayerInfo pi : players) {
 				if (out.size() >= max) break;
-				String line = pi.getProfile().name();
+				String line = pl.aerion.mod.features.Streamer.name(pi.getProfile().name());
 				if (ping) line += "  " + pi.getLatency() + " ms";
 				if (mode && pi.getGameMode() != null) line += "  " + pi.getGameMode().getShortDisplayName().getString();
 				out.add(line);
@@ -1228,6 +1228,7 @@ public final class Hud {
 			JsonObject m = cfg.module(e.getKey());
 			if (!HudConfig.bool(m, "enabled", false)) continue;
 			if (!preview && e.getValue() instanceof GameElement) continue;
+			if (!preview && pl.aerion.mod.features.Streamer.hides(e.getKey())) continue;
 			Ctx c = new Ctx(mc, mc.player, m, style(cfg, m, t), t, preview);
 			long started = System.nanoTime();
 			try {

@@ -76,7 +76,7 @@ public final class TitleCard {
 		int muted = Colors.alpha(t != null ? t.textMuted : 0xFFA3A9B6, a);
 		int x = c[0], y = c[1], w = c[2];
 		int below = y + PAD + c[4];
-		String name = Minecraft.getInstance().getUser().getName();
+		String name = pl.aerion.mod.features.Streamer.name(Minecraft.getInstance().getUser().getName());
 		// No panel behind: a soft shadow keeps the text readable on the background.
 		shadowed(g, name, x + w / 2f, below + 7, 7.5f, text, a);
 		// Who can join, when there is a line for it and it fits.

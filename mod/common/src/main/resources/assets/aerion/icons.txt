@@ -1,4 +1,4 @@
-64 6 384 768
+64 6 384 832
 fps
 coords
 direction
@@ -45,6 +45,7 @@ chunkBorders
 ownName
 mirrors
 tntTimer
+streamer
 armor
 clock
 memory

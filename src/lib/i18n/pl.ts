@@ -1760,6 +1760,8 @@ const pl: Dict = {
       chunkBordersHint: "Krawędzie chunków wokół ciebie, w kolorze motywu.",
       ownName: "Własny nick w trzeciej osobie",
       ownNameHint: "Twój nick i odznaka nad głową, gdy kamera jest za tobą.",
+      streamer: "Tryb streamera",
+      streamerHint: "Ukrywa Twój nick, adres serwera i współrzędne (także w F3). Klawisz F7 w grze.",
       tntTimer: "Odliczanie TNT",
       tntTimerHint: "Sekundy do wybuchu nad podpalonym TNT w pobliżu.",
       mirrors: "Okna w świecie (test)",

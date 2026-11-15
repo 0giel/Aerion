@@ -1126,6 +1126,8 @@ export type HudFeatures_Deserialize = {
 	ownName?: FeatureOptions_Deserialize,
 	/**  Seconds left above lit TNT nearby. */
 	tntTimer?: FeatureOptions_Deserialize,
+	/**  Hides the own name, the server address and coordinates (streams, recordings). */
+	streamer?: FeatureOptions_Deserialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors?: FeatureOptions_Deserialize,
 	/**
@@ -1176,6 +1178,8 @@ export type HudFeatures_Serialize = {
 	ownName: FeatureOptions_Serialize,
 	/**  Seconds left above lit TNT nearby. */
 	tntTimer: FeatureOptions_Serialize,
+	/**  Hides the own name, the server address and coordinates (streams, recordings). */
+	streamer: FeatureOptions_Serialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors: FeatureOptions_Serialize,
 	/**

@@ -1709,6 +1709,8 @@ const en = {
       chunkBordersHint: "The edges of the chunks around you, in the theme's colour.",
       ownName: "Own name in third person",
       ownNameHint: "Your name and badge above your head when the camera is behind you.",
+      streamer: "Streamer mode",
+      streamerHint: "Hides your name, the server address and your coordinates (also in F3). F7 in game.",
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
       mirrors: "Windows in the world (test)",

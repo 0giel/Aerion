@@ -11,6 +11,6 @@ public final class OwnName {
 	public static boolean show() {
 		HudConfig cfg = AerionClient.hud();
 		Minecraft mc = Minecraft.getInstance();
-		return cfg != null && HudConfig.bool(cfg.feature("ownName"), "enabled", false) && !mc.options.getCameraType().isFirstPerson();
+		return cfg != null && HudConfig.bool(cfg.feature("ownName"), "enabled", false) && !mc.options.getCameraType().isFirstPerson() && !Streamer.active();
 	}
 }

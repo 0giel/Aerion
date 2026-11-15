@@ -138,7 +138,7 @@ final class Minimap implements Hud.Module {
 				Txt.center(g, names[i], lx, ly, size, i == 0 ? 0xFFFFFFFF : 0xD0E0E0E0);
 			}
 		}
-		if (c.flag("coords", true) && player != null) {
+		if (c.flag("coords", true) && player != null && !pl.aerion.mod.features.Streamer.active()) {
 			String t = player.getBlockX() + ", " + player.getBlockY() + ", " + player.getBlockZ();
 			Hud.text(c, g, t, p + (s - Hud.width(c, t)) / 2, p + s + 2, c.style().text(), c.style().shadow());
 		}
