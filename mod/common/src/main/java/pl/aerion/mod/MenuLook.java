@@ -6,12 +6,15 @@ import pl.aerion.mod.hud.HudConfig;
 /**
  * Which parts of the game's menus follow the launcher theme (hud.json "features.menus", the
  * "Game look" page): the themed buttons and sliders, the themed menu background, and the player
- * with the "Host a world" button on the title screen. Each is on unless switched off.
+ * with the "Host a world" button on the title screen, each on unless switched off; and the
+ * parts beyond the menus ({@link GameLook}), each off until switched on.
  */
 public final class MenuLook {
 	private MenuLook() {}
 
 	private static boolean buttons = true, background = true, player = true;
+	/** The theme beyond the menus (hotbar, tooltips, chat, tabList): off until switched on. */
+	private static java.util.Set<String> parts = java.util.Set.of();
 	private static long at;
 
 	private static void read() {
@@ -24,6 +27,18 @@ public final class MenuLook {
 		buttons = !"0".equals(HudConfig.opt(f, "buttons", "1"));
 		background = !"0".equals(HudConfig.opt(f, "background", "1"));
 		player = !"0".equals(HudConfig.opt(f, "player", "1"));
+		java.util.Set<String> on = new java.util.HashSet<>();
+		for (String p : PARTS) if ("1".equals(HudConfig.opt(f, p, "0"))) on.add(p);
+		parts = on;
+	}
+
+	/** The parts of the game beyond the menus that can follow the theme. */
+	public static final String[] PARTS = {"hotbar", "tooltips", "chat", "tabList"};
+
+	/** Whether that part ({@link #PARTS}) follows the theme. */
+	public static boolean part(String name) {
+		read();
+		return parts.contains(name);
 	}
 
 	public static boolean buttons() {

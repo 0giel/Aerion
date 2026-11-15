@@ -184,6 +184,8 @@ public final class Containers {
 	 * game's grey one, or null to let the game draw its own.
 	 */
 	public static Identifier spriteTexture(Identifier sprite) {
+		Identifier look = GameLook.sprite(sprite);
+		if (look != null) return look;
 		if (sprite == null || !isPanelSprite(sprite.getPath())) return null;
 		Identifier png = Identifier.fromNamespaceAndPath(
 				sprite.getNamespace(), "textures/gui/sprites/" + sprite.getPath() + ".png");

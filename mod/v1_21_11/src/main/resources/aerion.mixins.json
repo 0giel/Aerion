@@ -16,7 +16,9 @@
 		"LogoRendererMixin",
 		"ScreenEffectRendererMixin",
 		"ScreenMixin",
-		"SplashRendererMixin"
+		"SplashRendererMixin",
+		"TabListLookMixin",
+		"TooltipLookMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
