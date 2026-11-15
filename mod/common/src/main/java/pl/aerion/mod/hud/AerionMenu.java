@@ -617,8 +617,9 @@ public final class AerionMenu implements Page {
 		if (animationsOn() && navTargetY >= 0) {
 			navY = navY < 0 ? navTargetY : navY + (navTargetY - navY) * Math.min(1f, dt * 14f);
 			if (Math.abs(navTargetY - navY) < 0.3f) navY = navTargetY;
-			block(nx + 2, Math.round(navY) + 1, 14, 14, accent);
 		}
+		// Layers, bottom to top: the rows lit under the pointer, the accent block, icons and names.
+		navTop.clear();
 		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + gap;
 		ny = navHead(nx, ny, "aerion.navhead.mods");
 		ny = navItem(nx, ny, Section.HUD, "fps", "aerion.nav.hud");
@@ -631,6 +632,9 @@ public final class AerionMenu implements Page {
 		ny = navHead(nx, ny, "aerion.navhead.look");
 		ny = navItem(nx, ny, Section.GAME, "inventory", "aerion.nav.game");
 		navItem(nx, ny, Section.LOOK, "look", "aerion.nav.look");
+		if (animationsOn() && navY >= 0) block(nx + 2, Math.round(navY) + 1, 14, 14, accent);
+		for (Runnable r : navTop) r.run();
+		navTop.clear();
 		if (!foot) return;
 		// The player at the foot, as in the launcher's sidebar.
 		int py = top + h - 26;
@@ -662,6 +666,9 @@ public final class AerionMenu implements Page {
 		return ny + h + 2;
 	}
 
+	/** What the sidebar draws over its accent block: the entries' icons and names. */
+	private final List<Runnable> navTop = new ArrayList<>();
+
 	private int navItem(int nx, int ny, Section which, String icon, String label) {
 		int w = SIDE - 10, h = 16;
 		boolean on = section == which, over = inside(nx, ny, w, h);
@@ -673,8 +680,11 @@ public final class AerionMenu implements Page {
 		float cover = slide ? Math.max(0f, 1f - Math.abs(navY - ny) / (h + 2f)) : on ? 1f : 0f;
 		if (glow > 0) Draw.rounded(g, nx, ny, w, h, 3, Colors.alpha(control, Math.round(255 * glow)));
 		if (on && !slide) block(nx + 2, ny + 1, 14, 14, accent);
-		Icons.draw(g, icon, nx + 5, ny + 3, 10, Colors.mix(over ? text : muted, accentText, cover));
-		Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, on || over ? text : muted);
+		int iconColor = Colors.mix(over ? text : muted, accentText, cover), nameColor = on || over ? text : muted;
+		navTop.add(() -> {
+			Icons.draw(g, icon, nx + 5, ny + 3, 10, iconColor);
+			Txt.draw(g, Lang.tr(label), nx + 19, ny + h / 2f, TEXT, nameColor);
+		});
 		hit(nx, ny, w, h, f -> {
 			section = which;
 			detail = null;
