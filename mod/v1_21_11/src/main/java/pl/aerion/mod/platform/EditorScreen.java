@@ -23,6 +23,11 @@ public final class EditorScreen extends Screen {
 		Game.clearToasts();
 	}
 
+	/** Lays the screen below out again (after its buttons were shown or hidden). */
+	public void refreshParent() {
+		if (parent != null) parent.resize(width, height);
+	}
+
 	public void show(Page next) {
 		page.close();
 		page = next;
@@ -41,6 +46,13 @@ public final class EditorScreen extends Screen {
 
 	@Override
 	public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float delta) {
+		if (page.showParent() && parent != null) {
+			// The screen below drawn as it is, without the pointer on it: changes show at once.
+			parent.renderBackground(g, -1, -1, delta);
+			parent.render(g, -1, -1, delta);
+			g.nextStratum();
+			return;
+		}
 		if (page.veil()) super.renderBackground(g, mouseX, mouseY, delta);
 	}
 

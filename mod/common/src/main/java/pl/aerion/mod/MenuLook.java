@@ -41,6 +41,13 @@ public final class MenuLook {
 		return parts.contains(name);
 	}
 
+	/** Whether a title screen button ("realms", "icons") was hidden by the player. */
+	public static boolean hidden(String name) {
+		pl.aerion.mod.hud.HudConfig cfg = AerionClient.hud();
+		if (cfg == null) return false;
+		return "0".equals(HudConfig.opt(cfg.feature("menus"), "show." + name, "1"));
+	}
+
 	public static boolean buttons() {
 		read();
 		return buttons;

@@ -27,34 +27,57 @@ abstract class MenuButtonMixin extends Screen {
 		super(title);
 	}
 
-	private static Component sceneLabel(String scene) {
-		return Component.literal(Lang.tr("aerion.menu.scene").replace("{name}", Lang.tr("aerion.choice." + scene)));
-	}
-
-	private static net.minecraft.client.gui.components.Tooltip sceneTip(String scene) {
-		String key = "world".equals(scene) && !pl.aerion.mod.MenuScene.hasWorldPicture() ? "aerion.menu.sceneWorldSoon" : "aerion.menu.sceneHint";
-		return net.minecraft.client.gui.components.Tooltip.create(Component.literal(Lang.tr(key)));
+	/**
+	 * The title screen's buttons the player hid (Aerion → menu look): Realms, the row of small
+	 * icons. The buttons below move up so no gap is left.
+	 */
+	private void hideButtons() {
+		boolean realms = !MenuLook.hidden("realms"), icons = !MenuLook.hidden("icons");
+		String realmsText = Component.translatable("menu.online").getString();
+		int mid = width / 2;
+		java.util.List<int[]> gone = new java.util.ArrayList<>();
+		java.util.List<net.minecraft.client.gui.components.AbstractWidget> column = new java.util.ArrayList<>();
+		for (var child : children()) {
+			if (!(child instanceof net.minecraft.client.gui.components.AbstractWidget wd) || !wd.visible) continue;
+			int cx = wd.getX() + wd.getWidth() / 2;
+			// The main column only: not the version and copyright lines along the bottom edge.
+			if (Math.abs(cx - mid) > 110 || wd.getY() >= height - 20) continue;
+			column.add(wd);
+			boolean isRealms = wd.getMessage().getString().equals(realmsText);
+			boolean isIcon = wd.getWidth() == 20 && wd.getHeight() == 20;
+			if ((isRealms && !realms) || (isIcon && !icons)) {
+				wd.visible = false;
+				wd.active = false;
+				boolean known = false;
+				for (int[] r : gone) known |= r[0] == wd.getY();
+				if (!known) gone.add(new int[] {wd.getY(), wd.getHeight()});
+			}
+		}
+		if (gone.isEmpty()) return;
+		for (var wd : column) {
+			if (!wd.visible) continue;
+			int dy = 0;
+			for (int[] r : gone) if (r[0] < wd.getY()) dy += r[1] + 4;
+			if (dy > 0) wd.setY(wd.getY() - dy);
+		}
 	}
 
 	@Inject(method = "init", at = @At("TAIL"))
 	private void aerion$menuButton(CallbackInfo ci) {
 		Screen self = this;
+		if (self instanceof TitleScreen) hideButtons();
 		addRenderableWidget(Button.builder(
 						Component.literal(Lang.tr("aerion.menu.button")),
 						b -> Game.setScreen(new EditorScreen(new HudEditor(), self)))
 				.bounds(width - 64, 4, 60, 20)
 				.build());
 		if (self instanceof TitleScreen) {
-			// The menu background, switched in turn: aurora, the game's panorama, the player's world.
-			Button scene = Button.builder(sceneLabel(pl.aerion.mod.MenuScene.mode()), b -> {
-						String next = pl.aerion.mod.MenuScene.nextScene();
-						b.setMessage(sceneLabel(next));
-						b.setTooltip(sceneTip(next));
-					})
-					.bounds(width - 64 - 6 - 104, 4, 104, 20)
-					.tooltip(sceneTip(pl.aerion.mod.MenuScene.mode()))
-					.build();
-			addRenderableWidget(scene);
+			// The menu's look: background, which buttons show, theme - in a panel over this screen.
+			addRenderableWidget(Button.builder(Component.literal(Lang.tr("aerion.menu.look")),
+							b -> Game.setScreen(new EditorScreen(new pl.aerion.mod.MenuStylePage(), self)))
+					.bounds(width - 64 - 6 - 64, 4, 64, 20)
+					.tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(Lang.tr("aerion.menu.lookHint"))))
+					.build());
 		}
 		java.util.List<int[]> own = new java.util.ArrayList<>();
 		for (var child : children()) {

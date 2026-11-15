@@ -23,6 +23,11 @@ public interface Page {
 		return true;
 	}
 
+	/** Whether the screen underneath (the title screen) stays drawn behind this page, live. */
+	default boolean showParent() {
+		return false;
+	}
+
 	/** A key press; true when the page used it. */
 	default boolean keyPressed(InputConstants.Key key) {
 		return false;
