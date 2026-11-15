@@ -1,0 +1,23 @@
+PackageIdentifier: 0giel.Aerion
+PackageVersion: 1.2.0
+PackageLocale: en-US
+Publisher: 0giel
+PublisherUrl: https://github.com/0giel
+PackageName: Aerion
+PackageUrl: https://0giel.github.io/Aerion/
+License: GPL-3.0
+LicenseUrl: https://github.com/0giel/Aerion/blob/main/LICENSE
+ShortDescription: A fast, themeable launcher for Minecraft Java Edition with its own HUD mod.
+Description: |-
+  Aerion is an unofficial launcher for Minecraft: Java Edition. It installs Fabric, Quilt, Forge and NeoForge,
+  finds mods on Modrinth and CurseForge, and comes with its own mod: a HUD arranged with the mouse and menus in
+  the launcher's theme. Not approved by or associated with Mojang or Microsoft.
+Moniker: aerion
+Tags:
+  - minecraft
+  - launcher
+  - fabric
+  - modrinth
+ReleaseNotesUrl: https://github.com/0giel/Aerion/releases/tag/v1.2.0
+ManifestType: defaultLocale
+ManifestVersion: 1.9.0

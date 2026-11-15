@@ -1,0 +1,18 @@
+PackageIdentifier: 0giel.Aerion
+PackageVersion: 1.2.0
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+  - interactive
+  - silent
+UpgradeBehavior: install
+ReleaseDate: 2026-11-15
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/0giel/Aerion/releases/download/v1.2.0/Aerion_1.2.0_x64-setup.exe
+    InstallerSha256: EEEBAB37AFF4DDCEA892A5C69914FDD23979A9699CB8C1A1119F93ADA13AD946
+    Dependencies:
+      PackageDependencies:
+        - PackageIdentifier: Microsoft.EdgeWebView2Runtime
+ManifestType: installer
+ManifestVersion: 1.9.0

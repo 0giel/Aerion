@@ -1,0 +1,19 @@
+# Draft for the AUR package "aerion-bin" (not submitted yet). Built from the release .deb.
+# Maintainer: 0giel <aerion.launcher@proton.me>
+pkgname=aerion-bin
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="A fast, themeable launcher for Minecraft: Java Edition with its own HUD mod (unofficial)"
+arch=('x86_64')
+url="https://0giel.github.io/Aerion/"
+license=('GPL-3.0-only')
+depends=('webkit2gtk-4.1' 'gtk3' 'libayatana-appindicator')
+provides=('aerion')
+conflicts=('aerion')
+source=("Aerion_${pkgver}_amd64.deb::https://github.com/0giel/Aerion/releases/download/v${pkgver}/Aerion_${pkgver}_amd64.deb")
+sha256sums=('3799377188733438e42128e4f75644dad07b324ef5a824bc784388dd97cf4939')
+
+package() {
+  bsdtar -xf data.tar.* -C "$pkgdir"
+  # The launcher updates itself only in the AppImage/Windows builds; pacman updates this one.
+}
