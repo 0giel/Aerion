@@ -9,6 +9,8 @@ Drafts for other install channels. Nothing here is submitted; each needs the mai
 - `aur/PKGBUILD` — `aerion-bin` for Arch Linux, from the release `.deb`. Check with `makepkg -si`
   and `namcap`, generate `.SRCINFO` with `makepkg --printsrcinfo > .SRCINFO`, push to
   `ssh://aur@aur.archlinux.org/aerion-bin.git`.
+- Packages that a package manager updates must turn the launcher's own updater off: leave the
+  file `/usr/lib/aerion/no-self-update` (the PKGBUILD does) or set `AERION_NO_SELF_UPDATE=1`.
 - Flathub — not drafted: Flathub builds from source with every Cargo and pnpm dependency listed
   offline (`flatpak-cargo-generator`, `flatpak-node-generator`), and the launcher's self-update
   must be off there. A larger job; worth it once the other channels work.

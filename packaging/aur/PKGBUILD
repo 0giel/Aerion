@@ -15,5 +15,7 @@ sha256sums=('3799377188733438e42128e4f75644dad07b324ef5a824bc784388dd97cf4939')
 
 package() {
   bsdtar -xf data.tar.* -C "$pkgdir"
-  # The launcher updates itself only in the AppImage/Windows builds; pacman updates this one.
+  # pacman updates this package: the marker turns the launcher's own updater off (it would try
+  # to install a .deb otherwise).
+  install -Dm644 /dev/null "$pkgdir/usr/lib/aerion/no-self-update"
 }

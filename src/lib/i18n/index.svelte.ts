@@ -14,9 +14,10 @@ const IDS = LOCALES.map((l) => l.id);
 
 export function systemLocale(): Locale {
   const langs = navigator.languages?.length ? navigator.languages : [navigator.language];
+  // Only complete translations are picked from the system; a beta one is chosen by hand.
   for (const l of langs) {
-    const id = l?.toLowerCase().slice(0, 2) as Locale;
-    if (IDS.includes(id)) return id;
+    const id = l?.toLowerCase().slice(0, 2);
+    if (id === "pl" || id === "en") return id;
   }
   return "en";
 }

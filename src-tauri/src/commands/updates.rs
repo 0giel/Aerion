@@ -47,7 +47,17 @@ fn system_package() -> bool {
     )
 }
 
+/// A distribution's own package (AUR, Flathub…) is updated by its package manager: the package
+/// leaves this marker file, or the environment sets `AERION_NO_SELF_UPDATE`.
+fn distro_managed() -> bool {
+    std::env::var_os("AERION_NO_SELF_UPDATE").is_some()
+        || std::path::Path::new("/usr/lib/aerion/no-self-update").exists()
+}
+
 fn self_updating() -> bool {
+    if distro_managed() {
+        return false;
+    }
     cfg!(any(windows, target_os = "macos"))
         || std::env::var_os("APPIMAGE").is_some()
         || system_package()
