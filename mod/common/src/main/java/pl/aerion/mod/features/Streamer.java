@@ -3,6 +3,8 @@ package pl.aerion.mod.features;
 import com.google.gson.JsonObject;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -47,15 +49,57 @@ public final class Streamer {
 		return active() && name != null && name.equals(own()) ? alias() : name;
 	}
 
-	/** The text with the player's own name swapped for the stand-in (styles, links and hovers stay). */
+	/** Letters a Minecraft name is made of: the own name only counts when not part of a longer word. */
+	private static final String EDGE_BEFORE = "(?<![A-Za-z0-9_])", EDGE_AFTER = "(?![A-Za-z0-9_])";
+
+	private static String cachedOwn, cachedServer;
+	private static Pattern namePattern, serverPattern;
+
+	/** The server's address (with and without the port) as typed, null in single player. */
+	private static Pattern server() {
+		var s = Minecraft.getInstance().getCurrentServer();
+		String ip = s == null || Minecraft.getInstance().isLocalServer() ? null : s.ip;
+		if (ip == null || ip.isBlank()) return null;
+		if (!ip.equals(cachedServer)) {
+			cachedServer = ip;
+			String host = ip.contains(":") && !ip.startsWith("[") ? ip.substring(0, ip.lastIndexOf(':')) : ip;
+			serverPattern = Pattern.compile("(?i)" + Pattern.quote(ip) + (host.equals(ip) ? "" : "|" + Pattern.quote(host)));
+		}
+		return serverPattern;
+	}
+
+	private static Pattern name() {
+		String own = own();
+		if (own == null || own.isEmpty()) return null;
+		if (!own.equals(cachedOwn)) {
+			cachedOwn = own;
+			namePattern = Pattern.compile(EDGE_BEFORE + Pattern.quote(own) + EDGE_AFTER);
+		}
+		return namePattern;
+	}
+
+	/** The plain text with the own name and the server address swapped (for a test and for strings). */
+	static String hide(String text, Pattern name, Pattern server, String alias, String hiddenServer) {
+		if (name != null) text = name.matcher(text).replaceAll(Matcher.quoteReplacement(alias));
+		if (server != null) text = server.matcher(text).replaceAll(Matcher.quoteReplacement(hiddenServer));
+		return text;
+	}
+
+	/**
+	 * The text with the own name swapped for the stand-in and the server's address hidden; styles,
+	 * links and hovers stay.
+	 */
 	public static Component hide(Component message) {
 		if (message == null || !active()) return message;
-		String own = own();
-		if (own == null || own.isEmpty() || !message.getString().contains(own)) return message;
-		String alias = alias();
+		Pattern name = name(), server = server();
+		String plain = message.getString();
+		boolean hasName = name != null && name.matcher(plain).find();
+		boolean hasServer = server != null && server.matcher(plain).find();
+		if (!hasName && !hasServer) return message;
+		String alias = alias(), hiddenServer = Lang.tr("aerion.streamer.server");
 		MutableComponent out = Component.empty();
 		message.visit((style, text) -> {
-			out.append(Component.literal(text.replace(own, alias)).setStyle(style));
+			out.append(Component.literal(hide(text, name, server, alias, hiddenServer)).setStyle(style));
 			return Optional.empty();
 		}, Style.EMPTY);
 		return out;

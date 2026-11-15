@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import pl.aerion.mod.Badges;
 
@@ -15,5 +16,16 @@ abstract class PlayerTabOverlayMixin {
 	@Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
 	private void aerion$badge(PlayerInfo info, CallbackInfoReturnable<Component> cir) {
 		cir.setReturnValue(Badges.decorate(info.getProfile().id(), pl.aerion.mod.features.Streamer.hide(cir.getReturnValue())));
+	}
+
+	/** Servers often write their address and the player's name above and below the list. */
+	@ModifyVariable(method = "setHeader", at = @At("HEAD"), argsOnly = true)
+	private Component aerion$header(Component header) {
+		return pl.aerion.mod.features.Streamer.hide(header);
+	}
+
+	@ModifyVariable(method = "setFooter", at = @At("HEAD"), argsOnly = true)
+	private Component aerion$footer(Component footer) {
+		return pl.aerion.mod.features.Streamer.hide(footer);
 	}
 }

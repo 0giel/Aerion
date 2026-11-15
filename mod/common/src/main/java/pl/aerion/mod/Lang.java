@@ -608,6 +608,7 @@ public final class Lang {
 			Map.entry("key.aerion.streamer", new String[] {"Streamer mode on/off", "Tryb streamera wł./wył."}),
 			Map.entry("aerion.desc.streamer", new String[] {"Hides your name, the server address and your coordinates (also in F3).", "Ukrywa Twój nick, adres serwera i współrzędne (także w F3)."}),
 			Map.entry("aerion.streamer.alias", new String[] {"Player", "Gracz"}),
+			Map.entry("aerion.streamer.server", new String[] {"(server)", "(serwer)"}),
 			Map.entry("aerion.streamer.on", new String[] {"Streamer mode on: name, server and coordinates hidden", "Tryb streamera wł.: nick, serwer i współrzędne ukryte"}),
 			Map.entry("aerion.streamer.off", new String[] {"Streamer mode off", "Tryb streamera wył."}),
 			Map.entry("aerion.feature.mirrors", new String[] {"Windows in the world", "Okna w świecie"}),
