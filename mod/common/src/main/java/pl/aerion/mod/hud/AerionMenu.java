@@ -2140,7 +2140,28 @@ public final class AerionMenu implements Page {
 	private void choice(String label, String[] values, String[] labels, String current, Consumer<String> set) {
 		float widest = 0;
 		for (String l : labels) widest = Math.max(widest, Txt.width(l, SMALL));
-		if (widest + 8 > (float) controlW() / values.length) {
+		if (widest + 8 > (float) (colW - reserve) / values.length) {
+			// Too many for one strip (e.g. a quick wheel slot): buttons sized to their words, in lines.
+			beginRow(label);
+			Txt.draw(g, label, x, y + 6, TEXT, text);
+			y += 13;
+			int bx = x, right = x + colW - reserve, bh = ROW - 4;
+			for (int i = 0; i < values.length; i++) {
+				String v = values[i];
+				int w = Math.round(Txt.width(labels[i], SMALL)) + 12;
+				if (bx > x && bx + w > right) {
+					bx = x;
+					y += bh + 3;
+				}
+				smallButton(bx, y, w, bh, labels[i], v.equals(current), () -> {
+					set.accept(v);
+					changed = true;
+				});
+				bx += w + 3;
+			}
+			y += ROW - 2;
+			endRow();
+		} else if (widest + 8 > (float) controlW() / values.length) {
 			beginRow(label);
 			Txt.draw(g, label, x, y + 6, TEXT, text);
 			y += 13;

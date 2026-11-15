@@ -1764,7 +1764,7 @@ const pl: Dict = {
       streamerHint: "Ukrywa Twój nick, adres serwera i współrzędne (także w F3). Klawisz F7 w grze.",
       shulkerPreview: "Podgląd shulkerów",
       shulkerPreviewHint: "Zawartość shulkera jako siatka przedmiotów w jego opisie.",
-      effects: "Efekty",
+      effects: "Połysk i cząsteczki",
       effectsHint: "Kolor połysku zaklęć i mniej cząsteczek; ustawisz je w menu w grze.",
       wheel: "Koło skrótów",
       wheelHint: "Przytrzymaj ` w grze i wskaż myszą akcję; co jest w kole, ustawisz w menu w grze.",

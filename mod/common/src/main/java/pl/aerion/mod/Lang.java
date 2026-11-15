@@ -639,7 +639,7 @@ public final class Lang {
 			Map.entry("aerion.choice.pink", new String[] {"Pink", "Różowy"}),
 			Map.entry("aerion.choice.white", new String[] {"White", "Biały"}),
 			Map.entry("aerion.choice.default", new String[] {"Game's own", "Jak w grze"}),
-			Map.entry("aerion.feature.effects", new String[] {"Effects", "Efekty"}),
+			Map.entry("aerion.feature.effects", new String[] {"Glint and particles", "Połysk i cząsteczki"}),
 			Map.entry("aerion.desc.effects", new String[] {"The colour of the enchantment glint and fewer particles.", "Kolor połysku zaklęć i mniej cząsteczek."}),
 			Map.entry("aerion.opt.effects.glint", new String[] {"Glint colour", "Kolor połysku"}),
 			Map.entry("aerion.opt.effects.particles", new String[] {"Particles (%)", "Cząsteczki (%)"}),
