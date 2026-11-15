@@ -85,6 +85,8 @@ public final class Waypoints {
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final double LABEL_DISTANCE = 32;
+	/** Closer than this, or looked at within about 8 degrees, a point shows its name. */
+	private static final double NEAR = 24, AIMED = Math.cos(Math.toRadians(8));
 	private static JsonObject file;
 	private static String loadedKey;
 	private static List<Point> points = new ArrayList<>();
@@ -190,6 +192,10 @@ public final class Waypoints {
 			scalePercent = 100;
 		}
 		Vec3 eye = p.getEyePosition(partial);
+		Vec3 look = p.getViewVector(partial);
+		// "aim": far points show a small marker and their distance; the name appears when the
+		// player looks at the point or comes near. "always": every point shows its name.
+		boolean always = "always".equals(HudConfig.opt(f, "labels", "aim"));
 		String here = dimension(p);
 		for (Point w : all()) {
 			double[] at3 = w.enabled ? position(w, here) : null;
@@ -202,7 +208,9 @@ public final class Waypoints {
 			double shownAt = Math.min(distance, LABEL_DISTANCE);
 			Vec3 at = eye.add(toward.normalize().scale(shownAt));
 			float scale = (float) (TextGizmo.Style.DEFAULT_SCALE * scalePercent / 100.0 * Math.max(1, shownAt / 5));
-			String text = showDistance ? w.name + "  " + Math.round(distance) + " m" : w.name;
+			boolean full = always || distance < NEAR || toward.normalize().dot(look) > AIMED;
+			String name = full ? w.name : "◆";
+			String text = showDistance ? name + "  " + Math.round(distance) + " m" : name;
 			Gizmos.billboardText(text, at, TextGizmo.Style.forColorAndCentered(color).withScale(scale)).setAlwaysOnTop();
 			if (beam && distance < LABEL_DISTANCE) {
 				Gizmos.line(new Vec3(at3[0] + 0.5, at3[1], at3[2] + 0.5), new Vec3(at3[0] + 0.5, at3[1] + 24, at3[2] + 0.5), color, 2f);

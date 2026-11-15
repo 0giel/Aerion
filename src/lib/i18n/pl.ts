@@ -1588,7 +1588,9 @@ const pl: Dict = {
         size: "Rozmiar",
         zoom: "Pikseli na blok",
         coords: "Koordynaty pod mapą",
-        north: "Znacznik północy",
+        north: "Strony świata",
+        shape: "Kształt",
+        rotate: "Obracaj razem z graczem",
       },
       toggles: {
         sprint: "Pokazuj bieg",
@@ -1603,6 +1605,8 @@ const pl: Dict = {
       percent: "Procent",
       value: "Wartość",
       none: "Brak",
+      square: "Kwadrat",
+      round: "Koło",
     },
     style: {
       presets: "Gotowe style",

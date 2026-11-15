@@ -94,7 +94,9 @@ export const FIELDS: Record<string, Field[]> = {
   ],
   minimap: [
     { key: "size", type: "number", def: "80", min: 48, max: 160 },
-    { key: "zoom", type: "number", def: "2", min: 1, max: 4 },
+    { key: "zoom", type: "number", def: "1", min: 1, max: 4 },
+    { key: "shape", type: "select", def: "square", choices: ["square", "round"] },
+    { key: "rotate", type: "toggle", def: "0" },
     { key: "coords", type: "toggle", def: "1" },
     { key: "north", type: "toggle", def: "1" },
   ],

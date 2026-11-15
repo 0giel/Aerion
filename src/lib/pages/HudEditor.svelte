@@ -446,7 +446,11 @@
                       >{/each}
                   </span>
                 {:else if id === "minimap"}
-                  <span class="map" style:--size={Number(opt(m, "size", "80"))}></span>
+                  <span
+                    class="map"
+                    class:round={opt(m, "shape", "square") === "round"}
+                    style:--size={Number(opt(m, "size", "80"))}
+                  ></span>
                 {:else}
                   {#each sample(id, (key, def) => opt(m, key, def)) as line, i (i)}<span class="line"
                       >{line}</span
@@ -945,6 +949,10 @@
     height: calc(var(--kk) * 16);
     border-radius: var(--box-r);
     background: linear-gradient(135deg, #9ad7ff, #4a7fae);
+  }
+  .map.round {
+    border-radius: 50%;
+    box-shadow: 0 0 0 calc(var(--kk) * 1.5) #141414;
   }
   .map {
     width: calc(var(--kk) * var(--size));

@@ -95,6 +95,11 @@ public final class Hud {
 		}
 
 		void draw(Ctx c, Gfx g);
+
+		/** False when the module draws its own shape and the style's box would show around it. */
+		default boolean boxed(Ctx c) {
+			return true;
+		}
 	}
 
 	static final int LINE = 10;
@@ -1159,7 +1164,7 @@ public final class Hud {
 				g.scale(k);
 				Style st = c.style().faded(a.vis);
 				if (st != c.style()) c = new Ctx(mc, mc.player, m, st, t, preview);
-				paintBox(g, st, s[0], s[1]);
+				if (e.getValue().boxed(c)) paintBox(g, st, s[0], s[1]);
 				if (a.pulse > 0) {
 					int flash = e.getValue().grade(c) >= 2 ? 0xFF5555 : 0xFFE25A;
 					Draw.rounded(g, 0, 0, s[0], s[1], st.radius(), Colors.alpha(flash, Math.round(0x66 * a.pulse)));

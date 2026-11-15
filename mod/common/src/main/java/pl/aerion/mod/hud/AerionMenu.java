@@ -111,7 +111,8 @@ public final class AerionMenu implements Page {
 					Option.toggle("wasd", true), Option.toggle("mouse", true), Option.toggle("space", true), Option.toggle("cps", true),
 					Option.number("keySize", 18, 12, 30), Option.colour("pressed", "accent"))),
 			Map.entry("minimap", List.of(
-					Option.number("size", 80, 48, 160), Option.number("zoom", 2, 1, 4), Option.toggle("coords", true), Option.toggle("north", true))),
+					Option.number("size", 80, 48, 160), Option.number("zoom", 1, 1, 4), Option.select("shape", "square", "square", "round"),
+					Option.toggle("rotate", false), Option.toggle("coords", true), Option.toggle("north", true))),
 			Map.entry("speed", List.of(
 					Option.format("{speed} m/s", "4.32 m/s", "{speed} b/s", "4.32 b/s", "{speed}", "4.32"),
 					Option.toggle("decimals", true), Option.toggle("vertical", false))),
@@ -1548,7 +1549,7 @@ public final class AerionMenu implements Page {
 		beginCard(null);
 		toggle(Lang.tr("aerion.waypoint.show"), HudConfig.bool(f, "enabled", false), v -> f.addProperty("enabled", v));
 		if (HudConfig.bool(f, "enabled", false) && MixinGate.skipped().contains("waypoints")) note(Lang.tr("aerion.hint.restart"));
-		for (Option o : List.of(Option.toggle("beam", true), Option.toggle("distance", true), Option.toggle("minimap", true), Option.toggle("death", true), Option.toggle("nether", true), Option.number("scale", 100, 40, 300))) {
+		for (Option o : List.of(Option.select("labels", "aim", "aim", "always"), Option.toggle("beam", true), Option.toggle("distance", true), Option.toggle("minimap", true), Option.toggle("death", true), Option.toggle("nether", true), Option.number("scale", 100, 40, 300))) {
 			option(f, o, "waypoints");
 		}
 		endCard();

@@ -145,24 +145,16 @@ public final class MapPage implements Page {
 			double[] at = Waypoints.position(p, here);
 			if (at == null) continue;
 			int px = screenX(at[0] + 0.5), py = screenY(at[2] + 0.5);
-			int c = Waypoints.color(p);
-			int r = p == selected || p == hover ? 4 : 3;
-			g.fill(px - r - 1, py - r - 1, px + r + 1, py + r + 1, 0xFF000000);
-			g.fill(px - r, py - r, px + r, py + r, p.enabled ? c : Colors.alpha(c, 0x70));
+			int r = p == selected || p == hover ? 6 : 5;
+			MapMarks.pin(g, px, py, p, r, !p.enabled);
 			String label = p == selected && naming ? p.name + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : "") : p.name;
 			float lw = Txt.width(label, 7);
-			Draw.rounded(g, px + 6, py - 5, Math.round(lw) + 6, 10, 2, 0xA0000000);
-			Txt.draw(g, label, px + 9, py, 7, p.enabled ? 0xFFFFFFFF : 0xFFAAAAAA);
+			Draw.rounded(g, px + r + 3, py - 5, Math.round(lw) + 6, 10, 2, 0xA0000000);
+			Txt.draw(g, label, px + r + 6, py, 7, p.enabled ? 0xFFFFFFFF : 0xFFAAAAAA);
 		}
-		// The player: a dot with a tick towards where they look.
-		int ppx = screenX(player.getX()), ppy = screenY(player.getZ());
-		g.fill(ppx - 3, ppy - 3, ppx + 3, ppy + 3, 0xFF000000);
-		g.fill(ppx - 2, ppy - 2, ppx + 2, ppy + 2, accent);
+		// The player: an arrow towards where they look.
 		double a = Math.toRadians(player.getYRot());
-		for (int k = 3; k <= 8; k++) {
-			int tx = ppx + (int) Math.round(-Math.sin(a) * k), ty = ppy + (int) Math.round(Math.cos(a) * k);
-			g.fill(tx, ty, tx + 1, ty + 1, accent);
-		}
+		MapMarks.arrow(g, screenX(player.getX()), screenY(player.getZ()), Math.atan2(-Math.sin(a), -Math.cos(a)), 8f, Colors.alpha(accent, 255));
 		g.endScissor();
 		Txt.center(g, "N", mapX + mapW / 2f, mapY + 6, 7, 0xFFFFFFFF);
 		if (insideMap(mouseX, mouseY)) {

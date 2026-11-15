@@ -1536,7 +1536,9 @@ const en = {
         size: "Size",
         zoom: "Pixels per block",
         coords: "Coordinates under the map",
-        north: "North marker",
+        north: "Compass letters",
+        shape: "Shape",
+        rotate: "Turn with the player",
       },
       toggles: {
         sprint: "Show sprint",
@@ -1551,6 +1553,8 @@ const en = {
       percent: "Percent",
       value: "Value",
       none: "None",
+      square: "Square",
+      round: "Round",
     },
     style: {
       presets: "Ready-made looks",
