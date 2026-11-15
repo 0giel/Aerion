@@ -15,6 +15,9 @@ import pl.aerion.mod.BuiltinPack;
 abstract class BuiltInPackSourceMixin {
 	@Inject(method = "loadPacks", at = @At("TAIL"))
 	private void aerion$addPack(Consumer<Pack> out, CallbackInfo ci) {
-		if ((Object) this instanceof ClientPackSource) BuiltinPack.create().ifPresent(out);
+		if ((Object) this instanceof ClientPackSource) {
+			BuiltinPack.create().ifPresent(out);
+			pl.aerion.mod.features.Effects.pack().ifPresent(out);
+		}
 	}
 }

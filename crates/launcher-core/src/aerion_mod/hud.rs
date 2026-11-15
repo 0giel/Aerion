@@ -218,6 +218,9 @@ pub struct HudFeatures {
     pub streamer: FeatureOptions,
     /// The inside of shulker boxes as a grid in their tooltip; on unless switched off.
     pub shulker_preview: OnFeature,
+    /// The enchantment glint's colour (`options.glint`) and the share of particles kept
+    /// (`options.particles`, %).
+    pub effects: FeatureOptions,
     /// The computer's windows on panels in the world (test).
     pub mirrors: FeatureOptions,
     /// Saturation and the held food's value on the hunger bar (`options.saturation`,
@@ -497,6 +500,7 @@ impl HudConfig {
                 &self.features.tnt_timer.options,
                 &self.features.streamer.options,
                 &self.features.shulker_preview.options,
+                &self.features.effects.options,
                 &self.features.mirrors.options,
                 &self.features.food.options,
             ]

@@ -66,7 +66,7 @@ public final class HudConfig {
 			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false},"lightLevels":{"enabled":false},
 			  "blockOutline":{"enabled":false},"chat":{"enabled":false},"perspective":{"enabled":false},"fovKey":{"enabled":false},
 			  "worldLook":{"enabled":false},"hitColor":{"enabled":false},"screens":{"enabled":false},"inventory":{"enabled":true},"menus":{"enabled":true},"waypoints":{"enabled":false},"badges":{"enabled":true},
-			  "chunkBorders":{"enabled":false},"ownName":{"enabled":false},"tntTimer":{"enabled":false},"streamer":{"enabled":false},"shulkerPreview":{"enabled":true},"mirrors":{"enabled":false},"food":{"enabled":true}}}
+			  "chunkBorders":{"enabled":false},"ownName":{"enabled":false},"tntTimer":{"enabled":false},"streamer":{"enabled":false},"shulkerPreview":{"enabled":true},"effects":{"enabled":false},"mirrors":{"enabled":false},"food":{"enabled":true}}}
 			""";
 
 	public static HudConfig defaults() {

@@ -34,6 +34,12 @@ public final class Game {
 	}
 
 	/** A short message above the hotbar. */
+	/** A file of the game's own resources (not the packs on top), or null. */
+	public static java.io.InputStream vanillaResource(net.minecraft.resources.Identifier id) throws java.io.IOException {
+		var supplier = Minecraft.getInstance().getVanillaPackResources().fullResources().getResource(net.minecraft.server.packs.PackType.CLIENT_RESOURCES, id);
+		return supplier == null ? null : supplier.get();
+	}
+
 	public static void overlayMessage(net.minecraft.network.chat.Component message) {
 		Minecraft.getInstance().gui.hud.setOverlayMessage(message, false);
 	}

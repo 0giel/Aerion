@@ -48,7 +48,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "streamer", "shulkerPreview", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "streamer", "shulkerPreview", "effects", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -166,6 +166,7 @@ public final class AerionMenu implements Page {
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
 			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.select("shape", "curve", "curve", "straight"), Option.toggle("handle", true))),
+			Map.entry("effects", List.of(Option.select("glint", "default", "default", "red", "gold", "green", "aqua", "blue", "pink", "white"), Option.number("particles", 100, 0, 100))),
 			Map.entry("food", List.of(Option.toggle("saturation", true), Option.toggle("preview", true), Option.toggle("tooltip", true))),
 			Map.entry("hitboxes", List.of(
 					Option.colour("color", "#ffffff"), Option.toggle("reach", true), Option.colour("reachColor", "#ff5555"),

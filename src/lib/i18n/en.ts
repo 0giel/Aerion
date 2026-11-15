@@ -1713,6 +1713,8 @@ const en = {
       streamerHint: "Hides your name, the server address and your coordinates (also in F3). F7 in game.",
       shulkerPreview: "Shulker box preview",
       shulkerPreviewHint: "What is inside a shulker box, as a grid of items in its tooltip.",
+      effects: "Effects",
+      effectsHint: "The colour of the enchantment glint and fewer particles; set them in the in-game menu.",
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
       mirrors: "Windows in the world (test)",

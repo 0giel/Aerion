@@ -1764,6 +1764,8 @@ const pl: Dict = {
       streamerHint: "Ukrywa Twój nick, adres serwera i współrzędne (także w F3). Klawisz F7 w grze.",
       shulkerPreview: "Podgląd shulkerów",
       shulkerPreviewHint: "Zawartość shulkera jako siatka przedmiotów w jego opisie.",
+      effects: "Efekty",
+      effectsHint: "Kolor połysku zaklęć i mniej cząsteczek; ustawisz je w menu w grze.",
       tntTimer: "Odliczanie TNT",
       tntTimerHint: "Sekundy do wybuchu nad podpalonym TNT w pobliżu.",
       mirrors: "Okna w świecie (test)",

@@ -1130,6 +1130,11 @@ export type HudFeatures_Deserialize = {
 	streamer?: FeatureOptions_Deserialize,
 	/**  The inside of shulker boxes as a grid in their tooltip; on unless switched off. */
 	shulkerPreview?: OnFeature_Deserialize,
+	/**
+	 *  The enchantment glint's colour (`options.glint`) and the share of particles kept
+	 *  (`options.particles`, %).
+	 */
+	effects?: FeatureOptions_Deserialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors?: FeatureOptions_Deserialize,
 	/**
@@ -1184,6 +1189,11 @@ export type HudFeatures_Serialize = {
 	streamer: FeatureOptions_Serialize,
 	/**  The inside of shulker boxes as a grid in their tooltip; on unless switched off. */
 	shulkerPreview: OnFeature_Serialize,
+	/**
+	 *  The enchantment glint's colour (`options.glint`) and the share of particles kept
+	 *  (`options.particles`, %).
+	 */
+	effects: FeatureOptions_Serialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors: FeatureOptions_Serialize,
 	/**

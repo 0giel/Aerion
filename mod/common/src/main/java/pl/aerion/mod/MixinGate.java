@@ -35,7 +35,8 @@ public final class MixinGate implements IMixinConfigPlugin {
 			Map.entry("ScreenEffectRendererMixin", List.of("overlays")),
 			Map.entry("DebugRendererMixin", List.of("hitboxes", "lightLevels", "blockOutline", "waypoints", "chunkBorders", "tntTimer")),
 			Map.entry("AvatarRendererMixin", List.of("ownName")),
-			Map.entry("NameTagMixin", List.of("badges")));
+			Map.entry("NameTagMixin", List.of("badges")),
+			Map.entry("ParticleEngineMixin", List.of("effects")));
 	// The chat and player-list mixins always apply: streamer mode (F7) hides the own name in them
 	// the moment it is switched on, also in a game started with it off.
 	/** Features that are on unless hud.json says otherwise (as in HudConfig.DEFAULTS). */
