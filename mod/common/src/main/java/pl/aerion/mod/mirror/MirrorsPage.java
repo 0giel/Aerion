@@ -66,7 +66,7 @@ public final class MirrorsPage implements Page {
 				int bx = x + w - 136;
 				small(g, bx - 40, y + 3, 16, "-", mouseX, mouseY, control, text, () -> Mirrors.resize(p, 1 / 1.15f));
 				small(g, bx - 20, y + 3, 16, "+", mouseX, mouseY, control, text, () -> Mirrors.resize(p, 1.15f));
-				String shape = Lang.tr(p.curved ? "aerion.mirrors.curved" : "aerion.mirrors.flat");
+				String shape = Lang.tr(p.curved ? "aerion.choice.curve" : "aerion.choice.straight");
 				small(g, bx, y + 3, 70, shape, mouseX, mouseY, control, text, () -> {
 					p.curved = !p.curved;
 					Mirrors.save();

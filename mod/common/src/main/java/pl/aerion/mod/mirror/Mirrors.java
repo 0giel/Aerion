@@ -155,7 +155,7 @@ public final class Mirrors {
 		panel.title = w.title();
 		panel.cls = w.cls();
 		panel.win = w.id();
-		panel.curved = !"0".equals(opt("curved", "1"));
+		panel.curved = !"straight".equals(opt("shape", "curve"));
 		putInFront(panel, p, 2.2f);
 		synchronized (Mirrors.class) {
 			all().add(panel);
@@ -299,6 +299,8 @@ public final class Mirrors {
 				int accent = AerionClient.theme() != null ? AerionClient.theme().accent : 0xFF7AA2FF;
 				out.submitCustomGeometry(pose, RenderTypes.text(BAR), (pp, vc) -> handle(pp, vc, bar, overBar ? accent : 0xD0E8E8E8));
 				out.submitCustomGeometry(pose, RenderTypes.text(CLOSE), (pp, vc) -> closer(pp, vc, bar, overClose ? 0xFFFF5A5A : 0xD0E8E8E8));
+				boolean overShape = aim != null && aim.panel == p && aim.part == Part.SHAPE;
+				out.submitCustomGeometry(pose, RenderTypes.text(p.curved ? SHAPE_FLAT : SHAPE_CURVE), (pp, vc) -> box(pp, vc, bar, shapeBox(bar), overShape ? accent : 0xD0E8E8E8));
 				boolean overSmaller = aim != null && aim.panel == p && aim.part == Part.SMALLER;
 				boolean overBigger = aim != null && aim.panel == p && aim.part == Part.BIGGER;
 				out.submitCustomGeometry(pose, RenderTypes.text(MINUS), (pp, vc) -> box(pp, vc, bar, sizeBox(bar, false), overSmaller ? accent : 0xD0E8E8E8));
@@ -306,7 +308,7 @@ public final class Mirrors {
 			}
 			if (aim != null && aim.panel == p && aim.part == Part.PANEL) {
 				Panel dot = p;
-				out.submitCustomGeometry(pose, RenderTypes.text(DOT), (pp, vc) -> cursor(pp, vc, dot, aim.u, aim.v));
+				out.submitCustomGeometry(pose, RenderTypes.text(POINTER), (pp, vc) -> cursor(pp, vc, dot, aim.u, aim.v));
 			}
 			pose.popPose();
 		}
@@ -357,9 +359,17 @@ public final class Mirrors {
 		return new float[] {0.5f - bw / 2 / w, v0, 0.5f + bw / 2 / w, v0 + BAR_H / h};
 	}
 
-	private static float[] closeBox(Panel p) {
+	/** The shape button (rounded ↔ straight) right of the bar, then the close button. */
+	private static float[] shapeBox(Panel p) {
 		float w = p.width, h = p.height(), bw = barWidth(p);
 		float u0 = 0.5f + (bw / 2 + 0.06f) / w;
+		float v0 = 1 + (BAR_GAP + BAR_H / 2 - CLOSE_D / 2) / h;
+		return new float[] {u0, v0, u0 + CLOSE_D / w, v0 + CLOSE_D / h};
+	}
+
+	private static float[] closeBox(Panel p) {
+		float w = p.width, h = p.height(), bw = barWidth(p);
+		float u0 = 0.5f + (bw / 2 + 0.06f + CLOSE_D + 0.04f) / w;
 		float v0 = 1 + (BAR_GAP + BAR_H / 2 - CLOSE_D / 2) / h;
 		return new float[] {u0, v0, u0 + CLOSE_D / w, v0 + CLOSE_D / h};
 	}
@@ -397,21 +407,85 @@ public final class Mirrors {
 	private static final Identifier BAR = Identifier.fromNamespaceAndPath("aerion", "mirror/bar");
 	private static final Identifier CLOSE = Identifier.fromNamespaceAndPath("aerion", "mirror/close");
 	private static final Identifier MINUS = Identifier.fromNamespaceAndPath("aerion", "mirror/minus");
+	/** The shape button shows what a click makes: a straight line, or an arc. */
+	private static final Identifier SHAPE_FLAT = Identifier.fromNamespaceAndPath("aerion", "mirror/shape_flat");
+	private static final Identifier SHAPE_CURVE = Identifier.fromNamespaceAndPath("aerion", "mirror/shape_curve");
+	private static final Identifier POINTER = Identifier.fromNamespaceAndPath("aerion", "mirror/pointer");
 	private static final Identifier PLUS = Identifier.fromNamespaceAndPath("aerion", "mirror/plus");
 	private static final Identifier DOT = Identifier.fromNamespaceAndPath("aerion", "mirror/dot");
 	private static boolean dotReady;
 
-	/** The pointer on the panel: a small round dot just in front of it. */
+	/** The pointer's size in blocks (its picture is square; the arrow's tip is its top left corner). */
+	private static final float POINTER_SIZE = 0.05f;
+	private static final int PT = 64;
+
+	/** The pointer on the panel: a small arrow, its tip exactly where the player looks. */
 	private static void cursor(PoseStack.Pose pose, VertexConsumer vc, Panel p, float u, float v) {
 		if (!dotReady) return;
-		float s = 0.035f / Math.max(0.01f, p.width), sv = 0.035f / Math.max(0.01f, p.height());
-		float[] a = at(p, u - s, v - sv, 0.01f), b = at(p, u + s, v - sv, 0.01f), c = at(p, u + s, v + sv, 0.01f), d = at(p, u - s, v + sv, 0.01f);
+		float s = POINTER_SIZE / Math.max(0.01f, p.width), sv = POINTER_SIZE / Math.max(0.01f, p.height());
+		float[] a = at(p, u, v, 0.01f), b = at(p, u + s, v, 0.01f), c = at(p, u + s, v + sv, 0.01f), d = at(p, u, v + sv, 0.01f);
 		for (float[][] q : new float[][][] {{a, d, c, b}, {b, c, d, a}}) {
 			vertex(vc, pose, q[0], 0, 0, 0xFFFFFFFF);
 			vertex(vc, pose, q[1], 0, 1, 0xFFFFFFFF);
 			vertex(vc, pose, q[2], 1, 1, 0xFFFFFFFF);
 			vertex(vc, pose, q[3], 1, 0, 0xFFFFFFFF);
 		}
+	}
+
+	/** The usual arrow pointer: white with a dark edge, smoothed by sampling each pixel 4 × 4. */
+	private static int[] pointerPicture() {
+		// The arrow on a 16-unit grid, tip at (0, 0).
+		float[][] shape = {{0, 0}, {0, 13.5f}, {3.3f, 10.6f}, {5.6f, 15.4f}, {7.6f, 14.5f}, {5.3f, 9.8f}, {9.6f, 9.8f}};
+		float k = (PT - 2) / 16f;
+		float[] xs = new float[shape.length], ys = new float[shape.length];
+		for (int i = 0; i < shape.length; i++) {
+			xs[i] = 1 + shape[i][0] * k;
+			ys[i] = 1 + shape[i][1] * k;
+		}
+		int[] out = new int[PT * PT];
+		float edge = 1.4f * k;
+		for (int y = 0; y < PT; y++) {
+			for (int x = 0; x < PT; x++) {
+				int in = 0, near = 0;
+				for (int sy = 0; sy < 4; sy++) {
+					for (int sx = 0; sx < 4; sx++) {
+						float px = x + (sx + 0.5f) / 4, py = y + (sy + 0.5f) / 4;
+						if (inside(xs, ys, px, py)) {
+							in++;
+							if (distanceToEdge(xs, ys, px, py) > edge) near++;
+						}
+					}
+				}
+				if (in == 0) continue;
+				int a = Math.round(255f * in / 16), white = Math.round(255f * near / Math.max(1, in));
+				out[y * PT + x] = (a << 24) | (white << 16) | (white << 8) | white;
+			}
+		}
+		return out;
+	}
+
+	private static boolean inside(float[] xs, float[] ys, float px, float py) {
+		boolean in = false;
+		for (int i = 0, j = xs.length - 1; i < xs.length; j = i++) {
+			if ((ys[i] > py) != (ys[j] > py) && px < (xs[j] - xs[i]) * (py - ys[i]) / (ys[j] - ys[i]) + xs[i]) in = !in;
+		}
+		return in;
+	}
+
+	private static float distanceToEdge(float[] xs, float[] ys, float px, float py) {
+		float best = Float.MAX_VALUE;
+		for (int i = 0, j = xs.length - 1; i < xs.length; j = i++) {
+			float dx = xs[i] - xs[j], dy = ys[i] - ys[j];
+			float t = Math.max(0, Math.min(1, ((px - xs[j]) * dx + (py - ys[j]) * dy) / (dx * dx + dy * dy)));
+			best = Math.min(best, (float) Math.hypot(px - xs[j] - t * dx, py - ys[j] - t * dy));
+		}
+		return best;
+	}
+
+	/** Whether the player looks at a window's picture (the game's crosshair then gives way). */
+	public static boolean pointing() {
+		Hit h = aim();
+		return h != null && h.part == Part.PANEL;
 	}
 
 	private static void ensureDot() {
@@ -462,13 +536,34 @@ public final class Mirrors {
 			}
 			Textures.registerPixels(plus ? PLUS : MINUS, n, n, img);
 		}
+		// Shape buttons: a disc with a straight line or an arc cut out.
+		for (boolean curve : new boolean[] {false, true}) {
+			int[] img = new int[n * n];
+			for (int y = 0; y < n; y++) {
+				for (int x = 0; x < n; x++) {
+					double fx = x + 0.5 - n / 2.0, fy = y + 0.5 - n / 2.0, d = Math.hypot(fx, fy);
+					double disc = Math.max(0, Math.min(1, n / 2.0 - 0.5 - d));
+					boolean mark;
+					if (curve) {
+						// An arc bowing towards the viewer, like the panel seen from above.
+						double r = n * 0.42, ay = fy - n * 0.22;
+						mark = Math.abs(Math.hypot(fx, ay + r) - r) < 1.6 && Math.abs(fx) < n * 0.26 && fy < n * 0.25;
+					} else {
+						mark = Math.abs(fy) < 1.6 && Math.abs(fx) < n * 0.26;
+					}
+					if (disc > 0 && !mark) img[y * n + x] = ((int) (disc * 255) << 24) | 0xFFFFFF;
+				}
+			}
+			Textures.registerPixels(curve ? SHAPE_CURVE : SHAPE_FLAT, n, n, img);
+		}
+		Textures.registerPixels(POINTER, PT, PT, pointerPicture());
 		dotReady = true;
 	}
 
 	// --- Aiming -------------------------------------------------------------------------------
 
 	/** Where the player looks on a panel. */
-	public enum Part { PANEL, BAR, CLOSE, SMALLER, BIGGER }
+	public enum Part { PANEL, BAR, CLOSE, SMALLER, BIGGER, SHAPE }
 
 	public record Hit(Panel panel, float u, float v, double distance, Part part) {}
 
@@ -526,6 +621,8 @@ public final class Mirrors {
 			float pad = 0.04f / p.height();
 			if (u >= b[0] && u <= b[2] && v >= b[1] - pad && v <= b[3] + pad) return new Hit(p, u, v, t, Part.BAR);
 			if (u >= c[0] && u <= c[2] && v >= c[1] && v <= c[3]) return new Hit(p, u, v, t, Part.CLOSE);
+			float[] sh = shapeBox(p);
+			if (u >= sh[0] && u <= sh[2] && v >= sh[1] && v <= sh[3]) return new Hit(p, u, v, t, Part.SHAPE);
 			float[] s = sizeBox(p, false), g = sizeBox(p, true);
 			if (u >= s[0] && u <= s[2] && v >= s[1] && v <= s[3]) return new Hit(p, u, v, t, Part.SMALLER);
 			if (u >= g[0] && u <= g[2] && v >= g[1] && v <= g[3]) return new Hit(p, u, v, t, Part.BIGGER);
@@ -546,6 +643,7 @@ public final class Mirrors {
 
 	// --- Input --------------------------------------------------------------------------------
 
+	private static String lastShape;
 	private static Panel grabbed;
 	private static double grabDistance;
 	/** Taken by the bar with the mouse (let go with the button), not with the move key. */
@@ -597,6 +695,13 @@ public final class Mirrors {
 			if (button == 0) remove(h.panel);
 			return true;
 		}
+		if (h.part == Part.SHAPE) {
+			if (button == 0) {
+				h.panel.curved = !h.panel.curved;
+				save();
+			}
+			return true;
+		}
 		if (h.part == Part.SMALLER || h.part == Part.BIGGER) {
 			if (button == 0) resize(h.panel, h.part == Part.BIGGER ? 1.15f : 1 / 1.15f);
 			return true;
@@ -643,6 +748,15 @@ public final class Mirrors {
 		}
 		// The world's saved panels come back as soon as it is joined.
 		if (!all().isEmpty()) start();
+		// Changing the shape in the settings changes every window, not only new ones.
+		String shape = opt("shape", "curve");
+		if (lastShape != null && !shape.equals(lastShape)) {
+			synchronized (Mirrors.class) {
+				for (Panel p : panels) p.curved = !"straight".equals(shape);
+			}
+			save();
+		}
+		lastShape = shape;
 		boolean held = byBar ? mc.options.keyAttack.isDown() && pl.aerion.mod.platform.Game.screen() == null : grabKey;
 		if (grabKey && grabbed == null) {
 			Hit h = aim();
