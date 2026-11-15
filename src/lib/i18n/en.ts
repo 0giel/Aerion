@@ -727,6 +727,15 @@ const en = {
     aerionModUpdatesHint:
       "Before a game starts, a newer signed version of the mod is downloaded, even between launcher updates.",
     importTheme: "Import theme…",
+    pasteTheme: "Paste theme code",
+    pastedTheme: "Added the theme {name}",
+    pasteThemeLabel: "Paste the code someone sent you (Ctrl+V).",
+    pasteThemeAdd: "Add theme",
+    themeCodeErrors: {
+      "not-a-theme-code": "This is not a theme code. A code starts with “aerion1:”.",
+      "too-long": "This code is too long.",
+      damaged: "This code is damaged. Ask for it again.",
+    },
     themesFolder: "Themes folder",
     defaultMemory: "Default memory",
     jvmPreset: "Default JVM preset",
@@ -846,6 +855,9 @@ const en = {
     newName: "My theme",
     reset: "Reset changes",
     exportFile: "Export…",
+    copyCode: "Copy code",
+    codeCopied:
+      "Theme code copied. Send it to friends: they use “Paste theme code” in Settings. Custom CSS and the background file are left out.",
     deleteTheme: "Delete theme",
     preview: "Preview",
     builtIn: "Built-in",

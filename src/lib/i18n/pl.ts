@@ -765,6 +765,15 @@ const pl: Dict = {
     aerionModUpdatesHint:
       "Przed startem gry pobiera nowszą, podpisaną wersję moda, także między aktualizacjami launchera.",
     importTheme: "Importuj motyw…",
+    pasteTheme: "Wklej kod motywu",
+    pastedTheme: "Dodano motyw {name}",
+    pasteThemeLabel: "Wklej kod, który ktoś Ci wysłał (Ctrl+V).",
+    pasteThemeAdd: "Dodaj motyw",
+    themeCodeErrors: {
+      "not-a-theme-code": "To nie jest kod motywu. Kod zaczyna się od „aerion1:”.",
+      "too-long": "Ten kod jest za długi.",
+      damaged: "Ten kod jest uszkodzony. Poproś o niego jeszcze raz.",
+    },
     themesFolder: "Folder motywów",
     defaultMemory: "Domyślna pamięć",
     jvmPreset: "Domyślny preset JVM",
@@ -888,6 +897,9 @@ const pl: Dict = {
     newName: "Mój motyw",
     reset: "Cofnij zmiany",
     exportFile: "Eksportuj…",
+    copyCode: "Kopiuj kod",
+    codeCopied:
+      "Skopiowano kod motywu. Wklej go znajomym: w Ustawieniach mają „Wklej kod motywu”. Bez własnego CSS i pliku tła.",
     deleteTheme: "Usuń motyw",
     preview: "Podgląd",
     builtIn: "Wbudowany",

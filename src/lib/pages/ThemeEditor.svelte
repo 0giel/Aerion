@@ -12,6 +12,7 @@
   import { themes } from "../theme/engine.svelte";
   import { COLOR_KEYS, FONT_STACKS, type Particles, type Theme } from "../theme/schema";
   import { commands, errorMessage } from "../api";
+  import { encodeTheme } from "../theme/shareCode";
   import { t } from "../i18n/index.svelte";
 
   /** A new theme from scratch (Settings → New theme) instead of a copy of the current one. */
@@ -106,6 +107,18 @@
       .catch((e) => toasts.error(errorMessage(e)));
   }
 
+  /** The theme as a short code for a chat (colours and fonts; no CSS, no background file). */
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(
+        await encodeTheme($state.snapshot(draft) as Record<string, unknown>),
+      );
+      toasts.success(t("themeEditor.codeCopied"));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
   async function remove() {
     if (
       !(await dialogs.confirm({
@@ -189,6 +202,7 @@
     {#if builtin && !fresh}<span class="small muted">{t("themeEditor.basedOn", { name: base.name })}</span
       >{/if}
     <button class="btn ghost" onclick={reset}><Icon name="undo" size={16} />{t("themeEditor.reset")}</button>
+    <button class="btn" onclick={copyCode}><Icon name="link" size={16} />{t("themeEditor.copyCode")}</button>
     <button class="btn" onclick={exportTheme}
       ><Icon name="upload" size={16} />{t("themeEditor.exportFile")}</button
     >

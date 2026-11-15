@@ -27,6 +27,7 @@
     type ModSource,
     type Settings,
   } from "../api";
+  import { decodeTheme, freeThemeId } from "../theme/shareCode";
   import { LOCALES, systemLocale, t } from "../i18n/index.svelte";
   import { autoSummary } from "../javaAuto";
   import type { AutoPlan } from "../bindings";
@@ -112,6 +113,32 @@
       toasts.success(remove ? t("settings.cfKeyRemoved") : t("settings.cfKeySaved"));
     } catch (e) {
       toasts.error(errorMessage(e));
+    }
+  }
+
+  /** A theme someone sent as a code: added as a new theme of the player's and applied. */
+  async function pasteTheme() {
+    const text = await dialogs.prompt({
+      title: t("settings.pasteTheme"),
+      text: t("settings.pasteThemeLabel"),
+      placeholder: "aerion1:…",
+      confirmLabel: t("settings.pasteThemeAdd"),
+    });
+    if (!text) return;
+    try {
+      const theme = await decodeTheme(text);
+      const name =
+        typeof theme.name === "string" && theme.name.trim() ? theme.name.trim().slice(0, 60) : "Theme";
+      const id = freeThemeId(name, (i) => !!themes.find(i));
+      await commands.saveUserTheme({ id, json: JSON.stringify({ ...theme, id, name }, null, 2), css: null });
+      await themes.loadUser();
+      await save({ theme: id, themeFollowSystem: false });
+      toasts.success(t("settings.pastedTheme", { name }));
+    } catch (e) {
+      const key = e instanceof Error ? e.message : "";
+      if (key === "not-a-theme-code" || key === "too-long" || key === "damaged")
+        toasts.error(t(`settings.themeCodeErrors.${key}`));
+      else toasts.error(errorMessage(e));
     }
   }
 
@@ -281,6 +308,9 @@
           <div class="row wrap gap-2">
             <button class="btn sm" onclick={() => (galleryOpen = true)}
               ><Icon name="sparkles" size={15} />{t("gallery.open")}</button
+            >
+            <button class="btn sm" onclick={pasteTheme}
+              ><Icon name="link" size={15} />{t("settings.pasteTheme")}</button
             >
             <button class="btn sm" onclick={importTheme}
               ><Icon name="upload" size={15} />{t("settings.importTheme")}</button
