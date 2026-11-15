@@ -21,6 +21,11 @@ public final class GameLook {
 	private GameLook() {}
 
 	/** The theme when that part should follow it, else null. */
+	/** The theme when this part of the game follows it, else null. */
+	public static Theme themed(String part) {
+		return on(part);
+	}
+
 	private static Theme on(String part) {
 		Theme t = AerionClient.colors();
 		return t != null && MenuLook.part(part) ? t : null;

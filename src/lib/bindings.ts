@@ -1128,6 +1128,8 @@ export type HudFeatures_Deserialize = {
 	tntTimer?: FeatureOptions_Deserialize,
 	/**  Hides the own name, the server address and coordinates (streams, recordings). */
 	streamer?: FeatureOptions_Deserialize,
+	/**  The inside of shulker boxes as a grid in their tooltip; on unless switched off. */
+	shulkerPreview?: OnFeature_Deserialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors?: FeatureOptions_Deserialize,
 	/**
@@ -1180,6 +1182,8 @@ export type HudFeatures_Serialize = {
 	tntTimer: FeatureOptions_Serialize,
 	/**  Hides the own name, the server address and coordinates (streams, recordings). */
 	streamer: FeatureOptions_Serialize,
+	/**  The inside of shulker boxes as a grid in their tooltip; on unless switched off. */
+	shulkerPreview: OnFeature_Serialize,
 	/**  The computer's windows on panels in the world (test). */
 	mirrors: FeatureOptions_Serialize,
 	/**

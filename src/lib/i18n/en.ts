@@ -1711,6 +1711,8 @@ const en = {
       ownNameHint: "Your name and badge above your head when the camera is behind you.",
       streamer: "Streamer mode",
       streamerHint: "Hides your name, the server address and your coordinates (also in F3). F7 in game.",
+      shulkerPreview: "Shulker box preview",
+      shulkerPreviewHint: "What is inside a shulker box, as a grid of items in its tooltip.",
       tntTimer: "TNT timer",
       tntTimerHint: "Seconds left above lit TNT near you.",
       mirrors: "Windows in the world (test)",

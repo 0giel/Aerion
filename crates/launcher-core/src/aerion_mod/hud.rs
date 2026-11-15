@@ -216,6 +216,8 @@ pub struct HudFeatures {
     pub tnt_timer: FeatureOptions,
     /// Hides the own name, the server address and coordinates (streams, recordings).
     pub streamer: FeatureOptions,
+    /// The inside of shulker boxes as a grid in their tooltip; on unless switched off.
+    pub shulker_preview: OnFeature,
     /// The computer's windows on panels in the world (test).
     pub mirrors: FeatureOptions,
     /// Saturation and the held food's value on the hunger bar (`options.saturation`,
@@ -494,6 +496,7 @@ impl HudConfig {
                 &self.features.own_name.options,
                 &self.features.tnt_timer.options,
                 &self.features.streamer.options,
+                &self.features.shulker_preview.options,
                 &self.features.mirrors.options,
                 &self.features.food.options,
             ]

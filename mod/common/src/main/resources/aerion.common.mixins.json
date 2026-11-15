@@ -13,6 +13,7 @@
 		"GameRendererShotMixin",
 		"HurtCamMixin",
 		"ItemStackMixin",
+		"ContainerContentsMixin",
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",

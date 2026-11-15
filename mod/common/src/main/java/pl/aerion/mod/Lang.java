@@ -605,6 +605,8 @@ public final class Lang {
 			Map.entry("aerion.desc.ownName", new String[] {"Your name and badge above your head when the camera is behind you.", "Twój nick i odznaka nad głową, gdy kamera jest za tobą."}),
 			Map.entry("aerion.feature.tntTimer", new String[] {"TNT timer", "Odliczanie TNT"}),
 			Map.entry("aerion.feature.streamer", new String[] {"Streamer mode", "Tryb streamera"}),
+			Map.entry("aerion.feature.shulkerPreview", new String[] {"Shulker box preview", "Podgląd shulkerów"}),
+			Map.entry("aerion.desc.shulkerPreview", new String[] {"What is inside a shulker box, as a grid of items in its tooltip.", "Zawartość shulkera jako siatka przedmiotów w jego opisie."}),
 			Map.entry("key.aerion.streamer", new String[] {"Streamer mode on/off", "Tryb streamera wł./wył."}),
 			Map.entry("aerion.desc.streamer", new String[] {"Hides your name, the server address and your coordinates (also in F3).", "Ukrywa Twój nick, adres serwera i współrzędne (także w F3)."}),
 			Map.entry("aerion.streamer.alias", new String[] {"Player", "Gracz"}),

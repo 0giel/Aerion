@@ -18,6 +18,7 @@
 		"SplashRendererMixin",
 		"TabListLookMixin",
 		"TooltipLookMixin",
+		"TooltipComponentMixin",
 		"MirrorRenderMixin"
 	],
 	"injectors": {
