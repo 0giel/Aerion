@@ -20,7 +20,19 @@ public interface WindowSource {
 	Frame capture(long id, int maxWidth);
 
 	/** Click at (`x`, `y`) of the window, as fractions 0–1 of its size; button 0 left, 1 right. */
-	void click(long id, float x, float y, int button);
+	default void click(long id, float x, float y, int button) {
+		press(id, x, y, button);
+		release(id, x, y, button);
+	}
+
+	/** A button goes down at (`x`, `y`) (to drag, select text, move a slider). */
+	void press(long id, float x, float y, int button);
+
+	/** The button goes up at (`x`, `y`). */
+	void release(long id, float x, float y, int button);
+
+	/** The pointer moves to (`x`, `y`), with the left button held or not (hover, dragging). */
+	void move(long id, float x, float y, boolean held);
 
 	/** Scroll at (`x`, `y`): `notches` up (positive) or down. */
 	void scroll(long id, float x, float y, int notches);

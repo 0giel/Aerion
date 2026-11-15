@@ -39,7 +39,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch, mirrors, mirrorGrab, mirrorType;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -76,8 +76,10 @@ public final class Features {
 			mirrors = new KeyMapping("key.aerion.mirrors", InputConstants.KEY_J, cat);
 			mirrorGrab = new KeyMapping("key.aerion.mirrorGrab", InputConstants.KEY_Y, cat);
 			mirrorType = new KeyMapping("key.aerion.mirrorType", InputConstants.KEY_U, cat);
+			mirrorArrange = new KeyMapping("key.aerion.mirrorArrange", InputConstants.KEY_K, cat);
+			mirrorHide = new KeyMapping("key.aerion.mirrorHide", InputConstants.KEY_R, cat);
 			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
-					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch, mirrors, mirrorGrab, mirrorType));
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -154,6 +156,8 @@ public final class Features {
 			case "mirrors" -> mirrors;
 			case "mirrorGrab" -> mirrorGrab;
 			case "mirrorType" -> mirrorType;
+			case "mirrorArrange" -> mirrorArrange;
+			case "mirrorHide" -> mirrorHide;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -450,6 +454,8 @@ public final class Features {
 		}
 		boolean mirrorsOn = HudConfig.bool(feature("mirrors"), "enabled", false);
 		pl.aerion.mod.mirror.Mirrors.tick(mc, mirrorsOn && Game.screen() == null && mirrorGrab.isDown(), mirrorsOn);
+		while (mirrorArrange.consumeClick()) if (mirrorsOn) pl.aerion.mod.mirror.Mirrors.arrange();
+		while (mirrorHide.consumeClick()) if (mirrorsOn) pl.aerion.mod.mirror.Mirrors.toggleHidden();
 		while (mirrorType.consumeClick()) {
 			long win = mirrorsOn && Game.screen() == null ? pl.aerion.mod.mirror.Mirrors.aimedWindow() : 0;
 			if (win != 0) {

@@ -46,6 +46,9 @@ public final class Mirrors {
 		public float radius = 2.2f;
 		/** Set once the first picture gave the panel a size that suits the window's shape. */
 		public boolean sized;
+		/** Goes along with the player: kept at the same turn and distance from them. */
+		public boolean pinned;
+		public float pinYaw, pinDistance, pinHeight;
 		transient long win;
 		transient Identifier tex;
 		transient int texW, texH;
@@ -83,6 +86,19 @@ public final class Mirrors {
 			case "high" -> 1920;
 			default -> 1280;
 		};
+	}
+
+	/** How solid the pictures are, 0.2–1. */
+	private static float opacity() {
+		try {
+			return Math.max(20, Math.min(100, Integer.parseInt(opt("opacity", "100")))) / 100f;
+		} catch (NumberFormatException e) {
+			return 1f;
+		}
+	}
+
+	private static boolean showTitle() {
+		return !"0".equals(opt("title", "1"));
 	}
 
 	private static boolean showBar() {
@@ -212,7 +228,7 @@ public final class Mirrors {
 			synchronized (Mirrors.class) {
 				list = loadedKey != null && mc.level != null ? new ArrayList<>(panels) : List.of();
 			}
-			if (list.isEmpty() || mc.isPaused()) return;
+			if (list.isEmpty() || mc.isPaused() || hidden) return;
 			long due = 1000L / fps();
 			if (System.currentTimeMillis() - lastCapture < due) return;
 			lastCapture = System.currentTimeMillis();
@@ -282,8 +298,12 @@ public final class Mirrors {
 			if (panels.isEmpty() || loadedKey == null) return;
 			list = new ArrayList<>(all());
 		}
+		if (hidden) return;
 		Vec3 cam = pl.aerion.mod.platform.Game.cameraPosition();
+		LocalPlayer me = Minecraft.getInstance().player;
+		for (Panel p : list) if (p.pinned && me != null && grabbed != p) follow(p, me, 1f);
 		Hit aim = aim();
+		int alpha = Math.round(opacity() * 255);
 		for (Panel p : list) {
 			upload(p);
 			if (p.tex == null) continue;
@@ -291,7 +311,9 @@ public final class Mirrors {
 			pose.translate(p.x - cam.x, p.y - cam.y, p.z - cam.z);
 			pose.mulPose(new Matrix4f().rotateY((float) Math.toRadians(-p.yaw)).rotateX((float) Math.toRadians(p.pitch)));
 			float w = p.width, h = p.height();
-			out.submitCustomGeometry(pose, RenderTypes.text(p.tex), (pp, vc) -> quads(pp, vc, p, w, h, 0xFFFFFFFF));
+			int tint = (alpha << 24) | 0xFFFFFF;
+			out.submitCustomGeometry(pose, RenderTypes.text(p.tex), (pp, vc) -> quads(pp, vc, p, w, h, tint));
+			if (showTitle()) title(pose, out, p);
 			if (showBar() || grabbed == p) {
 				Panel bar = p;
 				boolean overBar = grabbed == p || (aim != null && aim.panel == p && aim.part == Part.BAR);
@@ -299,6 +321,8 @@ public final class Mirrors {
 				int accent = AerionClient.theme() != null ? AerionClient.theme().accent : 0xFF7AA2FF;
 				out.submitCustomGeometry(pose, RenderTypes.text(BAR), (pp, vc) -> handle(pp, vc, bar, overBar ? accent : 0xD0E8E8E8));
 				out.submitCustomGeometry(pose, RenderTypes.text(CLOSE), (pp, vc) -> closer(pp, vc, bar, overClose ? 0xFFFF5A5A : 0xD0E8E8E8));
+				boolean overPin = aim != null && aim.panel == p && aim.part == Part.PIN;
+				out.submitCustomGeometry(pose, RenderTypes.text(PIN), (pp, vc) -> box(pp, vc, bar, pinBox(bar), overPin || bar.pinned ? accent : 0xD0E8E8E8));
 				boolean overShape = aim != null && aim.panel == p && aim.part == Part.SHAPE;
 				out.submitCustomGeometry(pose, RenderTypes.text(p.curved ? SHAPE_FLAT : SHAPE_CURVE), (pp, vc) -> box(pp, vc, bar, shapeBox(bar), overShape ? accent : 0xD0E8E8E8));
 				boolean overSmaller = aim != null && aim.panel == p && aim.part == Part.SMALLER;
@@ -312,6 +336,23 @@ public final class Mirrors {
 			}
 			pose.popPose();
 		}
+	}
+
+	/** The window's name above the panel, small, on a dark strip. */
+	private static void title(PoseStack pose, SubmitNodeCollector out, Panel p) {
+		Minecraft mc = Minecraft.getInstance();
+		String name = p.title.length() > 60 ? p.title.substring(0, 59) + "…" : p.title;
+		float[] top = at(p, 0.5f, 0, 0);
+		float scale = 0.0075f;
+		pose.pushPose();
+		pose.translate(top[0], top[1] + 0.09f, top[2]);
+		// Text faces the other way and runs downwards: turn it to the player and stand it up.
+		pose.mulPose(new Matrix4f().rotateY((float) Math.PI));
+		pose.scale(scale, -scale, scale);
+		var text = net.minecraft.network.chat.Component.literal(name).getVisualOrderText();
+		float x = -mc.font.width(text) / 2f;
+		out.submitText(pose, x, 0, text, false, net.minecraft.client.gui.Font.DisplayMode.NORMAL, BRIGHT, 0xFFFFFFFF, 0xA0000000, 0);
+		pose.popPose();
 	}
 
 	/** Point (u, v) of the panel (0–1 each, from the top left) in its own space. */
@@ -359,17 +400,24 @@ public final class Mirrors {
 		return new float[] {0.5f - bw / 2 / w, v0, 0.5f + bw / 2 / w, v0 + BAR_H / h};
 	}
 
-	/** The shape button (rounded ↔ straight) right of the bar, then the close button. */
-	private static float[] shapeBox(Panel p) {
+	/** Right of the bar: the pin button, the shape button (rounded ↔ straight), the close button. */
+	private static float[] pinBox(Panel p) {
 		float w = p.width, h = p.height(), bw = barWidth(p);
 		float u0 = 0.5f + (bw / 2 + 0.06f) / w;
 		float v0 = 1 + (BAR_GAP + BAR_H / 2 - CLOSE_D / 2) / h;
 		return new float[] {u0, v0, u0 + CLOSE_D / w, v0 + CLOSE_D / h};
 	}
 
-	private static float[] closeBox(Panel p) {
+	private static float[] shapeBox(Panel p) {
 		float w = p.width, h = p.height(), bw = barWidth(p);
 		float u0 = 0.5f + (bw / 2 + 0.06f + CLOSE_D + 0.04f) / w;
+		float v0 = 1 + (BAR_GAP + BAR_H / 2 - CLOSE_D / 2) / h;
+		return new float[] {u0, v0, u0 + CLOSE_D / w, v0 + CLOSE_D / h};
+	}
+
+	private static float[] closeBox(Panel p) {
+		float w = p.width, h = p.height(), bw = barWidth(p);
+		float u0 = 0.5f + (bw / 2 + 0.06f + 2 * (CLOSE_D + 0.04f)) / w;
 		float v0 = 1 + (BAR_GAP + BAR_H / 2 - CLOSE_D / 2) / h;
 		return new float[] {u0, v0, u0 + CLOSE_D / w, v0 + CLOSE_D / h};
 	}
@@ -411,6 +459,7 @@ public final class Mirrors {
 	private static final Identifier SHAPE_FLAT = Identifier.fromNamespaceAndPath("aerion", "mirror/shape_flat");
 	private static final Identifier SHAPE_CURVE = Identifier.fromNamespaceAndPath("aerion", "mirror/shape_curve");
 	private static final Identifier POINTER = Identifier.fromNamespaceAndPath("aerion", "mirror/pointer");
+	private static final Identifier PIN = Identifier.fromNamespaceAndPath("aerion", "mirror/pin");
 	private static final Identifier PLUS = Identifier.fromNamespaceAndPath("aerion", "mirror/plus");
 	private static final Identifier DOT = Identifier.fromNamespaceAndPath("aerion", "mirror/dot");
 	private static boolean dotReady;
@@ -557,13 +606,25 @@ public final class Mirrors {
 			Textures.registerPixels(curve ? SHAPE_CURVE : SHAPE_FLAT, n, n, img);
 		}
 		Textures.registerPixels(POINTER, PT, PT, pointerPicture());
+		// The pin button: a disc with a small person cut out (head and shoulders): "goes with me".
+		int[] pin = new int[n * n];
+		for (int y = 0; y < n; y++) {
+			for (int x = 0; x < n; x++) {
+				double fx = x + 0.5 - n / 2.0, fy = y + 0.5 - n / 2.0, d = Math.hypot(fx, fy);
+				double disc = Math.max(0, Math.min(1, n / 2.0 - 0.5 - d));
+				boolean head = Math.hypot(fx, fy + n * 0.1) < n * 0.13;
+				boolean body = fy > n * 0.08 && fy < n * 0.3 && Math.hypot(fx, (fy - n * 0.3) * 1.2) < n * 0.24;
+				if (disc > 0 && !head && !body) pin[y * n + x] = ((int) (disc * 255) << 24) | 0xFFFFFF;
+			}
+		}
+		Textures.registerPixels(PIN, n, n, pin);
 		dotReady = true;
 	}
 
 	// --- Aiming -------------------------------------------------------------------------------
 
 	/** Where the player looks on a panel. */
-	public enum Part { PANEL, BAR, CLOSE, SMALLER, BIGGER, SHAPE }
+	public enum Part { PANEL, BAR, CLOSE, SMALLER, BIGGER, SHAPE, PIN }
 
 	public record Hit(Panel panel, float u, float v, double distance, Part part) {}
 
@@ -577,6 +638,7 @@ public final class Mirrors {
 			if (panels.isEmpty() || loadedKey == null) return null;
 			list = new ArrayList<>(panels);
 		}
+		if (hidden) return null;
 		Vec3 eye = pl.getEyePosition(), look = pl.getViewVector(1f);
 		Hit best = null;
 		for (Panel p : list) {
@@ -623,6 +685,8 @@ public final class Mirrors {
 			if (u >= c[0] && u <= c[2] && v >= c[1] && v <= c[3]) return new Hit(p, u, v, t, Part.CLOSE);
 			float[] sh = shapeBox(p);
 			if (u >= sh[0] && u <= sh[2] && v >= sh[1] && v <= sh[3]) return new Hit(p, u, v, t, Part.SHAPE);
+			float[] pn = pinBox(p);
+			if (u >= pn[0] && u <= pn[2] && v >= pn[1] && v <= pn[3]) return new Hit(p, u, v, t, Part.PIN);
 			float[] s = sizeBox(p, false), g = sizeBox(p, true);
 			if (u >= s[0] && u <= s[2] && v >= s[1] && v <= s[3]) return new Hit(p, u, v, t, Part.SMALLER);
 			if (u >= g[0] && u <= g[2] && v >= g[1] && v <= g[3]) return new Hit(p, u, v, t, Part.BIGGER);
@@ -681,6 +745,85 @@ public final class Mirrors {
 		for (int ms : new int[] {40, 200, 600}) worker.schedule(back, ms, TimeUnit.MILLISECONDS);
 	}
 
+	/** All windows hidden for a moment (a key shows them again); pictures pause meanwhile. */
+	private static volatile boolean hidden;
+
+	public static boolean hidden() {
+		return hidden;
+	}
+
+	public static void toggleHidden() {
+		hidden = !hidden;
+	}
+
+	/** All windows in a half circle around the player, at eye height, the widest in the middle. */
+	public static void arrange() {
+		LocalPlayer pl = Minecraft.getInstance().player;
+		if (pl == null) return;
+		List<Panel> list;
+		synchronized (Mirrors.class) {
+			list = new ArrayList<>(all());
+		}
+		if (list.isEmpty()) return;
+		hidden = false;
+		float radius = 2.4f, gap = 0.15f;
+		float total = 0;
+		for (Panel p : list) total += p.width + gap;
+		total -= gap;
+		// Arc lengths to angles: centred on where the player looks.
+		double start = pl.getYRot() - Math.toDegrees(total / 2 / radius);
+		Vec3 eye = pl.getEyePosition();
+		double along = 0;
+		for (Panel p : list) {
+			double yaw = start + Math.toDegrees((along + p.width / 2) / radius);
+			double a = Math.toRadians(yaw);
+			p.x = eye.x - Math.sin(a) * radius;
+			p.y = eye.y;
+			p.z = eye.z + Math.cos(a) * radius;
+			p.yaw = (float) yaw;
+			p.pitch = 0;
+			p.radius = radius;
+			if (p.pinned) pin(p, pl);
+			along += p.width + gap;
+		}
+		save();
+	}
+
+	/** Pins a panel to the player (or unpins it): it keeps its turn and distance from them. */
+	public static void togglePin(Panel p) {
+		LocalPlayer pl = Minecraft.getInstance().player;
+		if (pl == null) return;
+		p.pinned = !p.pinned;
+		if (p.pinned) pin(p, pl);
+		save();
+	}
+
+	private static void pin(Panel p, LocalPlayer pl) {
+		Vec3 eye = pl.getEyePosition();
+		double dx = p.x - eye.x, dz = p.z - eye.z;
+		p.pinDistance = (float) Math.hypot(dx, dz);
+		p.pinHeight = (float) (p.y - eye.y);
+		float around = (float) Math.toDegrees(Math.atan2(-dx, dz));
+		p.pinYaw = wrap(around - pl.getYRot());
+		p.yaw = around;
+	}
+
+	private static float wrap(float deg) {
+		deg %= 360;
+		return deg > 180 ? deg - 360 : deg < -180 ? deg + 360 : deg;
+	}
+
+	/** Pinned panels follow the player: same turn and distance from them, at any time. */
+	private static void follow(Panel p, LocalPlayer pl, float partial) {
+		Vec3 eye = pl.getEyePosition(partial);
+		float yaw = pl.getViewYRot(partial) + p.pinYaw;
+		double a = Math.toRadians(yaw);
+		p.x = eye.x - Math.sin(a) * p.pinDistance;
+		p.y = eye.y + p.pinHeight;
+		p.z = eye.z + Math.cos(a) * p.pinDistance;
+		p.yaw = yaw;
+	}
+
 	/** Makes a panel bigger (`factor` > 1) or smaller, around its centre. */
 	public static void resize(Panel p, float factor) {
 		p.width = Math.max(0.3f, Math.min(12f, p.width * factor));
@@ -693,6 +836,10 @@ public final class Mirrors {
 		if (h == null) return false;
 		if (h.part == Part.CLOSE) {
 			if (button == 0) remove(h.panel);
+			return true;
+		}
+		if (h.part == Part.PIN) {
+			if (button == 0) togglePin(h.panel);
 			return true;
 		}
 		if (h.part == Part.SHAPE) {
@@ -713,10 +860,60 @@ public final class Mirrors {
 		}
 		WindowSource src = source();
 		if (src != null && h.panel.win != 0) {
-			src.click(h.panel.win, h.u, h.v, button);
+			if (button == 0) {
+				// The left button stays down while the attack key is held: dragging and selecting work.
+				src.press(h.panel.win, h.u, h.v, 0);
+				pressed = h.panel;
+				pressU = h.u;
+				pressV = h.v;
+			} else {
+				src.click(h.panel.win, h.u, h.v, button);
+			}
 			refocus();
 		}
 		return true;
+	}
+
+	/** The panel the left button went down on, and where the pointer is on it. */
+	private static Panel pressed;
+	private static float pressU, pressV, hoverU = -1, hoverV = -1;
+	private static long hoverWin;
+	private static long lastMove;
+
+	/** Every tick: the held button drags, a moving pointer hovers, letting go releases. */
+	private static void pointer(Minecraft mc) {
+		WindowSource src = source();
+		if (src == null) return;
+		boolean down = mc.options.keyAttack.isDown() && pl.aerion.mod.platform.Game.screen() == null;
+		Hit h = aim();
+		if (pressed != null) {
+			float u = pressU, v = pressV;
+			if (h != null && h.panel == pressed && h.part == Part.PANEL) {
+				u = h.u;
+				v = h.v;
+			}
+			if (pressed.win != 0) {
+				if (down) {
+					if (u != pressU || v != pressV) src.move(pressed.win, u, v, true);
+				} else {
+					src.release(pressed.win, u, v, 0);
+					refocus();
+				}
+			}
+			pressU = u;
+			pressV = v;
+			if (!down) pressed = null;
+			return;
+		}
+		// Hovering: a few times a second, only when the pointer moved on the window.
+		long now = System.currentTimeMillis();
+		if (h == null || h.part != Part.PANEL || h.panel.win == 0 || now - lastMove < 50) return;
+		if (h.panel.win == hoverWin && Math.abs(h.u - hoverU) < 0.002f && Math.abs(h.v - hoverV) < 0.002f) return;
+		src.move(h.panel.win, h.u, h.v, false);
+		hoverWin = h.panel.win;
+		hoverU = h.u;
+		hoverV = h.v;
+		lastMove = now;
 	}
 
 	/** The wheel over a panel scrolls its window, or resizes it while it is held. */
@@ -757,11 +954,14 @@ public final class Mirrors {
 			save();
 		}
 		lastShape = shape;
+		if (hidden) return;
+		pointer(mc);
 		boolean held = byBar ? mc.options.keyAttack.isDown() && pl.aerion.mod.platform.Game.screen() == null : grabKey;
 		if (grabKey && grabbed == null) {
 			Hit h = aim();
 			if (h != null) take(h.panel, false);
 		} else if (!held && grabbed != null) {
+			if (grabbed.pinned) pin(grabbed, mc.player);
 			grabbed = null;
 			byBar = false;
 			save();

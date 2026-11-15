@@ -48,7 +48,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "mirrors", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "food", "chunkBorders", "ownName", "tntTimer", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -163,7 +163,7 @@ public final class AerionMenu implements Page {
 					Option.colour("color", "#ffffff"), Option.toggle("outline", true), Option.toggle("dot", false),
 					Option.toggle("target", false), Option.colour("targetColor", "#ff5555"), Option.toggle("attack", true))),
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
-			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
+			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.select("shape", "curve", "curve", "straight"), Option.toggle("handle", true))),
 			Map.entry("food", List.of(Option.toggle("saturation", true), Option.toggle("preview", true), Option.toggle("tooltip", true))),
 			Map.entry("hitboxes", List.of(
@@ -191,7 +191,7 @@ public final class AerionMenu implements Page {
 		}
 	}
 
-	private enum Section { HUD, PROFILES, FEATURES, SOUNDS, WAYPOINTS, KEYS, GAME, LOOK }
+	private enum Section { HUD, PROFILES, FEATURES, SOUNDS, WAYPOINTS, MIRRORS, KEYS, GAME, LOOK }
 
 	private enum Sub { GENERAL, LOOK, KEY }
 
@@ -586,6 +586,7 @@ public final class AerionMenu implements Page {
 			case FEATURES -> tiles(mainX, mainW, found(List.of(FEATURES)));
 			case SOUNDS -> soundsPage();
 			case WAYPOINTS -> waypointsPage();
+			case MIRRORS -> mirrorsPage();
 			case PROFILES -> profilesPage();
 			case KEYS -> keysPage();
 			case GAME -> gamePage();
@@ -630,6 +631,7 @@ public final class AerionMenu implements Page {
 		ny = navHead(nx, ny, "aerion.navhead.tools");
 		ny = navItem(nx, ny, Section.SOUNDS, "sounds", "aerion.nav.sounds");
 		ny = navItem(nx, ny, Section.WAYPOINTS, "waypoints", "aerion.nav.waypoints");
+		ny = navItem(nx, ny, Section.MIRRORS, "mirrors", "aerion.nav.mirrors");
 		ny = navItem(nx, ny, Section.KEYS, "keys", "aerion.nav.keys") + gap;
 		ny = navHead(nx, ny, "aerion.navhead.look");
 		ny = navItem(nx, ny, Section.GAME, "inventory", "aerion.nav.game");
@@ -705,6 +707,7 @@ public final class AerionMenu implements Page {
 			case FEATURES -> "features";
 			case SOUNDS -> "sounds";
 			case WAYPOINTS -> "waypoints";
+			case MIRRORS -> "mirrors";
 			case KEYS -> "keys";
 			case GAME -> "game";
 			case LOOK -> "look";
@@ -777,7 +780,7 @@ public final class AerionMenu implements Page {
 	}
 
 	private boolean searchable() {
-		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK && section != Section.GAME && section != Section.WAYPOINTS && section != Section.PROFILES;
+		return detail == null && capturing == null && section != Section.KEYS && section != Section.LOOK && section != Section.GAME && section != Section.WAYPOINTS && section != Section.MIRRORS && section != Section.PROFILES;
 	}
 
 	/** Typing goes straight here, so there is nothing to click first. */
@@ -1594,6 +1597,71 @@ public final class AerionMenu implements Page {
 	}
 
 	// --- waypoints ---------------------------------------------------------------------------
+	/** Windows of the computer in the world: hanging them, laying them out, settings and keys. */
+	private void mirrorsPage() {
+		HudConfig cfg = AerionClient.hud();
+		JsonObject f = cfg.feature("mirrors");
+		beginCard(null);
+		toggle(Lang.tr("aerion.mirrors.enable"), HudConfig.bool(f, "enabled", false), v -> f.addProperty("enabled", v));
+		endCard();
+		var player = Minecraft.getInstance().player;
+		if (player != null) {
+			String hang = Lang.tr("aerion.mirrors.hangButton"), arrange = Lang.tr("aerion.mirrors.arrange");
+			String hide = Lang.tr(pl.aerion.mod.mirror.Mirrors.hidden() ? "aerion.mirrors.show" : "aerion.mirrors.hide");
+			int bx = x, hw = Math.round(Txt.width(hang, TEXT)) + 20, aw = Math.round(Txt.width(arrange, TEXT)) + 20;
+			button(bx, y, hw, 15, hang, true, () -> {
+				f.addProperty("enabled", true);
+				changed = true;
+				Page.go(new pl.aerion.mod.mirror.MirrorsPage());
+			});
+			button(bx + hw + 6, y, aw, 15, arrange, false, pl.aerion.mod.mirror.Mirrors::arrange);
+			button(bx + hw + aw + 12, y, Math.round(Txt.width(hide, TEXT)) + 20, 15, hide, false, pl.aerion.mod.mirror.Mirrors::toggleHidden);
+			y += 19;
+			List<pl.aerion.mod.mirror.Mirrors.Panel> panels = pl.aerion.mod.mirror.Mirrors.all();
+			if (panels.isEmpty()) {
+				note(Lang.tr("aerion.mirrors.empty"));
+			} else {
+				beginCard(Lang.tr("aerion.mirrors.panels"));
+				for (pl.aerion.mod.mirror.Mirrors.Panel p : new ArrayList<>(panels)) mirrorRow(p);
+				endCard();
+			}
+		}
+		beginCard(Lang.tr("aerion.sec.settings"));
+		for (Option o : OPTIONS.get("mirrors")) option(f, o, "mirrors");
+		endCard();
+		beginCard(Lang.tr("aerion.nav.keys"));
+		keyRow(Lang.tr("key.aerion.mirrors"), Features.key("mirrors"));
+		keyRow(Lang.tr("key.aerion.mirrorGrab"), Features.key("mirrorGrab"));
+		keyRow(Lang.tr("key.aerion.mirrorType"), Features.key("mirrorType"));
+		keyRow(Lang.tr("key.aerion.mirrorArrange"), Features.key("mirrorArrange"));
+		keyRow(Lang.tr("key.aerion.mirrorHide"), Features.key("mirrorHide"));
+		endCard();
+		note(Lang.tr("aerion.mirrors.keys"));
+	}
+
+	private void mirrorRow(pl.aerion.mod.mirror.Mirrors.Panel p) {
+		beginRow("mirror" + System.identityHashCode(p));
+		String remove = Lang.tr("aerion.mirrors.remove"), shape = Lang.tr(p.curved ? "aerion.choice.curve" : "aerion.choice.straight");
+		String pin = Lang.tr("aerion.mirrors.pin");
+		int rw = Math.round(Txt.width(remove, SMALL)) + 12, sw = Math.round(Txt.width(shape, SMALL)) + 12, pw = Math.round(Txt.width(pin, SMALL)) + 12;
+		int bx = x + colW - rw;
+		smallButton(bx, y + 2, rw, ROW - 4, remove, false, () -> pl.aerion.mod.mirror.Mirrors.remove(p));
+		bx -= sw + 3;
+		smallButton(bx, y + 2, sw, ROW - 4, shape, false, () -> {
+			p.curved = !p.curved;
+			pl.aerion.mod.mirror.Mirrors.save();
+		});
+		bx -= pw + 3;
+		smallButton(bx, y + 2, pw, ROW - 4, pin, p.pinned, () -> pl.aerion.mod.mirror.Mirrors.togglePin(p));
+		bx -= 19;
+		smallButton(bx, y + 2, 16, ROW - 4, "+", false, () -> pl.aerion.mod.mirror.Mirrors.resize(p, 1.15f));
+		bx -= 19;
+		smallButton(bx, y + 2, 16, ROW - 4, "-", false, () -> pl.aerion.mod.mirror.Mirrors.resize(p, 1 / 1.15f));
+		Txt.draw(g, ellipsize(p.title, bx - x - 8), x, y + ROW / 2f, TEXT, text);
+		y += ROW;
+		endRow();
+	}
+
 	private void waypointsPage() {
 		HudConfig cfg = AerionClient.hud();
 		JsonObject f = cfg.feature("waypoints");

@@ -20,6 +20,11 @@ public final class MirrorsPage implements Page {
 
 	private final List<Button> buttons = new ArrayList<>();
 	private List<WindowSource.Win> windows;
+	/** Small pictures of the windows, made in the background when the page opens. */
+	private final java.util.Map<Long, WindowSource.Frame> shots = new java.util.concurrent.ConcurrentHashMap<>();
+	private final java.util.Map<Long, net.minecraft.resources.Identifier> thumbs = new java.util.HashMap<>();
+	private boolean shooting;
+	private static final int ROW_H = 34, THUMB_W = 52, THUMB_H = 28;
 	private int scroll;
 
 	private int c(java.util.function.ToIntFunction<Theme> f, int fallback) {
@@ -32,6 +37,22 @@ public final class MirrorsPage implements Page {
 		if (windows == null) {
 			WindowSource src = Mirrors.source();
 			windows = src == null ? List.of() : src.list();
+			if (src != null && !shooting) {
+				shooting = true;
+				List<WindowSource.Win> list = windows;
+				Thread t = new Thread(() -> {
+					for (WindowSource.Win win : list) {
+						try {
+							WindowSource.Frame f = src.capture(win.id(), 160);
+							if (f != null) shots.put(win.id(), f);
+						} catch (Throwable ignored) {
+							// no picture for this one
+						}
+					}
+				}, "Aerion window pictures");
+				t.setDaemon(true);
+				t.start();
+			}
 		}
 		buttons.clear();
 		int text = c(t -> t.text, 0xFFFFFFFF), muted = c(t -> t.textMuted, 0xFFAAAAAA), accent = c(t -> t.accent, 0xFF55AAFF);
@@ -48,12 +69,13 @@ public final class MirrorsPage implements Page {
 		}
 		if (windows.isEmpty()) Txt.draw(g, Lang.tr("aerion.mirrors.none"), x, y + 5, 7, muted);
 		for (WindowSource.Win win : windows) {
-			boolean over = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + 18;
-			Draw.rounded(g, x, y, w, 18, 4, over ? control : Colors.mix(surface, control, 0.5f));
-			Txt.draw(g, ellipsize(win.title(), w - 70), x + 8, y + 9, 7.5f, text);
-			Txt.draw(g, Lang.tr("aerion.mirrors.place"), x + w - 56, y + 9, 6.5f, over ? accent : muted);
-			buttons.add(new Button(x, y, w, 18, () -> Mirrors.place(win)));
-			y += 21;
+			boolean over = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + ROW_H;
+			Draw.rounded(g, x, y, w, ROW_H, 4, over ? control : Colors.mix(surface, control, 0.5f));
+			thumb(g, win.id(), x + 4, y + 3);
+			Txt.draw(g, ellipsize(win.title(), w - 70 - THUMB_W - 8), x + THUMB_W + 12, y + ROW_H / 2f, 7.5f, text);
+			Txt.draw(g, Lang.tr("aerion.mirrors.place"), x + w - 56, y + ROW_H / 2f, 6.5f, over ? accent : muted);
+			buttons.add(new Button(x, y, w, ROW_H, () -> Mirrors.place(win)));
+			y += ROW_H + 3;
 		}
 		List<Mirrors.Panel> panels = Mirrors.all();
 		if (!panels.isEmpty()) {
@@ -98,6 +120,22 @@ public final class MirrorsPage implements Page {
 		return lines;
 	}
 
+	/** The window's small picture, fitted into its box (a dark box until it is ready). */
+	private void thumb(Gfx g, long id, int tx, int ty) {
+		g.fill(tx, ty, tx + THUMB_W, ty + THUMB_H, 0x60000000);
+		WindowSource.Frame f = shots.get(id);
+		if (f == null) return;
+		net.minecraft.resources.Identifier tex = thumbs.get(id);
+		if (tex == null) {
+			tex = net.minecraft.resources.Identifier.fromNamespaceAndPath("aerion", "mirror/thumb" + id);
+			pl.aerion.mod.platform.Textures.update(tex, f.width(), f.height(), f.argb());
+			thumbs.put(id, tex);
+		}
+		float k = Math.min(THUMB_W / (float) f.width(), THUMB_H / (float) f.height());
+		int dw = Math.max(1, Math.round(f.width() * k)), dh = Math.max(1, Math.round(f.height() * k));
+		g.texture(tex, tx + (THUMB_W - dw) / 2, ty + (THUMB_H - dh) / 2, dw, dh, f.width(), f.height(), 0xFFFFFFFF);
+	}
+
 	private void small(Gfx g, int bx, int by, int bw, String label, int mx, int my, int fill, int ink, Runnable run) {
 		boolean over = mx >= bx && mx < bx + bw && my >= by && my < by + 12;
 		Draw.rounded(g, bx, by, bw, 12, 3, over ? Colors.mix(fill, 0xFFFFFFFF, 0.15f) : fill);
@@ -135,5 +173,8 @@ public final class MirrorsPage implements Page {
 	}
 
 	@Override
-	public void close() {}
+	public void close() {
+		for (net.minecraft.resources.Identifier t : thumbs.values()) pl.aerion.mod.platform.Textures.release(t);
+		thumbs.clear();
+	}
 }

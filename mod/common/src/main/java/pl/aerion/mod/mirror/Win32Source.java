@@ -98,12 +98,23 @@ final class Win32Source implements WindowSource {
 		return new WinDef.LPARAM((y << 16) | (x & 0xFFFF));
 	}
 
+	private static final int WM_MOUSEMOVE = 0x0200, MK_LBUTTON = 1;
+
 	@Override
-	public void click(long id, float fx, float fy, int button) {
-		WinDef.LPARAM p = at(id, fx, fy);
+	public void press(long id, float fx, float fy, int button) {
 		boolean right = button == 1;
-		u.PostMessage(hwnd(id), right ? WM_RBUTTONDOWN : WM_LBUTTONDOWN, new WinDef.WPARAM(right ? 2 : 1), p);
-		u.PostMessage(hwnd(id), right ? WM_RBUTTONUP : WM_LBUTTONUP, new WinDef.WPARAM(0), p);
+		u.PostMessage(hwnd(id), right ? WM_RBUTTONDOWN : WM_LBUTTONDOWN, new WinDef.WPARAM(right ? 2 : 1), at(id, fx, fy));
+	}
+
+	@Override
+	public void release(long id, float fx, float fy, int button) {
+		boolean right = button == 1;
+		u.PostMessage(hwnd(id), right ? WM_RBUTTONUP : WM_LBUTTONUP, new WinDef.WPARAM(0), at(id, fx, fy));
+	}
+
+	@Override
+	public void move(long id, float fx, float fy, boolean held) {
+		u.PostMessage(hwnd(id), WM_MOUSEMOVE, new WinDef.WPARAM(held ? MK_LBUTTON : 0), at(id, fx, fy));
 	}
 
 	@Override

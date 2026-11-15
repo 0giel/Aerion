@@ -177,9 +177,11 @@ final class X11Source implements WindowSource {
 		return new int[] {Math.max(1, a.width), Math.max(1, a.height)};
 	}
 
-	private void button(long id, float fx, float fy, int button) {
+	/** The innermost window at (`fx`, `fy`) of window `id`, and the point in its coordinates. */
+	private record Target(X11.Window w, int x, int y) {}
+
+	private Target target(long id, float fx, float fy) {
 		int[] s = size(id);
-		// Down to the innermost window at that point (a toolkit's button is a window of its own).
 		X11.Window w = new X11.Window(id);
 		int px = Math.round(fx * s[0]), py = Math.round(fy * s[1]);
 		for (int depth = 0; depth < 16; depth++) {
@@ -189,36 +191,91 @@ final class X11Source implements WindowSource {
 					|| child.getValue().longValue() == 0) break;
 			X11.Window c = child.getValue();
 			IntByReference ix = new IntByReference(), iy = new IntByReference();
-			X11.WindowByReference none = new X11.WindowByReference();
-			x.XTranslateCoordinates(display, w, c, px, py, ix, iy, none);
+			x.XTranslateCoordinates(display, w, c, px, py, ix, iy, new X11.WindowByReference());
 			w = c;
 			px = ix.getValue();
 			py = iy.getValue();
 		}
-		for (int type : new int[] {X11.ButtonPress, X11.ButtonRelease}) {
-			X11.XEvent e = new X11.XEvent();
-			e.type = type;
-			e.xbutton.type = type;
-			e.xbutton.display = display;
-			e.xbutton.window = w;
-			e.xbutton.root = root;
-			e.xbutton.subwindow = X11.Window.None;
-			e.xbutton.time = new NativeLong(0);
-			e.xbutton.x = px;
-			e.xbutton.y = py;
-			e.xbutton.state = type == X11.ButtonRelease ? (X11.Button1Mask << (button - 1)) : 0;
-			e.xbutton.button = button;
-			e.xbutton.same_screen = 1;
-			e.setType(X11.XButtonEvent.class);
-			e.write();
-			x.XSendEvent(display, w, 1, new NativeLong(type == X11.ButtonPress ? X11.ButtonPressMask : X11.ButtonReleaseMask), e);
-		}
+		return new Target(w, px, py);
+	}
+
+	/** The point (`fx`, `fy`) of window `id` in the coordinates of its inner window `w`. */
+	private Target in(long id, X11.Window w, float fx, float fy) {
+		int[] s = size(id);
+		IntByReference ix = new IntByReference(), iy = new IntByReference();
+		x.XTranslateCoordinates(display, new X11.Window(id), w, Math.round(fx * s[0]), Math.round(fy * s[1]), ix, iy, new X11.WindowByReference());
+		return new Target(w, ix.getValue(), iy.getValue());
+	}
+
+	/** While a button is held, its events go to the window it went down on (as X itself does). */
+	private X11.Window pressedIn;
+
+	private void sendButton(Target t, int type, int button) {
+		X11.XEvent e = new X11.XEvent();
+		e.type = type;
+		e.xbutton.type = type;
+		e.xbutton.display = display;
+		e.xbutton.window = t.w;
+		e.xbutton.root = root;
+		e.xbutton.subwindow = X11.Window.None;
+		e.xbutton.time = new NativeLong(0);
+		e.xbutton.x = t.x;
+		e.xbutton.y = t.y;
+		e.xbutton.button = button;
+		e.xbutton.same_screen = 1;
+		e.xbutton.state = type == X11.ButtonRelease ? (X11.Button1Mask << (button - 1)) : 0;
+		e.setType(X11.XButtonEvent.class);
+		e.write();
+		x.XSendEvent(display, t.w, 1, new NativeLong(type == X11.ButtonPress ? X11.ButtonPressMask : X11.ButtonReleaseMask), e);
+	}
+
+	private static int xButton(int button) {
+		return button == 1 ? 3 : 1;
+	}
+
+	@Override
+	public synchronized void press(long id, float fx, float fy, int button) {
+		Target t = target(id, fx, fy);
+		pressedIn = t.w;
+		sendButton(t, X11.ButtonPress, xButton(button));
 		x.XFlush(display);
 	}
 
 	@Override
-	public synchronized void click(long id, float fx, float fy, int button) {
-		button(id, fx, fy, button == 1 ? 3 : 1);
+	public synchronized void release(long id, float fx, float fy, int button) {
+		Target t = pressedIn != null ? in(id, pressedIn, fx, fy) : target(id, fx, fy);
+		pressedIn = null;
+		sendButton(t, X11.ButtonRelease, xButton(button));
+		x.XFlush(display);
+	}
+
+	@Override
+	public synchronized void move(long id, float fx, float fy, boolean held) {
+		Target t = held && pressedIn != null ? in(id, pressedIn, fx, fy) : target(id, fx, fy);
+		X11.XEvent e = new X11.XEvent();
+		e.type = X11.MotionNotify;
+		e.xmotion.type = X11.MotionNotify;
+		e.xmotion.display = display;
+		e.xmotion.window = t.w;
+		e.xmotion.root = root;
+		e.xmotion.subwindow = X11.Window.None;
+		e.xmotion.time = new NativeLong(0);
+		e.xmotion.x = t.x;
+		e.xmotion.y = t.y;
+		e.xmotion.state = held ? X11.Button1Mask : 0;
+		e.xmotion.is_hint = 0;
+		e.xmotion.same_screen = 1;
+		e.setType(X11.XMotionEvent.class);
+		e.write();
+		x.XSendEvent(display, t.w, 1, new NativeLong(held ? X11.ButtonMotionMask | X11.PointerMotionMask : X11.PointerMotionMask), e);
+		x.XFlush(display);
+	}
+
+	private void button(long id, float fx, float fy, int xButton) {
+		Target t = target(id, fx, fy);
+		sendButton(t, X11.ButtonPress, xButton);
+		sendButton(t, X11.ButtonRelease, xButton);
+		x.XFlush(display);
 	}
 
 	@Override
