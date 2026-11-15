@@ -147,7 +147,8 @@ public final class AerionMenu implements Page {
 			Map.entry("worldLook", List.of(
 					Option.toggle("fixTime", true), Option.number("hour", 12, 0, 23), Option.select("weather", "clear", "game", "clear", "rain", "thunder"))),
 			Map.entry("hitColor", List.of(Option.colour("color", "#55aaff"), Option.number("opacity", 70, 0, 100))),
-			Map.entry("menus", List.of(Option.toggle("buttons", true), Option.toggle("background", true), Option.toggle("player", true),
+			Map.entry("menus", List.of(Option.toggle("buttons", true), Option.toggle("background", true),
+					Option.select("scene", "aurora", "aurora", "panorama", "world"), Option.number("blur", 6, 0, 20), Option.number("dim", 55, 0, 90), Option.toggle("player", true),
 					Option.toggle("hotbar", false), Option.toggle("tooltips", false), Option.toggle("chat", false), Option.toggle("tabList", false))),
 			Map.entry("inventory", List.of(
 					Option.colour("panel", "theme"), Option.number("panelOpacity", 100, 10, 100),

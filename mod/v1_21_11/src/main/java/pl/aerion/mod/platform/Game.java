@@ -54,4 +54,19 @@ public final class Game {
 		return net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().position();
 	}
 
+
+	/** A picture of the game's frame, ARGB row by row. */
+	public record Frame(int width, int height, int[] argb) {}
+
+	/** Reads the frame as it is now; `done` gets it a moment later (on the render thread). */
+	public static void grabFrame(java.util.function.Consumer<Frame> done) {
+		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+		net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget(), img -> {
+			try {
+				done.accept(new Frame(img.getWidth(), img.getHeight(), img.getPixels()));
+			} finally {
+				img.close();
+			}
+		});
+	}
 }

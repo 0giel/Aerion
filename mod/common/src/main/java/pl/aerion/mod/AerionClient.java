@@ -153,6 +153,7 @@ public final class AerionClient implements ClientModInitializer {
 		}
 		try {
 			MenuPicture.tick(Minecraft.getInstance());
+			MenuScene.tick(Minecraft.getInstance());
 		} catch (RuntimeException e) {
 			warnOnce("menu-picture", e);
 		}

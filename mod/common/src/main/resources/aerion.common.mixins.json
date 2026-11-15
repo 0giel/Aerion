@@ -10,6 +10,7 @@
 		"ClientLanguageMixin",
 		"DebugRendererMixin",
 		"EntityMixin",
+		"GameRendererShotMixin",
 		"HurtCamMixin",
 		"ItemStackMixin",
 		"MenuButtonMixin",

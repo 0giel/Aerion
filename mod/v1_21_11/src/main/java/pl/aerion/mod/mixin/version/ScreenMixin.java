@@ -21,10 +21,14 @@ abstract class ScreenMixin {
 	@Inject(method = "renderPanorama", at = @At("HEAD"), cancellable = true)
 	private void aerion$panorama(GuiGraphics g, float delta, CallbackInfo ci) {
 		Theme t = AerionClient.backdrop();
-		if (t == null) return;
-		Draw.background(new Gfx(g), t, 0xFF);
-		Backdrop.draw(new Gfx(g), t);
-		Particles.draw(new Gfx(g), t);
+		// The game's own panorama was chosen: it stays, the theme is laid over it after.
+		if (t == null || pl.aerion.mod.MenuScene.vanillaPanorama()) return;
+		Gfx gfx = new Gfx(g);
+		if (!pl.aerion.mod.MenuScene.drawWorld(gfx, t)) {
+			Draw.background(gfx, t, 0xFF);
+			Backdrop.draw(gfx, t);
+		}
+		Particles.draw(gfx, t);
 		ci.cancel();
 	}
 
@@ -33,6 +37,15 @@ abstract class ScreenMixin {
 	private void aerion$panoramaParticles(GuiGraphics g, float delta, CallbackInfo ci) {
 		Theme t = AerionClient.theme();
 		if (t != null && AerionClient.backdrop() == null) Particles.draw(new Gfx(g), t);
+		Theme shade = AerionClient.backdrop();
+		if (shade != null && pl.aerion.mod.MenuScene.vanillaPanorama()) {
+			// The game's panorama chosen as the background: the theme's shade over it, in a layer of
+			// its own (the panorama is drawn last in its layer; the buttons come after, above it).
+			g.nextStratum();
+			pl.aerion.mod.MenuScene.tint(new Gfx(g), shade);
+			Particles.draw(new Gfx(g), shade);
+		}
+
 	}
 
 	@Inject(
