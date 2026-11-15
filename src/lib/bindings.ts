@@ -1079,6 +1079,12 @@ export type HudFeatures_Deserialize = {
 	waypoints?: FeatureOptions_Deserialize,
 	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
 	badges?: OnFeature_Deserialize,
+	/**  The edges of the chunks around the player. */
+	chunkBorders?: FeatureOptions_Deserialize,
+	/**  The player's own name above their head in third person. */
+	ownName?: FeatureOptions_Deserialize,
+	/**  Seconds left above lit TNT nearby. */
+	tntTimer?: FeatureOptions_Deserialize,
 };
 
 export type HudFeatures_Serialize = {
@@ -1116,6 +1122,12 @@ export type HudFeatures_Serialize = {
 	waypoints: FeatureOptions_Serialize,
 	/**  Badges next to players' names ([`super::badges`]); on unless switched off. */
 	badges: OnFeature_Serialize,
+	/**  The edges of the chunks around the player. */
+	chunkBorders: FeatureOptions_Serialize,
+	/**  The player's own name above their head in third person. */
+	ownName: FeatureOptions_Serialize,
+	/**  Seconds left above lit TNT nearby. */
+	tntTimer: FeatureOptions_Serialize,
 };
 
 export type HudModule = HudModule_Serialize | HudModule_Deserialize;

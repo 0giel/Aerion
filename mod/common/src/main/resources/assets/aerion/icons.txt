@@ -1,4 +1,4 @@
-64 6 384 704
+64 6 384 768
 fps
 coords
 direction
@@ -35,6 +35,15 @@ blockInfo
 fpsGraph
 playerList
 badges
+reach
+combo
+saturation
+stopwatch
+server
+cooldowns
+chunkBorders
+ownName
+tntTimer
 armor
 clock
 memory

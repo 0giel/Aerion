@@ -35,7 +35,9 @@ import pl.aerion.mod.Draw;
 import pl.aerion.mod.Lang;
 import pl.aerion.mod.Theme;
 import pl.aerion.mod.Txt;
+import pl.aerion.mod.features.Combat;
 import pl.aerion.mod.features.Features;
+import pl.aerion.mod.features.Stopwatch;
 import pl.aerion.mod.features.Overlays;
 import pl.aerion.mod.features.WorldLook;
 import pl.aerion.mod.platform.EditorScreen;
@@ -433,6 +435,58 @@ public final class Hud {
 				return c.flag("all", false) ? out : List.of(out.get(0));
 			}
 		});
+		MODULES.put("reach", new Lines() {
+			List<String> lines(Ctx c) {
+				double r = Combat.reach();
+				// Hidden a while after the last hit, when asked to.
+				if (!c.preview() && c.flag("hideIdle", false) && Combat.sinceReach() > 10_000) return List.of();
+				String value = r < 0 ? (c.preview() ? "3.12" : "-") : String.format("%.2f", r);
+				return List.of(format(c.opt("format", "{reach} m"), "reach", value));
+			}
+		});
+		MODULES.put("combo", new Lines() {
+			List<String> lines(Ctx c) {
+				int n = c.preview() ? 3 : Combat.combo();
+				if (n == 0 && c.flag("hideZero", true)) return List.of();
+				return List.of(format(c.opt("format", "{combo} Combo"), "combo", n));
+			}
+		});
+		MODULES.put("saturation", new Lines() {
+			private float value(Ctx c) {
+				return c.player() == null ? 5f : c.player().getFoodData().getSaturationLevel();
+			}
+
+			List<String> lines(Ctx c) {
+				String v = String.format("%.1f", value(c));
+				return List.of(c.flag("label", true) ? Lang.tr("aerion.hud.saturation") + " " + v : v);
+			}
+
+			@Override
+			int color(Ctx c, int line) {
+				float v = value(c);
+				return c.flag("colored", true) ? graded(v >= 5, v > 0) : c.style().text();
+			}
+		});
+		MODULES.put("stopwatch", new Lines() {
+			List<String> lines(Ctx c) {
+				long ms = c.preview() && Stopwatch.millis() == 0 ? 83_400 : Stopwatch.millis();
+				return List.of(String.format("%d:%02d.%d", ms / 60_000, ms / 1000 % 60, ms / 100 % 10));
+			}
+
+			@Override
+			int minWidth(Ctx c) {
+				return Hud.width(c, "00:00.0");
+			}
+		});
+		MODULES.put("server", new Lines() {
+			List<String> lines(Ctx c) {
+				var server = c.mc().getCurrentServer();
+				if (server != null && !c.mc().isLocalServer()) return List.of(server.ip);
+				if (c.flag("hideSingle", false) && !c.preview()) return List.of();
+				return List.of(c.preview() && server == null ? "play.example.net" : Lang.tr("aerion.hud.singleplayer"));
+			}
+		});
+		MODULES.put("cooldowns", new Cooldowns());
 		MODULES.put("armorWarn", new Lines() {
 			private boolean warned;
 
@@ -705,6 +759,67 @@ public final class Hud {
 				if (icon) g.item(new ItemStack(r.item), p, y);
 				Hud.text(c, g, label(c, r), p + (icon ? 19 : 0), icon ? y + 4 : y, color, c.style().shadow());
 				y += icon ? 17 : LINE;
+			}
+		}
+	}
+
+	/**
+	 * Items waiting out their cooldown (ender pearl, chorus fruit, a disabled shield, wind charge…):
+	 * the item and a bar of the time left. Only items in the hotbar and the off hand are looked at.
+	 */
+	static final class Cooldowns implements Module {
+		private static final int BAR = 34;
+
+		private List<ItemStack> waiting(Ctx c) {
+			List<ItemStack> out = new ArrayList<>();
+			if (c.preview() && (c.player() == null || !any(c))) {
+				out.add(new ItemStack(Items.ENDER_PEARL));
+				out.add(new ItemStack(Items.SHIELD));
+				return out;
+			}
+			if (c.player() == null) return out;
+			var cd = c.player().getCooldowns();
+			List<net.minecraft.world.item.Item> seen = new ArrayList<>();
+			for (int i = 0; i <= 9; i++) {
+				ItemStack s = i < 9 ? c.player().getInventory().getItem(i) : c.player().getOffhandItem();
+				if (s.isEmpty() || seen.contains(s.getItem()) || !cd.isOnCooldown(s)) continue;
+				seen.add(s.getItem());
+				out.add(s);
+			}
+			return out;
+		}
+
+		private boolean any(Ctx c) {
+			var cd = c.player().getCooldowns();
+			for (int i = 0; i < 9; i++) if (cd.isOnCooldown(c.player().getInventory().getItem(i))) return true;
+			return cd.isOnCooldown(c.player().getOffhandItem());
+		}
+
+		private float left(Ctx c, ItemStack s, int index) {
+			if (c.player() == null || !c.player().getCooldowns().isOnCooldown(s)) return index == 0 ? 0.6f : 0.3f;
+			return c.player().getCooldowns().getCooldownPercent(s, 0f);
+		}
+
+		@Override
+		public int[] size(Ctx c) {
+			List<ItemStack> list = waiting(c);
+			if (list.isEmpty()) return new int[] {0, 0};
+			int p = c.style().padding();
+			return new int[] {19 + BAR + 2 * p, list.size() * 17 - 1 + 2 * p};
+		}
+
+		@Override
+		public void draw(Ctx c, Gfx g) {
+			int p = c.style().padding(), y = p;
+			int accent = c.theme() != null ? c.theme().accent : 0xFFFFE25A;
+			List<ItemStack> list = waiting(c);
+			for (int i = 0; i < list.size(); i++) {
+				g.item(list.get(i), p, y);
+				float k = Math.max(0, Math.min(1, left(c, list.get(i), i)));
+				int bx = p + 19, by = y + 7;
+				g.fill(bx, by, bx + BAR, by + 3, 0x60000000);
+				g.fill(bx, by, bx + Math.round(BAR * k), by + 3, 0xFF000000 | accent);
+				y += 17;
 			}
 		}
 	}

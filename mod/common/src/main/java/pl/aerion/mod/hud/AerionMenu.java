@@ -48,7 +48,7 @@ public final class AerionMenu implements Page {
 	private static final int ROW = 16, SIDE = 104, GAP = 5;
 	/** Space inside a setting's own panel: above and below its row, and on the sides. */
 	private static final int ROW_PAD = 3, ROW_IN = 8;
-	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "badges"};
+	private static final String[] FEATURES = {"zoom", "toggleSprint", "toggleSneak", "freelook", "fullbright", "hitboxes", "overlays", "crosshair", "hurtCam", "lightLevels", "blockOutline", "chat", "perspective", "fovKey", "fovLock", "worldLook", "hitColor", "screens", "chunkBorders", "ownName", "tntTimer", "badges"};
 	private static final String[] SOUND_GROUPS = {"all", "recent", "block", "entity", "item", "ambient", "music", "other"};
 	private static final int WIN_W = 480, WIN_H = 280;
 
@@ -125,6 +125,10 @@ public final class AerionMenu implements Page {
 					Option.toggle("arrow", true), Option.toggle("pearl", true), Option.toggle("gapple", true), Option.toggle("rocket", true), Option.toggle("xp", true),
 					Option.toggle("icon", true), Option.toggle("hideZero", true), Option.toggle("warn", true))),
 			Map.entry("death", List.of(Option.toggle("distance", true))),
+			Map.entry("reach", List.of(Option.format("{reach} m", "3.12 m", "Reach: {reach}", "Reach: 3.12", "{reach}", "3.12"), Option.toggle("hideIdle", false))),
+			Map.entry("combo", List.of(Option.format("{combo} Combo", "3 Combo", "Combo: {combo}", "Combo: 3", "x{combo}", "x3"), Option.toggle("hideZero", true))),
+			Map.entry("saturation", List.of(Option.toggle("label", true), Option.toggle("colored", true))),
+			Map.entry("server", List.of(Option.toggle("hideSingle", false))),
 			Map.entry("session", List.of(Option.toggle("label", true))),
 			Map.entry("day", List.of(Option.toggle("time", true))),
 			Map.entry("light", List.of(Option.toggle("colored", true), Option.toggle("sky", false))),
@@ -1706,6 +1710,10 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.worldLook"), Features.key("worldLook"));
 		keyRow(Lang.tr("aerion.feature.hitColor"), Features.key("hitColor"));
 		keyRow(Lang.tr("aerion.feature.screens"), Features.key("screens"));
+		keyRow(Lang.tr("aerion.feature.chunkBorders"), Features.key("chunkBorders"));
+		keyRow(Lang.tr("aerion.feature.ownName"), Features.key("ownName"));
+		keyRow(Lang.tr("aerion.feature.tntTimer"), Features.key("tntTimer"));
+		keyRow(Lang.tr("key.aerion.stopwatch"), Features.key("stopwatchStart"));
 		keyRow(Lang.tr("aerion.waypoint.add"), Features.key("waypointAdd"));
 		keyRow(Lang.tr("aerion.map.title"), Features.key("map"));
 		keyRow(Lang.tr("key.aerion.profile"), Features.key("profile"));

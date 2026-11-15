@@ -55,12 +55,19 @@ public final class HudConfig {
 			  "chatbox":{"enabled":false,"x":0,"y":733,"scale":100},
 			  "blockInfo":{"enabled":false,"x":300,"y":90,"scale":100},
 			  "fpsGraph":{"enabled":false,"x":992,"y":700,"scale":100},
-			  "playerList":{"enabled":false,"x":992,"y":300,"scale":100}},
+			  "playerList":{"enabled":false,"x":992,"y":300,"scale":100},
+			  "reach":{"enabled":false,"x":500,"y":620,"scale":100},
+			  "combo":{"enabled":false,"x":500,"y":680,"scale":100},
+			  "saturation":{"enabled":false,"x":8,"y":560,"scale":100},
+			  "stopwatch":{"enabled":false,"x":700,"y":90,"scale":100},
+			  "server":{"enabled":false,"x":8,"y":200,"scale":100},
+			  "cooldowns":{"enabled":false,"x":700,"y":560,"scale":100}},
 			 "features":{"zoom":{"enabled":true,"factor":4,"smooth":true},"freelook":{"enabled":false,"hold":true},
 			  "fullbright":{"enabled":false},"fovLock":{"enabled":false},"toggleSprint":{"enabled":false},"toggleSneak":{"enabled":false},
 			  "hitboxes":{"enabled":false},"overlays":{"enabled":false},"sounds":{"enabled":true},"crosshair":{"enabled":false},"hurtCam":{"enabled":false},"lightLevels":{"enabled":false},
 			  "blockOutline":{"enabled":false},"chat":{"enabled":false},"perspective":{"enabled":false},"fovKey":{"enabled":false},
-			  "worldLook":{"enabled":false},"hitColor":{"enabled":false},"screens":{"enabled":false},"inventory":{"enabled":true},"menus":{"enabled":true},"waypoints":{"enabled":false},"badges":{"enabled":true}}}
+			  "worldLook":{"enabled":false},"hitColor":{"enabled":false},"screens":{"enabled":false},"inventory":{"enabled":true},"menus":{"enabled":true},"waypoints":{"enabled":false},"badges":{"enabled":true},
+			  "chunkBorders":{"enabled":false},"ownName":{"enabled":false},"tntTimer":{"enabled":false}}}
 			""";
 
 	public static HudConfig defaults() {

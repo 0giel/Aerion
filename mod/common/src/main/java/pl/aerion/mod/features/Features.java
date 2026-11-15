@@ -35,11 +35,11 @@ public final class Features {
 	/** Every HUD module; each can have a key that switches it on and off. */
 	public static final String[] MODULE_IDS = {
 		"fps", "coords", "direction", "speed", "cps", "keystrokes", "armor", "totems", "items", "potions", "death", "armorWarn", "ping", "clock", "session", "day", "light", "memory", "packs", "minimap", "toggles", "bossbar", "scoreboard", "chatbox",
-		"blockInfo", "fpsGraph", "playerList"
+		"blockInfo", "fpsGraph", "playerList", "reach", "combo", "saturation", "stopwatch", "server", "cooldowns"
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -69,8 +69,12 @@ public final class Features {
 			waypointAdd = new KeyMapping("key.aerion.waypointAdd", InputConstants.UNKNOWN.getValue(), cat);
 			map = new KeyMapping("key.aerion.map", InputConstants.KEY_M, cat);
 			profile = new KeyMapping("key.aerion.profile", InputConstants.UNKNOWN.getValue(), cat);
+			chunkBorders = new KeyMapping("key.aerion.chunkBorders", InputConstants.UNKNOWN.getValue(), cat);
+			ownName = new KeyMapping("key.aerion.ownName", InputConstants.UNKNOWN.getValue(), cat);
+			tntTimer = new KeyMapping("key.aerion.tntTimer", InputConstants.UNKNOWN.getValue(), cat);
+			stopwatch = new KeyMapping("key.aerion.stopwatch", InputConstants.UNKNOWN.getValue(), cat);
 			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
-					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile));
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, stopwatch));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -140,6 +144,10 @@ public final class Features {
 			case "waypointAdd" -> waypointAdd;
 			case "map" -> map;
 			case "profile" -> profile;
+			case "chunkBorders" -> chunkBorders;
+			case "ownName" -> ownName;
+			case "tntTimer" -> tntTimer;
+			case "stopwatchStart" -> stopwatch;
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -414,6 +422,11 @@ public final class Features {
 		toggleOnKey(sounds, "sounds", true);
 		toggleOnKey(crosshair, "crosshair", false);
 		toggleOnKey(hurtCam, "hurtCam", false);
+		toggleOnKey(chunkBorders, "chunkBorders", false);
+		toggleOnKey(ownName, "ownName", false);
+		toggleOnKey(tntTimer, "tntTimer", false);
+		while (stopwatch.consumeClick()) Stopwatch.press();
+		Combat.tick(mc);
 		toggleOnKey(lightLevels, "lightLevels", false);
 		toggleOnKey(blockOutline, "blockOutline", false);
 		toggleOnKey(chat, "chat", false);

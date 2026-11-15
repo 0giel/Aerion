@@ -34,7 +34,8 @@ public final class MixinGate implements IMixinConfigPlugin {
 			Map.entry("ChatComponentMixin", List.of("chat")),
 			Map.entry("LevelRendererMixin", List.of("blockOutline")),
 			Map.entry("ScreenEffectRendererMixin", List.of("overlays")),
-			Map.entry("DebugRendererMixin", List.of("hitboxes", "lightLevels", "blockOutline", "waypoints")),
+			Map.entry("DebugRendererMixin", List.of("hitboxes", "lightLevels", "blockOutline", "waypoints", "chunkBorders", "tntTimer")),
+			Map.entry("AvatarRendererMixin", List.of("ownName")),
 			Map.entry("NameTagMixin", List.of("badges")),
 			Map.entry("PlayerTabOverlayMixin", List.of("badges")));
 	/** Features that are on unless hud.json says otherwise (as in HudConfig.DEFAULTS). */

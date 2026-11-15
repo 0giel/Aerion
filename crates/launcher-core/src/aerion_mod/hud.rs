@@ -208,6 +208,12 @@ pub struct HudFeatures {
     pub waypoints: FeatureOptions,
     /// Badges next to players' names ([`super::badges`]); on unless switched off.
     pub badges: OnFeature,
+    /// The edges of the chunks around the player.
+    pub chunk_borders: FeatureOptions,
+    /// The player's own name above their head in third person.
+    pub own_name: FeatureOptions,
+    /// Seconds left above lit TNT nearby.
+    pub tnt_timer: FeatureOptions,
 }
 
 /// A saved HUD layout (e.g. PvP, building) the player switches to with a key, in the menus, or
@@ -273,6 +279,12 @@ const MODULES: &[(&str, bool, u16, u16)] = &[
     ("blockInfo", false, 300, 90),
     ("fpsGraph", false, 992, 700),
     ("playerList", false, 992, 300),
+    ("reach", false, 500, 620),
+    ("combo", false, 500, 680),
+    ("saturation", false, 8, 560),
+    ("stopwatch", false, 700, 90),
+    ("server", false, 8, 200),
+    ("cooldowns", false, 700, 560),
 ];
 
 impl Default for HudConfig {
@@ -472,6 +484,9 @@ impl HudConfig {
                 &self.features.badges.options,
                 &self.features.inventory.options,
                 &self.features.menus.options,
+                &self.features.chunk_borders.options,
+                &self.features.own_name.options,
+                &self.features.tnt_timer.options,
             ]
             .iter()
             .all(|o| o.iter().all(|(k, v)| k.len() <= 200 && v.len() <= 64));

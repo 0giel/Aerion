@@ -37,6 +37,12 @@ export const MODULE_IDS = [
   "blockInfo",
   "fpsGraph",
   "playerList",
+  "reach",
+  "combo",
+  "saturation",
+  "stopwatch",
+  "server",
+  "cooldowns",
 ] as const;
 
 export const FIELDS: Record<string, Field[]> = {
@@ -149,6 +155,19 @@ export const FIELDS: Record<string, Field[]> = {
     { key: "value", type: "toggle", def: "1" },
     { key: "colored", type: "toggle", def: "1" },
   ],
+  reach: [
+    { key: "format", type: "text", def: "{reach} m" },
+    { key: "hideIdle", type: "toggle", def: "0" },
+  ],
+  combo: [
+    { key: "format", type: "text", def: "{combo} Combo" },
+    { key: "hideZero", type: "toggle", def: "1" },
+  ],
+  saturation: [
+    { key: "label", type: "toggle", def: "1" },
+    { key: "colored", type: "toggle", def: "1" },
+  ],
+  server: [{ key: "hideSingle", type: "toggle", def: "0" }],
   playerList: [
     { key: "max", type: "number", def: "10", min: 1, max: 50 },
     { key: "ping", type: "toggle", def: "1" },
@@ -235,6 +254,18 @@ export function sample(id: string, opt: (key: string, def: string) => string): s
       const mode = opt("dimension", "0") === "1" ? "  S" : "";
       return [`Alex${ping ? "  32 ms" : ""}${mode}`, `Steve${ping ? "  45 ms" : ""}${mode}`];
     }
+    case "reach":
+      return [fill(opt("format", "{reach} m"), { reach: "3.12" })];
+    case "combo":
+      return [fill(opt("format", "{combo} Combo"), { combo: 3 })];
+    case "saturation":
+      return ["5.0"];
+    case "stopwatch":
+      return ["1:23.4"];
+    case "server":
+      return ["play.example.net"];
+    case "cooldowns":
+      return ["▰▰▰▰▱▱", "▰▰▱▱▱▱"];
     default:
       return [];
   }

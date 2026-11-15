@@ -5,6 +5,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"BuiltInPackSourceMixin",
+		"AvatarRendererMixin",
 		"ClientLanguageMixin",
 		"DebugRendererMixin",
 		"EntityMixin",
@@ -12,12 +13,13 @@
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",
+		"MultiPlayerGameModeMixin",
 		"NameTagMixin",
 		"OptionInstanceAccessor",
 		"OptionsMixin",
 		"OverlayTextureMixin",
-		"PlayerTabOverlayMixin",
 		"PlayerFovMixin",
+		"PlayerTabOverlayMixin",
 		"SoundEngineMixin",
 		"WeatherMixin"
 	],

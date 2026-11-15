@@ -8,8 +8,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.features.BlockOutline;
+import pl.aerion.mod.features.ChunkBorders;
 import pl.aerion.mod.features.Hitboxes;
 import pl.aerion.mod.features.LightLevels;
+import pl.aerion.mod.features.TntTimer;
 import pl.aerion.mod.features.Waypoints;
 
 /** Hitboxes and light numbers join the shapes the game collects for the frame. */
@@ -22,6 +24,8 @@ abstract class DebugRendererMixin {
 			LightLevels.emit();
 			BlockOutline.emit();
 			Waypoints.emit(partial);
+			ChunkBorders.emit();
+			TntTimer.emit(partial);
 		} catch (RuntimeException e) {
 			AerionClient.warnOnce("hitboxes", e);
 		}
