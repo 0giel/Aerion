@@ -80,6 +80,9 @@ pub struct LayoutPrefs {
     /// Shape of cards and buttons: `soft` (rounded, see-through; the default) or `block` (nearly
     /// square corners, solid panels and hard shadows, like blocks).
     pub card_style: String,
+    /// What the home screen's scene shows: `both` (the player on the island; the default),
+    /// `player` (the player alone) or `island` (the island alone).
+    pub home_scene: String,
 }
 
 impl Default for LayoutPrefs {
@@ -95,6 +98,7 @@ impl Default for LayoutPrefs {
             nav_gaps: None,
             effects: "theme".into(),
             card_style: "soft".into(),
+            home_scene: "both".into(),
         }
     }
 }

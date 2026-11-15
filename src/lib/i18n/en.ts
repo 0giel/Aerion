@@ -1726,6 +1726,8 @@ const en = {
     navFavoritesHint: "One click to open or start them.",
     player: "Player model",
     sides: { left: "Left", right: "Right", hidden: "Hidden" },
+    scene: "Scene",
+    scenes: { both: "Player on island", player: "Player only", island: "Island only" },
     reset: "Restore defaults",
     done: "Done",
     home: {

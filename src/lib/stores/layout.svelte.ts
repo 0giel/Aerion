@@ -4,6 +4,9 @@ import { app } from "./app.svelte";
 import { themes } from "../theme/engine.svelte";
 import type { LayoutItem } from "../bindings";
 
+export const HOME_SCENES = ["both", "player", "island"] as const;
+export type HomeScene = (typeof HOME_SCENES)[number];
+
 export interface NavDef {
   id: string;
   page: Page;
@@ -125,6 +128,11 @@ class Layout {
   }
 
   /** Cards and buttons: rounded and see-through (`soft`, the default) or block-shaped. */
+  /** What the home scene shows: the player on the island, the player alone or the island alone. */
+  get homeScene(): HomeScene {
+    const v = app.settings?.layout.homeScene;
+    return HOME_SCENES.includes(v as HomeScene) ? (v as HomeScene) : "both";
+  }
   get cardStyle(): "soft" | "block" {
     return app.settings?.layout.cardStyle === "block" ? "block" : "soft";
   }
@@ -162,6 +170,9 @@ class Layout {
   setEffects(v: "theme" | "on" | "off") {
     return this.save({ effects: v });
   }
+  setHomeScene(v: HomeScene) {
+    return this.save({ homeScene: v });
+  }
   setCardStyle(v: "soft" | "block") {
     return this.save({ cardStyle: v });
   }
@@ -177,7 +188,7 @@ class Layout {
     });
   }
   resetHome() {
-    return this.save({ home: [], homePlayer: "right" });
+    return this.save({ home: [], homePlayer: "right", homeScene: "both" });
   }
 }
 

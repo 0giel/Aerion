@@ -84,10 +84,17 @@
   );
   /** Where the player model's box goes so its feet land on the island's top (the model is
    *  22 units wide; its feet are 18 units below its centre line, seen at the view's tilt). */
-  const figure = $derived({
-    left: (ISLAND.feet[0] - 11) * SCENE,
-    top: (ISLAND.feet[1] - 18 - 16 * Math.cos((TILT * Math.PI) / 180)) * SCENE,
-  });
+  const scene = $derived(layout.homeScene);
+  /** The player alone is drawn bigger, in the middle of the scene where the island would be. */
+  const FIGURE = $derived(scene === "player" ? SCENE * 1.35 : SCENE);
+  const figure = $derived(
+    scene === "player"
+      ? { left: (ISLAND.width / 2) * SCENE - 11 * FIGURE, top: (ISLAND.height / 2) * SCENE - 19 * FIGURE }
+      : {
+          left: (ISLAND.feet[0] - 11) * SCENE,
+          top: (ISLAND.feet[1] - 18 - 16 * Math.cos((TILT * Math.PI) / 180)) * SCENE,
+        },
+  );
   const CLOUDS = [
     { x: 2, y: 24, k: 1, t: 95 },
     { x: 62, y: 8, k: 0.7, t: 130 },
@@ -307,24 +314,28 @@
       </div>
       <div
         class="stage"
-        class:still={!drift}
+        class:still={!drift || scene === "player"}
         style:width="{ISLAND.width * SCENE}px"
         style:height="{ISLAND.height * SCENE}px"
         style:margin-left="{(-ISLAND.width * SCENE) / 2}px"
         style:margin-top="{(-ISLAND.height * SCENE) / 2}px"
       >
-        <div class="island"><SkyIsland scale={SCENE} pitch={TILT} {night} {biome} /></div>
-        <div class="figure" style:left="{figure.left}px" style:top="{figure.top}px">
-          <SkinViewer
-            skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
-            capeUrl={account?.capeUrl}
-            follow={app.settings?.followCursor ?? true}
-            slim={account?.skinVariant === "slim"}
-            scale={SCENE}
-            pitch={TILT}
-            ground={false}
-          />
-        </div>
+        {#if scene !== "player"}
+          <div class="island"><SkyIsland scale={SCENE} pitch={TILT} {night} {biome} /></div>
+        {/if}
+        {#if scene !== "island"}
+          <div class="figure" style:left="{figure.left}px" style:top="{figure.top}px">
+            <SkinViewer
+              skinUrl={account?.skinUrl ?? DEFAULT_SKIN}
+              capeUrl={account?.capeUrl}
+              follow={app.settings?.followCursor ?? true}
+              slim={account?.skinVariant === "slim"}
+              scale={FIGURE}
+              pitch={TILT}
+              ground={scene === "player"}
+            />
+          </div>
+        {/if}
       </div>
     </aside>
   {/if}

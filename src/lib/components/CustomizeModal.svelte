@@ -5,7 +5,14 @@
   import Icon from "./Icon.svelte";
   import Switch from "./Switch.svelte";
   import { ui } from "../stores/ui.svelte";
-  import { layout, NAV_MODES, NAV_SIDES, type NavMode, type PlayerSide } from "../stores/layout.svelte";
+  import {
+    layout,
+    NAV_MODES,
+    NAV_SIDES,
+    HOME_SCENES,
+    type NavMode,
+    type PlayerSide,
+  } from "../stores/layout.svelte";
   import { toasts } from "../stores/toasts.svelte";
   import { errorMessage } from "../api";
   import { t } from "../i18n/index.svelte";
@@ -198,6 +205,20 @@
           {/each}
         </div>
       </div>
+      {#if layout.player !== "hidden"}
+        <div class="field">
+          <span class="label">{t("layout.scene")}</span>
+          <div class="segmented" role="group" aria-label={t("layout.scene")}>
+            {#each HOME_SCENES as s (s)}
+              <button
+                type="button"
+                aria-pressed={layout.homeScene === s}
+                onclick={() => void run(layout.setHomeScene(s))}>{t(`layout.scenes.${s}`)}</button
+              >
+            {/each}
+          </div>
+        </div>
+      {/if}
     {/if}
   </div>
   {#snippet footer()}

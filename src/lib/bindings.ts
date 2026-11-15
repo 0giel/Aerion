@@ -1570,6 +1570,11 @@ export type LayoutPrefs_Deserialize = {
 	 *  square corners, solid panels and hard shadows, like blocks).
 	 */
 	cardStyle?: string,
+	/**
+	 *  What the home screen's scene shows: `both` (the player on the island; the default),
+	 *  `player` (the player alone) or `island` (the island alone).
+	 */
+	homeScene?: string,
 };
 
 /**
@@ -1604,6 +1609,11 @@ export type LayoutPrefs_Serialize = {
 	 *  square corners, solid panels and hard shadows, like blocks).
 	 */
 	cardStyle: string,
+	/**
+	 *  What the home screen's scene shows: `both` (the player on the island; the default),
+	 *  `player` (the player alone) or `island` (the island alone).
+	 */
+	homeScene: string,
 };
 
 export type License = License_Serialize | License_Deserialize;

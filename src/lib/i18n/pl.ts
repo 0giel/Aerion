@@ -1780,6 +1780,8 @@ const pl: Dict = {
     navFavoritesHint: "Jednym kliknięciem otworzysz lub uruchomisz instancję.",
     player: "Postać gracza",
     sides: { left: "Po lewej", right: "Po prawej", hidden: "Ukryta" },
+    scene: "Scena",
+    scenes: { both: "Gracz z wyspą", player: "Sam gracz", island: "Sama wyspa" },
     reset: "Przywróć domyślne",
     done: "Gotowe",
     home: {
