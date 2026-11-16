@@ -23,7 +23,8 @@ public final class Proto {
 	public static final int MAX_TITLE = 64;
 
 	// To the server.
-	public static final byte HELLO = 1, PANEL = 2, PART_OF_FRAME = 3, REMOVE = 4;
+	public static final byte HELLO = 1, PANEL = 2, PART_OF_FRAME = 3, REMOVE = 4, ALLOW = 5;
+	public static final int MAX_ALLOWED = 64;
 	// To the players.
 	public static final byte WELCOME = 10, THEIR_PANEL = 11, THEIR_FRAME = 12, THEIR_REMOVE = 13;
 
@@ -122,12 +123,27 @@ public final class Proto {
 		return message(REMOVE, o -> o.writeInt(id));
 	}
 
-	/** The server's answer: it passes windows on, at most `fps` pictures a second. */
-	public static byte[] welcome(int fps, int maxPanels) {
+	/** Who may see this player's windows: everyone, or only the players named. */
+	public static byte[] allow(boolean everyone, java.util.Collection<String> names) {
+		return message(ALLOW, o -> {
+			o.writeBoolean(everyone);
+			int n = Math.min(MAX_ALLOWED, names.size());
+			o.writeShort(n);
+			int i = 0;
+			for (String name : names) {
+				if (i++ >= n) break;
+				writeText(o, name);
+			}
+		});
+	}
+
+	/** The server's answer: it passes windows on, at most `fps` pictures a second of `maxFrameKb` each. */
+	public static byte[] welcome(int fps, int maxPanels, int maxFrameKb) {
 		return message(WELCOME, o -> {
 			o.writeInt(VERSION);
 			o.writeInt(fps);
 			o.writeInt(maxPanels);
+			o.writeInt(maxFrameKb);
 		});
 	}
 
@@ -175,7 +191,9 @@ public final class Proto {
 
 	public record Remove(int id) implements Message {}
 
-	public record Welcome(int version, int fps, int maxPanels) implements Message {}
+	public record Allow(boolean everyone, java.util.List<String> names) implements Message {}
+
+	public record Welcome(int version, int fps, int maxPanels, int maxFrameKb) implements Message {}
 
 	public record TheirPanel(UUID owner, String name, Panel panel) implements Message {}
 
@@ -198,7 +216,22 @@ public final class Proto {
 					yield rest.length > PART ? null : new Part(id, frame, index, count, rest);
 				}
 				case REMOVE -> new Remove(in.readInt());
-				case WELCOME -> new Welcome(in.readInt(), in.readInt(), in.readInt());
+				case ALLOW -> {
+					boolean everyone = in.readBoolean();
+					int n = in.readUnsignedShort();
+					if (n > MAX_ALLOWED) yield null;
+					java.util.List<String> names = new java.util.ArrayList<>();
+					for (int i = 0; i < n; i++) {
+						String name = readText(in);
+						if (name.length() <= 32) names.add(name);
+					}
+					yield new Allow(everyone, names);
+				}
+				case WELCOME -> {
+					int version = in.readInt(), fps = in.readInt(), panels = in.readInt();
+					// Servers of the first version didn't say the picture size.
+					yield new Welcome(version, fps, panels, in.available() >= 4 ? in.readInt() : 200);
+				}
 				case THEIR_PANEL -> new TheirPanel(readUuid(in), readText(in), Panel.read(in));
 				case THEIR_FRAME -> new TheirFrame(readUuid(in), in.readInt(), in.readAllBytes());
 				case THEIR_REMOVE -> new TheirRemove(readUuid(in), in.readInt());

@@ -166,7 +166,7 @@ public final class AerionMenu implements Page {
 					Option.colour("color", "#ffffff"), Option.toggle("outline", true), Option.toggle("dot", false),
 					Option.toggle("target", false), Option.colour("targetColor", "#ff5555"), Option.toggle("attack", true))),
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
-			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.toggle("others", true), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
+			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.select("shareQuality", "high", "low", "medium", "high", "max"), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.select("shape", "curve", "curve", "straight"), Option.toggle("handle", true))),
 			Map.entry("wheel", List.of(Option.select("slot1", "fullbright", W), Option.select("slot2", "hitboxes", W), Option.select("slot3", "waypoint", W), Option.select("slot4", "map", W), Option.select("slot5", "perspective", W), Option.select("slot6", "streamer", W), Option.select("slot7", "none", W), Option.select("slot8", "none", W))),
 			Map.entry("effects", List.of(Option.select("glint", "default", "default", "red", "gold", "green", "aqua", "blue", "pink", "white"), Option.number("particles", 100, 0, 100))),
@@ -1601,6 +1601,8 @@ public final class AerionMenu implements Page {
 		JsonObject f = cfg.feature("mirrors");
 		beginCard(null);
 		toggle(Lang.tr("aerion.mirrors.enable"), HudConfig.bool(f, "enabled", false), v -> f.addProperty("enabled", v));
+		// Others' windows can be turned off whether or not this player hangs any.
+		toggle(Lang.tr("aerion.opt.mirrors.others"), !"0".equals(HudConfig.opt(f, "others", "1")), v -> setOption(f, "others", v ? "1" : "0"));
 		endCard();
 		var player = Minecraft.getInstance().player;
 		if (player != null) {
@@ -1623,6 +1625,7 @@ public final class AerionMenu implements Page {
 				for (pl.aerion.mod.mirror.Mirrors.Panel p : new ArrayList<>(panels)) mirrorRow(p);
 				endCard();
 				if (panels.stream().anyMatch(p -> p.shared)) note(Lang.tr(pl.aerion.mod.mirror.ScreenShare.supported() ? "aerion.share.ok" : "aerion.share.unsupported"));
+				if (panels.stream().anyMatch(p -> p.shared)) whoWatches(player.getName().getString());
 			}
 		}
 		beginCard(Lang.tr("aerion.sec.settings"));
@@ -1636,6 +1639,50 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("key.aerion.mirrorHide"), Features.key("mirrorHide"));
 		endCard();
 		note(Lang.tr("aerion.mirrors.keys"));
+	}
+
+	/** Who may see the shared windows on this server: everyone, or the players ticked. */
+	private void whoWatches(String self) {
+		var allow = pl.aerion.mod.mirror.Mirrors.allow();
+		beginCard(Lang.tr("aerion.share.who"));
+		choiceRow(Lang.tr("aerion.share.whoLabel"), new String[] {"all", "list"}, new String[] {Lang.tr("aerion.share.everyone"), Lang.tr("aerion.share.chosen")},
+				allow.everyone() ? "all" : "list", v -> pl.aerion.mod.mirror.Mirrors.setAllow("all".equals(v), allow.names()));
+		if (!allow.everyone()) {
+			java.util.Set<String> names = new java.util.LinkedHashSet<>(allow.names());
+			var conn = Minecraft.getInstance().getConnection();
+			if (conn != null) {
+				for (var info : conn.getOnlinePlayers()) {
+					String n = info.getProfile().name();
+					if (!n.equalsIgnoreCase(self) && names.size() < 40) names.add(n);
+				}
+			}
+			if (names.isEmpty()) note(Lang.tr("aerion.share.nobody"));
+			for (String n : names) {
+				boolean on = allow.names().stream().anyMatch(a -> a.equalsIgnoreCase(n));
+				beginRow("allow:" + n);
+				Txt.draw(g, ellipsize(n, colW - 140), x, y + ROW / 2f, TEXT, text);
+				String label = Lang.tr(on ? "aerion.share.may" : "aerion.share.mayNot");
+				int w = Math.round(Txt.width(label, SMALL)) + 14;
+				smallButton(x + colW - w, y + 2, w, ROW - 4, label, on, () -> {
+					List<String> next = new ArrayList<>(allow.names());
+					if (on) next.removeIf(a -> a.equalsIgnoreCase(n));
+					else next.add(n);
+					pl.aerion.mod.mirror.Mirrors.setAllow(false, next);
+				});
+				y += ROW;
+				endRow();
+			}
+			// Anyone by name, also players not here now.
+			textRow("allowAdd", Lang.tr("aerion.share.add"), "", Lang.tr("aerion.share.addHint"), typed -> {
+				String n = typed.trim();
+				if (n.matches("[A-Za-z0-9_]{1,16}") && allow.names().stream().noneMatch(a -> a.equalsIgnoreCase(n))) {
+					List<String> next = new ArrayList<>(allow.names());
+					next.add(n);
+					pl.aerion.mod.mirror.Mirrors.setAllow(false, next);
+				}
+			});
+		}
+		endCard();
 	}
 
 	private void mirrorRow(pl.aerion.mod.mirror.Mirrors.Panel p) {

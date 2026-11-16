@@ -16,10 +16,10 @@ final class Config {
 	/** Pictures per second passed on per window. */
 	int fps = 5;
 	/** What one player may send, in kilobits per second (all their windows together). */
-	int kbps = 2400;
+	int kbps = 6000;
 	int maxPanels = 3;
 	/** The largest picture passed on, in KiB. */
-	int maxFrameKb = 200;
+	int maxFrameKb = 500;
 
 	static Config load() {
 		Config c = new Config();

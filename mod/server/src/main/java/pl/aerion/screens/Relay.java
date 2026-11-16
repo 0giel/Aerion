@@ -39,6 +39,9 @@ public final class Relay {
 	private static final class Sender {
 		final Map<Integer, Shared> panels = new HashMap<>();
 		boolean view;
+		/** Who may see this player's windows: everyone, or the names here (lower case). */
+		boolean everyone = true;
+		Set<String> allowed = Set.of();
 		long windowStart;
 		long bytes;
 	}
@@ -66,7 +69,7 @@ public final class Relay {
 			Sender s = PLAYERS.computeIfAbsent(id, k -> new Sender());
 			s.view = h.view();
 			if (!s.view) forgetFor(from);
-			send(from, Proto.welcome(config.fps, config.maxPanels));
+			send(from, Proto.welcome(config.fps, config.maxPanels, config.maxFrameKb));
 			return;
 		}
 		Sender s = PLAYERS.get(id);
@@ -74,6 +77,12 @@ public final class Relay {
 		switch (m) {
 			case Proto.PanelMsg pm -> panel(from, s, pm.panel());
 			case Proto.Part part -> part(from, s, part);
+			case Proto.Allow a -> {
+				s.everyone = a.everyone();
+				Set<String> names = new HashSet<>();
+				for (String n : a.names()) names.add(n.toLowerCase(java.util.Locale.ROOT));
+				s.allowed = names;
+			}
 			case Proto.Remove r -> {
 				if (s.panels.remove(r.id()) != null) gone(new Key(id, r.id()));
 			}
@@ -199,6 +208,8 @@ public final class Relay {
 				if (o.getKey().equals(v.getKey())) continue;
 				ServerPlayer owner = server.getPlayerList().getPlayer(o.getKey());
 				if (owner == null) continue;
+				// The owner chose who may watch.
+				if (!o.getValue().everyone && !o.getValue().allowed.contains(viewer.getName().getString().toLowerCase(java.util.Locale.ROOT))) continue;
 				for (var e : o.getValue().panels.entrySet()) {
 					Shared sh = e.getValue();
 					if (sh.panel == null || sh.dimension != viewer.level().dimension()) continue;

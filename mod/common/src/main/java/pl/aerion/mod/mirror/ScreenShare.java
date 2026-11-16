@@ -36,8 +36,8 @@ import pl.aerion.net.ScreenPayload;
 public final class ScreenShare {
 	private ScreenShare() {}
 
-	/** The widest picture sent (pixels) and the most remote panels shown at once. */
-	private static final int SEND_WIDTH = 640, MAX_REMOTE = 16, MAX_SIDE = 2048;
+	/** The most remote panels shown at once, and the largest picture accepted. */
+	private static final int MAX_REMOTE = 16, MAX_SIDE = 2048;
 
 	private static final ConcurrentLinkedQueue<byte[]> INBOX = new ConcurrentLinkedQueue<>();
 	private static final ExecutorService DECODER = Executors.newSingleThreadExecutor(r -> {
@@ -52,7 +52,8 @@ public final class ScreenShare {
 	private static Object connection;
 	private static boolean helloSent, lastView;
 	private static volatile boolean supported;
-	private static volatile int serverFps = 5;
+	private static volatile int serverFps = 5, maxFrameKb = 200;
+	private static String allowSent;
 	private static final AtomicInteger NEXT_ID = new AtomicInteger(1);
 	private static long lastPanels;
 
@@ -95,7 +96,50 @@ public final class ScreenShare {
 			if (!view) clearRemote();
 		}
 		for (byte[] b; (b = INBOX.poll()) != null;) handle(Proto.read(b));
-		if (supported) sendPanels();
+		if (supported) {
+			sendAllow();
+			sendPanels();
+		}
+	}
+
+	/** Who may watch, when it changed (per server, kept with the panels). */
+	private static void sendAllow() {
+		Mirrors.Allow a = Mirrors.allow();
+		String sig = a.everyone() + ":" + String.join(",", a.names());
+		if (sig.equals(allowSent)) return;
+		send(Proto.allow(a.everyone(), a.names()));
+		allowSent = sig;
+	}
+
+	/** Width and JPEG quality of the pictures sent (Aerion menu → Windows → sharing quality). */
+	private static int sendWidth() {
+		return switch (quality()) {
+			case "low" -> 480;
+			case "medium" -> 640;
+			case "max" -> 1280;
+			default -> 960;
+		};
+	}
+
+	private static float sendQuality() {
+		return switch (quality()) {
+			case "low" -> 0.55f;
+			case "medium" -> 0.65f;
+			case "max" -> 0.85f;
+			default -> 0.75f;
+		};
+	}
+
+	private static String quality() {
+		HudConfig cfg = AerionClient.hud();
+		return cfg == null ? "high" : HudConfig.opt(cfg.feature("mirrors"), "shareQuality", "high");
+	}
+
+	/** How wide windows must be read so shared pictures can be this sharp (0 when nothing is shared). */
+	static int captureWidth() {
+		if (!supported) return 0;
+		for (Mirrors.Panel p : Mirrors.all()) if (p.shared) return sendWidth();
+		return 0;
 	}
 
 	private static void handle(Proto.Message m) {
@@ -103,6 +147,8 @@ public final class ScreenShare {
 			case Proto.Welcome w -> {
 				supported = w.version() == Proto.VERSION;
 				serverFps = Math.max(1, Math.min(15, w.fps()));
+				maxFrameKb = Math.max(16, Math.min(900, w.maxFrameKb()));
+				allowSent = null;
 				if (supported) AerionClient.LOG.info("Aerion: this world passes shared windows on ({} pictures/s)", serverFps);
 			}
 			case Proto.TheirPanel tp -> {
@@ -208,7 +254,16 @@ public final class ScreenShare {
 		if (now - p.lastSent < 1000L / serverFps) return;
 		p.lastSent = now;
 		try {
-			byte[] jpeg = encode(f);
+			// Sharper when the server allows it: smaller and softer until it fits.
+			int limit = maxFrameKb * 1024, width = sendWidth();
+			float q = sendQuality();
+			byte[] jpeg = encode(f, width, q);
+			for (int step = 0; jpeg.length > limit && step < 4; step++) {
+				if (q > 0.5f) q -= 0.15f;
+				else width = Math.round(width * 0.75f);
+				jpeg = encode(f, width, q);
+			}
+			if (jpeg.length > limit) return;
 			int count = (jpeg.length + Proto.PART - 1) / Proto.PART;
 			if (count > Proto.MAX_PARTS) return;
 			int frame = ++p.frameNo;
@@ -221,8 +276,8 @@ public final class ScreenShare {
 		}
 	}
 
-	private static byte[] encode(WindowSource.Frame f) throws Exception {
-		float k = Math.min(1f, SEND_WIDTH / (float) f.width());
+	private static byte[] encode(WindowSource.Frame f, int maxWidth, float quality) throws Exception {
+		float k = Math.min(1f, maxWidth / (float) f.width());
 		int w = Math.max(1, Math.round(f.width() * k)), h = Math.max(1, Math.round(f.height() * k));
 		BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		int[] row = new int[w];
@@ -237,7 +292,7 @@ public final class ScreenShare {
 			writer.setOutput(ios);
 			ImageWriteParam param = writer.getDefaultWriteParam();
 			param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-			param.setCompressionQuality(0.6f);
+			param.setCompressionQuality(quality);
 			writer.write(null, new IIOImage(img, null, null), param);
 		} finally {
 			writer.dispose();

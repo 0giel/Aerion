@@ -91,11 +91,13 @@ public final class Mirrors {
 	}
 
 	private static int maxWidth() {
-		return switch (opt("quality", "medium")) {
+		int local = switch (opt("quality", "medium")) {
 			case "low" -> 640;
 			case "high" -> 1920;
 			default -> 1280;
 		};
+		// Shared pictures may ask for more than the panel itself.
+		return Math.max(local, ScreenShare.captureWidth());
 	}
 
 	/** How solid the pictures are, 0.2–1. */
@@ -159,6 +161,30 @@ public final class Mirrors {
 			}
 		}
 		return panels;
+	}
+
+	/** Who may see this player's shared windows on this server: everyone, or the names listed. */
+	public record Allow(boolean everyone, List<String> names) {}
+
+	public static synchronized Allow allow() {
+		all();
+		JsonObject a = file != null && loadedKey != null && file.get("share:" + loadedKey) instanceof JsonObject o ? o : null;
+		if (a == null) return new Allow(true, List.of());
+		List<String> names = new ArrayList<>();
+		if (a.get("names") instanceof com.google.gson.JsonArray arr) for (var e : arr) names.add(e.getAsString());
+		return new Allow(!a.has("everyone") || a.get("everyone").getAsBoolean(), names);
+	}
+
+	public static synchronized void setAllow(boolean everyone, List<String> names) {
+		all();
+		if (file == null || loadedKey == null) return;
+		JsonObject a = new JsonObject();
+		a.addProperty("everyone", everyone);
+		com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+		for (String n : names) arr.add(n);
+		a.add("names", arr);
+		file.add("share:" + loadedKey, a);
+		save();
 	}
 
 	public static synchronized void save() {
