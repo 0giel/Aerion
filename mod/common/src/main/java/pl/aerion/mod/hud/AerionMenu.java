@@ -2141,26 +2141,7 @@ public final class AerionMenu implements Page {
 		float widest = 0;
 		for (String l : labels) widest = Math.max(widest, Txt.width(l, SMALL));
 		if (widest + 8 > (float) (colW - reserve) / values.length) {
-			// Too many for one strip (e.g. a quick wheel slot): buttons sized to their words, in lines.
-			beginRow(label);
-			Txt.draw(g, label, x, y + 6, TEXT, text);
-			y += 13;
-			int bx = x, right = x + colW - reserve, bh = ROW - 4;
-			for (int i = 0; i < values.length; i++) {
-				String v = values[i];
-				int w = Math.round(Txt.width(labels[i], SMALL)) + 12;
-				if (bx > x && bx + w > right) {
-					bx = x;
-					y += bh + 3;
-				}
-				smallButton(bx, y, w, bh, labels[i], v.equals(current), () -> {
-					set.accept(v);
-					changed = true;
-				});
-				bx += w + 3;
-			}
-			y += ROW - 2;
-			endRow();
+			dropdown(label, values, labels, current, set);
 		} else if (widest + 8 > (float) controlW() / values.length) {
 			beginRow(label);
 			Txt.draw(g, label, x, y + 6, TEXT, text);
@@ -2171,6 +2152,50 @@ public final class AerionMenu implements Page {
 		} else {
 			choiceRow(label, values, labels, current, set);
 		}
+	}
+
+	/**
+	 * Too many choices for one strip (e.g. a quick wheel slot): a drop-down showing the chosen one;
+	 * a click opens the list under it, picking closes it.
+	 */
+	private void dropdown(String label, String[] values, String[] labels, String current, Consumer<String> set) {
+		String id = "drop:" + label;
+		boolean open = id.equals(expanded);
+		beginRow(id);
+		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
+		int bx = controlX(), bw = controlW(), bh = ROW - 4, by = y + 2;
+		String shown = current;
+		for (int i = 0; i < values.length; i++) if (values[i].equals(current)) shown = labels[i];
+		boolean over = inside(bx, by, bw, bh);
+		Draw.rounded(g, bx, by, bw, bh, 3, open ? Colors.mix(control, accent, 0.25f) : over ? Colors.mix(control, text, 0.08f) : control);
+		Txt.draw(g, ellipsize(shown, bw - 22, SMALL), bx + 7, by + bh / 2f, SMALL, text);
+		// A small arrow: down when closed, up when open.
+		int ax = bx + bw - 12, ay = by + bh / 2;
+		for (int r = 0; r < 3; r++) {
+			int row = open ? ay + 1 - r : ay - 1 + r;
+			g.fill(ax - (2 - r), row, ax + (3 - r), row + 1, muted);
+		}
+		hit(bx, by, bw, bh, f -> expanded = open ? null : id, false);
+		y += ROW;
+		if (open) {
+			int ih = ROW - 5;
+			Draw.rounded(g, bx, y - 1, bw, values.length * ih + 4, 3, Colors.alpha(control, 0xF0));
+			int iy = y + 1;
+			for (int i = 0; i < values.length; i++) {
+				String v = values[i];
+				boolean on = v.equals(current), hover = inside(bx + 2, iy, bw - 4, ih);
+				if (on || hover) Draw.rounded(g, bx + 2, iy, bw - 4, ih, 2, on ? Colors.mix(track, accent, 0.3f) : Colors.mix(control, text, 0.08f));
+				Txt.draw(g, labels[i], bx + 7, iy + ih / 2f, SMALL, on || hover ? text : muted);
+				hit(bx + 2, iy, bw - 4, ih, f -> {
+					set.accept(v);
+					changed = true;
+					expanded = null;
+				}, false);
+				iy += ih;
+			}
+			y = iy + 6;
+		}
+		endRow();
 	}
 
 	private void choiceRow(String label, String[] values, String[] labels, String current, Consumer<String> set) {
