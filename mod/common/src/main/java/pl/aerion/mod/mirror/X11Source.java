@@ -219,8 +219,50 @@ final class X11Source implements WindowSource {
 		return new int[] {Math.max(1, a.width), Math.max(1, a.height)};
 	}
 
-	/** The innermost window at (`fx`, `fy`) of window `id`, and the point in its coordinates. */
-	private record Target(X11.Window w, int x, int y) {}
+	/**
+	 * The innermost window at (`fx`, `fy`) of window `id`, the point in its coordinates and on the
+	 * screen (many programs - GTK, Chromium - read the screen position, so it must be right for
+	 * windows that don't start at the screen's corner).
+	 */
+	private record Target(X11.Window w, int x, int y, int rootX, int rootY) {}
+
+	private Target located(X11.Window w, int px, int py) {
+		IntByReference rx = new IntByReference(), ry = new IntByReference();
+		x.XTranslateCoordinates(display, w, root, px, py, rx, ry, new X11.WindowByReference());
+		return new Target(w, px, py, rx.getValue(), ry.getValue());
+	}
+
+	/** The window the pointer was last "in": programs get Enter/Leave as if the pointer moved. */
+	private X11.Window hovered;
+
+	private void cross(Target t) {
+		if (hovered != null && hovered.longValue() == t.w.longValue()) return;
+		if (hovered != null) crossing(hovered, X11.LeaveNotify, t);
+		crossing(t.w, X11.EnterNotify, t);
+		hovered = t.w;
+	}
+
+	private void crossing(X11.Window w, int type, Target at) {
+		X11.XEvent e = new X11.XEvent();
+		e.type = type;
+		e.xcrossing.type = type;
+		e.xcrossing.display = display;
+		e.xcrossing.window = w;
+		e.xcrossing.root = root;
+		e.xcrossing.subwindow = X11.Window.None;
+		e.xcrossing.time = new NativeLong(0);
+		e.xcrossing.x = at.x;
+		e.xcrossing.y = at.y;
+		e.xcrossing.x_root = at.rootX;
+		e.xcrossing.y_root = at.rootY;
+		e.xcrossing.mode = X11.NotifyNormal;
+		e.xcrossing.detail = X11.NotifyAncestor;
+		e.xcrossing.same_screen = 1;
+		e.xcrossing.focus = 1;
+		e.setType(X11.XCrossingEvent.class);
+		e.write();
+		x.XSendEvent(display, w, 1, new NativeLong(type == X11.EnterNotify ? X11.EnterWindowMask : X11.LeaveWindowMask), e);
+	}
 
 	private Target target(long id, float fx, float fy) {
 		int[] s = size(id);
@@ -238,7 +280,7 @@ final class X11Source implements WindowSource {
 			px = ix.getValue();
 			py = iy.getValue();
 		}
-		return new Target(w, px, py);
+		return located(w, px, py);
 	}
 
 	/** The point (`fx`, `fy`) of window `id` in the coordinates of its inner window `w`. */
@@ -246,7 +288,7 @@ final class X11Source implements WindowSource {
 		int[] s = size(id);
 		IntByReference ix = new IntByReference(), iy = new IntByReference();
 		x.XTranslateCoordinates(display, new X11.Window(id), w, Math.round(fx * s[0]), Math.round(fy * s[1]), ix, iy, new X11.WindowByReference());
-		return new Target(w, ix.getValue(), iy.getValue());
+		return located(w, ix.getValue(), iy.getValue());
 	}
 
 	/** While a button is held, its events go to the window it went down on (as X itself does). */
@@ -263,6 +305,8 @@ final class X11Source implements WindowSource {
 		e.xbutton.time = new NativeLong(0);
 		e.xbutton.x = t.x;
 		e.xbutton.y = t.y;
+		e.xbutton.x_root = t.rootX;
+		e.xbutton.y_root = t.rootY;
 		e.xbutton.button = button;
 		e.xbutton.same_screen = 1;
 		e.xbutton.state = type == X11.ButtonRelease ? (X11.Button1Mask << (button - 1)) : 0;
@@ -279,6 +323,7 @@ final class X11Source implements WindowSource {
 	public synchronized void press(long id, float fx, float fy, int button) {
 		Target t = target(id, fx, fy);
 		pressedIn = t.w;
+		cross(t);
 		sendButton(t, X11.ButtonPress, xButton(button));
 		x.XFlush(display);
 	}
@@ -294,6 +339,7 @@ final class X11Source implements WindowSource {
 	@Override
 	public synchronized void move(long id, float fx, float fy, boolean held) {
 		Target t = held && pressedIn != null ? in(id, pressedIn, fx, fy) : target(id, fx, fy);
+		if (!held) cross(t);
 		X11.XEvent e = new X11.XEvent();
 		e.type = X11.MotionNotify;
 		e.xmotion.type = X11.MotionNotify;
@@ -304,6 +350,8 @@ final class X11Source implements WindowSource {
 		e.xmotion.time = new NativeLong(0);
 		e.xmotion.x = t.x;
 		e.xmotion.y = t.y;
+		e.xmotion.x_root = t.rootX;
+		e.xmotion.y_root = t.rootY;
 		e.xmotion.state = held ? X11.Button1Mask : 0;
 		e.xmotion.is_hint = 0;
 		e.xmotion.same_screen = 1;
@@ -315,6 +363,7 @@ final class X11Source implements WindowSource {
 
 	private void button(long id, float fx, float fy, int xButton) {
 		Target t = target(id, fx, fy);
+		cross(t);
 		sendButton(t, X11.ButtonPress, xButton);
 		sendButton(t, X11.ButtonRelease, xButton);
 		x.XFlush(display);

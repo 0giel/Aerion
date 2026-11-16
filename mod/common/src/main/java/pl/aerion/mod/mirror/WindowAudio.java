@@ -71,6 +71,7 @@ final class WindowAudio {
 		final Mirrors.Panel panel;
 		volatile boolean stop;
 		volatile Process process;
+		boolean told;
 		final Adpcm.Encoder encoder = new Adpcm.Encoder();
 
 		Capture(Mirrors.Panel panel) {
@@ -92,12 +93,18 @@ final class WindowAudio {
 				try {
 					WindowSource src = Mirrors.source();
 					long pid = src == null || panel.win == 0 ? 0 : src.pid(panel.win);
-					long node = pid > 0 ? findNode(pid) : -1;
+					long node = findNode(pid, panel.cls);
 					// No sound playing yet: look again in a while.
 					if (node < 0) {
+						if (!told) {
+							AerionClient.LOG.info("Aerion: no sound found yet for window \"{}\" (program {}, process {}); looking again every few seconds", panel.title, panel.cls, pid);
+							told = true;
+						}
 						Thread.sleep(3000);
 						continue;
 					}
+					AerionClient.LOG.info("Aerion: sharing the sound of window \"{}\" (PipeWire stream {})", panel.title, node);
+					told = false;
 					record(node);
 				} catch (InterruptedException e) {
 					return;
@@ -140,7 +147,7 @@ final class WindowAudio {
 	 * The PipeWire node of the program's sound: its own process, else a stream of the same program,
 	 * else one of its child processes (browsers play sound from helper processes).
 	 */
-	static long findNode(long pid) throws Exception {
+	static long findNode(long pid, String cls) throws Exception {
 		Process p = new ProcessBuilder("pw-dump").redirectError(ProcessBuilder.Redirect.DISCARD).start();
 		String json;
 		try (InputStream in = p.getInputStream()) {
@@ -150,9 +157,10 @@ final class WindowAudio {
 		}
 		long self = ProcessHandle.current().pid();
 		if (pid == self) return -1;
-		String binary = binary(pid);
-		Set<Long> family = children(pid);
-		long byBinary = -1, byChild = -1;
+		// Programs in a sandbox (Flatpak) give their own process numbers: then only the name counts.
+		String binary = pid > 0 && related(binary(pid), cls) ? binary(pid) : null;
+		Set<Long> family = binary != null ? children(pid) : Set.of();
+		long byBinary = -1, byChild = -1, byName = -1;
 		for (JsonElement e : JsonParser.parseString(json).getAsJsonArray()) {
 			if (!(e instanceof JsonObject o) || !(o.get("info") instanceof JsonObject info) || !(info.get("props") instanceof JsonObject props)) continue;
 			if (!props.has("media.class") || !props.get("media.class").getAsString().equals("Stream/Output/Audio")) continue;
@@ -160,12 +168,35 @@ final class WindowAudio {
 			long streamPid = props.has("application.process.id") ? parse(props.get("application.process.id").getAsString()) : -1;
 			// Never the game's own sound.
 			if (streamPid == self) continue;
-			if (streamPid == pid) return id;
+			if (streamPid == pid && binary != null) return id;
+			if (byName < 0 && cls != null) {
+				for (String k : new String[] {"application.process.binary", "pipewire.access.portal.app_id", "application.id", "application.name"}) {
+					if (props.has(k) && related(props.get(k).getAsString(), cls)) {
+						byName = id;
+						break;
+					}
+				}
+			}
 			if (byBinary < 0 && binary != null && props.has("application.process.binary") && binary.equals(props.get("application.process.binary").getAsString())) byBinary = id;
 			// A helper process of the same program (browsers), not anything started from it.
 			if (byChild < 0 && family.contains(streamPid) && binary != null && binary.equals(binary(streamPid))) byChild = id;
 		}
-		return byChild >= 0 ? byChild : byBinary;
+		return byChild >= 0 ? byChild : byBinary >= 0 ? byBinary : byName;
+	}
+
+	/**
+	 * Whether a program name and the window's class (WM_CLASS, "instance class") belong together:
+	 * "brave" and "brave-browser", "com.discordapp.Discord" and "discord".
+	 */
+	static boolean related(String name, String cls) {
+		if (name == null || cls == null) return false;
+		String n = name.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+		if (n.length() < 3) return false;
+		for (String part : cls.toLowerCase(java.util.Locale.ROOT).split("[\\s,\"]+")) {
+			String c = part.replaceAll("[^a-z0-9]", "");
+			if (c.length() >= 3 && (n.contains(c) || c.contains(n))) return true;
+		}
+		return false;
 	}
 
 	private static long parse(String s) {

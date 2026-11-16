@@ -39,6 +39,7 @@ public final class Relay {
 	private static final class Sender {
 		final Map<Integer, Shared> panels = new HashMap<>();
 		boolean view;
+		long soundStart, soundBytes;
 		/** Who may see this player's windows: everyone, or the names here (lower case). */
 		boolean everyone = true;
 		Set<String> allowed = Set.of();
@@ -157,13 +158,14 @@ public final class Relay {
 	private static void audio(ServerPlayer from, Sender s, Proto.Audio a) {
 		Shared sh = s.panels.get(a.id());
 		if (sh == null || sh.panel == null) return;
+		// Sound has its own small budget, so sharp pictures never silence it.
 		long now = System.currentTimeMillis();
-		if (now - s.windowStart > 1000) {
-			s.windowStart = now;
-			s.bytes = 0;
+		if (now - s.soundStart > 1000) {
+			s.soundStart = now;
+			s.soundBytes = 0;
 		}
-		s.bytes += a.sound().length;
-		if (s.bytes > config.kbps * 1000L / 8) return;
+		s.soundBytes += a.sound().length;
+		if (s.soundBytes > 40_000) return;
 		byte[] msg = Proto.theirAudio(from.getUUID(), a.id(), a.seq(), a.sound());
 		for (ServerPlayer viewer : viewersOf(from.level().getServer(), new Key(from.getUUID(), a.id()))) send(viewer, msg);
 	}
