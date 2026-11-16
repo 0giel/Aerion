@@ -96,6 +96,7 @@ final class RemoteAudio {
 			try (SourceDataLine line = AudioSystem.getSourceDataLine(format)) {
 				line.open(format, WindowAudio.RATE * 4 / 2);
 				line.start();
+				boolean told = false;
 				while (!stop) {
 					byte[] block = queue.poll(500, TimeUnit.MILLISECONDS);
 					if (block == null) continue;
@@ -111,6 +112,10 @@ final class RemoteAudio {
 						out[4 * i + 3] = (byte) (b >> 8);
 					}
 					line.write(out, 0, out.length);
+					if (!told) {
+						told = true;
+						AerionClient.LOG.info("Aerion: playing the sound of {}'s window \"{}\" (now {}% left, {}% right)", panel.owner, panel.title, Math.round(l * 100), Math.round(r * 100));
+					}
 				}
 				line.stop();
 				line.flush();

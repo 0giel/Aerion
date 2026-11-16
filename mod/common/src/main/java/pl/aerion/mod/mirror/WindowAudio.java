@@ -91,21 +91,19 @@ final class WindowAudio {
 		public void run() {
 			while (!stop) {
 				try {
-					WindowSource src = Mirrors.source();
-					long pid = src == null || panel.win == 0 ? 0 : src.pid(panel.win);
-					long node = findNode(pid, panel.cls);
+					List<Long> nodes = nodes();
 					// No sound playing yet: look again in a while.
-					if (node < 0) {
+					if (nodes.isEmpty()) {
 						if (!told) {
-							AerionClient.LOG.info("Aerion: no sound found yet for window \"{}\" (program {}, process {}); looking again every few seconds", panel.title, panel.cls, pid);
+							AerionClient.LOG.info("Aerion: no sound found yet for window \"{}\" (program {}); looking again every few seconds", panel.title, panel.cls);
 							told = true;
 						}
 						Thread.sleep(3000);
 						continue;
 					}
-					AerionClient.LOG.info("Aerion: sharing the sound of window \"{}\" (PipeWire stream {})", panel.title, node);
+					AerionClient.LOG.info("Aerion: sharing the sound of window \"{}\" (PipeWire streams {})", panel.title, nodes);
 					told = false;
-					record(node);
+					record(nodes);
 				} catch (InterruptedException e) {
 					return;
 				} catch (Exception e) {
@@ -119,35 +117,97 @@ final class WindowAudio {
 			}
 		}
 
-		/** Records the stream until it ends (the program stops playing) or sharing stops. */
-		private void record(long node) throws Exception {
-			Process p = pipewire(new ProcessBuilder("pw-record", "--target", String.valueOf(node), "--rate", String.valueOf(RATE), "--channels", "1", "--format", "s16", "-"))
-					.redirectError(ProcessBuilder.Redirect.DISCARD).start();
-			process = p;
-			byte[] buf = new byte[CHUNK * 2];
-			short[] pcm = new short[CHUNK];
-			try (InputStream in = p.getInputStream()) {
+		private List<Long> nodes() throws Exception {
+			WindowSource src = Mirrors.source();
+			long pid = src == null || panel.win == 0 ? 0 : src.pid(panel.win);
+			return findNodes(pid, panel.cls);
+		}
+
+		/**
+		 * Records all the program's streams at once, mixed (a browser plays each tab and video as a
+		 * stream of its own), in 0.1 s pieces. Every few seconds the streams are looked up again:
+		 * programs end streams and start new ones all the time, and then recording starts over.
+		 */
+		private void record(List<Long> nodes) throws Exception {
+			List<Process> procs = new java.util.ArrayList<>();
+			List<java.util.concurrent.ArrayBlockingQueue<short[]>> queues = new java.util.ArrayList<>();
+			try {
+				for (long node : nodes) {
+					Process p = pipewire(new ProcessBuilder("pw-record", "--target", String.valueOf(node), "--rate", String.valueOf(RATE), "--channels", "1", "--format", "s16", "-"))
+							.redirectError(ProcessBuilder.Redirect.DISCARD).start();
+					procs.add(p);
+					var q = new java.util.concurrent.ArrayBlockingQueue<short[]>(10);
+					queues.add(q);
+					Thread reader = new Thread(() -> read(p, q), "Aerion window sound reader");
+					reader.setDaemon(true);
+					reader.start();
+				}
+				process = procs.get(0);
+				long nextCheck = System.currentTimeMillis() + 3000, tick = System.nanoTime();
 				while (!stop) {
-					int got = in.readNBytes(buf, 0, buf.length);
-					if (got <= 0) break;
-					int n = got / 2;
-					for (int i = 0; i < n; i++) pcm[i] = (short) ((buf[2 * i] & 0xFF) | (buf[2 * i + 1] << 8));
-					ScreenShare.sendAudio(panel, encoder.encode(pcm, n));
-					if (got < buf.length) break;
+					tick += 100_000_000L;
+					long wait = tick - System.nanoTime();
+					if (wait > 0) Thread.sleep(wait / 1_000_000, (int) (wait % 1_000_000));
+					int[] mix = null;
+					for (var q : queues) {
+						// Behind by more than a few pieces: skip ahead so the sound stays live.
+						while (q.size() > 3) q.poll();
+						short[] c = q.poll();
+						if (c == null) continue;
+						if (mix == null) mix = new int[CHUNK];
+						for (int i = 0; i < c.length && i < CHUNK; i++) mix[i] += c[i];
+					}
+					if (mix != null) {
+						short[] pcm = new short[CHUNK];
+						for (int i = 0; i < CHUNK; i++) pcm[i] = (short) Math.max(-32768, Math.min(32767, mix[i]));
+						ScreenShare.sendAudio(panel, encoder.encode(pcm, CHUNK));
+					}
+					if (System.currentTimeMillis() > nextCheck) {
+						nextCheck = System.currentTimeMillis() + 3000;
+						if (!nodes().equals(nodes)) return;
+					}
+					if (procs.stream().noneMatch(Process::isAlive)) return;
 				}
 			} finally {
-				p.destroy();
-				p.waitFor(1, TimeUnit.SECONDS);
+				for (Process p : procs) {
+					p.destroy();
+					p.waitFor(1, TimeUnit.SECONDS);
+				}
 				process = null;
 			}
 		}
+
+		/** A stream's sound into its queue, 0.1 s at a time (the oldest piece goes when it is full). */
+		private static void read(Process p, java.util.concurrent.ArrayBlockingQueue<short[]> q) {
+			byte[] buf = new byte[CHUNK * 2];
+			try (InputStream in = p.getInputStream()) {
+				while (true) {
+					int got = in.readNBytes(buf, 0, buf.length);
+					if (got < buf.length) return;
+					short[] pcm = new short[CHUNK];
+					for (int i = 0; i < CHUNK; i++) pcm[i] = (short) ((buf[2 * i] & 0xFF) | (buf[2 * i + 1] << 8));
+					if (!q.offer(pcm)) {
+						q.poll();
+						q.offer(pcm);
+					}
+				}
+			} catch (Exception ignored) {
+				// the stream ended
+			}
+		}
+	}
+
+	/** The first of the program's streams (see {@link #findNodes}), or -1. */
+	static long findNode(long pid, String cls) throws Exception {
+		List<Long> all = findNodes(pid, cls);
+		return all.isEmpty() ? -1 : all.get(0);
 	}
 
 	/**
 	 * The PipeWire node of the program's sound: its own process, else a stream of the same program,
 	 * else one of its child processes (browsers play sound from helper processes).
 	 */
-	static long findNode(long pid, String cls) throws Exception {
+	static List<Long> findNodes(long pid, String cls) throws Exception {
 		Process p = pipewire(new ProcessBuilder("pw-dump")).redirectError(ProcessBuilder.Redirect.DISCARD).start();
 		String json;
 		try (InputStream in = p.getInputStream()) {
@@ -156,13 +216,14 @@ final class WindowAudio {
 			p.waitFor(3, TimeUnit.SECONDS);
 		}
 		long self = ProcessHandle.current().pid();
-		if (pid == self) return -1;
+		if (pid == self) return List.of();
 		// Programs in a sandbox (Flatpak) give their own process numbers: then only the name counts.
 		JsonElement all = json.isBlank() ? null : JsonParser.parseString(json);
-		if (all == null || !all.isJsonArray()) return -1;
+		if (all == null || !all.isJsonArray()) return List.of();
 		String binary = pid > 0 && related(binary(pid), cls) ? binary(pid) : null;
 		Set<Long> family = binary != null ? children(pid) : Set.of();
-		long byBinary = -1, byChild = -1, byName = -1;
+		// Its own streams and its helpers' first; by the program's name only when there are none.
+		List<Long> own = new java.util.ArrayList<>(), named = new java.util.ArrayList<>();
 		for (JsonElement e : all.getAsJsonArray()) {
 			if (!(e instanceof JsonObject o) || !(o.get("info") instanceof JsonObject info) || !(info.get("props") instanceof JsonObject props)) continue;
 			if (!props.has("media.class") || !props.get("media.class").getAsString().equals("Stream/Output/Audio")) continue;
@@ -170,20 +231,26 @@ final class WindowAudio {
 			long streamPid = props.has("application.process.id") ? parse(props.get("application.process.id").getAsString()) : -1;
 			// Never the game's own sound.
 			if (streamPid == self) continue;
-			if (streamPid == pid && binary != null) return id;
-			if (byName < 0 && cls != null) {
+			boolean mine = binary != null && (streamPid == pid
+					|| (props.has("application.process.binary") && binary.equals(props.get("application.process.binary").getAsString()))
+					// A helper process of the same program (browsers), not anything started from it.
+					|| (family.contains(streamPid) && binary.equals(binary(streamPid))));
+			if (mine) {
+				own.add(id);
+				continue;
+			}
+			if (cls != null) {
 				for (String k : new String[] {"application.process.binary", "pipewire.access.portal.app_id", "application.id", "application.name"}) {
 					if (props.has(k) && related(props.get(k).getAsString(), cls)) {
-						byName = id;
+						named.add(id);
 						break;
 					}
 				}
 			}
-			if (byBinary < 0 && binary != null && props.has("application.process.binary") && binary.equals(props.get("application.process.binary").getAsString())) byBinary = id;
-			// A helper process of the same program (browsers), not anything started from it.
-			if (byChild < 0 && family.contains(streamPid) && binary != null && binary.equals(binary(streamPid))) byChild = id;
 		}
-		return byChild >= 0 ? byChild : byBinary >= 0 ? byBinary : byName;
+		List<Long> out = own.isEmpty() ? named : own;
+		java.util.Collections.sort(out);
+		return out.size() > 6 ? out.subList(0, 6) : out;
 	}
 
 	/**
