@@ -121,7 +121,7 @@ final class WindowAudio {
 
 		/** Records the stream until it ends (the program stops playing) or sharing stops. */
 		private void record(long node) throws Exception {
-			Process p = new ProcessBuilder("pw-record", "--target", String.valueOf(node), "--rate", String.valueOf(RATE), "--channels", "1", "--format", "s16", "-")
+			Process p = pipewire(new ProcessBuilder("pw-record", "--target", String.valueOf(node), "--rate", String.valueOf(RATE), "--channels", "1", "--format", "s16", "-"))
 					.redirectError(ProcessBuilder.Redirect.DISCARD).start();
 			process = p;
 			byte[] buf = new byte[CHUNK * 2];
@@ -148,7 +148,7 @@ final class WindowAudio {
 	 * else one of its child processes (browsers play sound from helper processes).
 	 */
 	static long findNode(long pid, String cls) throws Exception {
-		Process p = new ProcessBuilder("pw-dump").redirectError(ProcessBuilder.Redirect.DISCARD).start();
+		Process p = pipewire(new ProcessBuilder("pw-dump")).redirectError(ProcessBuilder.Redirect.DISCARD).start();
 		String json;
 		try (InputStream in = p.getInputStream()) {
 			json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
@@ -158,10 +158,12 @@ final class WindowAudio {
 		long self = ProcessHandle.current().pid();
 		if (pid == self) return -1;
 		// Programs in a sandbox (Flatpak) give their own process numbers: then only the name counts.
+		JsonElement all = json.isBlank() ? null : JsonParser.parseString(json);
+		if (all == null || !all.isJsonArray()) return -1;
 		String binary = pid > 0 && related(binary(pid), cls) ? binary(pid) : null;
 		Set<Long> family = binary != null ? children(pid) : Set.of();
 		long byBinary = -1, byChild = -1, byName = -1;
-		for (JsonElement e : JsonParser.parseString(json).getAsJsonArray()) {
+		for (JsonElement e : all.getAsJsonArray()) {
 			if (!(e instanceof JsonObject o) || !(o.get("info") instanceof JsonObject info) || !(info.get("props") instanceof JsonObject props)) continue;
 			if (!props.has("media.class") || !props.get("media.class").getAsString().equals("Stream/Output/Audio")) continue;
 			long id = o.get("id").getAsLong();
@@ -197,6 +199,29 @@ final class WindowAudio {
 			if (c.length() >= 3 && (n.contains(c) || c.contains(n))) return true;
 		}
 		return false;
+	}
+
+	/**
+	 * PipeWire's tools find the sound server through XDG_RUNTIME_DIR; a game started with another
+	 * one (a launcher in a sandbox) gets the user's own folder that has the server's socket.
+	 */
+	private static ProcessBuilder pipewire(ProcessBuilder b) {
+		var env = b.environment();
+		if (env.containsKey("PIPEWIRE_RUNTIME_DIR")) return b;
+		String xdg = env.get("XDG_RUNTIME_DIR");
+		if (xdg != null && Files.exists(Path.of(xdg, "pipewire-0"))) return b;
+		try (var dirs = Files.list(Path.of("/run/user"))) {
+			String me = System.getProperty("user.name");
+			for (Path d : (Iterable<Path>) dirs::iterator) {
+				if (Files.exists(d.resolve("pipewire-0")) && Files.getOwner(d).getName().equals(me)) {
+					env.put("PIPEWIRE_RUNTIME_DIR", d.toString());
+					break;
+				}
+			}
+		} catch (Exception ignored) {
+			// no /run/user: leave it as it is
+		}
+		return b;
 	}
 
 	private static long parse(String s) {

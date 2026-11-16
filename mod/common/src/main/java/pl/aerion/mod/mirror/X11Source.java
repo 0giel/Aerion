@@ -195,6 +195,8 @@ final class X11Source implements WindowSource {
 		int left = Math.max(0, -ax.getValue()), top = Math.max(0, -ay.getValue());
 		int right = Math.min(a.width, ra.width - ax.getValue()), bottom = Math.min(a.height, ra.height - ay.getValue());
 		if (right - left < 8 || bottom - top < 8) return null;
+		// The picture is the part on the screen: clicks are placed within the same part.
+		shown.put(id, new int[] {left, top, right - left, bottom - top});
 		Pointer img = Xlib.INSTANCE.XGetImage(display, w, left, top, right - left, bottom - top, new NativeLong(-1L), Z_PIXMAP);
 		if (img == null) return null;
 		try {
@@ -213,10 +215,18 @@ final class X11Source implements WindowSource {
 		}
 	}
 
-	private int[] size(long id) {
-		X11.XWindowAttributes a = new X11.XWindowAttributes();
-		x.XGetWindowAttributes(display, new X11.Window(id), a);
-		return new int[] {Math.max(1, a.width), Math.max(1, a.height)};
+	/** Per window, the part last pictured (x, y, width, height in the window). */
+	private final java.util.Map<Long, int[]> shown = new java.util.HashMap<>();
+
+	/** The point (`fx`, `fy`) of the picture, in the window's own pixels. */
+	private int[] point(long id, float fx, float fy) {
+		int[] r = shown.get(id);
+		if (r == null) {
+			X11.XWindowAttributes a = new X11.XWindowAttributes();
+			x.XGetWindowAttributes(display, new X11.Window(id), a);
+			r = new int[] {0, 0, Math.max(1, a.width), Math.max(1, a.height)};
+		}
+		return new int[] {r[0] + Math.round(fx * r[2]), r[1] + Math.round(fy * r[3])};
 	}
 
 	/**
@@ -265,9 +275,9 @@ final class X11Source implements WindowSource {
 	}
 
 	private Target target(long id, float fx, float fy) {
-		int[] s = size(id);
+		int[] at = point(id, fx, fy);
 		X11.Window w = new X11.Window(id);
-		int px = Math.round(fx * s[0]), py = Math.round(fy * s[1]);
+		int px = at[0], py = at[1];
 		for (int depth = 0; depth < 16; depth++) {
 			IntByReference cx = new IntByReference(), cy = new IntByReference();
 			X11.WindowByReference child = new X11.WindowByReference();
@@ -285,9 +295,9 @@ final class X11Source implements WindowSource {
 
 	/** The point (`fx`, `fy`) of window `id` in the coordinates of its inner window `w`. */
 	private Target in(long id, X11.Window w, float fx, float fy) {
-		int[] s = size(id);
+		int[] at = point(id, fx, fy);
 		IntByReference ix = new IntByReference(), iy = new IntByReference();
-		x.XTranslateCoordinates(display, new X11.Window(id), w, Math.round(fx * s[0]), Math.round(fy * s[1]), ix, iy, new X11.WindowByReference());
+		x.XTranslateCoordinates(display, new X11.Window(id), w, at[0], at[1], ix, iy, new X11.WindowByReference());
 		return located(w, ix.getValue(), iy.getValue());
 	}
 
