@@ -13,7 +13,7 @@
 	"entrypoints": {
 		"server": ["pl.aerion.screens.AerionScreens"]
 	},
-	"mixins": ["aerion-screens.mixins.json", "aerion.net.mixins.json"],
+	"mixins": ["aerion.net.mixins.json", "aerion-relay.mixins.json"],
 	"depends": {
 		"fabricloader": ">=0.20.1",
 		"minecraft": "${minecraft}"

@@ -2,7 +2,7 @@
 	"required": true,
 	"package": "pl.aerion.screens.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"server": ["PayloadMixin", "ServerTickMixin", "PlayerLeaveMixin"],
+	"mixins": ["PayloadMixin", "ServerTickMixin", "PlayerLeaveMixin"],
 	"injectors": {
 		"defaultRequire": 1
 	}

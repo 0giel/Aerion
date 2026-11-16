@@ -14,7 +14,7 @@
 	"entrypoints": {
 		"client": ["pl.aerion.mod.AerionClient"]
 	},
-	"mixins": ["aerion.mixins.json", "aerion.common.mixins.json", "aerion.net.mixins.json"],
+	"mixins": ["aerion.mixins.json", "aerion.common.mixins.json", "aerion.net.mixins.json", "aerion-relay.mixins.json"],
 	"depends": {
 		"fabricloader": ">=0.20.1",
 		"minecraft": "${minecraft}",

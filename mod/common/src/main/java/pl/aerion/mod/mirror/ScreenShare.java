@@ -103,6 +103,7 @@ public final class ScreenShare {
 			case Proto.Welcome w -> {
 				supported = w.version() == Proto.VERSION;
 				serverFps = Math.max(1, Math.min(15, w.fps()));
+				if (supported) AerionClient.LOG.info("Aerion: this world passes shared windows on ({} pictures/s)", serverFps);
 			}
 			case Proto.TheirPanel tp -> {
 				if (!view()) return;
