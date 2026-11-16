@@ -45,6 +45,8 @@ pub async fn start_launch(
         return Err(launcher_core::Error::AlreadyRunning.into());
     }
     let inst = state.instances.get(&id).await?;
+    let paths = state.paths.clone();
+    let _ = tokio::task::spawn_blocking(move || crate::state::install_bundled_mod(&paths)).await;
     {
         let mut s = state.settings.write().await;
         s.last_instance = Some(id.clone());

@@ -31,6 +31,17 @@ const AERION_MOD_JARS: &[(&str, &[u8])] = &[
     ),
 ];
 
+/// The Aerion mod ships inside the launcher; games load it from the data folder. Written at
+/// start and again before each launch: another Aerion sharing the folder (an installed release
+/// next to a test build) may have put its own copy there meanwhile.
+pub fn install_bundled_mod(paths: &Paths) {
+    for (version, bytes) in AERION_MOD_JARS {
+        if let Err(e) = launcher_core::aerion_mod::install_jar(paths, version, bytes) {
+            tracing::warn!(error = %e, version, "can't install the Aerion mod");
+        }
+    }
+}
+
 pub struct AppState {
     pub paths: Paths,
     pub settings: RwLock<Settings>,
@@ -89,12 +100,7 @@ impl AppState {
                     .flatten()
             }
         };
-        // The Aerion mod ships inside the launcher; games load it from the data folder.
-        for (version, bytes) in AERION_MOD_JARS {
-            if let Err(e) = launcher_core::aerion_mod::install_jar(&paths, version, bytes) {
-                tracing::warn!(error = %e, version, "can't install the Aerion mod");
-            }
-        }
+        install_bundled_mod(&paths);
         Ok(Self {
             accounts: Accounts::new(paths.accounts_file(), keyring.clone()),
             instances: InstanceManager::new(paths.instances_dir()),
