@@ -11,11 +11,20 @@ subprojects {
 	group = rootProject.group
 
 	afterEvaluate {
-		// Shared sources and assets (theme, HUD, features) next to the version's own code.
-		sourceSets.main.java.srcDir rootProject.file('common/src/main/java')
-		sourceSets.main.resources.srcDir rootProject.file('common/src/main/resources')
-
-		base.archivesName = "aerion-ui-${project.minecraft_version}"
+		boolean server = project.name.startsWith('server_')
+		// The messages of shared windows: the same classes in the mod and the server mod.
+		sourceSets.main.java.srcDir rootProject.file('net/src/main/java')
+		sourceSets.main.resources.srcDir rootProject.file('net/src/main/resources')
+		if (server) {
+			sourceSets.main.java.srcDir rootProject.file('server/src/main/java')
+			sourceSets.main.resources.srcDir rootProject.file('server/src/main/resources')
+			base.archivesName = "aerion-screens-server-${project.minecraft_version}"
+		} else {
+			// Shared sources and assets (theme, HUD, features) next to the version's own code.
+			sourceSets.main.java.srcDir rootProject.file('common/src/main/java')
+			sourceSets.main.resources.srcDir rootProject.file('common/src/main/resources')
+			base.archivesName = "aerion-ui-${project.minecraft_version}"
+		}
 
 		processResources {
 			def props = [version: project.version, minecraft: project.minecraft_range]

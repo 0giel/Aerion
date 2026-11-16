@@ -36,3 +36,12 @@ for dir in mod/v*/; do
   cp "$jar" "src-tauri/resources/aerion-ui-$mc.jar"
   echo "mod built: src-tauri/resources/aerion-ui-$mc.jar ($(stat -c %s "$jar") bytes)"
 done
+# The server mod for shared windows: given to server owners, never embedded in the launcher.
+mkdir -p release/server-mod
+rm -f release/server-mod/aerion-screens-server-*.jar
+for dir in mod/server_v*/; do
+  mc=$(sed -n 's/^minecraft_version=//p' "$dir/gradle.properties")
+  jar=$(ls "$dir"build/libs/aerion-screens-server-*[0-9].jar | grep -v -- '-sources' | head -1)
+  cp "$jar" "release/server-mod/aerion-screens-server-$mc.jar"
+  echo "server mod built: release/server-mod/aerion-screens-server-$mc.jar ($(stat -c %s "$jar") bytes)"
+done

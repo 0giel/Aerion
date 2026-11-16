@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "aerion_screens",
+	"version": "${version}",
+	"name": "Aerion Screens",
+	"description": "Server side of Aerion's windows in the world: players with the Aerion mod see the windows others share near them.",
+	"authors": ["Aerion"],
+	"contact": {
+		"homepage": "https://github.com/0giel/Aerion"
+	},
+	"license": "GPL-3.0-only",
+	"environment": "server",
+	"entrypoints": {
+		"server": ["pl.aerion.screens.AerionScreens"]
+	},
+	"mixins": ["aerion-screens.mixins.json", "aerion.net.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "${minecraft}"
+	}
+}

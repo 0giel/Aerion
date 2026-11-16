@@ -16,6 +16,7 @@
 		"ContainerContentsMixin",
 		"ScreenClickMixin",
 		"ParticleEngineMixin",
+		"ScreenShareMixin",
 		"MenuButtonMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",

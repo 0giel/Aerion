@@ -465,6 +465,7 @@ public final class Features {
 		}
 		boolean mirrorsOn = HudConfig.bool(feature("mirrors"), "enabled", false);
 		pl.aerion.mod.mirror.Mirrors.tick(mc, mirrorsOn && Game.screen() == null && mirrorGrab.isDown(), mirrorsOn);
+		pl.aerion.mod.mirror.ScreenShare.tick(mc);
 		while (mirrorArrange.consumeClick()) if (mirrorsOn) pl.aerion.mod.mirror.Mirrors.arrange();
 		while (mirrorHide.consumeClick()) if (mirrorsOn) pl.aerion.mod.mirror.Mirrors.toggleHidden();
 		while (mirrorType.consumeClick()) {

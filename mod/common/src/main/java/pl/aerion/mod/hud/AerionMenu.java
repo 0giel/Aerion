@@ -166,7 +166,7 @@ public final class AerionMenu implements Page {
 					Option.colour("color", "#ffffff"), Option.toggle("outline", true), Option.toggle("dot", false),
 					Option.toggle("target", false), Option.colour("targetColor", "#ff5555"), Option.toggle("attack", true))),
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
-			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
+			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.toggle("others", true), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.select("shape", "curve", "curve", "straight"), Option.toggle("handle", true))),
 			Map.entry("wheel", List.of(Option.select("slot1", "fullbright", W), Option.select("slot2", "hitboxes", W), Option.select("slot3", "waypoint", W), Option.select("slot4", "map", W), Option.select("slot5", "perspective", W), Option.select("slot6", "streamer", W), Option.select("slot7", "none", W), Option.select("slot8", "none", W))),
 			Map.entry("effects", List.of(Option.select("glint", "default", "default", "red", "gold", "green", "aqua", "blue", "pink", "white"), Option.number("particles", 100, 0, 100))),
@@ -1622,6 +1622,7 @@ public final class AerionMenu implements Page {
 				beginCard(Lang.tr("aerion.mirrors.panels"));
 				for (pl.aerion.mod.mirror.Mirrors.Panel p : new ArrayList<>(panels)) mirrorRow(p);
 				endCard();
+				if (panels.stream().anyMatch(p -> p.shared)) note(Lang.tr(pl.aerion.mod.mirror.ScreenShare.supported() ? "aerion.share.ok" : "aerion.share.unsupported"));
 			}
 		}
 		beginCard(Lang.tr("aerion.sec.settings"));
@@ -1651,6 +1652,11 @@ public final class AerionMenu implements Page {
 		});
 		bx -= pw + 3;
 		smallButton(bx, y + 2, pw, ROW - 4, pin, p.pinned, () -> pl.aerion.mod.mirror.Mirrors.togglePin(p));
+		// Shared with the players nearby (on a server with the Aerion Screens mod).
+		String share = Lang.tr(p.shared ? "aerion.share.on" : "aerion.share.off");
+		int shw = Math.round(Txt.width(share, SMALL)) + 12;
+		bx -= shw + 3;
+		smallButton(bx, y + 2, shw, ROW - 4, share, p.shared, () -> pl.aerion.mod.mirror.Mirrors.toggleShare(p));
 		bx -= 19;
 		smallButton(bx, y + 2, 16, ROW - 4, "+", false, () -> pl.aerion.mod.mirror.Mirrors.resize(p, 1.15f));
 		bx -= 19;

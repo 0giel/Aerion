@@ -49,7 +49,17 @@ public final class Mirrors {
 		/** Goes along with the player: kept at the same turn and distance from them. */
 		public boolean pinned;
 		public float pinYaw, pinDistance, pinHeight;
+		/** Seen by the other Aerion players nearby (on a server with the Aerion Screens mod). */
+		public boolean shared;
 		transient long win;
+		/** Someone else's panel (read-only) and their name. */
+		transient boolean remote;
+		transient String owner;
+		transient volatile boolean decoding;
+		// Sending: its number on the server, what was last said about it, pictures.
+		transient int netId, frameNo;
+		transient long lastSent;
+		transient pl.aerion.net.Proto.Panel sentAs;
 		transient Identifier tex;
 		transient int texW, texH;
 		transient volatile WindowSource.Frame pending;
@@ -203,7 +213,21 @@ public final class Mirrors {
 		synchronized (Mirrors.class) {
 			all().remove(panel);
 		}
+		ScreenShare.removed(panel);
+		release(panel);
+		save();
+	}
+
+	/** Lets go of a panel's picture. */
+	static void release(Panel panel) {
 		if (panel.tex != null) Textures.release(panel.tex);
+		panel.tex = null;
+	}
+
+	/** Shares a panel with the players nearby, or stops. */
+	public static void toggleShare(Panel panel) {
+		panel.shared = !panel.shared;
+		if (!panel.shared) ScreenShare.removed(panel);
 		save();
 	}
 
@@ -257,6 +281,7 @@ public final class Mirrors {
 					continue;
 				}
 				p.pending = f;
+				ScreenShare.offer(p, f);
 			}
 		} catch (Throwable e) {
 			AerionClient.warnOnce("mirror-capture", e);
@@ -313,10 +338,10 @@ public final class Mirrors {
 	private static void draw(PoseStack pose, SubmitNodeCollector out) {
 		List<Panel> list;
 		synchronized (Mirrors.class) {
-			if (panels.isEmpty() || loadedKey == null) return;
-			list = new ArrayList<>(all());
+			list = panels.isEmpty() || loadedKey == null ? new ArrayList<>() : new ArrayList<>(all());
 		}
-		if (hidden) return;
+		List<Panel> theirs = ScreenShare.remote();
+		if (hidden || (list.isEmpty() && theirs.isEmpty())) return;
 		Vec3 cam = pl.aerion.mod.platform.Game.cameraPosition();
 		LocalPlayer me = Minecraft.getInstance().player;
 		for (Panel p : list) if (p.pinned && me != null && grabbed != p) follow(p, me, 1f);
@@ -354,12 +379,25 @@ public final class Mirrors {
 			}
 			pose.popPose();
 		}
+		// Others' panels: the picture and their name, nothing to take hold of.
+		for (Panel p : theirs) {
+			upload(p);
+			if (p.tex == null) continue;
+			pose.pushPose();
+			pose.translate(p.x - cam.x, p.y - cam.y, p.z - cam.z);
+			pose.mulPose(new Matrix4f().rotateY((float) Math.toRadians(-p.yaw)).rotateX((float) Math.toRadians(p.pitch)));
+			float w = p.width, h = p.height();
+			out.submitCustomGeometry(pose, RenderTypes.text(p.tex), (pp, vc) -> quads(pp, vc, p, w, h, 0xFFFFFFFF));
+			title(pose, out, p);
+			pose.popPose();
+		}
 	}
 
 	/** The window's name above the panel, small, on a dark strip. */
 	private static void title(PoseStack pose, SubmitNodeCollector out, Panel p) {
 		Minecraft mc = Minecraft.getInstance();
 		String name = p.title.length() > 60 ? p.title.substring(0, 59) + "…" : p.title;
+		if (p.owner != null) name = p.owner + ": " + name;
 		float[] top = at(p, 0.5f, 0, 0);
 		float scale = 0.0075f;
 		pose.pushPose();
@@ -367,7 +405,11 @@ public final class Mirrors {
 		// Text faces the other way and runs downwards: turn it to the player and stand it up.
 		pose.mulPose(new Matrix4f().rotateY((float) Math.PI));
 		pose.scale(scale, -scale, scale);
-		var text = net.minecraft.network.chat.Component.literal(name).getVisualOrderText();
+		var line = net.minecraft.network.chat.Component.empty();
+		// Shared and seen by others now: a red mark in front.
+		if (ScreenShare.isLive(p)) line.append(net.minecraft.network.chat.Component.literal("● " + pl.aerion.mod.Lang.tr("aerion.share.live") + "  ").withStyle(net.minecraft.ChatFormatting.RED));
+		line.append(name);
+		var text = line.getVisualOrderText();
 		float x = -mc.font.width(text) / 2f;
 		out.submitText(pose, x, 0, text, false, net.minecraft.client.gui.Font.DisplayMode.NORMAL, BRIGHT, 0xFFFFFFFF, 0xA0000000, 0);
 		pose.popPose();

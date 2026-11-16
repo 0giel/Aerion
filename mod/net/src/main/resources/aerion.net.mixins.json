@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "pl.aerion.net.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": ["DiscardedPayloadMixin"],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
