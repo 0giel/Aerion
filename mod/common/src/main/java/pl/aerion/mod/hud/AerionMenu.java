@@ -1045,16 +1045,9 @@ public final class AerionMenu implements Page {
 	}
 
 	/** One button that steps through the values (for lists too long to show side by side). */
+	/** One of many (situations, anchor, badge): a drop-down list. */
 	private void cycle(String label, String[] values, String[] labels, String current, Consumer<String> set) {
-		beginRow(label);
-		Txt.draw(g, label, x, y + ROW / 2f, TEXT, text);
-		int idx = Math.max(0, java.util.Arrays.asList(values).indexOf(current));
-		smallButton(controlX(), y + 2, controlW(), ROW - 4, labels[idx] + "  ›", idx != 0, () -> {
-			set.accept(values[(idx + 1) % values.length]);
-			changed = true;
-		});
-		y += ROW;
-		endRow();
+		dropdown(label, values, labels, current, set);
 	}
 
 	/** Nine spots for the corners, edges and centre, drawn on a little screen. */

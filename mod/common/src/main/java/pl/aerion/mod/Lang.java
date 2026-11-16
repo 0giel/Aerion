@@ -140,7 +140,7 @@ public final class Lang {
 			Map.entry("aerion.opt.hideWhen", new String[] {"Hide when", "Ukryj gdy"}),
 			Map.entry("aerion.opt.animate", new String[] {"Fade and pop", "Płynne pojawianie się"}),
 			Map.entry("aerion.opt.pulse", new String[] {"Pulse when worse", "Pulsuj gdy gorzej"}),
-			Map.entry("aerion.hint.behavior", new String[] {"0 s = as long as the situation lasts. Tap a situation to step through them. Two modules in opposite situations swap places.", "0 s = dopóki trwa sytuacja. Kliknij sytuację, aby przełączać. Dwa moduły w przeciwnych sytuacjach zamieniają się miejscami."}),
+			Map.entry("aerion.hint.behavior", new String[] {"0 s = as long as the situation lasts. Two modules in opposite situations swap places.", "0 s = dopóki trwa sytuacja. Dwa moduły w przeciwnych sytuacjach zamieniają się miejscami."}),
 			Map.entry("aerion.hint.presets", new String[] {"Replaces the shared look; modules with their own look keep it.", "Zastępuje wspólny styl; moduły z własnym stylem go zachowują."}),
 			Map.entry("aerion.place.anchor", new String[] {"Anchor", "Kotwica"}),
 			Map.entry("aerion.place.margin", new String[] {"Margin from the edge", "Odstęp od krawędzi"}),
