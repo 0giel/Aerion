@@ -16,6 +16,11 @@ public interface WindowSource {
 	/** The windows that can be mirrored, without the game's own. */
 	List<Win> list();
 
+	/** The process the window belongs to, 0 when unknown (for finding its sound). */
+	default long pid(long id) {
+		return 0;
+	}
+
 	/** The window's program icon, about 32 pixels; null when it has none. */
 	default Frame icon(long id) {
 		return null;

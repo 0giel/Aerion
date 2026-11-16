@@ -86,6 +86,7 @@ public final class ScreenShare {
 			helloSent = false;
 			supported = false;
 			clearRemote();
+			WindowAudio.stopAll();
 		}
 		if (conn == null || mc.player == null) return;
 		boolean view = view();
@@ -100,6 +101,33 @@ public final class ScreenShare {
 			sendAllow();
 			sendPanels();
 		}
+		// The sound of own shared windows, and others' sound from where their windows hang.
+		List<Mirrors.Panel> sounding = new ArrayList<>();
+		if (supported && soundOn()) for (Mirrors.Panel p : Mirrors.all()) if (live(p) && p.sentAs != null) sounding.add(p);
+		WindowAudio.tick(sounding);
+		float master = mc.options.getSoundSourceVolume(net.minecraft.sounds.SoundSource.MASTER);
+		RemoteAudio.tick(mc, othersVolume() * master);
+	}
+
+	private static boolean soundOn() {
+		HudConfig cfg = AerionClient.hud();
+		return cfg == null || !"0".equals(HudConfig.opt(cfg.feature("mirrors"), "shareSound", "1"));
+	}
+
+	/** How loud others' windows are, 0–1 (Aerion menu → Windows). */
+	private static float othersVolume() {
+		HudConfig cfg = AerionClient.hud();
+		try {
+			return cfg == null ? 0.8f : Math.max(0, Math.min(100, Integer.parseInt(HudConfig.opt(cfg.feature("mirrors"), "othersVolume", "80")))) / 100f;
+		} catch (NumberFormatException e) {
+			return 0.8f;
+		}
+	}
+
+	/** A piece of an own shared window's sound (sound thread). */
+	static void sendAudio(Mirrors.Panel p, byte[] sound) {
+		if (!live(p) || p.sentAs == null || sound.length > Proto.MAX_AUDIO) return;
+		send(Proto.audio(p.netId, p.audioSeq++, sound));
 	}
 
 	/** Who may watch, when it changed (per server, kept with the panels). */
@@ -189,7 +217,13 @@ public final class ScreenShare {
 					}
 				});
 			}
+			case Proto.TheirAudio ta -> {
+				Key key = new Key(ta.owner(), ta.id());
+				Mirrors.Panel p = REMOTE.get(key);
+				if (p != null && view() && othersVolume() > 0) RemoteAudio.play(key, p, ta.sound());
+			}
 			case Proto.TheirRemove tr -> {
+				RemoteAudio.stop(new Key(tr.owner(), tr.id()));
 				Mirrors.Panel p = REMOTE.remove(new Key(tr.owner(), tr.id()));
 				if (p != null) Mirrors.release(p);
 			}
@@ -198,6 +232,7 @@ public final class ScreenShare {
 	}
 
 	private static void clearRemote() {
+		RemoteAudio.stopAll();
 		for (Mirrors.Panel p : REMOTE.values()) Mirrors.release(p);
 		REMOTE.clear();
 	}

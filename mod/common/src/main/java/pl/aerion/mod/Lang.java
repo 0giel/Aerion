@@ -461,6 +461,8 @@ public final class Lang {
 			Map.entry("aerion.share.unsupported", new String[] {"This server can't pass windows on: it needs the Aerion Screens server mod. Nothing is sent.", "Ten serwer nie przekazuje okien: potrzebuje moda serwerowego Aerion Screens. Nic nie jest wysyłane."}),
 			Map.entry("aerion.opt.mirrors.others", new String[] {"Other players' windows", "Okna innych graczy"}),
 			Map.entry("aerion.opt.mirrors.shareQuality", new String[] {"Shared picture quality", "Jakość udostępniania"}),
+			Map.entry("aerion.opt.mirrors.shareSound", new String[] {"Sound of shared windows", "Dźwięk udostępnianych okien"}),
+			Map.entry("aerion.opt.mirrors.othersVolume", new String[] {"Others' windows volume (%)", "Głośność okien innych (%)"}),
 			Map.entry("aerion.choice.max", new String[] {"Max", "Maks."}),
 			Map.entry("aerion.share.who", new String[] {"Who may watch", "Kto może oglądać"}),
 			Map.entry("aerion.share.whoLabel", new String[] {"On this server", "Na tym serwerze"}),

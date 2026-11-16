@@ -166,7 +166,7 @@ public final class AerionMenu implements Page {
 					Option.colour("color", "#ffffff"), Option.toggle("outline", true), Option.toggle("dot", false),
 					Option.toggle("target", false), Option.colour("targetColor", "#ff5555"), Option.toggle("attack", true))),
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
-			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.select("shareQuality", "high", "low", "medium", "high", "max"), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
+			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.select("shareQuality", "high", "low", "medium", "high", "max"), Option.toggle("shareSound", true), Option.number("othersVolume", 80, 0, 100), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.select("shape", "curve", "curve", "straight"), Option.toggle("handle", true))),
 			Map.entry("wheel", List.of(Option.select("slot1", "fullbright", W), Option.select("slot2", "hitboxes", W), Option.select("slot3", "waypoint", W), Option.select("slot4", "map", W), Option.select("slot5", "perspective", W), Option.select("slot6", "streamer", W), Option.select("slot7", "none", W), Option.select("slot8", "none", W))),
 			Map.entry("effects", List.of(Option.select("glint", "default", "default", "red", "gold", "green", "aqua", "blue", "pink", "white"), Option.number("particles", 100, 0, 100))),

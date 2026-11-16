@@ -57,7 +57,7 @@ public final class Mirrors {
 		transient String owner;
 		transient volatile boolean decoding;
 		// Sending: its number on the server, what was last said about it, pictures.
-		transient int netId, frameNo;
+		transient int netId, frameNo, audioSeq;
 		transient long lastSent;
 		transient pl.aerion.net.Proto.Panel sentAs;
 		transient Identifier tex;

@@ -83,6 +83,7 @@ public final class Relay {
 				for (String n : a.names()) names.add(n.toLowerCase(java.util.Locale.ROOT));
 				s.allowed = names;
 			}
+			case Proto.Audio a -> audio(from, s, a);
 			case Proto.Remove r -> {
 				if (s.panels.remove(r.id()) != null) gone(new Key(id, r.id()));
 			}
@@ -150,6 +151,21 @@ public final class Relay {
 		Key key = new Key(from.getUUID(), part.id());
 		byte[] msg = Proto.theirFrame(from.getUUID(), part.id(), jpeg);
 		for (ServerPlayer viewer : viewersOf(from.level().getServer(), key)) send(viewer, msg);
+	}
+
+	/** A piece of a window's sound: to those who see the window, within the same byte budget. */
+	private static void audio(ServerPlayer from, Sender s, Proto.Audio a) {
+		Shared sh = s.panels.get(a.id());
+		if (sh == null || sh.panel == null) return;
+		long now = System.currentTimeMillis();
+		if (now - s.windowStart > 1000) {
+			s.windowStart = now;
+			s.bytes = 0;
+		}
+		s.bytes += a.sound().length;
+		if (s.bytes > config.kbps * 1000L / 8) return;
+		byte[] msg = Proto.theirAudio(from.getUUID(), a.id(), a.seq(), a.sound());
+		for (ServerPlayer viewer : viewersOf(from.level().getServer(), new Key(from.getUUID(), a.id()))) send(viewer, msg);
 	}
 
 	/** Viewers who have been told about this window. */

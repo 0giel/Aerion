@@ -23,10 +23,12 @@ public final class Proto {
 	public static final int MAX_TITLE = 64;
 
 	// To the server.
-	public static final byte HELLO = 1, PANEL = 2, PART_OF_FRAME = 3, REMOVE = 4, ALLOW = 5;
+	public static final byte HELLO = 1, PANEL = 2, PART_OF_FRAME = 3, REMOVE = 4, ALLOW = 5, AUDIO = 6;
+	/** The largest piece of sound in one message (about 0.1 s of compressed sound is far less). */
+	public static final int MAX_AUDIO = 8000;
 	public static final int MAX_ALLOWED = 64;
 	// To the players.
-	public static final byte WELCOME = 10, THEIR_PANEL = 11, THEIR_FRAME = 12, THEIR_REMOVE = 13;
+	public static final byte WELCOME = 10, THEIR_PANEL = 11, THEIR_FRAME = 12, THEIR_REMOVE = 13, THEIR_AUDIO = 14;
 
 	/** Where a shared panel hangs and how it looks (sizes in blocks). */
 	public record Panel(int id, double x, double y, double z, float yaw, float pitch, float width, float aspect, float radius, boolean curved, String title) {
@@ -123,6 +125,24 @@ public final class Proto {
 		return message(REMOVE, o -> o.writeInt(id));
 	}
 
+	/** A piece of the window's sound (compressed, see the mod's Adpcm), numbered. */
+	public static byte[] audio(int id, int seq, byte[] sound) {
+		return message(AUDIO, o -> {
+			o.writeInt(id);
+			o.writeInt(seq);
+			o.write(sound);
+		});
+	}
+
+	public static byte[] theirAudio(UUID owner, int id, int seq, byte[] sound) {
+		return message(THEIR_AUDIO, o -> {
+			writeUuid(o, owner);
+			o.writeInt(id);
+			o.writeInt(seq);
+			o.write(sound);
+		});
+	}
+
 	/** Who may see this player's windows: everyone, or only the players named. */
 	public static byte[] allow(boolean everyone, java.util.Collection<String> names) {
 		return message(ALLOW, o -> {
@@ -193,6 +213,10 @@ public final class Proto {
 
 	public record Allow(boolean everyone, java.util.List<String> names) implements Message {}
 
+	public record Audio(int id, int seq, byte[] sound) implements Message {}
+
+	public record TheirAudio(UUID owner, int id, int seq, byte[] sound) implements Message {}
+
 	public record Welcome(int version, int fps, int maxPanels, int maxFrameKb) implements Message {}
 
 	public record TheirPanel(UUID owner, String name, Panel panel) implements Message {}
@@ -216,6 +240,17 @@ public final class Proto {
 					yield rest.length > PART ? null : new Part(id, frame, index, count, rest);
 				}
 				case REMOVE -> new Remove(in.readInt());
+				case AUDIO -> {
+					int id = in.readInt(), seq = in.readInt();
+					byte[] sound = in.readAllBytes();
+					yield sound.length > MAX_AUDIO ? null : new Audio(id, seq, sound);
+				}
+				case THEIR_AUDIO -> {
+					UUID owner = readUuid(in);
+					int id = in.readInt(), seq = in.readInt();
+					byte[] sound = in.readAllBytes();
+					yield sound.length > MAX_AUDIO ? null : new TheirAudio(owner, id, seq, sound);
+				}
 				case ALLOW -> {
 					boolean everyone = in.readBoolean();
 					int n = in.readUnsignedShort();

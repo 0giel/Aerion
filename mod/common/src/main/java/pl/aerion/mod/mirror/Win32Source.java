@@ -93,6 +93,13 @@ final class Win32Source implements WindowSource {
 		}
 	}
 
+	@Override
+	public long pid(long id) {
+		IntByReference pid = new IntByReference();
+		u.GetWindowThreadProcessId(hwnd(id), pid);
+		return pid.getValue();
+	}
+
 	private static final int WM_GETICON = 0x007F, ICON_BIG = 1, ICON_SMALL2 = 2, GCLP_HICON = -14, DI_NORMAL = 3, ICON_SIZE = 32;
 
 	/** The window's icon (asked of the window, else its class), drawn into 32×32 pixels. Untested. */

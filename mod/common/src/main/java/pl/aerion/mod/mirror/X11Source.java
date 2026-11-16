@@ -87,6 +87,12 @@ final class X11Source implements WindowSource {
 		}
 	}
 
+	@Override
+	public synchronized long pid(long id) {
+		long[] pid = longs(new X11.Window(id), "_NET_WM_PID");
+		return pid.length > 0 ? pid[0] : 0;
+	}
+
 	/** The icon from _NET_WM_ICON: of the sizes there, the one closest to 32 pixels. */
 	@Override
 	public synchronized Frame icon(long id) {

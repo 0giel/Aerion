@@ -1,0 +1,214 @@
+package pl.aerion.mod.mirror;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import pl.aerion.mod.AerionClient;
+
+/**
+ * The sound of a shared window: on Linux with PipeWire, the program's own audio stream (found by
+ * the window's process, its program or its child processes) is recorded with `pw-record` - only
+ * that program, not the game or the rest of the computer - and sent in 0.1 s pieces. Other
+ * systems send no sound yet (they still hear others).
+ */
+final class WindowAudio {
+	private WindowAudio() {}
+
+	static final int RATE = 24_000, CHUNK = RATE / 10;
+
+	private static final Map<Mirrors.Panel, Capture> RUNNING = new IdentityHashMap<>();
+	private static Boolean available;
+
+	/** Whether this computer can send window sound (Linux with PipeWire's tools). */
+	static boolean available() {
+		if (available == null) {
+			available = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("linux") && onPath("pw-record") && onPath("pw-dump");
+		}
+		return available;
+	}
+
+	private static boolean onPath(String tool) {
+		for (String dir : System.getenv().getOrDefault("PATH", "/usr/bin:/bin").split(":")) {
+			if (Files.isExecutable(Path.of(dir, tool))) return true;
+		}
+		return false;
+	}
+
+	/** Every tick: sound for each panel in `live`, stopped for the rest. */
+	static synchronized void tick(List<Mirrors.Panel> live) {
+		for (var it = RUNNING.entrySet().iterator(); it.hasNext();) {
+			var e = it.next();
+			if (!live.contains(e.getKey())) {
+				e.getValue().finish();
+				it.remove();
+			}
+		}
+		if (!available()) return;
+		for (Mirrors.Panel p : live) {
+			if (RUNNING.containsKey(p) || p.win == 0) continue;
+			Capture c = new Capture(p);
+			RUNNING.put(p, c);
+			c.start();
+		}
+	}
+
+	static synchronized void stopAll() {
+		for (Capture c : RUNNING.values()) c.finish();
+		RUNNING.clear();
+	}
+
+	private static final class Capture extends Thread {
+		final Mirrors.Panel panel;
+		volatile boolean stop;
+		volatile Process process;
+		final Adpcm.Encoder encoder = new Adpcm.Encoder();
+
+		Capture(Mirrors.Panel panel) {
+			super("Aerion window sound");
+			this.panel = panel;
+			setDaemon(true);
+		}
+
+		void finish() {
+			stop = true;
+			Process p = process;
+			if (p != null) p.destroy();
+			interrupt();
+		}
+
+		@Override
+		public void run() {
+			while (!stop) {
+				try {
+					WindowSource src = Mirrors.source();
+					long pid = src == null || panel.win == 0 ? 0 : src.pid(panel.win);
+					long node = pid > 0 ? findNode(pid) : -1;
+					// No sound playing yet: look again in a while.
+					if (node < 0) {
+						Thread.sleep(3000);
+						continue;
+					}
+					record(node);
+				} catch (InterruptedException e) {
+					return;
+				} catch (Exception e) {
+					AerionClient.warnOnce("window-sound", e);
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException ie) {
+						return;
+					}
+				}
+			}
+		}
+
+		/** Records the stream until it ends (the program stops playing) or sharing stops. */
+		private void record(long node) throws Exception {
+			Process p = new ProcessBuilder("pw-record", "--target", String.valueOf(node), "--rate", String.valueOf(RATE), "--channels", "1", "--format", "s16", "-")
+					.redirectError(ProcessBuilder.Redirect.DISCARD).start();
+			process = p;
+			byte[] buf = new byte[CHUNK * 2];
+			short[] pcm = new short[CHUNK];
+			try (InputStream in = p.getInputStream()) {
+				while (!stop) {
+					int got = in.readNBytes(buf, 0, buf.length);
+					if (got <= 0) break;
+					int n = got / 2;
+					for (int i = 0; i < n; i++) pcm[i] = (short) ((buf[2 * i] & 0xFF) | (buf[2 * i + 1] << 8));
+					ScreenShare.sendAudio(panel, encoder.encode(pcm, n));
+					if (got < buf.length) break;
+				}
+			} finally {
+				p.destroy();
+				p.waitFor(1, TimeUnit.SECONDS);
+				process = null;
+			}
+		}
+	}
+
+	/**
+	 * The PipeWire node of the program's sound: its own process, else a stream of the same program,
+	 * else one of its child processes (browsers play sound from helper processes).
+	 */
+	static long findNode(long pid) throws Exception {
+		Process p = new ProcessBuilder("pw-dump").redirectError(ProcessBuilder.Redirect.DISCARD).start();
+		String json;
+		try (InputStream in = p.getInputStream()) {
+			json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		} finally {
+			p.waitFor(3, TimeUnit.SECONDS);
+		}
+		long self = ProcessHandle.current().pid();
+		if (pid == self) return -1;
+		String binary = binary(pid);
+		Set<Long> family = children(pid);
+		long byBinary = -1, byChild = -1;
+		for (JsonElement e : JsonParser.parseString(json).getAsJsonArray()) {
+			if (!(e instanceof JsonObject o) || !(o.get("info") instanceof JsonObject info) || !(info.get("props") instanceof JsonObject props)) continue;
+			if (!props.has("media.class") || !props.get("media.class").getAsString().equals("Stream/Output/Audio")) continue;
+			long id = o.get("id").getAsLong();
+			long streamPid = props.has("application.process.id") ? parse(props.get("application.process.id").getAsString()) : -1;
+			// Never the game's own sound.
+			if (streamPid == self) continue;
+			if (streamPid == pid) return id;
+			if (byBinary < 0 && binary != null && props.has("application.process.binary") && binary.equals(props.get("application.process.binary").getAsString())) byBinary = id;
+			// A helper process of the same program (browsers), not anything started from it.
+			if (byChild < 0 && family.contains(streamPid) && binary != null && binary.equals(binary(streamPid))) byChild = id;
+		}
+		return byChild >= 0 ? byChild : byBinary;
+	}
+
+	private static long parse(String s) {
+		try {
+			return Long.parseLong(s.trim());
+		} catch (NumberFormatException e) {
+			return -1;
+		}
+	}
+
+	private static String binary(long pid) {
+		try {
+			return Path.of("/proc", String.valueOf(pid), "exe").toRealPath().getFileName().toString();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/** The process and everything started from it. */
+	private static Set<Long> children(long root) {
+		Set<Long> family = new HashSet<>();
+		family.add(root);
+		try (var dirs = Files.list(Path.of("/proc"))) {
+			Map<Long, Long> parent = new java.util.HashMap<>();
+			for (Path d : (Iterable<Path>) dirs::iterator) {
+				long id = parse(d.getFileName().toString());
+				if (id < 0) continue;
+				try {
+					String stat = Files.readString(d.resolve("stat"));
+					String[] f = stat.substring(stat.lastIndexOf(')') + 2).split(" ");
+					parent.put(id, parse(f[1]));
+				} catch (Exception ignored) {
+					// gone meanwhile
+				}
+			}
+			boolean grew = true;
+			while (grew) {
+				grew = false;
+				for (var e : parent.entrySet()) if (!family.contains(e.getKey()) && family.contains(e.getValue())) grew |= family.add(e.getKey());
+			}
+		} catch (Exception ignored) {
+			// no /proc: only the process itself
+		}
+		return family;
+	}
+}
