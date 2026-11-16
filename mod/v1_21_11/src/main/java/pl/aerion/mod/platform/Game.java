@@ -40,6 +40,11 @@ public final class Game {
 		return supplier == null ? null : supplier.get();
 	}
 
+	/** Whether a keyboard key is held now (also while a screen is open). */
+	public static boolean keyDown(int code) {
+		return code > 0 && com.mojang.blaze3d.platform.InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), code);
+	}
+
 	public static void overlayMessage(net.minecraft.network.chat.Component message) {
 		Minecraft.getInstance().gui.setOverlayMessage(message, false);
 	}

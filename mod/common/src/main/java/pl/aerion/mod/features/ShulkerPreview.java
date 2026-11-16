@@ -54,13 +54,38 @@ public final class ShulkerPreview {
 		return cfg != null && HudConfig.bool(cfg.feature("shulkerPreview"), "enabled", true);
 	}
 
+	/** Only while its key is held (Aerion menu → Shulker box preview); on unless switched off. */
+	private static boolean withKey() {
+		HudConfig cfg = AerionClient.hud();
+		return cfg == null || !"0".equals(HudConfig.opt(cfg.feature("shulkerPreview"), "withKey", "1"));
+	}
+
+	private static boolean keyHeld() {
+		var key = Features.key("shulkerPreview");
+		if (key == null || key.isUnbound()) return true;
+		var k = com.mojang.blaze3d.platform.InputConstants.getKey(key.saveString());
+		// A mouse button can't be asked for here: then the grid always shows.
+		return k.getType() == com.mojang.blaze3d.platform.InputConstants.Type.MOUSE || pl.aerion.mod.platform.Game.keyDown(k.getValue());
+	}
+
+	/** Under the game's list of a filled box: which key shows the grid. */
+	public static void hint(ItemStack stack, java.util.List<net.minecraft.network.chat.Component> lines) {
+		if (!on() || !withKey() || keyHeld() || box(stack) == null) return;
+		ItemContainerContents c = stack.get(DataComponents.CONTAINER);
+		if (c == null || !c.nonEmptyItems().iterator().hasNext()) return;
+		var key = Features.key("shulkerPreview");
+		String name = key == null ? "Shift" : key.getTranslatedKeyMessage().getString();
+		lines.add(net.minecraft.network.chat.Component.literal(pl.aerion.mod.Lang.tr("aerion.shulker.hold").replace("{key}", name))
+				.withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+	}
+
 	private static ShulkerBoxBlock box(ItemStack stack) {
 		return stack.getItem() instanceof BlockItem b && b.getBlock() instanceof ShulkerBoxBlock s ? s : null;
 	}
 
 	/** Whether this stack gets the grid (so the game's list of names is left out). */
 	public static boolean shows(ItemStack stack) {
-		if (!on() || box(stack) == null) return false;
+		if (!on() || box(stack) == null || (withKey() && !keyHeld())) return false;
 		ItemContainerContents c = stack.get(DataComponents.CONTAINER);
 		return c != null && c.nonEmptyItems().iterator().hasNext();
 	}

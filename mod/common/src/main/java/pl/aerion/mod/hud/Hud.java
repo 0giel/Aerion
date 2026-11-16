@@ -1151,6 +1151,8 @@ public final class Hud {
 		/** When the situation last began and last held, in seconds of game time (-1: never). */
 		double since = -1, lastTrue = -1;
 		boolean cond;
+		/** The timing settings last used: changing them starts the count again. */
+		String timing;
 	}
 
 	private static double seconds() {
@@ -1174,6 +1176,14 @@ public final class Hud {
 		boolean cond = Situations.condition(m, mc);
 		double now = seconds();
 		if (cond && !a.cond) a.since = now;
+		// New timing (a slider just moved): counted from now, or "show for 60 s" on a situation that
+		// began long ago (always, for one) would end at once.
+		String timing = HudConfig.opt(m, "showWhen", "always") + "|" + HudConfig.opt(m, "hideWhen", "never") + "|" + HudConfig.opt(m, "delay", "0") + "|"
+				+ HudConfig.opt(m, "showFor", "0");
+		if (!timing.equals(a.timing)) {
+			if (a.timing != null && cond) a.since = now;
+			a.timing = timing;
+		}
 		if (cond) a.lastTrue = now;
 		a.cond = cond;
 		int delay = numOpt(m, "delay", 0, 0, 10), showFor = numOpt(m, "showFor", 0, 0, 60), linger = numOpt(m, "linger", 0, 0, 30);

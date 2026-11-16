@@ -168,6 +168,7 @@ public final class AerionMenu implements Page {
 			Map.entry("hurtCam", List.of(Option.number("strength", 50, 0, 200))),
 			Map.entry("mirrors", List.of(Option.number("size", 16, 5, 60), Option.number("opacity", 100, 20, 100), Option.toggle("title", true), Option.select("shareQuality", "high", "low", "medium", "high", "max"), Option.toggle("shareSound", true), Option.number("othersVolume", 80, 0, 100), Option.number("fps", 12, 2, 30), Option.select("quality", "medium", "low", "medium", "high"),
 					Option.select("shape", "curve", "curve", "straight"), Option.toggle("handle", true))),
+			Map.entry("shulkerPreview", List.of(Option.toggle("withKey", true))),
 			Map.entry("wheel", List.of(Option.select("slot1", "fullbright", W), Option.select("slot2", "hitboxes", W), Option.select("slot3", "waypoint", W), Option.select("slot4", "map", W), Option.select("slot5", "perspective", W), Option.select("slot6", "streamer", W), Option.select("slot7", "none", W), Option.select("slot8", "none", W))),
 			Map.entry("effects", List.of(Option.select("glint", "default", "default", "red", "gold", "green", "aqua", "blue", "pink", "white"), Option.number("particles", 100, 0, 100))),
 			Map.entry("food", List.of(Option.toggle("saturation", true), Option.toggle("preview", true), Option.toggle("tooltip", true))),
@@ -228,6 +229,9 @@ public final class AerionMenu implements Page {
 	private float toUnits = 1f;
 	private int unitsW, unitsH;
 	private String soundGroup = "all", query = "";
+	/** The search over all settings in the sidebar: what is typed, and whether typing goes there. */
+	private String find = "";
+	private boolean finding;
 	/** Vertical position within the control being used, 0 at its top. */
 	private double hitY;
 	/** Picker state per colour row, so the hue survives black and white. */
@@ -367,6 +371,23 @@ public final class AerionMenu implements Page {
 			capturing = null;
 			return true;
 		}
+		if (finding) {
+			int k = key.getValue();
+			if (k == InputConstants.KEY_BACKSPACE) {
+				if (!find.isEmpty()) find = find.substring(0, find.length() - 1);
+				scroll = 0;
+			} else if (k == InputConstants.KEY_RETURN || k == InputConstants.KEY_NUMPADENTER) {
+				List<Result> r = results();
+				if (!r.isEmpty()) open(r.get(0));
+			} else if (escape) {
+				if (find.isEmpty()) finding = false;
+				find = "";
+				scroll = 0;
+			} else {
+				return false;
+			}
+			return true;
+		}
 		if (fieldKey != null) {
 			int k = key.getValue();
 			if (k == InputConstants.KEY_BACKSPACE && !fieldText.isEmpty()) fieldText = fieldText.substring(0, fieldText.length() - 1);
@@ -439,6 +460,13 @@ public final class AerionMenu implements Page {
 					changed = true;
 					hexRow = null;
 				}
+			}
+			return true;
+		}
+		if (finding) {
+			if (find.length() < 40 && Character.isValidCodePoint(codepoint) && !Character.isISOControl(codepoint)) {
+				find += new String(Character.toChars(codepoint));
+				scroll = 0;
 			}
 			return true;
 		}
@@ -563,8 +591,16 @@ public final class AerionMenu implements Page {
 
 		int mainX = left + side + 10, mainW = winW - side - 20;
 		iconButton(left + winW - 20, top + 6, 14, "close", this::leave);
-		int head = detail != null ? pageHead(mainX, top + 6, mainW - 18) : listHead(mainX, top + 7);
-		if (detail == null && (section == Section.HUD || section == Section.FEATURES)) searchBox(left + winW - 134, top + 6, 110);
+		boolean searching = !find.isEmpty();
+		int head;
+		if (searching) {
+			Txt.Display.draw(g, Lang.tr("aerion.find.title"), mainX, top + 13, HEADING, text);
+			Txt.draw(g, Lang.tr("aerion.find.hint"), mainX, top + 25, SMALL, muted);
+			head = 34;
+		} else {
+			head = detail != null ? pageHead(mainX, top + 6, mainW - 18) : listHead(mainX, top + 7);
+			if (detail == null && (section == Section.HUD || section == Section.FEATURES)) searchBox(left + winW - 134, top + 6, 110);
+		}
 
 		viewTop = top + head;
 		viewBottom = top + winH - 4;
@@ -585,7 +621,8 @@ public final class AerionMenu implements Page {
 		float slideIn = animationsOn() ? Hud.spring(Math.min(1f, (System.nanoTime() - pageAt) / 2.8e8f)) : 1f;
 		g.push();
 		g.translate((1f - slideIn) * 14f, 0);
-		if (detail != null) detailBody();
+		if (searching) resultsPage();
+		else if (detail != null) detailBody();
 		else switch (section) {
 			case HUD -> tiles(mainX, mainW, found(List.of(Features.MODULE_IDS)));
 			case FEATURES -> tiles(mainX, mainW, found(List.of(FEATURES)));
@@ -628,7 +665,7 @@ public final class AerionMenu implements Page {
 		}
 		// Layers, bottom to top: the rows lit under the pointer, the accent block, icons and names.
 		navTop.clear();
-		ny = navAction(nx, ny, "layout", "aerion.nav.layout", this::toLayout) + gap;
+		ny = navSearch(nx, ny) + gap;
 		ny = navHead(nx, ny, "aerion.navhead.mods");
 		ny = navItem(nx, ny, Section.HUD, "fps", "aerion.nav.hud");
 		ny = navItem(nx, ny, Section.PROFILES, "packs", "aerion.nav.profiles");
@@ -661,6 +698,125 @@ public final class AerionMenu implements Page {
 		if (navCompact) return ny;
 		Txt.Display.draw(g, Lang.tr(key).toUpperCase(Locale.ROOT), nx + 4, ny + 4, 5f, Colors.mix(sidebar, muted, 0.85f));
 		return ny + 10;
+	}
+
+	/**
+	 * The top of the sidebar: a search through all the settings (click, type; Enter opens the first
+	 * hit, Esc clears it) and, beside it, the HUD layout.
+	 */
+	private int navSearch(int nx, int ny) {
+		int w = SIDE - 10 - 18, h = 16;
+		boolean over = inside(nx, ny, w, h);
+		Draw.rounded(g, nx, ny, w, h, 3, finding ? Colors.mix(tile, accent, 0.18f) : over ? control : tile);
+		if (finding) Draw.outline(g, nx, ny, w, h, Colors.alpha(accent, 0xC0));
+		Icons.draw(g, "search", nx + 4, ny + 4, 8, muted);
+		String shown = finding ? find + (System.currentTimeMillis() / 500 % 2 == 0 ? "|" : "") : find;
+		boolean empty = shown.isEmpty();
+		Txt.draw(g, ellipsize(empty ? Lang.tr("aerion.find") : shown, w - 20, SMALL), nx + 15, ny + h / 2f, SMALL, empty ? muted : text);
+		hit(nx, ny, w, h, f -> {
+			finding = true;
+			query = "";
+		}, false);
+		int lx = nx + w + 2;
+		boolean overLayout = inside(lx, ny, 16, h);
+		if (overLayout) Draw.rounded(g, lx, ny, 16, h, 3, control);
+		Icons.draw(g, "layout", lx + 3, ny + 3, 10, overLayout ? text : muted);
+		hit(lx, ny, 16, h, f -> toLayout(), false);
+		return ny + h + 2;
+	}
+
+	/** A hit of the settings search: what it is, where it lives, and how to get there. */
+	private record Result(String title, String where, Runnable open) {}
+
+	private static String plain(String s) {
+		return java.text.Normalizer.normalize(s.toLowerCase(Locale.ROOT), java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "").replace("ł", "l");
+	}
+
+	/** Everything that matches: sections, modules, features and the settings inside them. */
+	private List<Result> results() {
+		String q = plain(find.trim());
+		List<Result> out = new ArrayList<>();
+		if (q.isEmpty()) return out;
+		java.util.function.Predicate<String> hit = s -> s != null && plain(s).contains(q);
+		if (hit.test(Lang.tr("aerion.nav.layout"))) out.add(new Result(Lang.tr("aerion.nav.layout"), "", this::toLayout));
+		for (Section s : Section.values()) {
+			String label = Lang.tr("aerion.nav." + navKey(s));
+			if (hit.test(label)) out.add(new Result(label, Lang.tr("aerion.find.section"), () -> go(s, null)));
+		}
+		for (String id : Features.MODULE_IDS) if (hit.test(name(id))) out.add(new Result(name(id), Lang.tr("aerion.nav.hud"), () -> go(Section.HUD, id)));
+		for (String id : FEATURES) if (hit.test(name(id))) out.add(new Result(name(id), Lang.tr("aerion.nav.features"), () -> go(Section.FEATURES, id)));
+		for (var e : OPTIONS.entrySet()) {
+			String owner = e.getKey();
+			for (Option o : e.getValue()) {
+				String own = Lang.get("aerion.opt." + owner + "." + o.key);
+				String label = own != null ? own : Lang.tr("aerion.opt." + o.key);
+				if (hit.test(label)) out.add(new Result(label, where(owner), () -> openOwner(owner)));
+			}
+		}
+		// Settings every HUD module has (when it shows, how it comes and goes).
+		for (String k : new String[] {"showWhen", "hideWhen", "showFor", "delay", "linger", "animate", "fade", "pulse"}) {
+			String label = Lang.tr("aerion.opt." + k);
+			if (hit.test(label)) out.add(new Result(label, Lang.tr("aerion.find.everyModule"), () -> go(Section.HUD, null)));
+		}
+		return out.size() > 60 ? out.subList(0, 60) : out;
+	}
+
+	private String where(String owner) {
+		return switch (owner) {
+			case "mirrors" -> Lang.tr("aerion.nav.mirrors");
+			case "menus", "inventory" -> Lang.tr("aerion.nav.game");
+			default -> name(owner);
+		};
+	}
+
+	private void openOwner(String owner) {
+		switch (owner) {
+			case "mirrors" -> go(Section.MIRRORS, null);
+			case "menus", "inventory" -> go(Section.GAME, null);
+			default -> go(List.of(Features.MODULE_IDS).contains(owner) ? Section.HUD : Section.FEATURES, owner);
+		}
+	}
+
+	private void go(Section s, String id) {
+		section = s;
+		detail = id;
+		sub = Sub.GENERAL;
+		expanded = null;
+		capturing = null;
+		query = "";
+		scroll = 0;
+		find = "";
+		finding = false;
+	}
+
+	private void open(Result r) {
+		r.open().run();
+		find = "";
+		finding = false;
+	}
+
+	/** The hits, one row each: the setting and where it is; a click goes there. */
+	private void resultsPage() {
+		List<Result> r = results();
+		if (r.isEmpty()) {
+			note(Lang.tr("aerion.find.none"));
+			return;
+		}
+		beginCard(null);
+		for (Result res : r) {
+			beginRow("find:" + res.title() + res.where());
+			boolean over = inside(x, y, colW, ROW);
+			if (over) Draw.rounded(g, x - 4, y + 1, colW + 8, ROW - 2, 3, Colors.alpha(control, 0xC0));
+			Txt.draw(g, ellipsize(res.title(), colW / 2), x, y + ROW / 2f, TEXT, text);
+			if (!res.where().isEmpty()) {
+				String w = ellipsize(res.where(), colW / 2 - 20, SMALL);
+				Txt.draw(g, w, x + colW - Txt.width(w, SMALL), y + ROW / 2f, SMALL, muted);
+			}
+			hit(x, y, colW, ROW, f -> open(res), false);
+			y += ROW;
+			endRow();
+		}
+		endCard();
 	}
 
 	/** A sidebar entry that does something instead of opening a section. */
@@ -706,7 +862,14 @@ public final class AerionMenu implements Page {
 	}
 
 	private int listHead(int mx, int my) {
-		String key = switch (section) {
+		String key = navKey(section);
+		Txt.Display.draw(g, Lang.tr("aerion.nav." + key), mx, my + 6, HEADING, text);
+		Txt.draw(g, Lang.tr("aerion.hint." + key), mx, my + 18, SMALL, muted);
+		return 34;
+	}
+
+	private static String navKey(Section section) {
+		return switch (section) {
 			case HUD -> "hud";
 			case PROFILES -> "profiles";
 			case FEATURES -> "features";
@@ -717,9 +880,6 @@ public final class AerionMenu implements Page {
 			case GAME -> "game";
 			case LOOK -> "look";
 		};
-		Txt.Display.draw(g, Lang.tr("aerion.nav." + key), mx, my + 6, HEADING, text);
-		Txt.draw(g, Lang.tr("aerion.hint." + key), mx, my + 18, SMALL, muted);
-		return 34;
 	}
 
 	private int pageHead(int mx, int my, int w) {
@@ -1876,6 +2036,7 @@ public final class AerionMenu implements Page {
 		keyRow(Lang.tr("aerion.feature.tntTimer"), Features.key("tntTimer"));
 		keyRow(Lang.tr("aerion.feature.streamer"), Features.key("streamer"));
 		keyRow(Lang.tr("aerion.feature.wheel"), Features.key("wheel"));
+		keyRow(Lang.tr("aerion.feature.shulkerPreview"), Features.key("shulkerPreview"));
 		keyRow(Lang.tr("key.aerion.stopwatch"), Features.key("stopwatchStart"));
 		keyRow(Lang.tr("key.aerion.mirrors"), Features.key("mirrors"));
 		keyRow(Lang.tr("key.aerion.mirrorGrab"), Features.key("mirrorGrab"));

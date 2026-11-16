@@ -23,6 +23,7 @@ abstract class ItemStackMixin {
 	@Inject(method = "getTooltipLines", at = @At("RETURN"))
 	private void aerion$food(Item.TooltipContext context, Player player, TooltipFlag flag, CallbackInfoReturnable<List<Component>> cir) {
 		pl.aerion.mod.features.ShulkerPreview.building(null);
+		pl.aerion.mod.features.ShulkerPreview.hint((ItemStack) (Object) this, cir.getReturnValue());
 		FoodOverlay.tooltip((ItemStack) (Object) this, cir.getReturnValue());
 	}
 

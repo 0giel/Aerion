@@ -39,7 +39,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, shulkerPeek, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -74,6 +74,7 @@ public final class Features {
 			tntTimer = new KeyMapping("key.aerion.tntTimer", InputConstants.UNKNOWN.getValue(), cat);
 			streamer = new KeyMapping("key.aerion.streamer", InputConstants.KEY_F7, cat);
 			wheel = new KeyMapping("key.aerion.wheel", InputConstants.KEY_GRAVE, cat);
+			shulkerPeek = new KeyMapping("key.aerion.shulkerPreview", InputConstants.KEY_LSHIFT, cat);
 			stopwatch = new KeyMapping("key.aerion.stopwatch", InputConstants.UNKNOWN.getValue(), cat);
 			mirrors = new KeyMapping("key.aerion.mirrors", InputConstants.KEY_J, cat);
 			mirrorGrab = new KeyMapping("key.aerion.mirrorGrab", InputConstants.KEY_Y, cat);
@@ -81,7 +82,7 @@ public final class Features {
 			mirrorArrange = new KeyMapping("key.aerion.mirrorArrange", InputConstants.KEY_K, cat);
 			mirrorHide = new KeyMapping("key.aerion.mirrorHide", InputConstants.KEY_R, cat);
 			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
-					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide));
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, shulkerPeek, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -156,6 +157,7 @@ public final class Features {
 			case "tntTimer" -> tntTimer;
 			case "streamer" -> streamer;
 			case "wheel" -> wheel;
+			case "shulkerPreview" -> shulkerPeek;
 			case "stopwatchStart" -> stopwatch;
 			case "mirrors" -> mirrors;
 			case "mirrorGrab" -> mirrorGrab;
