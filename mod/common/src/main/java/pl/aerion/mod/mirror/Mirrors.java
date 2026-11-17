@@ -82,6 +82,15 @@ public final class Mirrors {
 		return f == null ? fallback : pl.aerion.mod.hud.HudConfig.opt(f, key, fallback);
 	}
 
+	/** The picture rate and width asked of sources that scale pictures themselves. */
+	static int captureFps() {
+		return fps();
+	}
+
+	static int captureWidth() {
+		return maxWidth();
+	}
+
 	private static int fps() {
 		try {
 			return Math.max(2, Math.min(30, Integer.parseInt(opt("fps", "12"))));
@@ -203,6 +212,9 @@ public final class Mirrors {
 	public static void place(WindowSource.Win w) {
 		LocalPlayer p = Minecraft.getInstance().player;
 		if (p == null) return;
+		WindowSource src = source();
+		if (src != null) w = src.open(w);
+		if (w == null) return;
 		Panel panel = new Panel();
 		panel.title = w.title();
 		panel.cls = w.cls();
@@ -239,6 +251,8 @@ public final class Mirrors {
 		synchronized (Mirrors.class) {
 			all().remove(panel);
 		}
+		WindowSource src = source;
+		if (src != null && panel.win != 0) src.closed(panel.win);
 		ScreenShare.removed(panel);
 		release(panel);
 		save();
@@ -300,6 +314,12 @@ public final class Mirrors {
 			for (Panel p : list) {
 				if (p.win == 0 && wins != null) p.win = find(wins, p);
 				if (p.win == 0 || p.pending != null) continue;
+				// A window that learned how to be found again (a choice the desktop remembers).
+				String cls = src.clsOf(p.win);
+				if (cls != null && !cls.equals(p.cls)) {
+					p.cls = cls;
+					save();
+				}
 				WindowSource.Frame f = src.capture(p.win, maxWidth());
 				if (f == null) {
 					// The window is gone or hidden: look for it again later.
@@ -315,6 +335,11 @@ public final class Mirrors {
 	}
 
 	private static long find(List<WindowSource.Win> wins, Panel p) {
+		// Windows from the desktop's dialog come back only through their remembered choice.
+		if (p.cls.startsWith(PortalSource.PREFIX)) {
+			WindowSource src = source();
+			return src == null ? 0 : src.reopen(p.cls);
+		}
 		for (WindowSource.Win w : wins) if (w.title().equals(p.title)) return w.id();
 		for (WindowSource.Win w : wins) if (!p.cls.isEmpty() && w.cls().equals(p.cls)) return w.id();
 		return 0;

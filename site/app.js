@@ -25,7 +25,7 @@
     "m.text": "Add mods and packs from Modrinth and CurseForge with one button, together with what they require.",
     "w.title": "Your computer's windows in the game world",
     "w.text": "Hang YouTube, Discord or any program in the world and click into it without leaving the game. Friends with Aerion see and hear what you share.",
-    "w.1": "In a world opened with “Host a world” or on a server with the Aerion Screens mod", "w.2": "You choose who watches", "w.3": "Linux with X11 and Windows (test version)",
+    "w.1": "In a world opened with “Host a world” or on a server with the Aerion Screens mod", "w.2": "You choose who watches", "w.3": "Linux (view only on Wayland) and Windows (test version)",
     "m.1": "Fabric, Quilt, Forge and NeoForge", "m.2": "Java downloaded automatically", "m.3": "Performance mods in one click for every Fabric and Quilt instance:",
     "f.title": "And everything else",
     "f.1t": "HUD profiles", "f.1d": "Separate layouts for PvP, building and survival, switched with a key or by themselves when you join a server.",

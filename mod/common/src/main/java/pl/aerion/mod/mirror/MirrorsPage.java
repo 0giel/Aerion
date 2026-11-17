@@ -39,7 +39,7 @@ public final class MirrorsPage implements Page {
 	public void render(Gfx g, int mouseX, int mouseY) {
 		if (windows == null) {
 			WindowSource src = Mirrors.source();
-			windows = src == null ? List.of() : src.list();
+			windows = src == null ? List.of() : src.pickable();
 			if (src != null && !shooting) {
 				shooting = true;
 				List<WindowSource.Win> list = windows;
@@ -75,6 +75,16 @@ public final class MirrorsPage implements Page {
 		if (Mirrors.source() == null) {
 			Txt.draw(g, Lang.tr("aerion.mirrors.unsupported"), x, y + 5, 7, muted);
 			return;
+		}
+		if (PortalSource.wanted()) {
+			// Wayland: native programs are reached through the desktop's own dialog.
+			String problem = PortalSource.problem;
+			String note = problem == null ? Lang.tr("aerion.mirrors.waylandHint") : Lang.tr(problem.startsWith("missing:gi") || problem.startsWith("missing:pipewire") || problem.startsWith("missing:python") ? "aerion.mirrors.waylandMissing" : "aerion.mirrors.waylandFailed");
+			for (String line : wrap(note, w)) {
+				Txt.draw(g, line, x, y + 4, 6.5f, problem == null ? muted : accent);
+				y += 10;
+			}
+			y += 4;
 		}
 		if (windows.isEmpty()) Txt.draw(g, Lang.tr("aerion.mirrors.none"), x, y + 5, 7, muted);
 		for (WindowSource.Win win : windows) {

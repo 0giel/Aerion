@@ -26,6 +26,29 @@ public interface WindowSource {
 		return null;
 	}
 
+	/** The windows offered in the picker (may hold entries that open a window first). */
+	default List<Win> pickable() {
+		return list();
+	}
+
+	/** The window to hang for a picked entry; null when there is none (the entry failed). */
+	default Win open(Win w) {
+		return w;
+	}
+
+	/** A class that finds the window again later, when it changed since it was hung; else null. */
+	default String clsOf(long id) {
+		return null;
+	}
+
+	/** Finds a window this source can bring back from its saved class itself; 0 when it can't. */
+	default long reopen(String cls) {
+		return 0;
+	}
+
+	/** The panel showing this window went away. */
+	default void closed(long id) {}
+
 	/** The window's picture, at most `maxWidth` pixels wide; null when it can't be read now. */
 	Frame capture(long id, int maxWidth);
 
@@ -64,7 +87,16 @@ public interface WindowSource {
 		String os = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
 		try {
 			if (os.contains("win")) return new Win32Source();
-			if (os.contains("linux") || os.contains("bsd")) return X11Source.open();
+			if (os.contains("linux") || os.contains("bsd")) {
+				WindowSource x11 = null;
+				try {
+					x11 = X11Source.open();
+				} catch (Throwable e) {
+					// Wayland without XWayland: only windows from the desktop's dialog
+					if (!PortalSource.wanted()) throw e;
+				}
+				return PortalSource.wrap(x11);
+			}
 		} catch (Throwable e) {
 			pl.aerion.mod.AerionClient.LOG.warn("Aerion: window mirrors unavailable: {}", e.toString());
 		}
