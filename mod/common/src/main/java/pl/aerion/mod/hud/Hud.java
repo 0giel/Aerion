@@ -1169,8 +1169,9 @@ public final class Hud {
 	}
 
 	/**
-	 * Whether the module should be on screen now: its situation holds (after `delay` seconds), for at
-	 * most `showFor` seconds after it began (0: for as long as it holds), and `linger` seconds past its end.
+	 * Whether the module should be on screen now: from `delay` seconds after its situation began, for
+	 * `showFor` seconds whether or not it still holds (0: for as long as it holds), and `linger`
+	 * seconds past its end.
 	 */
 	private static boolean wanted(Anim a, JsonObject m, Minecraft mc) {
 		boolean cond = Situations.condition(m, mc);
@@ -1187,9 +1188,15 @@ public final class Hud {
 		if (cond) a.lastTrue = now;
 		a.cond = cond;
 		int delay = numOpt(m, "delay", 0, 0, 10), showFor = numOpt(m, "showFor", 0, 0, 60), linger = numOpt(m, "linger", 0, 0, 30);
-		if (!cond) return linger > 0 && a.lastTrue >= 0 && now - a.lastTrue < linger;
-		double elapsed = now - a.since;
-		return elapsed >= delay && (showFor == 0 || elapsed < delay + showFor);
+		boolean after = !cond && linger > 0 && a.lastTrue >= 0 && now - a.lastTrue < linger;
+		// A time set: on screen that long from when the situation began, also when it is over
+		// sooner (moving, then standing still); each new start counts again.
+		if (showFor > 0) {
+			double elapsed = a.since < 0 ? -1 : now - a.since;
+			return after || (elapsed >= delay && elapsed < delay + showFor);
+		}
+		if (!cond) return after;
+		return now - a.since >= delay;
 	}
 
 	private static final Map<String, Anim> ANIMS = new HashMap<>();
