@@ -3,6 +3,7 @@
   import Icon from "../components/Icon.svelte";
   import InstanceIcon from "../components/InstanceIcon.svelte";
   import ImportLaunchersModal from "./ImportLaunchersModal.svelte";
+  import PasteCodeModal from "./instance/PasteCodeModal.svelte";
   import { app } from "../stores/app.svelte";
   import { router } from "../stores/router.svelte";
   import { ui } from "../stores/ui.svelte";
@@ -42,6 +43,8 @@
   });
 
   let launchersOpen = $state(false);
+  let pasteOpen = $state(false);
+  let importOpen = $state(false);
   /** Mod updates waiting in instances that aren't running. */
   const updatable = $derived(
     Object.entries(app.contentUpdates).reduce((n, [id, c]) => n + (app.running[id] ? 0 : c), 0),
@@ -111,10 +114,29 @@
         ><Icon name="arrowUp" size={16} />{t("updateAll.button", { n: updatable })}</button
       >
     {/if}
-    <button class="btn" onclick={() => (launchersOpen = true)}
-      ><Icon name="download" size={16} />{t("importLaunchers.button")}</button
-    >
-    <button class="btn" onclick={importPack}><Icon name="upload" size={16} />{t("instances.import")}</button>
+    <!-- Every way in under one button: other launchers, a pack file, a friend's code. -->
+    <div class="menu-wrap">
+      <button
+        class="btn"
+        aria-haspopup="menu"
+        aria-expanded={importOpen}
+        onclick={() => (importOpen = !importOpen)}
+        ><Icon name="download" size={16} />{t("common.import")}</button
+      >
+      {#if importOpen}
+        <div class="menu card raised" role="menu">
+          <button role="menuitem" onclick={() => ((importOpen = false), (pasteOpen = true))}
+            ><Icon name="link" size={16} />{t("instances.paste")}</button
+          >
+          <button role="menuitem" onclick={() => ((importOpen = false), importPack())}
+            ><Icon name="upload" size={16} />{t("instances.import")}</button
+          >
+          <button role="menuitem" onclick={() => ((importOpen = false), (launchersOpen = true))}
+            ><Icon name="download" size={16} />{t("importLaunchers.button")}</button
+          >
+        </div>
+      {/if}
+    </div>
     <button class="btn primary" onclick={() => (ui.newInstanceOpen = true)}
       ><Icon name="plus" size={16} />{t("instances.new")}</button
     >
@@ -218,6 +240,9 @@
 </div>
 
 <svelte:window
+  onclick={(e) => {
+    if (importOpen && !(e.target as Element).closest(".menu-wrap")) importOpen = false;
+  }}
   onkeydown={(e) => e.key === "Escape" && (menu = null)}
   onblur={() => (menu = null)}
   onresize={() => (menu = null)}
@@ -268,6 +293,7 @@
 {/if}
 
 <ImportLaunchersModal bind:open={launchersOpen} />
+<PasteCodeModal bind:open={pasteOpen} />
 
 <style>
   .menu-back {
@@ -420,5 +446,34 @@
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+  }
+  .menu-wrap {
+    position: relative;
+  }
+  .menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.3rem);
+    z-index: 10;
+    min-width: 14rem;
+    padding: 0.35rem;
+    background: var(--c-surface);
+    display: flex;
+    flex-direction: column;
+    animation: fade-up var(--dur) var(--ease);
+  }
+  .menu button {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.65rem;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+  .menu button:hover {
+    background: var(--c-hover);
   }
 </style>

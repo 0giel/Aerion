@@ -269,6 +269,96 @@ pub async fn install_boost_pack(
     ))
 }
 
+/// One piece of content from an instance code: the exact version to install.
+#[derive(Debug, Clone, serde::Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SharedContent {
+    pub provider: Provider,
+    pub project_id: String,
+    pub version_id: String,
+    pub kind: ContentKind,
+    pub title: String,
+}
+
+/// Install the content an instance code lists (a friend's mods, resource packs and shaders at
+/// their versions, with what they require) as one task. A piece that can't be found or doesn't
+/// fit is skipped, not an error; the result lists what was added and what wasn't.
+#[tauri::command]
+#[specta::specta]
+pub async fn install_shared_content(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    items: Vec<SharedContent>,
+) -> CmdResult<String> {
+    if items.len() > 500 {
+        return Err(launcher_core::Error::Invalid("too many items in the code".into()).into());
+    }
+    let inst = state.instances.get(&instance_id).await?;
+    let app2 = app.clone();
+    let iid = instance_id.clone();
+    Ok(state.tasks.spawn(
+        &app,
+        "shared",
+        "task.shared",
+        Some(inst.name.clone()),
+        Some(instance_id),
+        move |ctx| async move {
+            let state = app2.state::<AppState>();
+            ctx.stage("stage.resolve", None);
+            let mut result = BoostResult::default();
+            let mut planned: HashSet<(Provider, String)> = HashSet::new();
+            // One install per provider and kind (a plan holds one of each).
+            let mut groups: Vec<((Provider, ContentKind), InstallPlan)> = Vec::new();
+            // What the code lists is installed at its own version, never as someone's dependency
+            // at another one: while planning one item, the others count as already there.
+            let listed: HashSet<(Provider, String)> = items
+                .iter()
+                .map(|i| (i.provider, i.project_id.clone()))
+                .collect();
+            for item in items {
+                let me = (item.provider, item.project_id.clone());
+                if planned.contains(&me) {
+                    continue;
+                }
+                let mut already: HashSet<(Provider, String)> = listed.union(&planned).cloned().collect();
+                already.remove(&me);
+                match make_plan(&state, &iid, item.provider, &item.project_id, Some(&item.version_id), item.kind, &already).await {
+                    Ok(plan) => {
+                        let at = match groups.iter().position(|(k, _)| *k == (item.provider, item.kind)) {
+                            Some(i) => i,
+                            None => {
+                                groups.push(((item.provider, item.kind), InstallPlan::default()));
+                                groups.len() - 1
+                            }
+                        };
+                        for f in plan.install {
+                            if planned.insert((item.provider, f.project_id.clone())) {
+                                groups[at].1.install.push(f);
+                            }
+                        }
+                        result.added.push(item.title);
+                    }
+                    Err(e) => {
+                        tracing::info!(item = %item.title, error = %e, "shared content not available");
+                        result.unavailable.push(item.title);
+                    }
+                }
+            }
+            let content = state.instances.content(&iid)?;
+            let engine = state.engine().await;
+            for ((provider, kind), mut plan) in groups {
+                if plan.install.is_empty() {
+                    continue;
+                }
+                plan.provider = Some(provider);
+                content.install(&engine.downloader, &plan, kind, &ctx).await?;
+            }
+            Ok(serde_json::to_string(&result).ok())
+        },
+    ))
+}
+
 /// What will be installed: the best compatible file plus required dependencies; optional
 /// dependencies, conflicts and files needing a manual download are listed separately.
 #[tauri::command]

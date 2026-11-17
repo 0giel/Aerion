@@ -133,6 +133,12 @@ export const commands = {
 	 *  added, what was already there and what isn't available.
 	 */
 	installBoostPack: (instanceId: string) => __TAURI_INVOKE<string>("install_boost_pack", { instanceId }),
+	/**
+	 *  Install the content an instance code lists (a friend's mods, resource packs and shaders at
+	 *  their versions, with what they require) as one task. A piece that can't be found or doesn't
+	 *  fit is skipped, not an error; the result lists what was added and what wasn't.
+	 */
+	installSharedContent: (instanceId: string, items: SharedContent[]) => __TAURI_INVOKE<string>("install_shared_content", { instanceId, items }),
 	listContent: (instanceId: string) => __TAURI_INVOKE<ContentEntry_Serialize[]>("list_content", { instanceId }),
 	setContentEnabled: (instanceId: string, kind: ContentKind, fileName: string, enabled: boolean) => __TAURI_INVOKE<null>("set_content_enabled", { instanceId, kind, fileName, enabled }),
 	removeContent: (instanceId: string, kind: ContentKind, fileName: string) => __TAURI_INVOKE<null>("remove_content", { instanceId, kind, fileName }),
@@ -2447,6 +2453,15 @@ export type Settings_Serialize = {
 	dashboards: Dashboard_Serialize[],
 	/**  Friends to join (no server of ours involved: they share an e4mc or LAN address). */
 	friends: Friend_Serialize[],
+};
+
+/**  One piece of content from an instance code: the exact version to install. */
+export type SharedContent = {
+	provider: Provider,
+	projectId: string,
+	versionId: string,
+	kind: ContentKind,
+	title: string,
 };
 
 export type Skin = Skin_Serialize | Skin_Deserialize;

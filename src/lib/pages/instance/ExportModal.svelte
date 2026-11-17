@@ -5,9 +5,31 @@
   import { toasts } from "../../stores/toasts.svelte";
   import { commands, errorMessage, type Instance, type PackFormat } from "../../api";
   import { t } from "../../i18n/index.svelte";
+  import { encodeInstance } from "../../instanceCode";
 
   let { open = $bindable(false), instance }: { open?: boolean; instance: Instance } = $props();
   let format = $state<PackFormat>("mrpack");
+  /** The paste-in-chat code instead of a file. */
+  let asCode = $state(false);
+  let code = $state("");
+  let left = $state(0);
+
+  async function makeCode() {
+    asCode = true;
+    code = "";
+    try {
+      const r = await encodeInstance(instance, await commands.listContent(instance.id));
+      code = r.code;
+      left = r.left;
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    }
+  }
+
+  async function copyCode() {
+    await navigator.clipboard.writeText(code);
+    toasts.success(t("instances.codeCopied"));
+  }
   let name = $state(untrack(() => instance.name));
   let version = $state("1.0.0");
   let entries = $state.raw<string[]>([]);
@@ -54,16 +76,29 @@
     <div class="field">
       <span class="label">{t("instances.exportFormat")}</span>
       <div class="segmented" role="group">
-        <button aria-pressed={format === "mrpack"} onclick={() => (format = "mrpack")}
-          >Modrinth (.mrpack)</button
+        <button
+          aria-pressed={!asCode && format === "mrpack"}
+          onclick={() => ((format = "mrpack"), (asCode = false))}>Modrinth (.mrpack)</button
         >
-        <button aria-pressed={format === "curseforge"} onclick={() => (format = "curseforge")}
-          >CurseForge (.zip)</button
+        <button
+          aria-pressed={!asCode && format === "curseforge"}
+          onclick={() => ((format = "curseforge"), (asCode = false))}>CurseForge (.zip)</button
         >
-        <button aria-pressed={format === "aerion"} onclick={() => (format = "aerion")}>Aerion</button>
+        <button
+          aria-pressed={!asCode && format === "aerion"}
+          onclick={() => ((format = "aerion"), (asCode = false))}>Aerion</button
+        >
+        <button aria-pressed={asCode} onclick={makeCode}>{t("instances.codeFormat")}</button>
       </div>
     </div>
-    {#if format !== "aerion"}
+    {#if asCode}
+      <div class="field">
+        <span class="label">{t("instances.codeLabel")}</span>
+        <textarea class="input mono code" readonly value={code} rows="4"></textarea>
+        <span class="tiny muted">{t("instances.codeHint")}</span>
+        {#if left > 0}<span class="tiny muted">{t("instances.codeLeft", { n: left })}</span>{/if}
+      </div>
+    {:else if format !== "aerion"}
       <div class="row gap-3">
         <div class="field grow">
           <label for="ex-name">{t("common.name")}</label><input
@@ -95,11 +130,21 @@
   </div>
   {#snippet footer()}
     <button class="btn ghost" onclick={() => (open = false)}>{t("common.cancel")}</button>
-    <button class="btn primary" onclick={run}>{t("common.export")}</button>
+    {#if asCode}
+      <button class="btn primary" disabled={!code} onclick={copyCode}>{t("instances.codeCopy")}</button>
+    {:else}
+      <button class="btn primary" onclick={run}>{t("common.export")}</button>
+    {/if}
   {/snippet}
 </Modal>
 
 <style>
+  .code {
+    width: 100%;
+    font-size: 0.75rem;
+    word-break: break-all;
+    resize: none;
+  }
   .checks {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
