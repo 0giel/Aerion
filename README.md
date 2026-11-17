@@ -40,15 +40,21 @@ in one click · one-click crash fixes · automatic updates.
 
 ## What's new
 
+- **Windows in the world (1.3):** hang any window of your computer in the game and click and type
+  into it. Share it, and Aerion players near you see it and hear its sound, in a world opened with
+  *Host a world* or on a server with the
+  [Aerion Screens](https://github.com/0giel/Aerion/releases/latest) server mod. You choose who may
+  watch.
+- **Also in 1.3:** instance codes (one short text rebuilds a whole instance), *Tune automatically*
+  on the Performance page, a skin editor, theme codes, streamer mode (F7), a quick wheel, shulker
+  box previews and a map that remembers explored terrain.
+- **The hotbar menu (1.2):** the launcher's menu can sit at the bottom, like the game's hotbar.
 - **A new look (1.1):** your player stands on a floating island on the Start screen, in the
-  colours of your theme, with a winter, desert or nether island for each instance. A new logo, a
-  sidebar of its own and new icons.
-- **Performance mods in one click (1.1.1):** Sodium, Lithium, FerriteCore, ImmediatelyFast and
-  EntityCulling for any Fabric or Quilt instance, from Modrinth, when you create it or later in its
-  Content tab. Mods you already have, or turned off, are left alone.
-- **In the game (1.1.2):** furnaces' and the brewing stand's progress in your theme's colours.
+  colours of your theme. Performance mods in one click for any Fabric or Quilt instance.
 - Earlier: HUD profiles, an in-game map with waypoints, a key editor, friends with a *Join* button,
   a screenshot gallery, an after-game performance summary and badges.
+
+![A friend's shared window, seen in the game](docs/screenshots/windows.gif)
 
 ![HUD profiles](docs/screenshots/profiles.png)
 

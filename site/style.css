@@ -112,6 +112,7 @@ h1 { font-family: var(--display); font-size: clamp(2.2rem, 5.6vw, 4rem); line-he
 .tabs button[aria-selected="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
 .frame { margin: 0; border: 1px solid var(--line-2); border-radius: var(--r-lg); overflow: hidden; background: var(--surface); box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.7); }
 .frame img { width: 100%; transition: opacity 0.18s; }
+.frame video { display: block; width: 100%; height: auto; }
 .frame img.swap { opacity: 0.35; }
 .tour .frame { margin-bottom: -1px; border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 0; max-height: 620px; }
 
