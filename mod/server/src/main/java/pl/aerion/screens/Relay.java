@@ -93,15 +93,16 @@ public final class Relay {
 	}
 
 	private static void panel(ServerPlayer from, Sender s, Proto.Panel p) {
+		// A window hangs near its owner: nobody places pictures far across the world. Checked
+		// before a new window takes one of the owner's places.
+		double dx = p.x() - from.getX(), dy = p.y() - from.getY(), dz = p.z() - from.getZ();
+		if (dx * dx + dy * dy + dz * dz > 64 * 64) return;
 		Shared sh = s.panels.get(p.id());
 		if (sh == null) {
 			if (s.panels.size() >= config.maxPanels) return;
 			sh = new Shared();
 			s.panels.put(p.id(), sh);
 		}
-		// A window hangs near its owner: nobody places pictures far across the world.
-		double dx = p.x() - from.getX(), dy = p.y() - from.getY(), dz = p.z() - from.getZ();
-		if (dx * dx + dy * dy + dz * dz > 64 * 64) return;
 		boolean moved = sh.panel != null && !sh.panel.equals(p);
 		sh.panel = p;
 		sh.dimension = from.level().dimension();
@@ -167,8 +168,17 @@ public final class Relay {
 		s.soundBytes += a.sound().length;
 		if (s.soundBytes > 40_000) return;
 		byte[] msg = Proto.theirAudio(from.getUUID(), a.id(), a.seq(), a.sound());
-		for (ServerPlayer viewer : viewersOf(from.level().getServer(), new Key(from.getUUID(), a.id()))) send(viewer, msg);
+		Proto.Panel p = sh.panel;
+		for (ServerPlayer viewer : viewersOf(from.level().getServer(), new Key(from.getUUID(), a.id()))) {
+			// Players hear a window only up close (the mod is silent past SOUND_RANGE): no sound
+			// goes to those who would not hear it.
+			double dx = p.x() - viewer.getX(), dy = p.y() - viewer.getY(), dz = p.z() - viewer.getZ();
+			if (dx * dx + dy * dy + dz * dz <= SOUND_RANGE * SOUND_RANGE) send(viewer, msg);
+		}
 	}
+
+	/** How far a window's sound carries, a little more than the mod's 24 blocks. */
+	static final double SOUND_RANGE = 26;
 
 	/** Viewers who have been told about this window. */
 	private static List<ServerPlayer> viewersOf(MinecraftServer server, Key key) {
@@ -213,6 +223,8 @@ public final class Relay {
 
 	/** A few times a second: who sees which windows now. */
 	public static void tick(MinecraftServer server) {
+		if (current != server && server.isDedicatedServer() && !server.usesAuthentication())
+			AerionScreens.LOG.warn("Aerion screens: online-mode is off, so the players' lists of who may watch their windows go by nicks anyone can take");
 		current = server;
 		if (!config.enabled || PLAYERS.isEmpty() || ++ticks % 5 != 0) return;
 		double range = config.range;

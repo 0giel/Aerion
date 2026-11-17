@@ -45,7 +45,8 @@ final class Config {
 			p.setProperty("maxFrameKb", String.valueOf(c.maxFrameKb));
 			Files.createDirectories(file.getParent());
 			try (Writer w = Files.newBufferedWriter(file)) {
-				p.store(w, "Aerion shared windows: players with the Aerion mod see the windows others share near them");
+				p.store(w, "Aerion shared windows: players with the Aerion mod see the windows others share near them.\n"
+						+ "Players choose who may watch by nick; with online-mode=false anyone can take a nick, so that choice protects nothing there.");
 			}
 		} catch (IOException | RuntimeException e) {
 			AerionScreens.LOG.warn("Aerion screens: settings not read ({}), using the defaults", e.toString());

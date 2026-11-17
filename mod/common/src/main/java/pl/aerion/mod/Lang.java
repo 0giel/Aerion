@@ -476,6 +476,7 @@ public final class Lang {
 			Map.entry("aerion.share.chosen", new String[] {"Chosen", "Wybrani"}),
 			Map.entry("aerion.share.may", new String[] {"May watch", "Może oglądać"}),
 			Map.entry("aerion.share.mayNot", new String[] {"Can't watch", "Nie może"}),
+			Map.entry("aerion.share.offline", new String[] {"On servers that don't check accounts, anyone can take a nick.", "Na serwerach bez sprawdzania kont każdy może użyć cudzego nicku."}),
 			Map.entry("aerion.share.nobody", new String[] {"No other players here yet; the ones you allow are remembered for this server.", "Na razie nie ma tu innych graczy; zapamiętam, kogo dopuścisz na tym serwerze."}),
 			Map.entry("aerion.share.add", new String[] {"Add by name", "Dodaj nick"}),
 			Map.entry("aerion.share.addHint", new String[] {"Type a nick, Enter", "Wpisz nick, Enter"}),

@@ -1841,6 +1841,8 @@ public final class AerionMenu implements Page {
 					pl.aerion.mod.mirror.Mirrors.setAllow(false, next);
 				}
 			});
+			// The server checks names only: on servers without account checks a name proves nothing.
+			note(Lang.tr("aerion.share.offline"));
 		}
 		endCard();
 	}

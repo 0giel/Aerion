@@ -21,6 +21,9 @@ final class RemoteAudio {
 
 	private static final float RANGE = 24f;
 	private static final int MAX_PLAYING = 6;
+	/** Pieces (0.1 s each) stored before playing starts, and how long to wait for them at most. */
+	private static final int PRIME = 2;
+	private static final long PRIME_WAIT_NS = 300_000_000L;
 	private static final Map<Object, Player> PLAYING = new HashMap<>();
 
 	/** A piece of sound for a window (render thread). */
@@ -96,21 +99,37 @@ final class RemoteAudio {
 			try (SourceDataLine line = AudioSystem.getSourceDataLine(format)) {
 				line.open(format, WindowAudio.RATE * 4 / 2);
 				line.start();
-				boolean told = false;
+				boolean told = false, priming = true;
+				float lastL = 0, lastR = 0;
+				int bufferBytes = line.getBufferSize();
 				while (!stop) {
+					// Pieces come over the network unevenly: keep a small store (about 0.2 s) before
+					// playing, and again whenever the line ran dry, so the sound doesn't crackle.
+					if (priming || line.available() >= bufferBytes - 4) {
+						long until = System.nanoTime() + PRIME_WAIT_NS;
+						while (!stop && queue.size() < PRIME && System.nanoTime() < until) Thread.sleep(10);
+						priming = false;
+					}
 					byte[] block = queue.poll(500, TimeUnit.MILLISECONDS);
-					if (block == null) continue;
+					if (block == null) {
+						priming = true;
+						continue;
+					}
 					short[] pcm = Adpcm.decode(block);
 					if (pcm == null) continue;
 					float l = left, r = right;
 					byte[] out = new byte[pcm.length * 4];
 					for (int i = 0; i < pcm.length; i++) {
-						int a = Math.round(pcm[i] * l), b = Math.round(pcm[i] * r);
+						// The volume glides across the piece: steps as the player turns would click.
+						float f = (i + 1f) / pcm.length, gl = lastL + (l - lastL) * f, gr = lastR + (r - lastR) * f;
+						int a = Math.round(pcm[i] * gl), b = Math.round(pcm[i] * gr);
 						out[4 * i] = (byte) a;
 						out[4 * i + 1] = (byte) (a >> 8);
 						out[4 * i + 2] = (byte) b;
 						out[4 * i + 3] = (byte) (b >> 8);
 					}
+					lastL = l;
+					lastR = r;
 					line.write(out, 0, out.length);
 					if (!told) {
 						told = true;
