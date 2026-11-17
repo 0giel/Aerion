@@ -10,6 +10,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    notes: {
+      pl: [
+        "Kod instancji: wyślij znajomemu krótki tekst, a dostanie te same mody, paczki i shadery (Instancje → Importuj → Wklej kod).",
+        "„Dostrój automatycznie” na stronie Wydajność: po grze jedno kliknięcie ustawia pamięć, zasięg renderowania i mody przyspieszające. Strona pokazuje też, ile kosztuje mod Aerion.",
+        "Edytor skinów, kody motywów do udostępniania i język niemiecki (beta).",
+        "Mod: okna z komputera w świecie gry, które możesz udostępnić znajomym razem z dźwiękiem (w świecie z „Hostuj świat” albo na serwerze z modem Aerion Screens).",
+        "Mod: tryb streamera (F7), koło skrótów (`), podgląd shulkerów (Shift), mapa pamiętająca zwiedzone tereny i punkty trasy z czatu jednym kliknięciem.",
+        "Mod: panel „Wygląd” na ekranie tytułowym (tło: zorza, panorama albo Twój świat), wyszukiwarka ustawień, kolor połysku zaklęć i motyw na pasku, w opisach, czacie i liście graczy.",
+      ],
+      en: [
+        "Instance codes: send a friend a short text and they get the same mods, packs and shaders (Instances → Import → Paste code).",
+        "“Tune automatically” on the Performance page: after a game one click sets the memory, render distance and speed-up mods. The page also shows what the Aerion mod costs.",
+        "A skin editor, theme share codes and German (beta).",
+        "Mod: your computer's windows in the game's world, which you can share with friends, sound included (in a world opened with “Host a world” or on a server with the Aerion Screens mod).",
+        "Mod: streamer mode (F7), a quick wheel (`), shulker box preview (Shift), a map that remembers explored terrain and waypoints from chat in one click.",
+        "Mod: a “Look” panel on the title screen (background: aurora, panorama or your world), a settings search, the enchantment glint's colour, and the theme on the hotbar, tooltips, chat and player list.",
+      ],
+    },
+  },
+  {
     version: "1.2.0",
     notes: {
       pl: [
