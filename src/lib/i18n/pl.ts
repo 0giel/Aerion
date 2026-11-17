@@ -1291,6 +1291,15 @@ const pl: Dict = {
     modCostHint: "Ile czasu z każdej klatki zabrały części moda, średnio w świecie.",
     modBackground:
       "Okna w świecie odczytywały okna w tle przez {ms} ms na sekundę (to nie spowalnia klatek).",
+    tune: {
+      button: "Dostrój automatycznie",
+      hint: "Launcher może sam wprowadzić poniższe wskazówki.",
+      applied: "Zastosowano. Sprawdź w następnej grze, czy jest lepiej.",
+      memory: "pamięć {size}",
+      render: "zasięg renderowania {n}",
+      boost: "mody przyspieszające",
+      done: "{name}: {list}.",
+    },
     hints: {
       allGood: "Nic nie spowalniało tej gry.",
       aerionCost:

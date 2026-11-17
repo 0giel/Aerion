@@ -1239,6 +1239,15 @@ const en = {
     modCostHint: "How long the mod’s parts took out of every frame, on average in a world.",
     modBackground:
       "Windows in the world read windows in the background for {ms} ms per second (this doesn’t slow frames).",
+    tune: {
+      button: "Tune automatically",
+      hint: "The launcher can apply the tips below by itself.",
+      applied: "Applied. See in the next game whether it runs better.",
+      memory: "memory {size}",
+      render: "render distance {n}",
+      boost: "speed-up mods",
+      done: "{name}: {list}.",
+    },
     hints: {
       allGood: "Nothing slowed this game down.",
       aerionCost:

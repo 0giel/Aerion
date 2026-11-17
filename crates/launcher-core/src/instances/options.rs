@@ -136,6 +136,24 @@ fn merge(from: &str, into: &str, bindings: bool, version: bool) -> String {
     text
 }
 
+/// Set one plain value in a settings folder's `options.txt` (kept as the game wrote the rest).
+pub fn set_value(game_dir: &Path, key: &str, value: &str) -> Result<()> {
+    let ok = |s: &str, max: usize| {
+        !s.is_empty() && s.len() <= max && s.bytes().all(|b| b.is_ascii_graphic() && b != b':')
+    };
+    if !ok(key, 64) || key.starts_with("key_") || !ok(value, 64) {
+        return Err(Error::Invalid(format!("invalid game option {key}")));
+    }
+    let path = game_dir.join("options.txt");
+    let own = read(&path);
+    std::fs::create_dir_all(game_dir).at(game_dir)?;
+    crate::util::fs::atomic_write_sync(
+        &path,
+        merge(&format!("{key}:{value}\n"), &own, false, false).as_bytes(),
+    )?;
+    Ok(())
+}
+
 /// One value of the game's own `options.txt`.
 pub fn value(game_dir: &Path, key: &str) -> Option<String> {
     lines(&read(&game_dir.join("options.txt")))
@@ -303,6 +321,25 @@ pub fn write_bindings(game_dir: &Path, changes: &[KeyBinding]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sets_one_value_and_keeps_the_rest() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("options.txt"),
+            "fov:0.5\nrenderDistance:24\nkey_key.jump:key.keyboard.space\n",
+        )
+        .unwrap();
+        set_value(dir.path(), "renderDistance", "12").unwrap();
+        assert_eq!(value(dir.path(), "renderDistance").as_deref(), Some("12"));
+        assert_eq!(value(dir.path(), "fov").as_deref(), Some("0.5"));
+        assert_eq!(
+            value(dir.path(), "key_key.jump").as_deref(),
+            Some("key.keyboard.space")
+        );
+        assert!(set_value(dir.path(), "key_key.jump", "x").is_err());
+        assert!(set_value(dir.path(), "a:b", "1").is_err());
+    }
 
     #[test]
     fn copy_template_apply() {

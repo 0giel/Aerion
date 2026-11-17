@@ -288,6 +288,34 @@ async fn bindings_dir(
     }
 }
 
+/// The game's render distance for an instance (and the shared settings when it uses them, or the
+/// next start would bring the old value back). Refused while the game runs: it writes its own.
+#[tauri::command]
+#[specta::specta]
+pub async fn set_render_distance(
+    state: State<'_, AppState>,
+    instance_id: String,
+    chunks: u32,
+) -> CmdResult<()> {
+    if state.games.is_running(&instance_id) {
+        return Err(launcher_core::Error::AlreadyRunning.into());
+    }
+    let chunks = chunks.clamp(2, 32).to_string();
+    let inst = state.instances.get(&instance_id).await?;
+    let mut dirs = vec![state.instances.game_dir(&instance_id)?];
+    if inst.shared_options {
+        dirs.push(state.paths.shared_options_dir());
+    }
+    launcher_core::util::blocking(move || {
+        for d in &dirs {
+            options::set_value(d, "renderDistance", &chunks)?;
+        }
+        Ok(())
+    })
+    .await?;
+    Ok(())
+}
+
 /// The key bindings of an instance (`instanceId`), or of the shared settings (`null`).
 #[tauri::command]
 #[specta::specta]

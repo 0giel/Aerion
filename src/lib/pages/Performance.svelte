@@ -103,6 +103,54 @@
     }
   }
 
+  /** Hints the launcher can act on by itself, for "Tune automatically". */
+  const fabricLike = (id: string) => {
+    const l = app.instances.find((i) => i.id === id)?.loader;
+    return l === "fabric" || l === "quilt";
+  };
+  const tunable = (s: SessionSummary) =>
+    app.instances.some((i) => i.id === s.instanceId) &&
+    s.hints.some(
+      (h) =>
+        h.kind === "lowMemory" ||
+        h.kind === "tooMuchMemory" ||
+        h.kind === "renderDistance" ||
+        (h.kind === "noSodium" && fabricLike(s.instanceId)),
+    );
+  let tuned = $state<string[]>([]);
+  let tuning = $state(false);
+  const sessionKey = (s: SessionSummary) => `${s.instanceId}/${s.ended}`;
+
+  /** Every fix the last game's hints suggest, at once: memory, render distance, speed-up mods. */
+  async function tune(s: SessionSummary) {
+    const inst = app.instances.find((i) => i.id === s.instanceId);
+    if (!inst) return;
+    tuning = true;
+    const done: string[] = [];
+    try {
+      for (const h of s.hints) {
+        if (h.kind === "lowMemory" || h.kind === "tooMuchMemory") {
+          const mb = Number(h.params.suggest);
+          await commands.updateInstance({ ...inst, maxMemoryMb: mb });
+          done.push(t("perf.tune.memory", { size: size(mb) }));
+        } else if (h.kind === "renderDistance") {
+          await commands.setRenderDistance(s.instanceId, 12);
+          done.push(t("perf.tune.render", { n: 12 }));
+        } else if (h.kind === "noSodium" && fabricLike(s.instanceId)) {
+          await app.installBoost(s.instanceId);
+          done.push(t("perf.tune.boost"));
+        }
+      }
+      await app.refreshInstances();
+      tuned = [...tuned, sessionKey(s)];
+      toasts.success(t("perf.tune.done", { name: inst.name, list: done.join(", ") }));
+    } catch (e) {
+      toasts.error(errorMessage(e));
+    } finally {
+      tuning = false;
+    }
+  }
+
   const n1 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 1 }));
   const n2 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 2 }));
   const n0 = $derived(new Intl.NumberFormat(i18n.locale, { maximumFractionDigits: 0 }));
@@ -291,6 +339,15 @@
               >{formatRelative(session.ended)} · {formatPlayTime(session.playSecs)}</span
             >
           </div>
+          {#if tunable(session)}
+            {@const done = tuned.includes(sessionKey(session))}
+            <div class="row between wrap tune">
+              <span class="small muted">{t(done ? "perf.tune.applied" : "perf.tune.hint")}</span>
+              <button class="btn sm primary" disabled={done || tuning} onclick={() => tune(session)}
+                ><Icon name="sparkles" size={14} />{t("perf.tune.button")}</button
+              >
+            </div>
+          {/if}
           <div class="stats">
             <div class="stat">
               <span class="label">{t("perf.fpsAvg")}</span>
@@ -414,6 +471,12 @@
 </div>
 
 <style>
+  .tune {
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    background: var(--c-hover);
+  }
   .cost {
     padding-top: var(--sp-2);
     border-top: 1px solid var(--border);

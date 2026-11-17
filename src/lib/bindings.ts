@@ -139,6 +139,11 @@ export const commands = {
 	 *  fit is skipped, not an error; the result lists what was added and what wasn't.
 	 */
 	installSharedContent: (instanceId: string, items: SharedContent[]) => __TAURI_INVOKE<string>("install_shared_content", { instanceId, items }),
+	/**
+	 *  The game's render distance for an instance (and the shared settings when it uses them, or the
+	 *  next start would bring the old value back). Refused while the game runs: it writes its own.
+	 */
+	setRenderDistance: (instanceId: string, chunks: number) => __TAURI_INVOKE<null>("set_render_distance", { instanceId, chunks }),
 	listContent: (instanceId: string) => __TAURI_INVOKE<ContentEntry_Serialize[]>("list_content", { instanceId }),
 	setContentEnabled: (instanceId: string, kind: ContentKind, fileName: string, enabled: boolean) => __TAURI_INVOKE<null>("set_content_enabled", { instanceId, kind, fileName, enabled }),
 	removeContent: (instanceId: string, kind: ContentKind, fileName: string) => __TAURI_INVOKE<null>("remove_content", { instanceId, kind, fileName }),

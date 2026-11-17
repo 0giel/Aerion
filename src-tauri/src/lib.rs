@@ -86,6 +86,7 @@ pub fn specta_builder() -> Builder<tauri::Wry> {
             mods::boost_status,
             mods::install_boost_pack,
             mods::install_shared_content,
+            commands::worlds::set_render_distance,
             mods::list_content,
             mods::set_content_enabled,
             mods::remove_content,
