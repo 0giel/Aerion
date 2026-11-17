@@ -29,10 +29,12 @@ final class WindowAudio {
 	private static final Map<Mirrors.Panel, Capture> RUNNING = new IdentityHashMap<>();
 	private static Boolean available;
 
-	/** Whether this computer can send window sound (Linux with PipeWire's tools). */
+	private static final boolean WINDOWS = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).startsWith("windows");
+
+	/** Whether this computer can send window sound (Linux with PipeWire's tools, or Windows). */
 	static boolean available() {
 		if (available == null) {
-			available = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("linux") && onPath("pw-record") && onPath("pw-dump");
+			available = WINDOWS || (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("linux") && onPath("pw-record") && onPath("pw-dump"));
 		}
 		return available;
 	}
@@ -89,6 +91,10 @@ final class WindowAudio {
 
 		@Override
 		public void run() {
+			if (WINDOWS) {
+				windows();
+				return;
+			}
 			while (!stop) {
 				try {
 					List<Long> nodes = nodes();
@@ -115,6 +121,37 @@ final class WindowAudio {
 					}
 				}
 			}
+		}
+
+		/** Windows: the window's process (and the ones it started), recorded by the system itself. */
+		private void windows() {
+			long self = ProcessHandle.current().pid();
+			while (!stop) {
+				WindowSource src = Mirrors.source();
+				long pid = src == null || panel.win == 0 ? 0 : src.pid(panel.win);
+				if (pid > 0 && gameOrAncestor(pid)) {
+					// The launcher (or a terminal) the game runs in: its tree holds the game's own sound.
+					if (!told) AerionClient.LOG.info("Aerion: window \"{}\" belongs to the game's own launcher; its sound isn't shared", panel.title);
+					told = true;
+				} else if (pid > 0 && pid != self) {
+					AerionClient.LOG.info("Aerion: sharing the sound of window \"{}\" (process {})", panel.title, pid);
+					boolean ok = WinLoopback.record(pid, RATE, CHUNK, () -> stop, pcm -> ScreenShare.sendAudio(panel, encoder.encode(pcm, pcm.length)));
+					// Not possible on this Windows: no use asking again and again.
+					if (!ok) return;
+				}
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
+		}
+
+		private static boolean gameOrAncestor(long pid) {
+			for (var p = java.util.Optional.of(ProcessHandle.current()); p.isPresent(); p = p.get().parent()) {
+				if (p.get().pid() == pid) return true;
+			}
+			return false;
 		}
 
 		private List<Long> nodes() throws Exception {
