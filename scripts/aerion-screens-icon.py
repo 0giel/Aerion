@@ -1,44 +1,44 @@
 #!/usr/bin/env python3
-# icon.py <out.png> <size>: Aerion Screens' icon, drawn on a 32x32 pixel grid (Minecraft-like) and
-# scaled up without smoothing.
+"""Aerion Screens' icon in the Aerion logo's style (docs/brand/icon.svg): the same rounded amber
+tile, with a flat monitor instead of the winged block and the logo's star.
+
+Usage: scripts/aerion-screens-icon.py <out.png> <size>   (drawn 4x larger, then scaled down)
+"""
 import sys
-from PIL import Image
-N = 32
+from PIL import Image, ImageDraw
+
+S = 4  # supersampling
+N = 1024 * S
+
+
+def p(*xy):
+    return [v * S for v in xy]
+
+
 img = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-px = img.load()
-def rect(x0, y0, x1, y1, c):
-    for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
-            px[x, y] = c
-# Orange tile with a lighter top and a darker bottom edge (a block, like the launcher's cards).
+# The tile: the logo's vertical gradient from #fbbf24 to #9a4a0a, clipped to its rounded square.
+grad = Image.new("RGBA", (N, N))
+top, bottom = (0xFB, 0xBF, 0x24), (0x9A, 0x4A, 0x0A)
+gd = ImageDraw.Draw(grad)
 for y in range(N):
     t = y / (N - 1)
-    c = (int(255 - 18 * t), int(158 - 40 * t), int(26 - 10 * t), 255)
-    for x in range(N):
-        px[x, y] = c
-rect(0, 0, N - 1, 0, (255, 196, 92, 255))
-rect(0, N - 2, N - 1, N - 1, (196, 92, 8, 255))
-# Cut the corners so the tile reads as rounded.
-for x, y in [(0, 0), (1, 0), (0, 1), (N - 1, 0), (N - 2, 0), (N - 1, 1), (0, N - 1), (1, N - 1), (0, N - 2), (N - 1, N - 1), (N - 2, N - 1), (N - 1, N - 2)]:
-    px[x, y] = (0, 0, 0, 0)
-DARK, EDGE = (38, 30, 46, 255), (24, 18, 30, 255)
-# Monitor: frame, screen, stand.
-rect(5, 6, 26, 21, DARK)
-rect(5, 21, 26, 21, EDGE)
-rect(6, 6, 25, 6, (64, 54, 76, 255))
-# Screen: a sky over a grass block (a window showing the world).
-for y in range(8, 20):
-    t = (y - 8) / 11
-    rect(7, y, 24, y, (int(88 + 60 * t), int(170 + 40 * t), 255, 255))
-rect(7, 17, 24, 19, (106, 170, 64, 255))
-rect(7, 17, 24, 17, (138, 204, 84, 255))
-W = (255, 255, 255, 255)
-# A play button in the middle of the screen.
-for i, h in enumerate((4, 4, 3, 3, 2, 2, 1, 1, 0)):
-    rect(13 + i, 13 - h, 13 + i, 13 + h, W)
-# Stand and foot.
-rect(14, 22, 17, 23, DARK)
-rect(10, 24, 21, 25, DARK)
-rect(10, 25, 21, 25, EDGE)
+    gd.line([(0, y), (N, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(top, bottom)) + (255,))
+mask = Image.new("L", (N, N), 0)
+ImageDraw.Draw(mask).rounded_rectangle(p(50, 50, 974, 974), radius=230 * S, fill=255)
+img.paste(grad, (0, 0), mask)
+d = ImageDraw.Draw(img)
+WHITE, CREAM, GOLD = "#ffffff", "#fff1cf", "#ffd27a"
+# The monitor: a white frame around a screen that shows the tile through it, a white play mark.
+d.rounded_rectangle(p(212, 262, 812, 662), radius=48 * S, fill=WHITE)
+screen = Image.new("L", (N, N), 0)
+ImageDraw.Draw(screen).rounded_rectangle(p(258, 308, 766, 616), radius=18 * S, fill=255)
+img.paste(grad, (0, 0), screen)
+d.polygon(p(468, 392, 468, 532, 586, 462), fill=WHITE)
+# Stand: a gold neck and a cream foot, like the block's shaded faces.
+d.polygon(p(474, 662, 550, 662, 568, 742, 456, 742), fill=GOLD)
+d.rounded_rectangle(p(360, 736, 664, 784), radius=24 * S, fill=CREAM)
+# The logo's four-pointed star, over the screen's corner.
+cx, cy, r, w = 800, 220, 56, 11.6
+d.polygon(p(cx, cy - r, cx + w, cy - w, cx + r, cy, cx + w, cy + w, cx, cy + r, cx - w, cy + w, cx - r, cy, cx - w, cy - w), fill=WHITE)
 size = int(sys.argv[2])
-img.resize((size, size), Image.NEAREST).save(sys.argv[1])
+img.resize((size, size), Image.LANCZOS).save(sys.argv[1])
