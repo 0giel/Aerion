@@ -39,7 +39,7 @@ public final class Features {
 	};
 
 	private static KeyMapping[] keys;
-	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, shulkerPeek, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide;
+	private static KeyMapping editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels, blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, shulkerPeek, stopwatch;
 	private static final Map<String, KeyMapping> MODULE_KEYS = new LinkedHashMap<>();
 
 	/** Created on first use, while the game's options are being built (see OptionsMixin). */
@@ -76,13 +76,8 @@ public final class Features {
 			wheel = new KeyMapping("key.aerion.wheel", InputConstants.KEY_GRAVE, cat);
 			shulkerPeek = new KeyMapping("key.aerion.shulkerPreview", InputConstants.KEY_LSHIFT, cat);
 			stopwatch = new KeyMapping("key.aerion.stopwatch", InputConstants.UNKNOWN.getValue(), cat);
-			mirrors = new KeyMapping("key.aerion.mirrors", InputConstants.KEY_J, cat);
-			mirrorGrab = new KeyMapping("key.aerion.mirrorGrab", InputConstants.KEY_Y, cat);
-			mirrorType = new KeyMapping("key.aerion.mirrorType", InputConstants.KEY_U, cat);
-			mirrorArrange = new KeyMapping("key.aerion.mirrorArrange", InputConstants.KEY_K, cat);
-			mirrorHide = new KeyMapping("key.aerion.mirrorHide", InputConstants.KEY_R, cat);
 			List<KeyMapping> all = new ArrayList<>(List.of(editor, zoom, freelook, fullbright, fullbrightUp, fullbrightDown, fovLock, hitboxes, overlays, sounds, crosshair, hurtCam, lightLevels,
-					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, shulkerPeek, stopwatch, mirrors, mirrorGrab, mirrorType, mirrorArrange, mirrorHide));
+					blockOutline, chat, perspective, fovKey, worldLook, hitColor, screens, waypointAdd, map, profile, chunkBorders, ownName, tntTimer, streamer, wheel, shulkerPeek, stopwatch));
 			for (String id : MODULE_IDS) {
 				KeyMapping k = new KeyMapping("key.aerion.module." + id, InputConstants.UNKNOWN.getValue(), cat);
 				MODULE_KEYS.put(id, k);
@@ -159,11 +154,11 @@ public final class Features {
 			case "wheel" -> wheel;
 			case "shulkerPreview" -> shulkerPeek;
 			case "stopwatchStart" -> stopwatch;
-			case "mirrors" -> mirrors;
-			case "mirrorGrab" -> mirrorGrab;
-			case "mirrorType" -> mirrorType;
-			case "mirrorArrange" -> mirrorArrange;
-			case "mirrorHide" -> mirrorHide;
+			case "mirrors" -> pl.aerion.screens.client.ScreensClient.key("mirrors");
+			case "mirrorGrab" -> pl.aerion.screens.client.ScreensClient.key("mirrorGrab");
+			case "mirrorType" -> pl.aerion.screens.client.ScreensClient.key("mirrorType");
+			case "mirrorArrange" -> pl.aerion.screens.client.ScreensClient.key("mirrorArrange");
+			case "mirrorHide" -> pl.aerion.screens.client.ScreensClient.key("mirrorHide");
 			case "toggleSprint" -> mc.options.keySprint;
 			case "toggleSneak" -> mc.options.keyShift;
 			default -> MODULE_KEYS.get(id);
@@ -428,7 +423,7 @@ public final class Features {
 
 	/** Whether panels of windows take clicks and the wheel now (feature on, no screen open). */
 	public static boolean mirrorsActive() {
-		return keys != null && Game.screen() == null && HudConfig.bool(feature("mirrors"), "enabled", false);
+		return pl.aerion.screens.client.ScreensClient.active();
 	}
 
 	/** Called every client tick. */
@@ -454,29 +449,7 @@ public final class Features {
 		Effects.sync();
 		pl.aerion.mod.hud.MapMemory.tick(mc);
 		while (stopwatch.consumeClick()) Stopwatch.press();
-		while (mirrors.consumeClick()) {
-			if (Game.screen() == null && mc.player != null) {
-				// Opening the picker is a clear wish: the feature turns on with it.
-				JsonObject f = feature("mirrors");
-				if (!HudConfig.bool(f, "enabled", false)) {
-					f.addProperty("enabled", true);
-					AerionClient.saveHud();
-				}
-				Game.setScreen(new EditorScreen(new pl.aerion.mod.mirror.MirrorsPage(), null));
-			}
-		}
-		boolean mirrorsOn = HudConfig.bool(feature("mirrors"), "enabled", false);
-		pl.aerion.mod.mirror.Mirrors.tick(mc, mirrorsOn && Game.screen() == null && mirrorGrab.isDown(), mirrorsOn);
-		pl.aerion.mod.mirror.ScreenShare.tick(mc);
-		while (mirrorArrange.consumeClick()) if (mirrorsOn) pl.aerion.mod.mirror.Mirrors.arrange();
-		while (mirrorHide.consumeClick()) if (mirrorsOn) pl.aerion.mod.mirror.Mirrors.toggleHidden();
-		while (mirrorType.consumeClick()) {
-			long win = mirrorsOn && Game.screen() == null ? pl.aerion.mod.mirror.Mirrors.aimedWindow() : 0;
-			if (win != 0) {
-				var hit = pl.aerion.mod.mirror.Mirrors.aim();
-				Game.setScreen(new EditorScreen(new pl.aerion.mod.mirror.TypePage(win, hit != null ? hit.panel().title : ""), null));
-			}
-		}
+		// Windows in the world tick in Aerion Screens itself.
 		Combat.tick(mc);
 		toggleOnKey(lightLevels, "lightLevels", false);
 		toggleOnKey(blockOutline, "blockOutline", false);
@@ -611,7 +584,7 @@ public final class Features {
 			}
 			case "map" -> Game.setScreen(new EditorScreen(new pl.aerion.mod.hud.MapPage(), null));
 			case "profile" -> pl.aerion.mod.hud.Profiles.cycle(AerionClient.hud());
-			case "mirrors" -> Game.setScreen(new EditorScreen(new pl.aerion.mod.mirror.MirrorsPage(), null));
+			case "mirrors" -> pl.aerion.screens.client.ScreensClient.openPicker();
 			case "streamer" -> Streamer.toggle();
 			case "stopwatch" -> Stopwatch.press();
 			default -> {}

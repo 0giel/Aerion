@@ -1767,24 +1767,24 @@ public final class AerionMenu implements Page {
 		var player = Minecraft.getInstance().player;
 		if (player != null) {
 			String hang = Lang.tr("aerion.mirrors.hangButton"), arrange = Lang.tr("aerion.mirrors.arrange");
-			String hide = Lang.tr(pl.aerion.mod.mirror.Mirrors.hidden() ? "aerion.mirrors.show" : "aerion.mirrors.hide");
+			String hide = Lang.tr(pl.aerion.screens.client.Mirrors.hidden() ? "aerion.mirrors.show" : "aerion.mirrors.hide");
 			int bx = x, hw = Math.round(Txt.width(hang, TEXT)) + 20, aw = Math.round(Txt.width(arrange, TEXT)) + 20;
 			button(bx, y, hw, 15, hang, true, () -> {
 				f.addProperty("enabled", true);
 				changed = true;
 				Page.go(new pl.aerion.mod.mirror.MirrorsPage());
 			});
-			button(bx + hw + 6, y, aw, 15, arrange, false, pl.aerion.mod.mirror.Mirrors::arrange);
-			button(bx + hw + aw + 12, y, Math.round(Txt.width(hide, TEXT)) + 20, 15, hide, false, pl.aerion.mod.mirror.Mirrors::toggleHidden);
+			button(bx + hw + 6, y, aw, 15, arrange, false, pl.aerion.screens.client.Mirrors::arrange);
+			button(bx + hw + aw + 12, y, Math.round(Txt.width(hide, TEXT)) + 20, 15, hide, false, pl.aerion.screens.client.Mirrors::toggleHidden);
 			y += 19;
-			List<pl.aerion.mod.mirror.Mirrors.Panel> panels = pl.aerion.mod.mirror.Mirrors.all();
+			List<pl.aerion.screens.client.Mirrors.Panel> panels = pl.aerion.screens.client.Mirrors.all();
 			if (panels.isEmpty()) {
 				note(Lang.tr("aerion.mirrors.empty"));
 			} else {
 				beginCard(Lang.tr("aerion.mirrors.panels"));
-				for (pl.aerion.mod.mirror.Mirrors.Panel p : new ArrayList<>(panels)) mirrorRow(p);
+				for (pl.aerion.screens.client.Mirrors.Panel p : new ArrayList<>(panels)) mirrorRow(p);
 				endCard();
-				if (panels.stream().anyMatch(p -> p.shared)) note(Lang.tr(pl.aerion.mod.mirror.ScreenShare.supported() ? "aerion.share.ok" : "aerion.share.unsupported"));
+				if (panels.stream().anyMatch(p -> p.shared)) note(Lang.tr(pl.aerion.screens.client.ScreenShare.supported() ? "aerion.share.ok" : "aerion.share.unsupported"));
 				if (panels.stream().anyMatch(p -> p.shared)) whoWatches(player.getName().getString());
 			}
 		}
@@ -1803,10 +1803,10 @@ public final class AerionMenu implements Page {
 
 	/** Who may see the shared windows on this server: everyone, or the players ticked. */
 	private void whoWatches(String self) {
-		var allow = pl.aerion.mod.mirror.Mirrors.allow();
+		var allow = pl.aerion.screens.client.Mirrors.allow();
 		beginCard(Lang.tr("aerion.share.who"));
 		choiceRow(Lang.tr("aerion.share.whoLabel"), new String[] {"all", "list"}, new String[] {Lang.tr("aerion.share.everyone"), Lang.tr("aerion.share.chosen")},
-				allow.everyone() ? "all" : "list", v -> pl.aerion.mod.mirror.Mirrors.setAllow("all".equals(v), allow.names()));
+				allow.everyone() ? "all" : "list", v -> pl.aerion.screens.client.Mirrors.setAllow("all".equals(v), allow.names()));
 		if (!allow.everyone()) {
 			java.util.Set<String> names = new java.util.LinkedHashSet<>(allow.names());
 			var conn = Minecraft.getInstance().getConnection();
@@ -1827,7 +1827,7 @@ public final class AerionMenu implements Page {
 					List<String> next = new ArrayList<>(allow.names());
 					if (on) next.removeIf(a -> a.equalsIgnoreCase(n));
 					else next.add(n);
-					pl.aerion.mod.mirror.Mirrors.setAllow(false, next);
+					pl.aerion.screens.client.Mirrors.setAllow(false, next);
 				});
 				y += ROW;
 				endRow();
@@ -1838,7 +1838,7 @@ public final class AerionMenu implements Page {
 				if (n.matches("[A-Za-z0-9_]{1,16}") && allow.names().stream().noneMatch(a -> a.equalsIgnoreCase(n))) {
 					List<String> next = new ArrayList<>(allow.names());
 					next.add(n);
-					pl.aerion.mod.mirror.Mirrors.setAllow(false, next);
+					pl.aerion.screens.client.Mirrors.setAllow(false, next);
 				}
 			});
 			// The server checks names only: on servers without account checks a name proves nothing.
@@ -1847,29 +1847,29 @@ public final class AerionMenu implements Page {
 		endCard();
 	}
 
-	private void mirrorRow(pl.aerion.mod.mirror.Mirrors.Panel p) {
+	private void mirrorRow(pl.aerion.screens.client.Mirrors.Panel p) {
 		beginRow("mirror" + System.identityHashCode(p));
 		String remove = Lang.tr("aerion.mirrors.remove"), shape = Lang.tr(p.curved ? "aerion.choice.curve" : "aerion.choice.straight");
 		String pin = Lang.tr("aerion.mirrors.pin");
 		int rw = Math.round(Txt.width(remove, SMALL)) + 12, sw = Math.round(Txt.width(shape, SMALL)) + 12, pw = Math.round(Txt.width(pin, SMALL)) + 12;
 		int bx = x + colW - rw;
-		smallButton(bx, y + 2, rw, ROW - 4, remove, false, () -> pl.aerion.mod.mirror.Mirrors.remove(p));
+		smallButton(bx, y + 2, rw, ROW - 4, remove, false, () -> pl.aerion.screens.client.Mirrors.remove(p));
 		bx -= sw + 3;
 		smallButton(bx, y + 2, sw, ROW - 4, shape, false, () -> {
 			p.curved = !p.curved;
-			pl.aerion.mod.mirror.Mirrors.save();
+			pl.aerion.screens.client.Mirrors.save();
 		});
 		bx -= pw + 3;
-		smallButton(bx, y + 2, pw, ROW - 4, pin, p.pinned, () -> pl.aerion.mod.mirror.Mirrors.togglePin(p));
+		smallButton(bx, y + 2, pw, ROW - 4, pin, p.pinned, () -> pl.aerion.screens.client.Mirrors.togglePin(p));
 		// Shared with the players nearby (on a server with the Aerion Screens mod).
 		String share = Lang.tr(p.shared ? "aerion.share.on" : "aerion.share.off");
 		int shw = Math.round(Txt.width(share, SMALL)) + 12;
 		bx -= shw + 3;
-		smallButton(bx, y + 2, shw, ROW - 4, share, p.shared, () -> pl.aerion.mod.mirror.Mirrors.toggleShare(p));
+		smallButton(bx, y + 2, shw, ROW - 4, share, p.shared, () -> pl.aerion.screens.client.Mirrors.toggleShare(p));
 		bx -= 19;
-		smallButton(bx, y + 2, 16, ROW - 4, "+", false, () -> pl.aerion.mod.mirror.Mirrors.resize(p, 1.15f));
+		smallButton(bx, y + 2, 16, ROW - 4, "+", false, () -> pl.aerion.screens.client.Mirrors.resize(p, 1.15f));
 		bx -= 19;
-		smallButton(bx, y + 2, 16, ROW - 4, "-", false, () -> pl.aerion.mod.mirror.Mirrors.resize(p, 1 / 1.15f));
+		smallButton(bx, y + 2, 16, ROW - 4, "-", false, () -> pl.aerion.screens.client.Mirrors.resize(p, 1 / 1.15f));
 		Txt.draw(g, ellipsize(p.title, bx - x - 8), x, y + ROW / 2f, TEXT, text);
 		y += ROW;
 		endRow();

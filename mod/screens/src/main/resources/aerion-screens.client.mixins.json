@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "pl.aerion.screens.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": ["KeysMixin", "LanguageMixin", "MinecraftMixin", "MouseMixin", "PayloadMixin", "RenderMixin", "CrosshairMixin"],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

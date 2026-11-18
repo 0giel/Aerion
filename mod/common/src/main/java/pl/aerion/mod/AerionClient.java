@@ -40,6 +40,7 @@ public final class AerionClient implements ClientModInitializer {
 		}
 		if (!MixinGate.skipped().isEmpty()) LOG.info("Aerion: off at start, so their mixins are left out: {}", MixinGate.skipped());
 		Badges.init();
+		pl.aerion.mod.mirror.ScreensBridge.install();
 		String st = System.getProperty("aerion.status");
 		if (st != null && !st.isBlank()) status = Path.of(st);
 		String p = System.getProperty("aerion.theme");

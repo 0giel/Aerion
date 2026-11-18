@@ -27,7 +27,7 @@ public final class Crosshair {
 	/** Draws in the game's place; false leaves the game's own crosshair. */
 	public static boolean draw(Gfx g) {
 		// Over a window's panel the arrow pointer shows where a click goes.
-		if (Features.mirrorsActive() && pl.aerion.mod.mirror.Mirrors.pointing()) return true;
+		if (pl.aerion.screens.client.ScreensClient.pointing()) return true;
 		HudConfig cfg = AerionClient.hud();
 		if (cfg == null) return false;
 		JsonObject f = cfg.feature("crosshair");

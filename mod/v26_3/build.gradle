@@ -6,6 +6,10 @@ plugins {
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+	// Aerion Screens: compiled against, and carried inside this jar (Fabric loads it as its own mod;
+	// a copy the player put in mods/ is used instead).
+	implementation project(':screens_v26_3')
+	include project(':screens_v26_3')
 }
 
 tasks.withType(JavaCompile).configureEach {

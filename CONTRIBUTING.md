@@ -59,6 +59,11 @@ Plan: `docs/PLAN.md` · decisions: `docs/DECISIONS.md` · theming: `docs/THEMING
   in-game HUD editor, zoom/freelook/fullbright. `common` is shared; `v26_3` and `v1_21_11` hold what
   differs per game version (`platform/*`, version mixins), one jar each. Client only, no Fabric API;
   loaded with `-Dfabric.addMods`, reads `<root>/aerion-mod/theme.json` and `hud.json`.
+  `screens` (+ `screens_v26_3`, `screens_v1_21_11`) is Aerion Screens: windows in the world and
+  sharing them, its own Fabric mod (one jar for players and servers, also on its own for other
+  launchers, with the game's own menus) and carried inside each Aerion jar (jar-in-jar). Aerion plugs
+  its settings, menus and cost meter in through `pl.aerion.screens.client.Screens`
+  (`common/.../mirror/ScreensBridge.java`). `scripts/build-mod.sh` also writes `release/screens/`.
 - `src` — Svelte 5 (runes). `lib/api.ts` aliases generated types (`X_Serialize` → `X`);
   `lib/stores/*` global state; `lib/theme/*` token engine; `lib/i18n/*` (en/pl, typed);
   pages are code-split (`App.svelte`).

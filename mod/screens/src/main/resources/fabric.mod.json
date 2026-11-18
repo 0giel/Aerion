@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "aerion_screens",
+	"version": "${version}",
+	"name": "Aerion Screens",
+	"description": "Windows of your computer in the game world, shared with players nearby, with sound. Put it on the server too.",
+	"authors": [
+		"Aerion"
+	],
+	"contact": {
+		"homepage": "https://github.com/0giel/Aerion"
+	},
+	"license": "GPL-3.0-only",
+	"environment": "*",
+	"entrypoints": {
+		"client": [
+			"pl.aerion.screens.client.ScreensClient"
+		],
+		"server": [
+			"pl.aerion.screens.AerionScreens"
+		]
+	},
+	"mixins": [
+		"aerion.net.mixins.json",
+		"aerion-relay.mixins.json",
+		"aerion-screens.client.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "${minecraft}"
+	},
+	"icon": "assets/aerion_screens/icon.png"
+}

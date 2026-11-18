@@ -43,8 +43,9 @@ in one click · one-click crash fixes · automatic updates.
 - **Windows in the world (1.3):** hang any window of your computer in the game and click and type
   into it. Share it, and Aerion players near you see it and hear its sound, in a world opened with
   *Host a world* or on a server with the
-  [Aerion Screens](https://github.com/0giel/Aerion/releases/latest) server mod. You choose who may
-  watch.
+  [Aerion Screens](https://github.com/0giel/Aerion/releases/latest) mod. You choose who may watch.
+  Friends on another launcher can get Aerion Screens on its own: one Fabric mod for players and
+  servers.
 - **Also in 1.3:** instance codes (one short text rebuilds a whole instance), *Tune automatically*
   on the Performance page, a skin editor, theme codes, streamer mode (F7), a quick wheel, shulker
   box previews and a map that remembers explored terrain.

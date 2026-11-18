@@ -78,6 +78,10 @@ What lives where. Architecture and conventions: [../CONTRIBUTING.md](../CONTRIBU
 | `common/.../Draw.java`, `Txt.java`, `Icons.java`, `Colors.java`, `Chroma.java` | Drawing, smooth text, icons, colours |
 | `common/.../Theme.java`, `Logo.java`, `Particles.java`, `Lang.java` | Theme, logo, particles, the mod's texts |
 | `common/.../mixin/` | Hooks shared by all game versions |
+| `common/.../mirror/ScreensBridge.java`, `MirrorsPage.java`, `TypePage.java` | Aerion's settings, menus and cost meter for Aerion Screens |
+| `screens/.../net/Proto.java`, `screens/.../screens/Relay.java` | Aerion Screens: the messages of shared windows and the relay that passes them on (servers and hosted worlds) |
+| `screens/.../screens/client/` | Aerion Screens in the game: windows (`Mirrors`, `X11Source`, `Win32Source`, `PortalSource`), sharing and sound, its own menus (`ui/`), keys and settings (`config/aerion-screens-client.json`) |
+| `screens_v26_3/`, `screens_v1_21_11/` | What differs per game version in Aerion Screens |
 | `v26_3/`, `v1_21_11/` | What differs per version: `platform/` and `mixin/version/` |
 | `common/src/main/resources/assets/aerion/` | Generated font and icon images, logo |
 

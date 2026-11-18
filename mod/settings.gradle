@@ -12,5 +12,6 @@ pluginManagement {
 rootProject.name = 'aerion-mod'
 // One jar per Minecraft version; the shared code in common/ is compiled into each.
 include 'v26_3', 'v1_21_11'
-// The server mod that passes shared windows on (separate jars, never inside the launcher).
-include 'server_v26_3', 'server_v1_21_11'
+// Aerion Screens: windows in the world, shared in multiplayer. Its own mod (one jar for players and
+// servers, also on Modrinth) and carried inside the Aerion mod's jar.
+include 'screens_v26_3', 'screens_v1_21_11'

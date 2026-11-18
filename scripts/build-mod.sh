@@ -36,12 +36,13 @@ for dir in mod/v*/; do
   cp "$jar" "src-tauri/resources/aerion-ui-$mc.jar"
   echo "mod built: src-tauri/resources/aerion-ui-$mc.jar ($(stat -c %s "$jar") bytes)"
 done
-# The server mod for shared windows: given to server owners, never embedded in the launcher.
-mkdir -p release/server-mod
-rm -f release/server-mod/aerion-screens-server-*.jar
-for dir in mod/server_v*/; do
-  mc=$(sed -n 's/^minecraft_version=//p' "$dir/gradle.properties")
-  jar=$(ls "$dir"build/libs/aerion-screens-server-*[0-9].jar | grep -v -- '-sources' | head -1)
-  cp "$jar" "release/server-mod/aerion-screens-server-$mc.jar"
-  echo "server mod built: release/server-mod/aerion-screens-server-$mc.jar ($(stat -c %s "$jar") bytes)"
+# Aerion Screens on its own (one jar for players and servers, for Modrinth and server owners);
+# the same mod is also carried inside each aerion-ui jar above.
+mkdir -p release/screens
+rm -f release/screens/aerion-screens-*.jar
+for dir in mod/screens_v*/; do
+  mc=$(grep '^minecraft_version=' "$dir"gradle.properties | cut -d= -f2)
+  jar=$(ls "$dir"build/libs/aerion-screens-*[0-9].jar | grep -v -- '-sources' | head -1)
+  cp "$jar" "release/screens/aerion-screens-$mc.jar"
+  echo "screens mod built: release/screens/aerion-screens-$mc.jar ($(stat -c %s "$jar") bytes)"
 done

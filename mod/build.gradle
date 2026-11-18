@@ -11,15 +11,12 @@ subprojects {
 	group = rootProject.group
 
 	afterEvaluate {
-		boolean server = project.name.startsWith('server_')
-		// The messages of shared windows and the relay that passes them on: the same classes in the
-		// server mod and in the mod (a world hosted from the game passes windows on by itself).
-		sourceSets.main.java.srcDir rootProject.file('net/src/main/java')
-		sourceSets.main.resources.srcDir rootProject.file('net/src/main/resources')
-		sourceSets.main.java.srcDir rootProject.file('server/src/main/java')
-		if (server) {
-			sourceSets.main.resources.srcDir rootProject.file('server/src/main/resources')
-			base.archivesName = "aerion-screens-server-${project.minecraft_version}"
+		boolean screens = project.name.startsWith('screens_')
+		if (screens) {
+			// Aerion Screens: the protocol, the relay and the windows themselves.
+			sourceSets.main.java.srcDir rootProject.file('screens/src/main/java')
+			sourceSets.main.resources.srcDir rootProject.file('screens/src/main/resources')
+			base.archivesName = "aerion-screens-${project.minecraft_version}"
 		} else {
 			// Shared sources and assets (theme, HUD, features) next to the version's own code.
 			sourceSets.main.java.srcDir rootProject.file('common/src/main/java')

@@ -1,5 +1,8 @@
 package pl.aerion.mod.mirror;
 
+import pl.aerion.screens.client.Mirrors;
+import pl.aerion.screens.client.PortalSource;
+import pl.aerion.screens.client.WindowSource;
 import com.mojang.blaze3d.platform.InputConstants;
 import pl.aerion.mod.AerionClient;
 import pl.aerion.mod.Colors;
