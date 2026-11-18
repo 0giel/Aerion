@@ -336,3 +336,26 @@ jar, libraries, assets) plus the server jar and Java 25; `--check` runs before e
 gets the session on stdin (`CommandSpec::stdin`), never in argv, and starts only for a Microsoft
 account, as the project asks of launchers. Java mods, shaders and the Aerion mod don't apply; Modrinth
 and CurseForge exports refuse Horizon instances. The Launch API is experimental, so expect changes.
+
+### D41 — Windows in the world: pictures and sound through a relay, never peer to peer (2026-11-16)
+Shared windows go player → server → players nearby as custom payloads (`aerion:screen`), JPEG in
+≤30 000-byte parts and IMA ADPCM sound. The relay holds every sender to limits (windows, picture
+size and rate, bandwidth, a separate sound budget) and drops instead of queueing. Peer-to-peer was
+rejected: no NAT traversal, IP addresses would leak between players. The relay runs on servers and
+in hosted worlds alike.
+
+### D42 — Wayland windows through the desktop's portal, in a helper process (2026-11-17)
+Native Wayland windows can't be read by another program. The desktop's own ScreenCast dialog
+(xdg-desktop-portal) is the only allowed way; a small Python + GStreamer helper does the portal
+handshake and scales the picture before it reaches Java, so a crash there can't take the game
+down. The choice is remembered (restore token as the panel's class), so saved panels come back
+without the dialog. Such panels are view only.
+
+### D43 — Aerion Screens is its own mod, carried inside Aerion (2026-11-18)
+The owner wanted one jar for players on any launcher and for servers (like Simple Voice Chat).
+Screens is a separate Fabric mod with the game's own menus and settings; the Aerion mod nests it
+(jar-in-jar) and plugs in its settings, themed menus and cost meter through `Screens` (API 1).
+Tested: Fabric prefers a copy in `mods/` over the nested one, even an older one, so Aerion checks
+the API version and never hard-depends; no launcher change was needed. Screens `breaks` Aerion
+< 1.2.0, which had the same classes built in. The old server-only jars stay in the 1.3.0 release
+only.

@@ -2,7 +2,7 @@
 
 Minecraft: Java Edition launcher and Fabric mod. Tauri 2 (Rust) + Svelte 5 + TypeScript + Vite; the mod is Java (Fabric Loom).
 Bug reports and ideas: GitHub issues. Changes: a pull request against `main`; CI runs the checks below.
-Plan: `docs/PLAN.md` · decisions: `docs/DECISIONS.md` · theming: `docs/THEMING.md` · file map: `docs/FILES.md` · Mojang's review: `docs/MOJANG_REVIEW.md`.
+Features (start here): `docs/FEATURES.md` · plan: `docs/PLAN.md` · decisions: `docs/DECISIONS.md` · theming: `docs/THEMING.md` · file map: `docs/FILES.md` · Mojang's review: `docs/MOJANG_REVIEW.md`.
 
 ## Commands
 
