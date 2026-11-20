@@ -30,7 +30,7 @@ abstract class MinecraftMixin {
 	/** Clicking a window may move the focus away for a moment: the game doesn't pause for that. */
 	@Inject(method = "pauseGame", at = @At("HEAD"), cancellable = true)
 	private void aerionScreens$noPause(boolean pauseOnly, CallbackInfo ci) {
-		if (Mirrors.justSent()) ci.cancel();
+		if (Mirrors.justSent() || Mirrors.keyboardHeld) ci.cancel();
 	}
 
 	/** No block breaking behind a panel while the button is held. */

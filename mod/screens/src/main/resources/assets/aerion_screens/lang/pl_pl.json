@@ -27,7 +27,7 @@
 	"aerion_screens.waylandHint": "Programów działających na Waylandzie nie ma na liście: wybierz „Okno z Waylanda…” i wskaż okno w oknie systemu. Takiego panelu nie da się klikać.",
 	"aerion_screens.waylandMissing": "Okna z Waylanda potrzebują python3-gi i wtyczki PipeWire do GStreamera (np. gstreamer1.0-pipewire).",
 	"aerion_screens.waylandFailed": "Pulpit nie udostępnił okna. Spróbuj jeszcze raz; powód jest w logu gry.",
-	"aerion_screens.typing": "Piszesz w: %s · Esc kończy",
+	"aerion_screens.typing": "Piszesz w: %s · Esc kończy · Shift+Esc wysyła Esc",
 	"aerion_screens.enabled": "Okna w świecie",
 	"aerion_screens.yours": "Twoje okna",
 	"aerion_screens.sharing": "Udostępnianie",
@@ -57,5 +57,6 @@
 	"aerion_screens.add": "Dodaj",
 	"aerion_screens.addHint": "Nick",
 	"aerion_screens.offline": "Na serwerach bez sprawdzania kont każdy może użyć cudzego nicku.",
-	"aerion_screens.settingsTitle": "Ustawienia okien"
+	"aerion_screens.settingsTitle": "Ustawienia okien",
+	"aerion_screens.typingHeld": "Klawiatura jest w: %s · Esc wraca do gry"
 }

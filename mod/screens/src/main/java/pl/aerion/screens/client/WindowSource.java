@@ -77,6 +77,30 @@ public interface WindowSource {
 	void key(long id, String name);
 
 	/**
+	 * Gives the keyboard to the window itself, so everything typed goes straight to it (every key,
+	 * shortcuts, the system's input of accented letters), until Esc or {@link #releaseKeyboard}.
+	 * `done` runs when Esc took the keyboard back. False when this source can't do it; keys are
+	 * then passed on one by one with {@link #key} and {@link #type}.
+	 */
+	default boolean holdKeyboard(long id, Runnable done) {
+		return false;
+	}
+
+	/** The game gets the keyboard back (after {@link #holdKeyboard}). */
+	default void releaseKeyboard() {}
+
+	/** Modifier bits, as the game reports them. */
+	int SHIFT = 1, CTRL = 2, ALT = 4, SUPER = 8;
+
+	/**
+	 * A key with modifiers held: any name from {@link Keys#name} ("pagedown", "f5", "a"…), so
+	 * shortcuts like Ctrl+C work. Sources that know only the first keys get them without modifiers.
+	 */
+	default void key(long id, String name, int mods) {
+		if (mods == 0) key(id, name);
+	}
+
+	/**
 	 * Gives the keyboard focus back to the game's window (the biggest one of this process): a
 	 * program that was clicked may take the focus, and the game would pause.
 	 */

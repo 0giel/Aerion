@@ -30,6 +30,9 @@ import org.joml.Matrix4f;
  * read on a thread of their own, about twelve times a second, only while panels exist.
  */
 public final class Mirrors {
+	/** A window has the keyboard (typing into it): the game doesn't pause for losing the focus. */
+	public static volatile boolean keyboardHeld;
+
 	private Mirrors() {}
 
 	/** One panel. Position is the centre; it faces the way the player looked when placing it. */

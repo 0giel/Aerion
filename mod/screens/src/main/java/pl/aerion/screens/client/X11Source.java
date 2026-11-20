@@ -15,8 +15,9 @@ import java.util.List;
 /**
  * Windows of an X11 desktop (also the XWayland ones under Wayland). Pictures come from
  * XGetImage: a window covered by another shows what covers it unless the desktop composites.
- * Input is sent as X events to the window itself, so the game keeps the real pointer; some
- * programs ignore such events.
+ * Pointer input is sent as X events to the window itself, so the game keeps the real pointer;
+ * GTK programs (Firefox, GNOME's) ignore such events. Keys go as real input (XTest) to the window,
+ * which has the keyboard focus for that moment; every program takes those.
  */
 final class X11Source implements WindowSource {
 	/** What jna-platform's X11 lacks. */
@@ -28,6 +29,16 @@ final class X11Source implements WindowSource {
 		int XDestroyImage(Pointer image);
 
 		int XSetInputFocus(X11.Display d, X11.Window w, int revertTo, NativeLong time);
+
+		int XGetInputFocus(X11.Display d, X11.WindowByReference focus, IntByReference revertTo);
+
+		int XDisplayKeycodes(X11.Display d, IntByReference min, IntByReference max);
+
+		Pointer XGetKeyboardMapping(X11.Display d, byte first, int count, IntByReference perKeycode);
+
+		int XChangeKeyboardMapping(X11.Display d, int first, int perKeycode, NativeLong[] keysyms, int count);
+
+		int XQueryKeymap(X11.Display d, byte[] keys);
 	}
 
 	private static final int Z_PIXMAP = 2;
@@ -381,6 +392,15 @@ final class X11Source implements WindowSource {
 
 	@Override
 	public synchronized void scroll(long id, float fx, float fy, int notches) {
+		// GTK programs ignore a sent wheel and the game holds the real pointer: they get the arrow
+		// keys instead, three per notch, as the wheel scrolls three lines.
+		if (ignoresSentPointer(id) && xtest() != null) {
+			int code = keycode(notches > 0 ? "Up" : "Down");
+			if (code != 0) queue(id, () -> {
+				for (int i = 0; i < 3 * Math.abs(notches); i++) stroke(code, 0);
+			});
+			return;
+		}
 		for (int i = 0; i < Math.abs(notches); i++) button(id, fx, fy, notches > 0 ? 4 : 5);
 	}
 
@@ -408,13 +428,295 @@ final class X11Source implements WindowSource {
 		}
 	}
 
+	// --- Real keys (XTest) ------------------------------------------------------------------------
+
+	private X11.XTest xtest;
+	private boolean xtestTried;
+
+	/** XTest when the X server has it (it nearly always does), else null. */
+	private X11.XTest xtest() {
+		if (!xtestTried) {
+			xtestTried = true;
+			try {
+				X11.XTest t = X11.XTest.INSTANCE;
+				if (t.XTestQueryExtension(display, new IntByReference(), new IntByReference(), new IntByReference(), new IntByReference())) xtest = t;
+			} catch (Throwable e) {
+				Screens.LOG.info("Aerion Screens: no XTest here ({}), keys go as plain events", e.toString());
+			}
+		}
+		return xtest;
+	}
+
+	private int keycode(String sym) {
+		X11.KeySym ks = x.XStringToKeysym(sym);
+		return ks == null || ks.longValue() == 0 ? 0 : x.XKeysymToKeycode(display, ks) & 0xFF;
+	}
+
+	private void fake(int code, boolean down) {
+		// A millisecond apart: GTK orders key events by their time, and events of the same
+		// millisecond came out shuffled.
+		if (code != 0) xtest.XTestFakeKeyEvent(display, code, down, new NativeLong(1));
+	}
+
+	/**
+	 * The window gets the keyboard focus for the moment `send` runs, then it goes back where it
+	 * was: real key events always go to the focused window, and the game must keep getting its keys.
+	 */
+	private void toWindow(long id, Runnable send) {
+		X11.WindowByReference was = new X11.WindowByReference();
+		IntByReference revert = new IntByReference();
+		Xlib.INSTANCE.XGetInputFocus(display, was, revert);
+		Xlib.INSTANCE.XSetInputFocus(display, new X11.Window(id), 2, new NativeLong(0));
+		try {
+			send.run();
+		} finally {
+			x.XSync(display, false);
+			// The server handles real input from its own queue, a little after the request: the
+			// focus may only go back once the keys have reached the window.
+			try {
+				Thread.sleep(40);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			X11.Window back = was.getValue();
+			if (back != null && back.longValue() > 1) Xlib.INSTANCE.XSetInputFocus(display, back, revert.getValue(), new NativeLong(0));
+			x.XFlush(display);
+		}
+	}
+
+	private static final String[] MODIFIERS = {"Shift_L", "Control_L", "Alt_L", "Super_L"};
+
+	/** Presses the key `code` with the modifiers in `mods` (Shift 1, Ctrl 2, Alt 4, Super 8). */
+	private void stroke(int code, int mods) {
+		int[] held = new int[MODIFIERS.length];
+		for (int i = 0; i < MODIFIERS.length; i++) {
+			if ((mods & (1 << i)) != 0) {
+				held[i] = keycode(MODIFIERS[i]);
+				fake(held[i], true);
+			}
+		}
+		fake(code, true);
+		fake(code, false);
+		for (int i = MODIFIERS.length - 1; i >= 0; i--) fake(held[i], false);
+	}
+
+	/** A keycode no key uses, borrowed for characters the keyboard layout lacks (as xdotool does). */
+	private int spare = -1;
+
+	private int spareKeycode() {
+		if (spare >= 0) return spare;
+		spare = 0;
+		IntByReference min = new IntByReference(), max = new IntByReference(), per = new IntByReference();
+		Xlib.INSTANCE.XDisplayKeycodes(display, min, max);
+		int lo = min.getValue(), n = max.getValue() - lo + 1;
+		if (n <= 0) return 0;
+		Pointer p = Xlib.INSTANCE.XGetKeyboardMapping(display, (byte) lo, n, per);
+		if (p == null) return 0;
+		try {
+			int k = per.getValue();
+			for (int i = n - 1; i >= 0 && spare == 0; i--) {
+				boolean empty = true;
+				for (int j = 0; j < k && empty; j++) empty = p.getNativeLong((long) (i * k + j) * NativeLong.SIZE).longValue() == 0;
+				if (empty) spare = lo + i;
+			}
+		} finally {
+			x.XFree(p);
+		}
+		return spare;
+	}
+
+	/** Types one character as real input: with the key that has it, or a borrowed keycode. */
+	private void realChar(int cp) {
+		long ks = cp == '\n' ? 0xFF0D : cp == '\t' ? 0xFF09 : cp >= 0x20 && cp < 0x100 ? cp : 0x01000000L | cp;
+		int code = x.XKeysymToKeycode(display, new X11.KeySym(ks)) & 0xFF;
+		if (code != 0) {
+			for (int level = 0; level < 2; level++) {
+				X11.KeySym at = x.XKeycodeToKeysym(display, (byte) code, level);
+				if (at != null && at.longValue() == ks) {
+					stroke(code, level == 1 ? SHIFT : 0);
+					return;
+				}
+			}
+		}
+		int borrowed = spareKeycode();
+		if (borrowed == 0) return;
+		Xlib.INSTANCE.XChangeKeyboardMapping(display, borrowed, 1, new NativeLong[] {new NativeLong(ks)}, 1);
+		x.XSync(display, false);
+		stroke(borrowed, 0);
+		x.XSync(display, false);
+		// The program reads the key with the borrowed meaning: give it a moment before the next.
+		try {
+			Thread.sleep(25);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	// Keys wait a moment and go to the window together: one focus change for a burst of typing
+	// keeps them in order and the game's frame free.
+	private final List<Runnable> pending = new ArrayList<>();
+	private long pendingId;
+	private java.util.concurrent.ScheduledExecutorService sender;
+
+	private void queue(long id, Runnable keys) {
+		if (!pending.isEmpty() && pendingId != id) flush();
+		pendingId = id;
+		pending.add(keys);
+		if (sender == null) {
+			sender = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+				Thread t = new Thread(r, "Aerion window keys");
+				t.setDaemon(true);
+				return t;
+			});
+		}
+		if (pending.size() == 1) sender.schedule(() -> {
+			synchronized (this) {
+				flush();
+			}
+		}, 30, java.util.concurrent.TimeUnit.MILLISECONDS);
+	}
+
+	private void flush() {
+		if (pending.isEmpty()) return;
+		List<Runnable> now = new ArrayList<>(pending);
+		pending.clear();
+		toWindow(pendingId, () -> now.forEach(Runnable::run));
+	}
+
 	@Override
 	public synchronized void type(long id, String text) {
+		if (xtest() != null) {
+			queue(id, () -> text.codePoints().forEach(this::realChar));
+			return;
+		}
 		for (int cp : text.codePoints().toArray()) {
 			String sym = cp == ' ' ? "space" : cp < 128 && Character.isLetterOrDigit(cp) ? String.valueOf((char) Character.toLowerCase(cp)) : String.format("U%04X", cp);
 			keysym(id, sym, Character.isUpperCase(cp) || SHIFTED.indexOf(cp) >= 0);
 		}
 		x.XFlush(display);
+	}
+
+	/** X's name for a key name from {@link Keys#name}. */
+	private static String sym(String name) {
+		if (name.length() == 1) return name;
+		if (name.matches("f\\d{1,2}")) return "F" + name.substring(1);
+		return switch (name) {
+			case "enter" -> "Return";
+			case "backspace" -> "BackSpace";
+			case "tab" -> "Tab";
+			case "escape" -> "Escape";
+			case "left" -> "Left";
+			case "right" -> "Right";
+			case "up" -> "Up";
+			case "down" -> "Down";
+			case "home" -> "Home";
+			case "end" -> "End";
+			case "pageup" -> "Prior";
+			case "pagedown" -> "Next";
+			case "insert" -> "Insert";
+			case "delete" -> "Delete";
+			case "space" -> "space";
+			default -> null;
+		};
+	}
+
+	@Override
+	public synchronized void key(long id, String name) {
+		key(id, name, 0);
+	}
+
+	@Override
+	public synchronized void key(long id, String name, int mods) {
+		String sym = sym(name);
+		if (sym == null) return;
+		if (xtest() != null) {
+			int code = keycode(sym);
+			if (code != 0) queue(id, () -> stroke(code, mods));
+			return;
+		}
+		keysym(id, sym, (mods & SHIFT) != 0);
+		x.XFlush(display);
+	}
+
+	// --- The keyboard held by a window ----------------------------------------------------------------
+
+	private volatile Thread holder;
+	private X11.Window heldFrom;
+	private int heldRevert;
+
+	@Override
+	public synchronized boolean holdKeyboard(long id, Runnable done) {
+		releaseKeyboard();
+		int esc = keycode("Escape");
+		if (esc == 0) return false;
+		X11.WindowByReference was = new X11.WindowByReference();
+		IntByReference revert = new IntByReference();
+		Xlib.INSTANCE.XGetInputFocus(display, was, revert);
+		heldFrom = was.getValue();
+		heldRevert = revert.getValue();
+		Xlib.INSTANCE.XSetInputFocus(display, new X11.Window(id), 2, new NativeLong(0));
+		x.XFlush(display);
+		Mirrors.keyboardHeld = true;
+		// Esc is watched in the keyboard's state, which X tells whoever has the focus.
+		Thread t = new Thread(() -> {
+			byte[] keys = new byte[32];
+			boolean seen = false;
+			while (holder == Thread.currentThread()) {
+				boolean down;
+				synchronized (this) {
+					Xlib.INSTANCE.XQueryKeymap(display, keys);
+					down = (keys[esc >> 3] & (1 << (esc & 7))) != 0;
+				}
+				// Back to the game once Esc is let go, so its release doesn't reach the game.
+				if (down) seen = true;
+				else if (seen) {
+					releaseKeyboard();
+					done.run();
+					return;
+				}
+				try {
+					Thread.sleep(25);
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
+		}, "Aerion window keyboard");
+		t.setDaemon(true);
+		holder = t;
+		t.start();
+		return true;
+	}
+
+	@Override
+	public synchronized void releaseKeyboard() {
+		if (holder == null) return;
+		holder = null;
+		Mirrors.keyboardHeld = false;
+		if (heldFrom != null && heldFrom.longValue() > 1) Xlib.INSTANCE.XSetInputFocus(display, heldFrom, heldRevert, new NativeLong(0));
+		heldFrom = null;
+		x.XFlush(display);
+	}
+
+	/** GTK programs (Firefox, GNOME's) ignore pointer events sent to them; their windows carry _GTK_ properties. */
+	private final java.util.Map<Long, Boolean> gtk = new java.util.HashMap<>();
+
+	private boolean ignoresSentPointer(long id) {
+		return gtk.computeIfAbsent(id, k -> {
+			X11.Window w = new X11.Window(k);
+			for (String p : new String[] {"_GTK_THEME_VARIANT", "_GTK_APPLICATION_ID", "_GTK_FRAME_EXTENTS"}) if (has(w, p)) return true;
+			String cls = text(w, "WM_CLASS").toLowerCase(java.util.Locale.ROOT);
+			return cls.matches(".*(firefox|navigator|thunderbird|librewolf|waterfox|floorp|zen).*");
+		});
+	}
+
+	private boolean has(X11.Window w, String name) {
+		X11.AtomByReference type = new X11.AtomByReference();
+		IntByReference format = new IntByReference();
+		NativeLongByReference count = new NativeLongByReference(), rest = new NativeLongByReference();
+		PointerByReference data = new PointerByReference();
+		int r = x.XGetWindowProperty(display, w, atom(name), new NativeLong(0), new NativeLong(1), false, new X11.Atom(X11.AnyPropertyType), type, format, count, rest, data);
+		if (data.getValue() != null) x.XFree(data.getValue());
+		return r == 0 && type.getValue() != null && type.getValue().longValue() != 0;
 	}
 
 	/** The game's own window: the biggest viewable one of this process. */
@@ -456,23 +758,6 @@ final class X11Source implements WindowSource {
 		e.write();
 		x.XSendEvent(display, root, 0, new NativeLong(X11.SubstructureRedirectMask | X11.SubstructureNotifyMask), e);
 		Xlib.INSTANCE.XSetInputFocus(display, w, 2, new NativeLong(0));
-		x.XFlush(display);
-	}
-
-	@Override
-	public synchronized void key(long id, String name) {
-		String sym = switch (name) {
-			case "enter" -> "Return";
-			case "backspace" -> "BackSpace";
-			case "tab" -> "Tab";
-			case "escape" -> "Escape";
-			case "left" -> "Left";
-			case "right" -> "Right";
-			case "up" -> "Up";
-			case "down" -> "Down";
-			default -> null;
-		};
-		if (sym != null) keysym(id, sym, false);
 		x.XFlush(display);
 	}
 }

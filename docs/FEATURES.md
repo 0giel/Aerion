@@ -55,7 +55,8 @@ menu (sections, module tiles, a search over all settings at the top).
 ## 4. Aerion Screens
 
 **What players get:** press **J** for the window picker; a chosen window hangs in front of you
-(curved or flat). Look at it to click, scroll and type (**U** types into it); drag its bar or hold
+(curved or flat). Look at it to click and scroll; **U** gives the window the keyboard (every key,
+shortcuts and accented letters go straight to it; Esc or a click returns to the game); drag its bar or hold
 **Y** to move; − and + resize; pin it to yourself; **K** arranges all around you, **R** hides them.
 *Share* sends the picture (JPEG) and the sound to players nearby who have Aerion Screens; the
 owner chooses who may watch (everyone or nicks). Others' windows can be switched off.
@@ -70,7 +71,7 @@ live in `hud.json`. Saved windows: `aerion-mirrors.json` in the game folder (per
 | Messages (`Proto.VERSION = 1`, keep it: 1.3.0 players and servers speak it) | `screens/.../net/Proto.java`, `ScreenPayload.java`, `mixin/DiscardedPayloadMixin.java` |
 | Relay (server and hosted worlds): limits, range, sound only to players within 26 blocks, nick lists | `screens/.../screens/Relay.java`, `Config.java`, `mixin/` |
 | Windows and panels | `screens/.../client/Mirrors.java` |
-| Window sources | `X11Source` (Linux X11/XWayland, clicks via XSendEvent), `Win32Source` (Windows), `PortalSource` + `assets/aerion_screens/portal-capture.py` (Wayland, view only, through xdg-desktop-portal; force on X11 with `AERION_PORTAL=1`) |
+| Window sources | `X11Source` (Linux X11/XWayland: clicks and the wheel as sent X events; GTK programs such as Firefox and GNOME's ignore those, so for them the wheel becomes arrow keys; typing hands the window the X keyboard focus and watches Esc in the keymap; single keys go through XTest), `Win32Source` (Windows: window messages), `PortalSource` + `assets/aerion_screens/portal-capture.py` (Wayland, view only, through xdg-desktop-portal; force on X11 with `AERION_PORTAL=1`) |
 | Sound | `WindowAudio` (Linux: PipeWire `pw-record` of the window's program; Windows: `WinLoopback`, WASAPI process loopback), IMA ADPCM (`Adpcm`), playback panned and fading over 24 blocks with a 0.2 s store (`RemoteAudio`) |
 | Sharing | `ScreenShare` |
 | Hooks for other mods | `Screens` (API 1: settings, menus, cost), `ScreensClient` (keys, tick, `active()`, `openPicker()`) |
@@ -109,7 +110,9 @@ the Wayland path with a stand-in PipeWire stream.
 Not verified yet:
 - anything about windows on real Windows (capture, clicks, icons, WASAPI sound);
 - the real Wayland dialog (the owner's GNOME on X11 has the portal too; try with `AERION_PORTAL=1`);
-- clicks into non-fullscreen windows on the owner's own desktop (reported failing, works in tests);
+- clicks into GTK programs (Firefox, GNOME apps): they ignore sent pointer events and the game holds the real pointer, so clicks there may not work; the wheel there moves like the arrow keys (scrolls once the caret reaches the edge in text editors);
+- typing on Windows: keys still go as window messages one by one (no keyboard hand-over yet);
+- the Realms news icon hidden with the Realms button (the icon needs a Realms login to show at all);
 - the Tab list theming in multiplayer; a German mod (the mod knows en/pl only).
 
 ## 7. Change history in short

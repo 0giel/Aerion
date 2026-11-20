@@ -211,21 +211,53 @@ final class Win32Source implements WindowSource {
 
 	@Override
 	public void key(long id, String name) {
-		int vk = switch (name) {
+		key(id, name, 0);
+	}
+
+	/** The Windows key code for a key name from {@link Keys#name}, 0 when there is none. */
+	private static int vk(String name) {
+		if (name.length() == 1) {
+			char c = Character.toUpperCase(name.charAt(0));
+			return Character.isLetterOrDigit(c) ? c : 0;
+		}
+		if (name.matches("f\\d{1,2}")) return 0x6F + Integer.parseInt(name.substring(1));
+		return switch (name) {
 			case "enter" -> 0x0D;
 			case "backspace" -> 0x08;
 			case "tab" -> 0x09;
 			case "escape" -> 0x1B;
+			case "space" -> 0x20;
+			case "pageup" -> 0x21;
+			case "pagedown" -> 0x22;
+			case "end" -> 0x23;
+			case "home" -> 0x24;
 			case "left" -> 0x25;
 			case "up" -> 0x26;
 			case "right" -> 0x27;
 			case "down" -> 0x28;
+			case "insert" -> 0x2D;
+			case "delete" -> 0x2E;
 			default -> 0;
 		};
+	}
+
+	/**
+	 * A key with modifiers. Messages to the window carry the modifier keys too, but a program that
+	 * asks Windows which keys are held may not see them, so some shortcuts may not work.
+	 */
+	@Override
+	public void key(long id, String name, int mods) {
+		int vk = vk(name);
 		if (vk == 0) return;
-		u.PostMessage(hwnd(id), WM_KEYDOWN, new WinDef.WPARAM(vk), new WinDef.LPARAM(1));
-		if (vk == 0x0D || vk == 0x08 || vk == 0x09 || vk == 0x1B) u.PostMessage(hwnd(id), WM_CHAR, new WinDef.WPARAM(vk), new WinDef.LPARAM(1));
-		u.PostMessage(hwnd(id), WM_KEYUP, new WinDef.WPARAM(vk), new WinDef.LPARAM(0xC0000001L));
+		WinDef.HWND h = hwnd(id);
+		int[] modVk = {0x10, 0x11, 0x12, 0x5B};
+		for (int i = 0; i < modVk.length; i++) if ((mods & (1 << i)) != 0) u.PostMessage(h, WM_KEYDOWN, new WinDef.WPARAM(modVk[i]), new WinDef.LPARAM(1));
+		u.PostMessage(h, WM_KEYDOWN, new WinDef.WPARAM(vk), new WinDef.LPARAM(1));
+		if (mods == 0 && (vk == 0x0D || vk == 0x08 || vk == 0x09 || vk == 0x1B)) u.PostMessage(h, WM_CHAR, new WinDef.WPARAM(vk), new WinDef.LPARAM(1));
+		// Ctrl with a letter types a control character (Ctrl+A is 1), as Windows does itself.
+		if ((mods & CTRL) != 0 && vk >= 'A' && vk <= 'Z') u.PostMessage(h, WM_CHAR, new WinDef.WPARAM(vk - 'A' + 1), new WinDef.LPARAM(1));
+		u.PostMessage(h, WM_KEYUP, new WinDef.WPARAM(vk), new WinDef.LPARAM(0xC0000001L));
+		for (int i = modVk.length - 1; i >= 0; i--) if ((mods & (1 << i)) != 0) u.PostMessage(h, WM_KEYUP, new WinDef.WPARAM(modVk[i]), new WinDef.LPARAM(0xC0000001L));
 	}
 
 	/** A window handle as a number, and back. */

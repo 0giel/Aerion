@@ -27,7 +27,7 @@
 	"aerion_screens.waylandHint": "Programs running on Wayland aren't listed: pick “Window from Wayland…” and choose one in your desktop's window. Such panels can't be clicked.",
 	"aerion_screens.waylandMissing": "Windows from Wayland need python3-gi and GStreamer's PipeWire plugin (e.g. gstreamer1.0-pipewire).",
 	"aerion_screens.waylandFailed": "The desktop didn't share a window. Try again; the game's log says why.",
-	"aerion_screens.typing": "Typing into %s · Esc ends",
+	"aerion_screens.typing": "Typing into %s · Esc ends · Shift+Esc sends Esc",
 	"aerion_screens.enabled": "Windows in the world",
 	"aerion_screens.yours": "Your windows",
 	"aerion_screens.sharing": "Sharing",
@@ -57,5 +57,6 @@
 	"aerion_screens.add": "Add",
 	"aerion_screens.addHint": "Nick",
 	"aerion_screens.offline": "On servers that don't check accounts, anyone can take a nick.",
-	"aerion_screens.settingsTitle": "Window settings"
+	"aerion_screens.settingsTitle": "Window settings",
+	"aerion_screens.typingHeld": "The keyboard is in %s · Esc returns to the game"
 }

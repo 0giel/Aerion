@@ -284,6 +284,21 @@ public final class PortalSource implements WindowSource {
 	}
 
 	@Override
+	public void key(long id, String name, int mods) {
+		if (x11 != null && id >= 0) x11.key(id, name, mods);
+	}
+
+	@Override
+	public boolean holdKeyboard(long id, Runnable done) {
+		return x11 != null && id >= 0 && x11.holdKeyboard(id, done);
+	}
+
+	@Override
+	public void releaseKeyboard() {
+		if (x11 != null) x11.releaseKeyboard();
+	}
+
+	@Override
 	public void focusGame() {
 		if (x11 != null) x11.focusGame();
 	}

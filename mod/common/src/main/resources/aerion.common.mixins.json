@@ -27,6 +27,7 @@
 		"PlayerFovMixin",
 		"PlayerTabOverlayMixin",
 		"SoundEngineMixin",
+		"TitleRealmsMixin",
 		"WeatherMixin"
 	],
 	"injectors": {
