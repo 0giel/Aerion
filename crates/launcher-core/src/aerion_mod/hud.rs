@@ -526,13 +526,7 @@ pub fn file(paths: &Paths) -> PathBuf {
 
 /// The saved settings with every known module present (new modules get their defaults).
 pub async fn load(paths: &Paths) -> HudConfig {
-    let mut cfg = match tokio::fs::read(file(paths)).await {
-        Ok(bytes) => serde_json::from_slice::<HudConfig>(&bytes).unwrap_or_else(|e| {
-            tracing::warn!(error = %e, "hud.json is invalid; using defaults");
-            HudConfig::default()
-        }),
-        Err(_) => HudConfig::default(),
-    };
+    let mut cfg: HudConfig = crate::util::fs::read_json_or_keep(file(paths)).await;
     let defaults = HudConfig::default().modules;
     for modules in
         std::iter::once(&mut cfg.modules).chain(cfg.profiles.iter_mut().map(|p| &mut p.modules))

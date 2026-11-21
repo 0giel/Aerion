@@ -19,7 +19,13 @@ pub async fn atomic_write(path: impl AsRef<Path>, bytes: impl AsRef<[u8]>) -> Re
         ensure_dir(parent).await?;
     }
     let tmp = tmp_sibling(path);
-    tokio::fs::write(&tmp, bytes).await.at(&tmp)?;
+    {
+        use tokio::io::AsyncWriteExt as _;
+        let mut f = tokio::fs::File::create(&tmp).await.at(&tmp)?;
+        f.write_all(bytes.as_ref()).await.at(&tmp)?;
+        // On disk before the rename: a power cut can't leave an empty file in the old one's place.
+        f.sync_all().await.at(&tmp)?;
+    }
     if let Err(e) = tokio::fs::rename(&tmp, path).await {
         let _ = tokio::fs::remove_file(&tmp).await;
         return Err(Error::io(path, e));
@@ -57,6 +63,26 @@ pub async fn read_json<T: DeserializeOwned>(path: impl AsRef<Path>) -> Result<Op
             .map_err(|e| Error::parse(path.display().to_string(), e)),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(e) => Err(Error::io(path, e)),
+    }
+}
+
+/// A settings file that may be missing or damaged: a damaged one is kept as `<name>.broken`
+/// (the first time) before the defaults are used, so the next save can't erase what was there.
+pub async fn read_json_or_keep<T: DeserializeOwned + Default>(path: impl AsRef<Path>) -> T {
+    let path = path.as_ref();
+    match read_json::<T>(path).await {
+        Ok(Some(v)) => v,
+        Ok(None) => T::default(),
+        Err(e) => {
+            tracing::warn!(file = %path.display(), error = %e, "damaged file kept aside; using defaults");
+            let mut broken = path.as_os_str().to_owned();
+            broken.push(".broken");
+            let broken = PathBuf::from(broken);
+            if !broken.exists() {
+                let _ = tokio::fs::copy(path, &broken).await;
+            }
+            T::default()
+        }
     }
 }
 
@@ -165,6 +191,28 @@ pub fn dir_size_sync(path: &Path) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A damaged settings file is kept as `.broken`, and defaults come back instead of an error.
+    #[tokio::test]
+    async fn damaged_files_are_kept_aside() {
+        let dir = tempfile::tempdir().unwrap();
+        let f = dir.path().join("hud.json");
+        tokio::fs::write(&f, b"{ broken").await.unwrap();
+        let v: std::collections::BTreeMap<String, u32> = read_json_or_keep(&f).await;
+        assert!(v.is_empty());
+        assert_eq!(
+            std::fs::read(dir.path().join("hud.json.broken")).unwrap(),
+            b"{ broken"
+        );
+        write_json(
+            &f,
+            &std::collections::BTreeMap::from([("a".to_owned(), 1u32)]),
+        )
+        .await
+        .unwrap();
+        let v: std::collections::BTreeMap<String, u32> = read_json_or_keep(&f).await;
+        assert_eq!(v.get("a"), Some(&1));
+    }
 
     #[test]
     fn safe_join_accepts_normal_paths() {

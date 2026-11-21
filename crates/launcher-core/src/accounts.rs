@@ -10,7 +10,7 @@ use tokio::sync::Mutex;
 use crate::auth::{AuthInfo, Endpoints, McSession, Profile, minecraft_session, msa};
 use crate::error::{AuthError, Error, Result};
 use crate::net::client::Http;
-use crate::util::fs::{read_json, write_json};
+use crate::util::fs::write_json;
 use crate::util::now_secs;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -254,11 +254,7 @@ impl Accounts {
     }
 
     pub async fn state(&self) -> AccountsState {
-        read_json(&self.file)
-            .await
-            .ok()
-            .flatten()
-            .unwrap_or_default()
+        crate::util::fs::read_json_or_keep(&self.file).await
     }
 
     pub async fn get(&self, id: &str) -> Option<Account> {
