@@ -246,7 +246,14 @@ impl InstanceManager {
     }
 
     pub fn dir(&self, id: &str) -> Result<PathBuf> {
-        if id.is_empty() || id.contains(['/', '\\']) || id == "." || id == ".." {
+        // On Windows also ':': "C:" would replace the base folder instead of joining it (made ids
+        // never have one; on Linux a folder made by hand may, and stays reachable).
+        if id.is_empty()
+            || id.contains(['/', '\\', '\0'])
+            || (cfg!(windows) && id.contains(':'))
+            || id == "."
+            || id == ".."
+        {
             return Err(Error::InstanceNotFound(id.to_owned()));
         }
         Ok(self.root.join(id))

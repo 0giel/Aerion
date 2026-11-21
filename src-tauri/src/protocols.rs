@@ -12,6 +12,7 @@
 //!   downloaded from Mojang (see `game::textures`).
 
 use std::net::IpAddr;
+use std::time::Duration;
 
 use base64::Engine as _;
 use launcher_core::util::hash::sha1_hex;
@@ -52,15 +53,87 @@ fn is_private(host: &str) -> bool {
     {
         return true;
     }
-    match host.trim_matches(['[', ']']).parse::<IpAddr>() {
-        Ok(IpAddr::V4(ip)) => {
-            ip.is_private() || ip.is_loopback() || ip.is_link_local() || ip.is_unspecified()
+    host.trim_matches(['[', ']'])
+        .parse::<IpAddr>()
+        .is_ok_and(private_ip)
+}
+
+/// An address on this computer or its local network, which images from the web never need.
+fn private_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(ip) => {
+            let [a, b, ..] = ip.octets();
+            ip.is_private()
+                || ip.is_loopback()
+                || ip.is_link_local()
+                || ip.is_unspecified()
+                || ip.is_broadcast()
+                || ip.is_multicast()
+                || a == 0
+                // Shared address space (carrier-grade NAT), 100.64.0.0/10.
+                || (a == 100 && (64..128).contains(&b))
         }
-        Ok(IpAddr::V6(ip)) => {
-            ip.is_loopback() || ip.is_unspecified() || (ip.segments()[0] & 0xfe00) == 0xfc00
+        IpAddr::V6(ip) => {
+            if let Some(v4) = ip.to_ipv4_mapped() {
+                return private_ip(IpAddr::V4(v4));
+            }
+            let first = ip.segments()[0];
+            ip.is_loopback()
+                || ip.is_unspecified()
+                || ip.is_multicast()
+                // Unique local fc00::/7 and link-local fe80::/10.
+                || (first & 0xfe00) == 0xfc00
+                || (first & 0xffc0) == 0xfe80
         }
-        Err(_) => false,
     }
+}
+
+/// Name resolution for the image proxy that never yields a local address: a public name that
+/// points at the local network (or is changed to after the first look, DNS rebinding) and
+/// redirects to such names are refused at connection time.
+struct PublicOnly;
+
+impl reqwest::dns::Resolve for PublicOnly {
+    fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+        let host = name.as_str().to_owned();
+        Box::pin(async move {
+            let found: Vec<std::net::SocketAddr> = tokio::net::lookup_host((host.as_str(), 0))
+                .await?
+                .filter(|a| !private_ip(a.ip()))
+                .collect();
+            if found.is_empty() {
+                return Err("the name points only at local addresses".into());
+            }
+            Ok(Box::new(found.into_iter()) as reqwest::dns::Addrs)
+        })
+    }
+}
+
+/// The client the image proxy fetches with: public addresses only (also after redirects), at
+/// most 5 redirects, bounded times.
+fn image_client() -> &'static reqwest::Client {
+    static CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .user_agent(launcher_core::net::client::user_agent())
+            .dns_resolver(std::sync::Arc::new(PublicOnly))
+            .redirect(reqwest::redirect::Policy::custom(|attempt| {
+                let url = attempt.url();
+                if attempt.previous().len() >= 5 {
+                    attempt.error("too many redirects")
+                } else if !matches!(url.scheme(), "https" | "http")
+                    || url.host_str().is_none_or(is_private)
+                {
+                    attempt.error("redirect to a local address")
+                } else {
+                    attempt.follow()
+                }
+            }))
+            .connect_timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(30))
+            .build()
+            .unwrap_or_default()
+    })
 }
 
 async fn proxy<R: Runtime>(
@@ -92,10 +165,7 @@ async fn proxy<R: Runtime>(
     {
         return Ok(image_response(body, &ct));
     }
-    let engine = state.engine().await;
-    let resp = engine
-        .http
-        .client()
+    let mut resp = image_client()
         .get(parsed)
         .send()
         .await
@@ -119,9 +189,13 @@ async fn proxy<R: Runtime>(
     {
         return Err(StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
-    let body = resp.bytes().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
-    if body.len() > MAX_IMAGE {
-        return Err(StatusCode::PAYLOAD_TOO_LARGE);
+    // Read in pieces, so a server that sends no size (or a wrong one) can't make us hold more.
+    let mut body = Vec::new();
+    while let Some(chunk) = resp.chunk().await.map_err(|_| StatusCode::BAD_GATEWAY)? {
+        if body.len() + chunk.len() > MAX_IMAGE {
+            return Err(StatusCode::PAYLOAD_TOO_LARGE);
+        }
+        body.extend_from_slice(&chunk);
     }
     let ct = if generic {
         sniff_image(&body)
@@ -135,7 +209,7 @@ async fn proxy<R: Runtime>(
         let _ = launcher_core::util::fs::atomic_write(&body_path, &body).await;
         let _ = tokio::fs::write(&type_path, &ct).await;
     }
-    Ok(image_response(body.to_vec(), &ct))
+    Ok(image_response(body, &ct))
 }
 
 /// The type of a raster image recognised by its magic bytes (never SVG: it can carry script).
@@ -383,6 +457,14 @@ mod tests {
         assert_eq!(sniff_image(b"<html>"), None);
     }
 
+    /// A public name that points at this computer is refused when it is looked up.
+    #[tokio::test]
+    async fn names_of_local_addresses_are_not_resolved() {
+        use reqwest::dns::Resolve as _;
+        let name: reqwest::dns::Name = "localhost".parse().unwrap();
+        assert!(PublicOnly.resolve(name).await.is_err());
+    }
+
     #[test]
     fn blocks_private_hosts() {
         for h in [
@@ -393,10 +475,23 @@ mod tests {
             "[::1]",
             "printer.local",
             "169.254.1.1",
+            "0.0.0.0",
+            "100.64.0.1",
+            "[fe80::1]",
+            "[fd00::1]",
+            "[::ffff:127.0.0.1]",
+            "[::ffff:192.168.0.1]",
+            "224.0.0.1",
         ] {
             assert!(is_private(h), "{h}");
         }
-        for h in ["cdn.modrinth.com", "media.forgecdn.net", "8.8.8.8"] {
+        for h in [
+            "cdn.modrinth.com",
+            "media.forgecdn.net",
+            "8.8.8.8",
+            "100.128.0.1",
+            "[2606:4700::1111]",
+        ] {
             assert!(!is_private(h), "{h}");
         }
     }
