@@ -127,3 +127,28 @@ Not verified yet:
 | mod 1.2.0 | Aerion Screens as its own mod (jar-in-jar in Aerion, standalone on Modrinth, game-look menus), Wayland windows (view only), relay fixes (far windows, sound range), smoother others' sound, nick warning on offline servers |
 
 Full per-release notes: `src/lib/changelog.ts` (shown in the launcher's "What's new").
+
+## 8. The master plan (2026-11-19) against the code
+
+The owner's development plan ("Aerion Master Plan Rozwoju") was written from the public docs, not
+the code. Where each part stands, checked 2026-11-21:
+
+| Plan section | State | Notes |
+|---|---|---|
+| 2. Inventory | Done | This file, `FILES.md`, `DECISIONS.md`, `STATUS.md`. Not yet: a list of user data files and their formats. |
+| 3.2 Error model | Done | `ErrorInfo.code` from Rust, mapped to `errors.<code>` in the UI; no error-text parsing in Svelte. |
+| 3.3 Cancellation | Mostly done | Downloads: cancellation token, `.part` resume, hash check, mirror fallback, all tested (`net/download.rs`). Not checked: a cancelled install leaving a half-made instance. |
+| 3.5 Launching | Done | Arguments are arrays, never shell strings; logs in a bounded ring buffer; token masked. |
+| 4.1–4.2 IPC, capabilities | Done | Minimal capabilities (`capabilities/default.json`); no shell or file-system plugin; devtools only in debug builds. |
+| 4.3 CSP | Done | Strict; `style-src 'unsafe-inline'` stays (Svelte styles). |
+| 4.4 Own protocols | Done | `localimg`, `themeasset` accept only checked names; Windows drive letters blocked in instance ids (2026-11-21). |
+| 4.5 Image proxy | Done 2026-11-21 | Public addresses only after DNS (names and redirects to the local network refused), 5 redirects, size counted while reading. |
+| 5. Auth, tokens | Done | PKCE/device code; tokens only in the OS keyring; masked in logs. |
+| 6. Updater | Done | Tauri updater (minisign signature, newer versions only); mod jars signed and verified; key never in the repo. Not done: key rotation plan, rollback. |
+| 7. Archives, modpacks | Done 2026-11-21 | `safe_join` everywhere (zip-slip tested); 64 MiB per in-memory entry, 200 000 files and 16 GiB per extraction. |
+| 8. Fabric client | Partly | Two versions tested in game; Windows and Wayland dialog not (section 6). |
+| 9. Svelte, UX | Partly | Virtualised console, themes, lite mode; no full keyboard/a11y audit. |
+| 10. Performance | Partly | `scripts/perf-linux.sh`, in-game cost meter, release-to-release comparison (`claude-harness/perf`). No long-run or 100-instance tests. |
+| 11. Config, migrations | Partly | Atomic writes (synced to disk), damaged files kept as `.broken` (settings, HUD, accounts), new fields get defaults. No `schemaVersion` yet: needed only before the first breaking format change. |
+| 12–14. Plugins, Studio, Hub | Not planned now | Studio exists in part (theme and HUD editors, theme codes, gallery). Plugins and a Hub need a server and moderation; Fabric plugins can't be sandboxed. |
+| 15. CI | Done | fmt, clippy, tests, svelte-check, ESLint/Prettier, vitest; release workflows check the client ID and signatures. Not yet: `cargo audit`/`cargo deny`. |
