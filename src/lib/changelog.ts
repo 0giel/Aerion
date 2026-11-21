@@ -10,6 +10,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.3.1",
+    notes: {
+      pl: [
+        "Okna w świecie: po wciśnięciu U klawiatura idzie wprost do okna – wszystkie klawisze, skróty i polskie litery. Esc albo klik wraca do gry.",
+        "Kółko myszy przewija też okna Firefoksa i programów GNOME.",
+        "Aerion Screens to osobny mod: znajomi na innych launcherach pobierają tylko jego, a na serwer trafia ten sam plik.",
+        "Ukrycie przycisku Realms chowa też jego ikonkę z wiadomościami.",
+        "Bezpieczniej: obrazki z internetu nie sięgają do Twojej sieci domowej, modpacki mają limity rozmiaru, a uszkodzony plik HUD lub kont nie jest już nadpisywany.",
+      ],
+      en: [
+        "Windows in the world: press U and the keyboard goes straight to the window – every key, shortcut and accented letter. Esc or a click returns to the game.",
+        "The mouse wheel scrolls Firefox and GNOME programs too.",
+        "Aerion Screens is its own mod: friends on other launchers get just that, and a server takes the same file.",
+        "Hiding the Realms button also hides its news icon.",
+        "Safer: images from the web can't reach your home network, modpacks have size limits, and a damaged HUD or accounts file is no longer overwritten.",
+      ],
+    },
+  },
+  {
     version: "1.3.0",
     notes: {
       pl: [
