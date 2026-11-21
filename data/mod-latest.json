@@ -1,17 +1,17 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "minLauncher": "1.3.0",
-  "notes": "Aerion mod 1.2.0",
+  "notes": "Aerion mod 1.2.1",
   "jars": {
     "1.21.11": {
-      "url": "https://github.com/0giel/Aerion/releases/download/mod-v1.2.0/aerion-ui-1.21.11.jar",
-      "sha256": "67025666a9d65fd39f223fad0d822f8583a2d79e4c9b0c3033390196b8daef53",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQnZjMmZsVkNseEpJa1Y0VkNQU09HQ2NLSGZNTjZjNENRZU4vSUdHMndueHBFaC9iQUxyZ3paS2ZYQVU0bGd1WUFRekgxaVlEbWorYjlKUEY1dEFlNERPamE2ak1UNlFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MDE4MDQ5CWZpbGU6YWVyaW9uLXVpLTEuMjEuMTEuamFyCm14cHV3UHpPaGF5K3V1eGFXNCt3R0tEbFNTcXFaTVkvVk43Y0ZmMEIvWmFxd2RpN3B0TkhlRFJWVm1ERWdZQXV6WFpiRjFiUlZ6eDh2eXZweHlnb0RRPT0K"
+      "url": "https://github.com/0giel/Aerion/releases/download/mod-v1.2.1/aerion-ui-1.21.11.jar",
+      "sha256": "a75432c7676f0e4c369990ce797a6299bad7d5e15105bcea74269b1632785e2a",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQnZjMmZsVkNseEp4cmkySmdHdmRiaGI4M2JZSFA4Q3owZUlvR09kcnQ4Mmw5K1FzcStpM3FKTmdGMEUxQzM2SXNpYXdXbVloZ3A1RlhxQWx1VkExbW5oa050SnVLT2dZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MjQ2MDQ0CWZpbGU6YWVyaW9uLXVpLTEuMjEuMTEuamFyCnFJZHdWSkZUOVZMbTJMcklYcWl3UVNKS0sxdHJNOG5nOXVGajVqdDZvZ2N6RkRFdFFiRDRmdGE3NERrbE53Q3R0TmFyR0lXNnp0M3BWaHdvSXIyM0JRPT0K"
     },
     "26.3": {
-      "url": "https://github.com/0giel/Aerion/releases/download/mod-v1.2.0/aerion-ui-26.3.jar",
-      "sha256": "66130607f2f3b87e86e76fb92f6974aa0148795c89f300e5fb47d051dcfdd254",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQnZjMmZsVkNseEhkZzFGVnpHSzdON0pLWnljZVBhai81SW1Bb0FYdFpaaWpTTXFtSDhtODBhYnMxMGhjb0pNbnBLU3JnMDViUkhPcnUwanpwOFJUM20zdGpkOHhublFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MDE4MDUwCWZpbGU6YWVyaW9uLXVpLTI2LjMuamFyCjkxYjF3WVFFN2l3eUJaR1V2QWw1MzJMK0tQZDVYWGJqYW1acHRSMkJabjg1V09BL1V0NnMrMEZJbC9lcVU4bkxzdVh4S3FMOTZBWWlLYmJOMEhoc0N3PT0K"
+      "url": "https://github.com/0giel/Aerion/releases/download/mod-v1.2.1/aerion-ui-26.3.jar",
+      "sha256": "9bf7b2f305660bf56b41404b9e70e6746d045b1f4a35296269a12391d3bc7c50",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQnZjMmZsVkNseEVGV1JGSzFzeGtGK0Zua096UmplMDFZWEtiZVRZZjJiL1lqQmVscmV1VWVNOGd3cXBxclFQVXJZaGxvMitSYnFhNUhoemNwMWlKUnBtSVBmY0gxUGdZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MjQ2MDQ0CWZpbGU6YWVyaW9uLXVpLTI2LjMuamFyCklMRit2WnM4Z1BtVk9FNjRETWNxcFdRZ2g3aW0yRWg3L0U2bTZQNUZ6Ulk4NVM2TG1OUzdzemFzWDBCL0dRMXg0SDNIbkpwMkRsYVRmQUtuZml0aUJBPT0K"
     }
   }
 }
