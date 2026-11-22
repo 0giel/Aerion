@@ -55,6 +55,24 @@ public final class FoodOverlay {
 		}
 	}
 
+	/**
+	 * The player's saturation. A server sends it only with a change of hunger or health (or when it
+	 * reaches zero), so the client's copy stays put while it drains. In a world running in this
+	 * game (single player, or hosted for friends) the server's own value is read instead.
+	 */
+	private static float saturation(Player player, FoodData food) {
+		try {
+			var server = net.minecraft.client.Minecraft.getInstance().getSingleplayerServer();
+			if (server != null) {
+				var own = server.getPlayerList().getPlayer(player.getUUID());
+				if (own != null) return own.getFoodData().getSaturationLevel();
+			}
+		} catch (RuntimeException ignored) {
+			// the world is just closing: the client's copy will do
+		}
+		return food.getSaturationLevel();
+	}
+
 	private static void paint(Gfx g, Player player, int top, int right) {
 		HudConfig cfg = AerionClient.hud();
 		if (cfg == null || player == null) return;
@@ -62,7 +80,7 @@ public final class FoodOverlay {
 		if (!HudConfig.bool(f, "enabled", true) || !ensure()) return;
 		FoodData food = player.getFoodData();
 		int level = food.getFoodLevel();
-		float saturation = food.getSaturationLevel();
+		float saturation = saturation(player, food);
 		boolean showSaturation = "1".equals(HudConfig.opt(f, "saturation", "1"));
 		boolean preview = "1".equals(HudConfig.opt(f, "preview", "1"));
 
